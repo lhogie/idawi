@@ -28,7 +28,7 @@ public class Component {
 	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
 
 	private ComponentInfo descriptor;
-	 final Map<Class<? extends Service>, Service> services = new HashMap<>();
+	final Map<Class<? extends Service>, Service> services = new HashMap<>();
 	public Set<ComponentInfo> otherComponentsSharingFilesystem;
 	public final Set<Component> killOnDeath = new HashSet<>();
 
@@ -83,7 +83,7 @@ public class Component {
 			}
 		});
 	}
-	
+
 	public <S extends Service> void lookupServices(Class<S> c, Consumer<S> h) {
 		lookupServices(s -> c.isInstance(s), s -> h.accept((S) s));
 	}
@@ -122,6 +122,6 @@ public class Component {
 
 	public void removeService(Service s) {
 		s.shutdown();
-		services.remove(s.id);	
+		services.remove(s.id);
 	}
 }
