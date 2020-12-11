@@ -1,0 +1,217 @@
+package idawi.net;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.function.Consumer;
+
+import idawi.Component;
+import idawi.ComponentInfo;
+import idawi.EOT;
+import idawi.Message;
+import idawi.NeighborhoodListener;
+import idawi.Operation;
+import idawi.RouteEntry;
+import idawi.Service;
+import idawi.TransportLayer;
+import idawi.routing.RoutingService;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
+import toools.thread.Threads;
+import toools.util.Date;
+
+public class NetworkingService extends Service implements Consumer<Message> {
+	static {
+		// delete deprecated messages
+		Threads.newThread_loop(1000, () -> true, () -> {
+			for (Component c : Component.thingsInThisJVM.values()) {
+				NetworkingService t = c.lookupService(NetworkingService.class);
+				synchronized (t.aliveMessages) {
+					for (Message m : t.aliveMessages.values()) {
+						if (m.isExpired()) {
+							t.alreadyReceivedMsgs.remove(m.ID);
+							t.alreadySentMsgs.remove(m.ID);
+							t.aliveMessages.remove(m.ID);
+						}
+					}
+				}
+			}
+		});
+	}
+
+	public final MultiTransport transport;
+	public final Long2ObjectMap<Message> aliveMessages = new Long2ObjectOpenHashMap<>();
+	public final LongSet alreadySentMsgs = new LongOpenHashSet();
+	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
+
+	public NetworkingService(Component t) {
+		super(t);
+		transport = new MultiTransport();
+		transport.update(t.descriptor());
+		transport.setNewMessageConsumer(this);
+		transport.addProtocol(new LMI());
+
+		transport.listeners.add(new NeighborhoodListener() {
+			@Override
+			public void peerJoined(ComponentInfo newPeer, TransportLayer protocol) {
+				synchronized (aliveMessages) {
+					for (Message msg : aliveMessages.values()) {
+						// send(msg, protocol, Set.of(newPeer));
+					}
+				}
+			}
+
+			@Override
+			public void peerLeft(ComponentInfo p, TransportLayer neighborhood) {
+			}
+		});
+	}
+
+	@Operation
+	public Collection<ComponentInfo> listProtocols(Message msg, Consumer<Object> out) {
+		return transport.neighbors();
+	}
+
+	@Override
+	public synchronized void accept(Message msg) {
+//		 Cout.debug(component + " RECV " + msg);
+		msg.receptionDate = Date.time();
+		msg.route.forEach(routeEntry -> component.descriptorRegistry.update(routeEntry.component));
+
+		for (Service s : component.services()) {
+			if (s instanceof RoutingService) {
+				((RoutingService) s).scheme.feedWith(msg.route);
+			}
+		}
+
+		if (msg.isExpired()) {
+			return;
+		}
+
+		// the message was already received
+		if (alreadyReceivedMsgs.contains(msg.ID)) {
+			// updates recipients list
+			if (!msg.to.isBroadcast()) {
+				Message firstReceptionOfMsg;
+
+				synchronized (aliveMessages) {
+					firstReceptionOfMsg = aliveMessages.get(msg.ID);
+
+					if (firstReceptionOfMsg == null) {
+						aliveMessages.put(msg.ID, msg);
+					}
+				}
+
+				if (firstReceptionOfMsg != null) {
+					msg.to.notYetReachedExplicitRecipients
+							.retainAll(firstReceptionOfMsg.to.notYetReachedExplicitRecipients);
+				}
+			}
+		} else {
+			alreadyReceivedMsgs.add(msg.ID);
+
+			if (msg.to.isBroadcast()) {
+				Service targetService = component.lookupService(msg.to.service);
+
+				if (targetService != null) {
+					targetService.considerNewMessage(msg);
+				}
+			} else { // if I'm explicit recipient of the message
+				boolean explicitRecipient = msg.to.notYetReachedExplicitRecipients.remove(component.descriptor());
+
+				if (explicitRecipient) {
+					Service targetService = component.lookupService(msg.to.service);
+
+					if (targetService != null) {
+						targetService.considerNewMessage(msg);
+					} else {
+						if (explicitRecipient) {
+							error("service not found: " + msg.to.service);
+//							System.err.println(msg.replyTo);
+							if (msg.replyTo != null) {
+								send(new IllegalStateException("service not found: " + msg.to.service), msg.replyTo,
+										null);
+								send(new EOT(), msg.replyTo, null);
+							}
+						}
+					}
+				}
+			}
+
+			if (alreadySentMsgs.contains(msg.ID)) {
+				// already sent
+			} else if (msg.route.size() >= msg.to.coverage) {
+				// went far enough
+			} else if (!msg.to.isBroadcast() && msg.to.notYetReachedExplicitRecipients.isEmpty()) {
+				// all recipients have been reached, if any
+			} else {
+				Collection<ComponentInfo> neighbors = neighbors();
+
+				if (neighbors.size() == 1 && neighbors.contains(msg.route.last())) {
+					// don't resend to the guy who just sent it
+				} else {
+//				Cout.debugSuperVisible(peer + " forwarding " + msg);
+					send(msg, transport);
+				}
+			}
+		}
+	}
+
+	public void send(Message msg) {
+//		Cout.debugSuperVisible(component +  " sends " + msg);
+		send(msg, transport);
+	}
+
+	public void send(Message msg, TransportLayer protocol) {
+		RoutingService router = component.lookupService(RoutingService.class);
+		Collection<ComponentInfo> relays = router.scheme.findRelaysToReach(protocol,
+				msg.to.notYetReachedExplicitRecipients);
+		// Cout.debug("ROUTING: " + msg.to.peers + " -> " + relays);
+		send(msg, protocol, relays);
+	}
+
+	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {
+
+		if (relays.isEmpty()) {
+			return;
+		}
+
+		alreadySentMsgs.add(msg.ID);
+
+		synchronized (aliveMessages) {
+			// in order to avoid modifying the immutable set created by Set.of()
+			if (msg.to.notYetReachedExplicitRecipients != null) {
+				msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentInfo>(
+						msg.to.notYetReachedExplicitRecipients);
+			}
+
+			aliveMessages.put(msg.ID, msg);
+		}
+
+		RouteEntry e = new RouteEntry();
+		e.component = component.descriptor();
+		e.date = System.nanoTime();
+		e.protocolName = protocol.getName();
+		msg.route.add(e);
+		msg.emissionDate = Date.time();
+		// Cout.debug("sending: " + msg + " via " + protocol.getName());
+		// Cout.debug(descriptor + " SEND " + protocol + " sending via " + relays + ": "
+		// + msg);
+
+		protocol.send(msg, relays);
+	}
+
+	public Collection<ComponentInfo> neighbors() {
+		Collection<ComponentInfo> s = transport.neighbors();
+		s.remove(component.descriptor());
+		return s;
+	}
+
+	@Override
+	public void inform(ComponentInfo p) {
+		super.inform(p);
+		transport.injectLocalInfoTo(p);
+	}
+}
