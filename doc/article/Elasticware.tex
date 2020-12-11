@@ -1,0 +1,150 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{P2P Distributed Computing}
+\author{luc.hogie}
+\date{June 2020}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+
+JThing is a middleware for distributed applications. Its design objectives are to make it as much general yet effective as possible. JThing defines a distributed system as a dynamic multi-hop overlay network of entities communicating via explicit messages. 
+
+JThing is developed at I3S computer science laboratory (Cnrs/Inria Sophia Antipolis/Université Côte d'Azur). Its design benefits from our long experience in the field of distributed computing, and is driven by the practical requirements of our Research projects. In particular for many years we have been conducting experiments on graphs algorithms. With the advent of open data, graphs have dramatically increased in size. Processing now billion-elements graphs in a centralized setting (as we did at start) turns out to be impracticable in many cases. This led us to resort to distributed computing., thereby to deal with its practical aspects, with the existing software and their limitations. Each new experiment coming with its particular data model and specific requirements, existing frameworks turned out to be inadequate, and each time we had to implement adapted software solutions.
+
+JThings can be seen as a synthesis of our past developments and experience in the field distributed computing. It gathers implementations of the concepts that proved useful to our past studies, and that we believe will be useful to future Research not only in field of graph algorithms but also in  cloud computing and IOT (mobile P2P networks, DTNs, etc).
+
+Distributed computing is notoriously difficult field. Writing distributed applications is hard as programmers have to deal with complexities at all stages: heterogeneous hardware and networks technologies, sophisticated protocols, complex software infrastructures, concurrent access to data, performance issues, reliability issues, etc.
+JThings tackles distributed computing by using an elegant approach which, used as the core of world-scale P2P infrastructures, have shown its incredible effectiveness: decentralization: Pafadipo can be seen as a P2P overlay network in which all nodes are equally responsible of the global operation of the system. Decentralization gives Pafadipo an elastic nature that has numerous intrinsic advantages, like the ability to grow or shrink dynamically, to be resilient to failures, to support node mobility and churn, to accommodate multi-hop networks (networks whose the nodes are used as intermediaries to read other nodes), etc.
+This elasticity makes Pafadipo suited to a wide range of applications like IOT, MANETs, cluster and cloud computing, etc.
+
+Considering such a wide range of applications imposes the consideration of the communication protocols they use. For example computing clusters use Infiniband in addition to IP protocols. IOT/MANETs use Bluetooth. WAN networks impose the use of SSH, and sometimes they do not even allow the use of SSH-tunneling. In order to deal with this variety, Pafadipo provides an abstract communication protocol and implementations for terrain networking protocols, namely TCP, UDP, SSH, etc.
+
+In short, main features of Pafadipo include:
+\begin{itemize}
+    \item deployment of nodes through SSH
+    \item decentralized, P2P communication
+    \item sync and async queue-based messaging
+    \item support SSH, TCP, UDP, file-based communication
+    \item comes with many base services for deployment, publish-subscribe, system-monitoring, service lifecycle
+\end{itemize}
+
+
+In order to be usable on the largest variety of devices, ranging from sensors to super-calculators, Pafadipo is written in Java (plus a few lines of bash). It was successfully tested using JDK 8 and 13 on Linux (Fedora, Mint) and Apple Mac OSX.
+
+
+\section{Overview of the architecture}
+A \textit{node} is the piece of software that enables devices (computers, smartphones, etc) to interact with each other, thereby forming an overlay network. Nodes refer to other nodes in the overlay to as its \textit{peers}.
+Nodes have a local registry which stores information about their peers. This information is not necessarily complete for a given peer nor it  The \textit{neighborhood} of a node is the set of peers. Node incorporate a routing service, which enables nodes to interact with peers not in their neighborhood by 
+using neighbors as relays.
+
+Nodes have no ID. They can be referred  as by any information other nodes know about them: IP address, port, lifetime, some name, etc. Peer identification is achieved by the use of asymmetric encryption of data transmissions.
+
+Nodes have no application logic: it is held by \textit{service}s exposed by nodes. A service is the atomic application component in a Pafadipo distributed application.
+
+A service contains a set of queues. Queues can be dynamically created and deleted. A queue has a string identifier within the service that holds it. Any string, including the null string can be used as a queue identifier. A message transferred from a (service in a) node to another node carries information about its target service/queue, as well as optional service/queue for returns. Sending a message to a non-existing queue entails it immediate creation, as well as a the invocation of a specific handler in the service. 
+ Pafadifo's queues can be queried in two ways: in a imperative way, by calling a blocking \texttt{read()} method on it, or in a reactive way by specifying a specific function (typically written as a lambda) that will be invoked upon the reception of each new messages.
+ 
+
+A message is identified by a unique random 64-bit numerical ID.
+Pafadipo messages transfer is based on multicast/broadcast, meaning that  messages are targeted to not a single peer but to a set of peers. Unicast can be emulated by specifying one single element in the set of recipient peers.  It carries a content which can be any Java object. Finally it has a maximum number of hops allowed as well as an expiration date. A message in considered active until it expires. In order to support node mobility, active messages are considered for re-emission each time a new peer connects, depending on the routing scheme within the node.
+
+At emission, a message embeds optional return information. This returns information is used by the receiving service, that is then enabled to return data. Unlink functions which are expected to return a result once they complete, message processing in Pafadipo is enables to send data during its execution. There is no restriction on the destination for returns data: they can be returned back to the message emitter or sent to any other node, using the same multicast/broadcast mode as for the emission of any message.  The nature of content of return messages is application-specific. Commonly it will be either acknowledgements, progress information, temporary results, and final results.
+
+At the lowest layer, a messages is sent asynchronously: the \texttt{send()} method is not blocking. The emitter has no guaranty that the message will be received. Feedback sent by the service(s) processing the message is received asynchronously as well, just like any other message.
+
+\subsection{Synchronous com}
+
+Synchronous communication is enable by  resorting to dynamic queues.
+In this configuration, the emission of a message blocks until the emitter has received the information it needs, or a timeout expires. The API for synchronous communication is multiform. In its simplest form, the call of the send() primitive features a handler for any incoming feedback. This handler is commonly written as a lambda. This handler  is required to return a boolean value indicating whether the sending service should keep on waiting for further returns. A more high-level form of the send() primitive is to take as input a handler that is called each time a new responding peer is discovered and that is provided with a queue of messages incoming from this peer.
+An even higher-level form provides de-multiplexing of the incoming messages. Its takes as input another hander that is called every time progress information is received, there enabling the monitoring of the progression of remote processes.
+
+\section{Underlying transport protocols}
+Pafadipo feature an abstraction for the network communications. It defines a protocol driver as a component able to send messages asynchronously, to trigger a consumer each time a new message is received, and to provides a set of peer in its current neighborhood.
+The following protocols are currently supported.
+
+LMI is used when the two agents involved in the communication are in the same JVM.
+
+UDP
+is the preferred communication protocol because its fast.
+Unreliability of UDP is overcomed by higher level communication control in *Pafadipo*.
+For synchronous communication between two neighbors
+
+TCP
+is slower than UDP but has the advantage of allowing the use of SSH-tunneling, which is required when the plain TCP ports are inacessiible because of a firewall or a NAS.
+
+SSH
+is primarily used to deploy things on remote computers. The communication streams between the SSH client and SSH server are used to transport messages. This mechanism can be used even when SSH tunelling not available.
+
+Sometimes nodes have no direct neither indirect way to reach one another using other protocols, but they share a common file system. This is the case of two computers in different LANs, each one connected to a common cloud storage.
+
+
+\subsection{Built-in services}
+Pafadipo comes with a set of built-in services. Some are demos for the framework, while others bring crucial features, as detailed hereinafter.
+
+\subsubsection{Deployment}
+A unique feature of pafadipo is its ability to deploying new nodes programmatically.
+More precisely, if a node (called the parent node) is given the ability to connect through SSH to a remote host, it becomes able to start new nodes (called the child nodes) on this host.
+To do that, the parent node uses the ubiquitous \texttt{rsync} utility to incrementally transfer all its binaries (the whole content of its Java classpath) to the remote host. Once the binaries transferred , the parent node starts a new Java Virtual Machine on the remote host, with an instance of the node class in it. This new node will instantly being in capacity to communicate with its parent node, as well as with other peers in the overlay.
+
+In practise, instead of deploying one single node to one single host at a time, a parent node will rather try to deploy new nodes onto multiple hosts in parallel. Here arises the problem of shared file-systems to which writing operations must deal with  conflicting resources: before transferring binaries to remote hosts, the parent node executes a distributed algorithm for the computation of the set of hosts sharing a same file-system. Then binaries are transferred in parallel to one single (random) computer in every set. As soon as a set as received its binaries, child nodes are in parallel  started on all hosts in it.
+
+At any time, a child node can be set to be dependant on its parent node. In this case, child nodes terminates on their own as soon as they lose the SSH connection to their parent node. On the contrary an independent child node will continue running even so the SSH connected that were used to start it gets lost. Note that an independent node may have other ways to communicate with its parent if it is still running, thereby not losing contact.
+
+Finally the deployment of new nodes on remote hosts can be set to be proactive. In this configuration, possibly available remotes hosts are periodically scanned for (using custom peer lists, or \texttt{known_hosts} file and TCP broadcast) and a new node is automatically deployed on them.
+
+\subsubsection{Service manager}
+
+Thanks to the \textit{service manager} service, services can dynamically start and stop other services in their node using an object-oriented API, as well as in other nodes, using a message-based API. 
+
+\subsubsection{Explorer}
+
+The explorer distributed application comes with a command line interface.
+It enables the navigation and query.
+
+\subsubsection{Monitoring stdout, stderr}
+In order to simplify monitoring and debugging, Pafadipo comes with a specific service which forward to all peers (broadcast)  the messages that are written to standard output and standard error streams in other peers.
+
+\subsubsection{Reporting errors}
+In a way similar to the forwarding of standard output and error streams, the \textit{error reporting} services let all peers know about errors occurring anywhere in the system, thereby enabling distributed error reporting.
+\subsubsection{Reporting errors}
+
+
+\subsubsection{Publish-subscribe}
+
+
+\subsection{Suited to experimentation}
+
+
+
+\section{Comparison to existing platforms}
+ZeroMQ
+
+Monix, Zio et Akka
+
+JGroups
+
+Akka
+
+Hazelcasts
+
+Terracota
+
+Apache River
+
+Jade is supported by Telecom Italia.
+Its naming service is centralized
+In accordance to the FIPA standard, Jade imposes a number of agent-specific high-level asbractions which concern their behavior, their interactions, etc.
+It receives messages in blocking mode.
+
+Unique features of Pafadipo are P2P, deployment/
+
+
+
+
+
+\end{document}
