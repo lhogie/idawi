@@ -27,7 +27,7 @@ public class DummyService extends Service {
 
 	@Operation
 	public void countFromAtoB(int a, int b, Consumer<Object> r) {
-		for (int i = a; i < b; ++a) {
+		for (int i = a; i < b; ++i) {
 			r.accept(i);
 		}
 	}

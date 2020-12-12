@@ -1,24 +1,94 @@
 package idawi;
 
-import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
-public abstract class AbstractOperation implements Serializable {
+import toools.reflect.Clazz;
+
+public class AbstractOperation {
 	int nbCalls;
 	double totalDuration;
+	private final Method method;
+	private final Object target;
+	public final OperationDescriptor signature;
+
+	public AbstractOperation(Object s, Method m) {
+		m.setAccessible(true);
+		this.method = m;
+		this.target = s;
+		this.signature = new OperationDescriptor(m);
+	}
+
+	@Override
+	public String toString() {
+		return descriptor().toString();
+	}
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;
 	}
 
-	public abstract OperationDescriptor signature();
-
-	protected final void accept(Message msg, Consumer<Object> returns) throws Throwable{
-		++nbCalls;
-		double start = Utils.time();
-		acceptImpl(msg, returns);
-		totalDuration += Utils.time() - start;
+	public int nbCalls() {
+		return nbCalls;
 	}
 
-	protected abstract void acceptImpl(Message msg, Consumer<Object> returns) throws Throwable;
+	public OperationDescriptor descriptor() {
+		return signature;
+	}
+
+	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
+		Class<?>[] types = method.getParameterTypes();
+
+		if (types.length == 0) {
+			invoke(returns);
+		} else if (types.length == 1 && types[0] == Message.class) {
+			invoke(returns, msg);
+		} else if (types.length == 1 && types[0] == Consumer.class) {
+			invoke(returns, returns);
+		} else if (types.length == 2 && types[0] == Message.class && types[1] == Consumer.class) {
+			invoke(returns, msg, returns);
+		} else {
+			// we have a parameterized operation
+			OperationParameterList parms;
+
+			if (msg.content instanceof OperationParameterList) {
+				parms = (OperationParameterList) msg.content;
+			} else if (msg.content instanceof OperationStringParameterList) {
+				parms = OperationParameterList.from((OperationStringParameterList) msg.content,
+						method.getParameterTypes());
+			} else {
+				throw new IllegalStateException(
+						"expecting message content to be a parameter list but is " + msg.content.getClass().getName());
+			}
+
+			// use return keyword instead of returns consumer
+			if (parms.size() == signature.parameterTypes.length) {
+				invoke(returns, parms.toArray());
+			} else if (signature.parameterTypes.length == parms.size() + 1) {
+				// uses returns consumer
+				if (signature.parameterTypes[signature.parameterTypes.length - 1] == Consumer.class) {
+					parms.add(returns);
+					invoke(returns, parms.toArray());
+				} else {
+					throw new IllegalStateException("last parameter of operation " + method.getName()
+							+ " should be of type " + Consumer.class.getName());
+				}
+			} else {
+				throw new IllegalStateException("expecting parameters " + Arrays.toString(signature.parameterTypes)
+						+ " for operation " + method.getDeclaringClass().getName() + "." + method.getName()
+						+ " but received " + Arrays.toString(Clazz.getClasses(parms.toArray())));
+			}
+		}
+	}
+
+	private void invoke(Consumer<Object> returns, Object... parms)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		Object r = method.invoke(target, parms);
+
+		if (method.getReturnType() != void.class) {
+			returns.accept(r);
+		}
+	}
 }

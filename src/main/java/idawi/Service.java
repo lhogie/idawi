@@ -1,7 +1,6 @@
 package idawi;
 
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
@@ -39,7 +39,7 @@ public class Service {
 
 		for (Method m : getClass().getMethods()) {
 			if (m.isAnnotationPresent(Operation.class)) {
-				name2operation.put(m.getName(), new InMethodOperation(this, m));
+				name2operation.put(m.getName(), new AbstractOperation(this, m));
 			}
 		}
 	}
@@ -47,6 +47,11 @@ public class Service {
 	@Operation
 	public long nbMessagesReceived() {
 		return nbMessages;
+	}
+
+	@Operation
+	public String html() {
+		return "<html>Hi!</html>";
 	}
 
 	@Operation
@@ -69,8 +74,6 @@ public class Service {
 
 			// no queue, it has already expired
 			if (q == null) {
-				name2queue.keySet().forEach(n -> System.out.println(n));
-
 				if (msg.replyTo != null) {
 					MessageException err = new MessageException("operation/queue '" + msg.to.operationOrQueue
 							+ "' not existing on service " + getClass().getName());
@@ -84,6 +87,9 @@ public class Service {
 		} else {
 			threadPool.submit(() -> {
 				try {
+					operation.nbCalls++;
+					double start = Utils.time();
+
 					// process the message
 					operation.accept(msg, someResult -> {
 						if (msg.replyTo != null) {
@@ -98,6 +104,8 @@ public class Service {
 									+ " are discarded because the message specifies no return recipient");
 						}
 					});
+
+					operation.totalDuration += Utils.time() - start;
 
 					// tells the client the processing has completed
 					if (msg.replyTo != null) {
@@ -117,47 +125,13 @@ public class Service {
 		}
 	}
 
-	@Operation
-	public Object callRESTOperation(Set<ComponentInfo> components, Class<? extends Service> serviceID, String operation,
-			String... stringParms) throws MessageException {
-		AbstractOperation m = name2operation.get(operation);
-
-		if (!InMethodOperation.class.isInstance(m)) {
-			throw new MessageException("operation " + operation + " is not implemented as a method");
-		}
-
-		Object[] actualParms = new Object[stringParms.length];
-		Class<?>[] types = m.signature().parameterTypes;
-
-		for (int i = 0; i < stringParms.length; ++i) {
-			actualParms[i] = fromString(stringParms[i], types[i]);
-		}
-
-		try {
-			return ((InMethodOperation) m).method.invoke(this, actualParms);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new MessageException(e);
-		}
-	}
-
-	private Object fromString(String from, Class<?> to) throws MessageException {
-		if (to == String.class) {
-			return from;
-		} else if (to == double.class || to == Double.class) {
-			return Double.valueOf(from);
-		} else if (to == int.class || to == Integer.class) {
-			return Long.valueOf(from);
-		} else if (to == long.class || to == Long.class) {
-			return Long.valueOf(from);
-		} else if (to == int.class || to == Integer.class) {
-			return Integer.valueOf(from);
-		} else {
-			throw new MessageException("string cannot be converted to " + to.getClass());
-		}
-	}
-
 	public void registerOperation(String queue, OperationFunctionalInterface userCode) {
-		name2operation.put(queue, new InLambdaOperation(userCode));
+		try {
+			name2operation.put(queue, new AbstractOperation(userCode,
+					userCode.getClass().getMethod("accept", Message.class, Consumer.class)));
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	public void newThread_loop_periodic(long periodMs, Runnable r) {
@@ -220,9 +194,6 @@ public class Service {
 	protected MessageQueue createQueue(String qid, Set<ComponentInfo> expectedSenders) {
 		MessageQueue q = new MessageQueue(qid, expectedSenders, 10, wannaDie -> delete(wannaDie));
 		name2queue.put(qid, q);
-		name2queue.keySet().forEach(n -> System.out.println(n));
-		System.out.println("ending listing queues");
-
 		return q;
 	}
 

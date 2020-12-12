@@ -159,8 +159,8 @@ public class RESTService extends Service {
 						var stringParms = path.length == 3 ? new String[0] : path[3].split(",");
 						System.out.println("invoking action " + operation + " service " + components + "/"
 								+ serviceID.getClass().toString() + " with parameters: " + stringParms);
-						return call(components, serviceID, "callRESTOperation", stringParms).setTimeout(timeout)
-								.collect().contents();
+						return call(components, serviceID, "callRESTOperation", operation, stringParms)
+								.setTimeout(timeout).collect().contents();
 					}
 				}
 			}

@@ -321,7 +321,7 @@ public class ComponentDeployer extends Service {
 					deployInfo.id);
 
 			t.descriptorRegistry.add(deployInfo.parent);
-			t.otherComponentsSharingFilesystem = deployInfo.peersSharingFileSystem;
+			t.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
 			t.lookupService(NetworkingService.class).transport
 					.addProtocol(new PipeFromToParentProcess(deployInfo.parent, deployInfo.suicideWhenParentDies));

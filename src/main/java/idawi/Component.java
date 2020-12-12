@@ -24,16 +24,16 @@ import toools.reflect.Clazz;
 
 public class Component {
 	public static final Directory directory = new Directory("$HOME/." + Component.class.getPackage().getName());
-	public static final ConcurrentHashMap<String, Component> thingsInThisJVM = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
 
 	private ComponentInfo descriptor;
 	final Map<Class<? extends Service>, Service> services = new HashMap<>();
-	public Set<ComponentInfo> otherComponentsSharingFilesystem;
+	public final Set<ComponentInfo> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
 
 	public Component() {
-		this("name=c" + thingsInThisJVM.size());
+		this("name=c" + componentsInThisJVM.size());
 	}
 
 	public Component(String cdl) {
@@ -41,7 +41,7 @@ public class Component {
 	}
 
 	public Component(ComponentInfo descriptor) {
-		if (thingsInThisJVM.containsKey(descriptor.friendlyName)) {
+		if (componentsInThisJVM.containsKey(descriptor.friendlyName)) {
 			throw new IllegalStateException(descriptor.friendlyName + " is already in use");
 		}
 
@@ -60,12 +60,12 @@ public class Component {
 		addService(ExternalCommandsService.class);
 
 		descriptorRegistry.add(descriptor());
-		thingsInThisJVM.put(descriptor.friendlyName, this);
+		componentsInThisJVM.put(descriptor.friendlyName, this);
 	}
 
 	public void dispose() {
 		killOnDeath.forEach(t -> t.dispose());
-		thingsInThisJVM.remove(this);
+		componentsInThisJVM.remove(this);
 	}
 
 	public Collection<Service> services() {

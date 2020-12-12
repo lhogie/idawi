@@ -24,7 +24,7 @@ import toools.io.ser.JavaSerializer;
 public class LucTests {
 
 	public static void main(String[] args) {
-		new LucTests().signature();
+		new LucTests().operationSignatures();
 	}
 
 	@Test
@@ -50,9 +50,28 @@ public class LucTests {
 		assertNotEquals(null, pong);
 
 		// clean
-		Component.thingsInThisJVM.clear();
+		Component.componentsInThisJVM.clear();
 
 		// this prevents threads to hinder the termination of the program
+		Component.stopPlatformThreads();
+	}
+
+	@Test
+	public void operationSignatures() throws CDLException {
+		Cout.debugSuperVisible("Starting test");
+		Component c1 = new Component("name=c1");
+		Component c2 = new Component("name=c2");
+		LMI.connect(c1, c2);
+
+		Service client = c1.addService(Service.class);
+		assertEquals(5, (Integer) client.call(c2.descriptor(), DummyService.class, "stringLength", "salut").collect()
+				.resultMessages(1).first().content);
+		assertEquals(53, (Integer) client.send(100, new To(c2.descriptor(), DummyService.class, "countFrom1toN"))
+				.collect().resultMessages(100).get(53).content);
+		assertEquals(7, (Integer) client.call(c2.descriptor(), DummyService.class, "countFromAtoB", 0, 13).collect()
+				.resultMessages(13).get(7).content);
+
+		Component.componentsInThisJVM.clear();
 		Component.stopPlatformThreads();
 	}
 
@@ -61,7 +80,7 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test");
 
 		// creates a component in this JVM
-		System.out.println("peeeeers: " + Component.thingsInThisJVM);
+		System.out.println("peeeeers: " + Component.componentsInThisJVM);
 		Component c1 = new Component(ComponentInfo.fromPDL("name=c1"));
 
 		// and deploy another one in a separate JVM
@@ -78,7 +97,7 @@ public class LucTests {
 		assertNotEquals(null, pong);
 
 		// clean
-		Component.thingsInThisJVM.clear();
+		Component.componentsInThisJVM.clear();
 
 		// this prevents threads to hinder the termination of the program
 		Component.stopPlatformThreads();
@@ -105,7 +124,7 @@ public class LucTests {
 		assertNotEquals(null, pong);
 
 		// clean
-		Component.thingsInThisJVM.clear();
+		Component.componentsInThisJVM.clear();
 
 		// this prevents threads to hinder the termination of the program
 		Component.stopPlatformThreads();
@@ -143,7 +162,7 @@ public class LucTests {
 		assertEquals(len, 5);
 
 		// clean
-		Component.thingsInThisJVM.clear();
+		Component.componentsInThisJVM.clear();
 
 		// this prevents threads to hinder the termination of the program
 		Component.stopPlatformThreads();

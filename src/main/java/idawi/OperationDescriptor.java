@@ -1,13 +1,14 @@
 package idawi;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-public class OperationDescriptor {
+public class OperationDescriptor implements Serializable {
 
-	public Class<?>[] parameterTypes;
-	public Class<?>[] returnTypes;
-	private String name;
+	public final Class<?>[] parameterTypes;
+	public final Class<?>[] returnTypes;
+	private final String name;
 
 	public OperationDescriptor(Method m) {
 		this.parameterTypes = m.getParameterTypes();
@@ -15,13 +16,9 @@ public class OperationDescriptor {
 		this.name = m.getName();
 	}
 
+
 	@Override
 	public String toString() {
 		return Arrays.toString(returnTypes) + " " + name + "(" + Arrays.toString(parameterTypes) + ")";
-	}
-
-	public OperationDescriptor(Class[] parameterTypes) {
-		this.parameterTypes = parameterTypes;
-		this.returnTypes = null;
 	}
 }
