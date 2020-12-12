@@ -25,6 +25,7 @@ import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
 import idawi.net.PipeFromToParentProcess;
+import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
 import toools.io.file.Directory;
@@ -70,7 +71,7 @@ public class ComponentDeployer extends Service {
 		registerOperation("local_deploy", (msg, out) -> {
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
 			List<Component> things = new ArrayList<>();
-			deployLocalPeers(req.n, req.suicideWhenParentDie, peerOk -> things.add(peerOk));
+			deployLocalPeers(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> things.add(peerOk));
 			out.accept(req.n + " things created");
 			LMI.chain(things);
 			out.accept("chained");
@@ -159,13 +160,17 @@ public class ComponentDeployer extends Service {
 		}
 	}
 
-	public Set<Component> deployLocalPeers(int n, boolean suicideWhenParentDie, Consumer<Component> peerOk) {
+	public Set<Component> deployLocalPeers(int n, Int2ObjectFunction<String> i2name, boolean suicideWhenParentDie,
+			Consumer<Component> peerOk) {
 		Set<Component> s = new HashSet<>();
 
 		for (int i = 0; i < n; ++i) {
-			Component t = new Component();
+			Component t = new Component("name=" + i2name.apply(i));
 			deployLocalPeer(t, suicideWhenParentDie);
-			peerOk.accept(t);
+
+			if (peerOk != null) {
+				peerOk.accept(t);
+			}
 			s.add(t);
 		}
 

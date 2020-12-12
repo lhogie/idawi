@@ -17,7 +17,7 @@ import idawi.Message;
 import idawi.TransportLayer;
 
 public class LMI extends TransportLayer {
-	public static ExecutorService executorService = Executors.newSingleThreadExecutor();
+	public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 	public final Map<ComponentInfo, LMI> peer_lmi = new HashMap<>();
 
 	private boolean run;
@@ -37,7 +37,9 @@ public class LMI extends TransportLayer {
 				if (false) {
 					lmi.processIncomingMessage(clone);
 				} else {
-					executorService.submit(() -> lmi.processIncomingMessage(clone));
+					if (!executorService.isShutdown()) {
+						executorService.submit(() -> lmi.processIncomingMessage(clone));
+					}
 				}
 			}
 		}

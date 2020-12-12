@@ -3,6 +3,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +26,7 @@ import toools.io.ser.JavaSerializer;
 public class LucTests {
 
 	public static void main(String[] args) {
-		new LucTests().operationSignatures();
+		new LucTests().waitingFirst();
 	}
 
 	@Test
@@ -70,6 +72,26 @@ public class LucTests {
 				.collect().resultMessages(100).get(53).content);
 		assertEquals(7, (Integer) client.call(c2.descriptor(), DummyService.class, "countFromAtoB", 0, 13).collect()
 				.resultMessages(13).get(7).content);
+
+		Component.componentsInThisJVM.clear();
+		Component.stopPlatformThreads();
+	}
+
+	@Test
+	public void waitingFirst() throws CDLException {
+		Cout.debugSuperVisible("Starting test");
+		Component root = new Component("name=root");
+		Set<Component> others = root.lookupService(ComponentDeployer.class).deployLocalPeers(2, i -> "other-" + i,
+				true, null);
+		others.forEach(c -> LMI.connect(root, c));
+
+		Service client = root.addService(Service.class);
+		Set<ComponentInfo> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
+
+		ComponentInfo first = client.call(ss, DummyService.class, "waiting", 1).collectUntilFirstEOT().resultMessages(1)
+				.first().route.source().component;
+		System.out.println(first);
+//		assertEquals(7, (Double) );
 
 		Component.componentsInThisJVM.clear();
 		Component.stopPlatformThreads();

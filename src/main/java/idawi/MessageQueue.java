@@ -89,10 +89,12 @@ public class MessageQueue extends Q<Message> {
 
 	public MessageList collect(Function<Message, SUFFICIENCY> returnsHandler) {
 		MessageList l = new MessageList();
+		
 		l.timeout = forEach(msg -> {
 			l.add(msg);
 			return returnsHandler.apply(msg);
 		});
+		
 		return l;
 	}
 }

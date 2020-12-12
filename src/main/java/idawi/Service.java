@@ -85,43 +85,45 @@ public class Service {
 				q.add_blocking(msg);
 			}
 		} else {
-			threadPool.submit(() -> {
-				try {
-					operation.nbCalls++;
-					double start = Utils.time();
+			if (!threadPool.isShutdown()) {
+				threadPool.submit(() -> {
+					try {
+						operation.nbCalls++;
+						double start = Utils.time();
 
-					// process the message
-					operation.accept(msg, someResult -> {
-						if (msg.replyTo != null) {
-							if (someResult instanceof InputStream) {
-								throw new IllegalStateException("streams are not yet supported");
-//								Streams.stream((InputStream) someResult, this, msg.returnTarget);
+						// process the message
+						operation.accept(msg, someResult -> {
+							if (msg.replyTo != null) {
+								if (someResult instanceof InputStream) {
+									throw new IllegalStateException("streams are not yet supported");
+//									Streams.stream((InputStream) someResult, this, msg.returnTarget);
+								} else {
+									send(someResult, msg.replyTo, null);
+								}
 							} else {
-								send(someResult, msg.replyTo, null);
+								error("returns for queue " + msg.to.operationOrQueue + " in service  " + id
+										+ " are discarded because the message specifies no return recipient");
 							}
-						} else {
-							error("returns for queue " + msg.to.operationOrQueue + " in service  " + id
-									+ " are discarded because the message specifies no return recipient");
+						});
+
+						operation.totalDuration += Utils.time() - start;
+
+						// tells the client the processing has completed
+						if (msg.replyTo != null) {
+							send(new EOT(), msg.replyTo, null);
 						}
-					});
+					} catch (Throwable exception) {
+						MessageException err = new MessageException(exception);
+						exception.printStackTrace();
+						error(err);
 
-					operation.totalDuration += Utils.time() - start;
-
-					// tells the client the processing has completed
-					if (msg.replyTo != null) {
-						send(new EOT(), msg.replyTo, null);
+						if (msg.replyTo != null) {
+							send(err, msg.replyTo, null);
+							send(new EOT(), msg.replyTo, null);
+						}
 					}
-				} catch (Throwable exception) {
-					MessageException err = new MessageException(exception);
-					exception.printStackTrace();
-					error(err);
-
-					if (msg.replyTo != null) {
-						send(err, msg.replyTo, null);
-						send(new EOT(), msg.replyTo, null);
-					}
-				}
-			});
+				});
+			}
 		}
 	}
 

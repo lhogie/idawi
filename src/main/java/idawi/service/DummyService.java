@@ -1,5 +1,6 @@
 package idawi.service;
 
+import java.util.Random;
 import java.util.function.Consumer;
 
 import idawi.Component;
@@ -7,10 +8,19 @@ import idawi.Message;
 import idawi.Operation;
 import idawi.ProgressRatio;
 import idawi.Service;
+import toools.math.MathsUtilities;
+import toools.thread.Threads;
 
 public class DummyService extends Service {
 	public DummyService(Component component) {
 		super(component);
+	}
+
+	@Operation
+	public double waiting(double maxSeconds) {
+		double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
+		Threads.sleepMs((long) (seconds * 1000));
+		return seconds;
 	}
 
 	@Operation
