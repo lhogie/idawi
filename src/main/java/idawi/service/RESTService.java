@@ -3,8 +3,10 @@ package idawi.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,6 +24,7 @@ import idawi.ComponentInfo;
 import idawi.Message;
 import idawi.MessageException;
 import idawi.Operation;
+import idawi.OperationDescriptor;
 import idawi.Service;
 import idawi.net.JacksonSerializer;
 import idawi.net.NetworkingService;
@@ -52,16 +55,52 @@ public class RESTService extends Service {
 		}
 	}
 
+	public static class ToStringSerializer<E> extends Serializer<E> {
+		@Override
+		public E read(InputStream is) throws IOException {
+			throw new IllegalStateException();
+		}
+
+		@Override
+		public void write(E o, OutputStream out) throws IOException {
+			out.write(o.toString().getBytes());
+		}
+
+		@Override
+		public String getMIMEType() {
+			return "toString()";
+		}
+	}
+
+	public static class StrackTraceSerializer<E> extends Serializer<E> {
+		@Override
+		public E read(InputStream is) throws IOException {
+			throw new IllegalStateException();
+		}
+
+		@Override
+		public void write(E o, OutputStream out) throws IOException {
+			((Throwable) o).printStackTrace(new PrintStream(out));
+		}
+
+		@Override
+		public String getMIMEType() {
+			return "stack_trace";
+		}
+	}
+
 	private HttpServer restServer;
 	public Map<String, Serializer> name2serializer = new HashMap<>();
 
 	public RESTService(Component t) {
 		super(t);
-		name2serializer.put("JSON", new GSONSerializer<>());
-		name2serializer.put("JSON2", new JacksonSerializer());
-		name2serializer.put("SER", new JavaSerializer<>());
-		name2serializer.put("FST", new FSTSerializer<>());
-		name2serializer.put("XML", new XMLSerializer<>());
+		name2serializer.put("json_gson", new GSONSerializer<>());
+		name2serializer.put("json_jackson", new JacksonSerializer());
+		name2serializer.put("ser", new JavaSerializer<>());
+		name2serializer.put("fst", new FSTSerializer<>());
+		name2serializer.put("xml", new XMLSerializer<>());
+		name2serializer.put("toString", new ToStringSerializer<>());
+		name2serializer.put("error", new StrackTraceSerializer<>());
 	}
 
 	public HttpServer startHTTPServer() throws IOException {
@@ -83,21 +122,22 @@ public class RESTService extends Service {
 	private void requestHandler(HttpExchange e) {
 		URI uri = e.getRequestURI();
 		Map<String, String> query = query(uri.getQuery());
-		String format = query.getOrDefault("format", "JSON");
-		var serializer = name2serializer.get(format);
+		String format = query.get("format");
+		var serializer = name2serializer.getOrDefault(format, new GSONSerializer<>());
 
 		if (serializer == null) {
-			throw new Error("unknow format: " + format + ". Available format are: " + name2serializer.keySet());
-		}
-
-		try {
-			String[] path = path(uri.getPath());
-			Object result = processRESTRequest(path, query);
-			byte[] json = serializer.toBytes(result);
-			sendBack(json, e);
-		} catch (Throwable t) {
-			t.printStackTrace();
-			sendBack(serializer.toBytes(t), e);
+			sendBack(("unknow format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes(),
+					e);
+		} else {
+			try {
+				String[] path = path(uri.getPath());
+				Object result = processRESTRequest(path, query);
+				byte[] json = serializer.toBytes(result);
+				sendBack(json, e);
+			} catch (Throwable t) {
+				t.printStackTrace();
+				sendBack(serializer.toBytes(t), e);
+			}
 		}
 	}
 
@@ -157,10 +197,10 @@ public class RESTService extends Service {
 						throw new Error("path too long! Expecting: component/service/action");
 					} else {
 						var stringParms = path.length == 3 ? new String[0] : path[3].split(",");
-						System.out.println("invoking action " + operation + " service " + components + "/"
-								+ serviceID.getClass().toString() + " with parameters: " + stringParms);
-						return call(components, serviceID, "callRESTOperation", operation, stringParms)
-								.setTimeout(timeout).collect().contents();
+						System.out.println("calling action " + components + "/" + serviceID.toString() + "/" + operation
+								+ "(" + Arrays.toString(stringParms) + ")");
+						return call(components, serviceID, operation, stringParms).setTimeout(timeout).collect()
+								.resultMessages().contents();
 					}
 				}
 			}
@@ -199,13 +239,14 @@ public class RESTService extends Service {
 		return r;
 	}
 
-	private Map<String, Set<String>> decribeService(Set<ComponentInfo> components, Class<? extends Service> serviceID)
-			throws MessageException {
-		Map<String, Set<String>> component2serviceList = new HashMap<>();
+	private Map<String, Set<OperationDescriptor>> decribeService(Set<ComponentInfo> components,
+			Class<? extends Service> serviceID) throws MessageException {
+		Map<String, Set<OperationDescriptor>> component2serviceList = new HashMap<>();
 
-		for (Message m : call(components, serviceID, "listNativeActions").collect().throwAnyError().resultMessages()) {
+		for (Message m : call(components, serviceID, "listNativeActionsNames").collect().throwAnyError()
+				.resultMessages()) {
 			component2serviceList.put(m.route.source().component.friendlyName + "/" + serviceID,
-					(Set<String>) m.content);
+					(Set<OperationDescriptor>) m.content);
 		}
 
 		return component2serviceList;
@@ -286,9 +327,8 @@ public class RESTService extends Service {
 		Component t = new Component();
 		t.lookupService(RESTService.class).startHTTPServer();
 
-		Set<Component> components = t.lookupService(ComponentDeployer.class).deployLocalPeers(1, true, peerOk -> {
-			System.out.println("new component: " + peerOk);
-		});
+		Set<Component> components = t.lookupService(ComponentDeployer.class).deployLocalPeers(1, i -> "component-" + i,
+				true, null);
 
 		Threads.sleepForever();
 	}

@@ -55,9 +55,15 @@ public class Service {
 	}
 
 	@Operation
-	public Set<String> listNativeActions() {
+	public Set<String> listNativeActionsNames() {
 		return new HashSet<String>(name2operation.keySet());
 	}
+
+	@Operation
+	public void listNativeActions(Consumer out) {
+		name2operation.values().forEach(o -> out.accept(o.signature));
+	}
+	
 
 	public String getFriendlyName() {
 		return getClass().getName();

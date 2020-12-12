@@ -182,7 +182,10 @@ public class ComponentDeployer extends Service {
 		for (ComponentInfo d : localPeers) {
 			Component t = new Component(d);
 			deployLocalPeer(t, suicideWhenParentDie);
-			peerOk.accept(t);
+
+			if (peerOk != null) {
+				peerOk.accept(t);
+			}
 		}
 	}
 

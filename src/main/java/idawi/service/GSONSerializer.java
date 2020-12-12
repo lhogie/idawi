@@ -42,7 +42,7 @@ public class GSONSerializer<E> extends Serializer<E> {
 		gson = builder.create();
 	}
 
-	public static class Hodler<E> {
+	public static class Holder<E> {
 		E o;
 		String msg;
 	}
@@ -50,17 +50,16 @@ public class GSONSerializer<E> extends Serializer<E> {
 	@Override
 	public E read(InputStream is) throws IOException {
 		Reader r = new InputStreamReader(is);
-		Hodler<E> m = gson.fromJson(r, Hodler.class);
+		Holder<E> m = gson.fromJson(r, Holder.class);
 		return m.o;
 	}
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
-		Hodler<E> m = new Hodler<>();
+		Holder<E> m = new Holder<>();
 		m.o = o;
 		m.msg = msg;
 		String json = gson.toJson(m);
-		System.out.println("sending: " + json);
 		os.write(json.getBytes());
 	}
 
