@@ -35,7 +35,7 @@ public class Demo {
 
 		// start a new JVM to host the time series DB
 		Set<Component> s = new HashSet<>();
-		ComponentInfo server = ComponentInfo.fromPDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
+		ComponentInfo server = ComponentInfo.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 		t.lookupService(ComponentDeployer.class).deploy(Set.of(server), true, 15, false, fdbk -> {
 		}, ok -> {
 		});
@@ -45,7 +45,7 @@ public class Demo {
 //		LMI.connect(t, dbThing);
 
 		// loads the timeDB on the server - this one will really store figures
-		t.lookupService(ServiceManager.class).start(TimeSeriesDB.class, server);
+		t.lookupService(ServiceManager.class).start(TimeSeriesDB.class, server, 10);
 		t.lookupService(RESTService.class).startHTTPServer();
 
 		// creates the figure that will be fed

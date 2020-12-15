@@ -218,7 +218,7 @@ public class RESTService extends Service {
 			Set<ComponentInfo> found = component.descriptorRegistry.lookupByName(name);
 
 			if (components.isEmpty()) {
-				components.add(ComponentInfo.fromPDL("name=" + name));
+				components.add(ComponentInfo.fromCDL("name=" + name));
 			} else {
 				components.addAll(found);
 			}

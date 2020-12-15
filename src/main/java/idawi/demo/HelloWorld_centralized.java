@@ -13,7 +13,7 @@ public class HelloWorld_centralized {
 		int nbNodes = 300;
 
 		for (int i = 0; i < nbNodes; ++i) {
-			Component node = new Component(ComponentInfo.fromPDL("name=" + i));
+			Component node = new Component(ComponentInfo.fromCDL("name=" + i));
 			ComponentInfo next = new ComponentInfo();
 			next.friendlyName = "" + ((i + 1) % nbNodes);
 			node.descriptorRegistry.add(next);

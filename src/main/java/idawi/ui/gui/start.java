@@ -59,7 +59,7 @@ public class start extends JThingLineCmd {
 			UDPDriver udp = new UDPDriver();
 			mp.addProtocol(udp);
 
-			Component peer = new Component(ComponentInfo.fromPDL("name="+name));
+			Component peer = new Component(ComponentInfo.fromCDL("name="+name));
 
 			peers.add(peer);
 

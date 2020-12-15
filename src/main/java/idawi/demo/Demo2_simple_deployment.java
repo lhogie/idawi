@@ -24,7 +24,7 @@ public class Demo2_simple_deployment {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 		// creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentInfo.fromPDL("name=parent"));
+		Component t = new Component(ComponentInfo.fromCDL("name=parent"));
 
 		// describes the child peer that will be deployed to
 		ComponentInfo child = new ComponentInfo();

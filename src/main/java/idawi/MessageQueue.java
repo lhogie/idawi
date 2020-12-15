@@ -79,6 +79,14 @@ public class MessageQueue extends Q<Message> {
 		});
 	}
 
+	public Object get() {
+		try {
+			return setTimeout(60).collectUntilFirstEOT().throwAnyError().resultMessages().first().content;
+		} catch (MessageException e) {
+			throw new Error(e);
+		}
+	}
+
 	public MessageList collect() {
 		return collect(msg -> SUFFICIENCY.NOT_ENOUGH);
 	}
@@ -89,12 +97,12 @@ public class MessageQueue extends Q<Message> {
 
 	public MessageList collect(Function<Message, SUFFICIENCY> returnsHandler) {
 		MessageList l = new MessageList();
-		
+
 		l.timeout = forEach(msg -> {
 			l.add(msg);
 			return returnsHandler.apply(msg);
 		});
-		
+
 		return l;
 	}
 }

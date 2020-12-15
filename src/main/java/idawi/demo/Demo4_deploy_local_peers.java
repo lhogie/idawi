@@ -26,8 +26,9 @@ public class Demo4_deploy_local_peers {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		Component initialThing = new Component(ComponentInfo.fromPDL("name=0"));
-		initialThing.lookupService(ComponentDeployer.class).deployLocalPeers(50, true, peerOk -> things.add(peerOk));
+		Component initialThing = new Component(ComponentInfo.fromCDL("name=0"));
+		initialThing.lookupService(ComponentDeployer.class).deployLocalPeers(50, i -> "c" + i, true,
+				peerOk -> things.add(peerOk));
 		LMI.chain(things);
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);

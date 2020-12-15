@@ -18,7 +18,7 @@ public class HelloWorld {
 			UDPDriver protocol = new UDPDriver();
 			protocol.setPort(baseport + i);
 
-			Component node = new Component(ComponentInfo.fromPDL("name=node-" + i));
+			Component node = new Component(ComponentInfo.fromCDL("name=node-" + i));
 			node.descriptorRegistry.addLocalPeerByPort(baseport + i + 1);
 
 			new Service(node) {

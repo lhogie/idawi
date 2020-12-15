@@ -22,7 +22,7 @@ public class system_monitor {
 
 		List<ComponentInfo> peers = ComponentInfo.fromPDL(Arrays.asList(args));
 
-		Component localNode = new Component(ComponentInfo.fromPDL("name=system monitor"));
+		Component localNode = new Component(ComponentInfo.fromCDL("name=system monitor"));
 		Service localService = new Service(localNode) {
 			@Override
 			public String getFriendlyName() {
@@ -38,7 +38,7 @@ public class system_monitor {
 
 		localNode.lookupService(ComponentDeployer.class).deploy(peers, true, 2, true, msg -> System.out.println(msg),
 				newPeer -> {
-					ServiceManager.start(SystemMonitor.class, localService, newPeer);
+					localNode.lookupService(ServiceManager.class).start(SystemMonitor.class, newPeer, 1);
 					Subscription subscription = new Subscription();
 					subscription.to.notYetReachedExplicitRecipients = Set.of(localNode.descriptor());
 					subscription.to.operationOrQueue = null;

@@ -18,7 +18,7 @@ public class Demo3_multi_deployment {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 		// creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentInfo.fromPDL("name=parent"));
+		Component t = new Component(ComponentInfo.fromCDL("name=parent"));
 
 		Set<ComponentInfo> children = new HashSet<ComponentInfo>();
 		for (int i = 0; i < args.length; i++) {

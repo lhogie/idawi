@@ -15,7 +15,9 @@ import idawi.routing.RoutingService;
 import idawi.service.Bencher;
 import idawi.service.ComponentDeployer;
 import idawi.service.DummyService;
+import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
+import idawi.service.FileService;
 import idawi.service.PingPong;
 import idawi.service.RESTService;
 import idawi.service.ServiceManager;
@@ -37,7 +39,7 @@ public class Component {
 	}
 
 	public Component(String cdl) {
-		this(ComponentInfo.fromPDL(cdl));
+		this(ComponentInfo.fromCDL(cdl));
 	}
 
 	public Component(ComponentInfo descriptor) {
@@ -54,10 +56,11 @@ public class Component {
 		addService(PingPong.class);
 		addService(Bencher.class);
 		addService(RoutingService.class);
-//		addService(ErrorLog.class);
+		addService(ErrorLog.class);
 		addService(DummyService.class);
 		addService(RESTService.class);
 		addService(ExternalCommandsService.class);
+		addService(FileService.class);
 
 		descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(descriptor.friendlyName, this);
@@ -93,7 +96,13 @@ public class Component {
 			throw new IllegalArgumentException("service already running");
 		}
 
-		return Clazz.makeInstance(Clazz.getConstructor(id, Component.class), this);
+		var constructor = Clazz.getConstructor(id, Component.class);
+
+		if (constructor == null) {
+			throw new IllegalStateException(id + " does not have constructor (" + Component.class.getName() + ")");
+		}
+
+		return Clazz.makeInstance(constructor, this);
 	}
 
 	public Service newService() {

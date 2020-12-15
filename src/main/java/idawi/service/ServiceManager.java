@@ -1,6 +1,5 @@
 package idawi.service;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,18 +10,12 @@ import idawi.ComponentInfo;
 import idawi.Operation;
 import idawi.Service;
 import idawi.To;
-import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
 	public ServiceManager(Component peer) {
 		super(peer);
 
-		registerOperation("start", (msg, out) -> {
-			Class<Service> clazz = (Class<Service>) msg.content;
-			Constructor<Service> constructor = Clazz.getConstructor(clazz, Component.class);
-			Service service = Clazz.makeInstance(constructor, component);
-			component.services().add(service);
-		});
+		registerOperation("start", (msg, out) -> component.addService((Class<Service>) msg.content));
 
 		registerOperation("stop", (msg, out) -> {
 			Class<Service> clazz = (Class<Service>) msg.content;
@@ -53,12 +46,7 @@ public class ServiceManager extends Service {
 		return "start/stop services";
 	}
 
-	public void start(Class<? extends Service> clazz, ComponentInfo p) {
-		send(clazz, new To(p, ServiceManager.class, "start")).collect();
-	}
-
-	public static void start(Class<? extends Service> clazz, Service localService, ComponentInfo p) {
-		To to = new To(Set.of(p), ServiceManager.class, "start");
-		localService.send(clazz, to).collect();
+	public void start(Class<? extends Service> clazz, ComponentInfo target, double timeoutS) {
+		send(clazz, new To(target, ServiceManager.class, "start")).setTimeout(timeoutS).collect();
 	}
 }

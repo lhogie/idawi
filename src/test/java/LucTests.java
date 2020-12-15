@@ -53,9 +53,6 @@ public class LucTests {
 
 		// clean
 		Component.componentsInThisJVM.clear();
-
-		// this prevents threads to hinder the termination of the program
-		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -74,7 +71,6 @@ public class LucTests {
 				.resultMessages(13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
-		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -94,7 +90,6 @@ public class LucTests {
 //		assertEquals(7, (Double) );
 
 		Component.componentsInThisJVM.clear();
-		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -103,11 +98,11 @@ public class LucTests {
 
 		// creates a component in this JVM
 		System.out.println("peeeeers: " + Component.componentsInThisJVM);
-		Component c1 = new Component(ComponentInfo.fromPDL("name=c1"));
+		Component c1 = new Component(ComponentInfo.fromCDL("name=c1"));
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentInfo c2 = ComponentInfo.fromPDL("name=c2");
+		ComponentInfo c2 = ComponentInfo.fromCDL("name=c2");
 		c1.lookupService(ComponentDeployer.class).deployOtherJVM(c2, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
@@ -120,9 +115,6 @@ public class LucTests {
 
 		// clean
 		Component.componentsInThisJVM.clear();
-
-		// this prevents threads to hinder the termination of the program
-		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -134,7 +126,7 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentInfo other = ComponentInfo.fromPDL("name=other_peer /  tcp_port=56757");
+		ComponentInfo other = ComponentInfo.fromCDL("name=other_peer /  tcp_port=56757");
 		master.lookupService(ComponentDeployer.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
@@ -147,9 +139,6 @@ public class LucTests {
 
 		// clean
 		Component.componentsInThisJVM.clear();
-
-		// this prevents threads to hinder the termination of the program
-		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -157,10 +146,10 @@ public class LucTests {
 		Message a = new Message();
 		a.to = new To();
 		a.to.notYetReachedExplicitRecipients = new HashSet<>();
-		a.to.notYetReachedExplicitRecipients.add(ComponentInfo.fromPDL("name=Luc"));
+		a.to.notYetReachedExplicitRecipients.add(ComponentInfo.fromCDL("name=Luc"));
 		a.to.service = DummyService.class;
 		RouteEntry re = new RouteEntry();
-		re.component = ComponentInfo.fromPDL("name=test");
+		re.component = ComponentInfo.fromCDL("name=test");
 		re.protocolName = "tcp";
 		a.route.add(re);
 		a.content = new Object[] { 4, true, new String[] { "1st element" } };
@@ -185,9 +174,6 @@ public class LucTests {
 
 		// clean
 		Component.componentsInThisJVM.clear();
-
-		// this prevents threads to hinder the termination of the program
-		Component.stopPlatformThreads();
 	}
 
 }

@@ -22,15 +22,15 @@ public class Demo_deploymentPlan {
 	public static void main(String[] args) throws Throwable {
 
 		// creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentInfo.fromPDL("name=master"));
+		Component t = new Component(ComponentInfo.fromCDL("name=master"));
 
-		ComponentInfo musclotte = ComponentInfo.fromPDL("ssh=musclotte.inria.fr");
-		ComponentInfo nicoati = ComponentInfo.fromPDL("ssh=nicoati.inria.fr");
-		ComponentInfo dronic = ComponentInfo.fromPDL("ssh=dronic.i3s.unice.fr");
-		ComponentInfo t2 = ComponentInfo.fromPDL("name=t2");
-		ComponentInfo t3 = ComponentInfo.fromPDL("name=t3");
-		ComponentInfo t4 = ComponentInfo.fromPDL("name=t4");
-		ComponentInfo jvm2 = ComponentInfo.fromPDL("name=jvm1 / where=new_jvm");
+		ComponentInfo musclotte = ComponentInfo.fromCDL("ssh=musclotte.inria.fr");
+		ComponentInfo nicoati = ComponentInfo.fromCDL("ssh=nicoati.inria.fr");
+		ComponentInfo dronic = ComponentInfo.fromCDL("ssh=dronic.i3s.unice.fr");
+		ComponentInfo t2 = ComponentInfo.fromCDL("name=t2");
+		ComponentInfo t3 = ComponentInfo.fromCDL("name=t3");
+		ComponentInfo t4 = ComponentInfo.fromCDL("name=t4");
+		ComponentInfo jvm2 = ComponentInfo.fromCDL("name=jvm1 / where=new_jvm");
 
 		Graph<ComponentInfo> g = new Graph<>();
 		g.add(t.descriptor(), musclotte);
@@ -43,7 +43,7 @@ public class Demo_deploymentPlan {
 
 		System.out.println(g.bfs(t.descriptor()));
 
-		t.lookupService(ComponentDeployer.class).apply(g, 10, true, (f) -> System.out.println(f), (p) -> System.out.println(p));
+		t.lookupService(ComponentDeployer.class).apply(g, 10, true,feedback -> System.out.println(feedback), (p) -> System.out.println(p));
 
 		// describes the child peer that will be deployed to
 		ComponentInfo child = new ComponentInfo();

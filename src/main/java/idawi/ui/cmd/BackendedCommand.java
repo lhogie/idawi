@@ -22,7 +22,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	@Override
 	protected int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable {
-		ComponentInfo hook = ComponentInfo.fromPDL(getOptionValue(cmdLine, "--hook"));
+		ComponentInfo hook = ComponentInfo.fromCDL(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
 		if (localService.component.lookupService(PingPong.class).ping(hook, timeout) == null) {

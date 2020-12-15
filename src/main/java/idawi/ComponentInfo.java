@@ -110,7 +110,7 @@ public class ComponentInfo implements Serializable {
 		});
 	}
 
-	public static ComponentInfo fromPDL(String s) {
+	public static ComponentInfo fromCDL(String s) {
 
 		ComponentInfo peer = new ComponentInfo();
 
@@ -219,14 +219,14 @@ public class ComponentInfo implements Serializable {
 		List<ComponentInfo> r = new ArrayList<>();
 
 		for (String s : parms) {
-			r.add(fromPDL(s));
+			r.add(fromCDL(s));
 		}
 
 		return r;
 	}
 
 	public static void main(String[] args) throws Throwable {
-		ComponentInfo p = ComponentInfo.fromPDL(args[0]);
+		ComponentInfo p = ComponentInfo.fromCDL(args[0]);
 		System.out.println(p.toTDL());
 	}
 

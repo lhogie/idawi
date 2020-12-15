@@ -34,7 +34,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(ComponentInfo.fromPDL("name="+getCommandName()));
+		Component localNode = new Component(ComponentInfo.fromCDL("name="+getCommandName()));
 		Service localService = new Service(localNode) {
 			@Override
 			public String getFriendlyName() {

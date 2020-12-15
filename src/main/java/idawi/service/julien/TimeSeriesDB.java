@@ -1,5 +1,6 @@
 package idawi.service.julien;
 
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -15,7 +16,6 @@ import idawi.Component;
 import idawi.Message;
 import idawi.Operation;
 import idawi.Service;
-import idawi.Streams;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.io.file.Directory;
@@ -82,18 +82,16 @@ public class TimeSeriesDB extends Service {
 	}
 
 	@Operation
-	public Figure retrieveFigure(Message msg, Consumer<Object> returns) {
-		return name2figure.get((String) msg.content);
+	public Figure retrieveFigure(String figureName) {
+		return name2figure.get(figureName);
 	}
 
 	@Operation
-	public void retrieveWorkbench(Message msg, Consumer<Object> returns) throws Throwable {
+	public InputStream retrieveWorkbench() throws Throwable {
 		PipedOutputStream pos = new PipedOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(pos);
 		oos.writeObject(name2figure);
-		PipedInputStream pis = new PipedInputStream(pos);
-		Streams.stream(pis, returns);
-		oos.close();
+		return new PipedInputStream(pos);
 	}
 
 	@Operation

@@ -21,7 +21,7 @@ public class prBackend extends CommandBackend {
 		}
 		else if (action.equals("add")) {
 			while ( ! parms.isEmpty()) {
-				n.descriptorRegistry.add(ComponentInfo.fromPDL(parms.remove(0)));
+				n.descriptorRegistry.add(ComponentInfo.fromCDL(parms.remove(0)));
 			}
 		}
 		else if (action.equals("save")) {

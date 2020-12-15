@@ -1,6 +1,6 @@
 package idawi;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +15,9 @@ import java.util.function.Consumer;
 
 import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import toools.io.file.Directory;
 import toools.thread.Q;
 import toools.thread.Threads;
 
@@ -39,9 +42,18 @@ public class Service {
 
 		for (Method m : getClass().getMethods()) {
 			if (m.isAnnotationPresent(Operation.class)) {
+				if (name2operation.containsKey(m.getName())) {
+					throw new IllegalStateException("operation name is already in use: " + m.getName());
+				}
+
 				name2operation.put(m.getName(), new AbstractOperation(this, m));
 			}
 		}
+	}
+
+	@Operation
+	public Directory directory() {
+		return new Directory(Component.directory, "/services/" + id);
 	}
 
 	@Operation
@@ -63,14 +75,40 @@ public class Service {
 	public void listNativeActions(Consumer out) {
 		name2operation.values().forEach(o -> out.accept(o.signature));
 	}
-	
 
 	public String getFriendlyName() {
 		return getClass().getName();
 	}
 
+	Object2ObjectMap<Object, ChunkReceiver> chunk2buf = new Object2ObjectOpenHashMap<>();
+
+	public void requestStream(To to, To replyTo, Object... parms) {
+		call(to, new OperationParameterList(parms));
+	}
+	
 	public void considerNewMessage(Message msg) {
 		++nbMessages;
+
+		if (msg.content instanceof Chunk) {
+			Chunk chunk = (Chunk) msg.content;
+			ChunkReceiver receiver = chunk2buf.get(chunk.id);
+
+			if (receiver == null) {
+//				chunk2buf.put(chunk.id, receiver = new ChunkReceiver(chunk.end));
+			}
+
+//			receiver.addChunk(chunk, msg.route);
+
+			if (receiver.hasCompleteData()) {
+				chunk2buf.remove(chunk.id);
+				Message m = new Message();
+				m.content = receiver;
+				considerNewMessage(m);
+			}
+
+			return;
+		}
+
 		AbstractOperation operation = name2operation.get(msg.to.operationOrQueue);
 
 		// this queue is not associated to any processing, to leave in a queue and some
@@ -100,12 +138,7 @@ public class Service {
 						// process the message
 						operation.accept(msg, someResult -> {
 							if (msg.replyTo != null) {
-								if (someResult instanceof InputStream) {
-									throw new IllegalStateException("streams are not yet supported");
-//									Streams.stream((InputStream) someResult, this, msg.returnTarget);
-								} else {
-									send(someResult, msg.replyTo, null);
-								}
+								send(someResult, msg.replyTo, null);
 							} else {
 								error("returns for queue " + msg.to.operationOrQueue + " in service  " + id
 										+ " are discarded because the message specifies no return recipient");
@@ -133,9 +166,13 @@ public class Service {
 		}
 	}
 
-	public void registerOperation(String queue, OperationFunctionalInterface userCode) {
+	public void registerOperation(String name, OperationFunctionalInterface userCode) {
+		if (name2operation.containsKey(name)) {
+			throw new IllegalStateException("operation name is already in use: " + name);
+		}
+
 		try {
-			name2operation.put(queue, new AbstractOperation(userCode,
+			name2operation.put(name, new AbstractOperation(userCode,
 					userCode.getClass().getMethod("accept", Message.class, Consumer.class)));
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new IllegalStateException(e);
@@ -229,6 +266,10 @@ public class Service {
 		msg.replyTo = returns;
 		msg.content = content;
 		send(msg);
+	}
+
+	public void transfer(ByteSource in, To to, To returns) throws IOException {
+		in.forEachChunk(c -> send(c, to, returns));
 	}
 
 	public MessageQueue send(Object content, To to) {

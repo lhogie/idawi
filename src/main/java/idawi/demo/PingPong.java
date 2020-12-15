@@ -24,7 +24,7 @@ public class PingPong {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		things.add(new Component(ComponentInfo.fromPDL("name=root")));
+		things.add(new Component(ComponentInfo.fromCDL("name=root")));
 
 		for (int i = 1; i < 350; ++i) {
 			// Thing t = things.get(ThreadLocalRandom.current().nextInt(things.size()));

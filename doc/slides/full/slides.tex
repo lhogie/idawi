@@ -190,15 +190,15 @@ Elasticware currently support the following transport protocols:
 
 \begin{frame}
 \frametitle{Deployment of components}
-New components can be deployed anywhere a SSH connection is possible (and rsync is available).
+New components can be deployed anywhere a SSH connection is possible (and rsync is available). When you 
 \begin{enumerate}
 	\item determines shared file systems among computers
-	\item update binaries
+	\item update binaries, which includes:
 		\begin{enumerate}
-			\item incremental update of Java  bytecode
-			\item installation the right JVM if necessary
+			\item incremental update of Java  bytecode (using rsync)
+			\item installs the right JVM if necessary
 		\end{enumerate}
-	\item executes a JVM  and starts JThing in it
+	\item executes a JVM  and starts a component in it
 \end{enumerate}
 The parent component initially communicate with the new component through the standard I/O streams of the SSH local process. If the new component is declared to be autonomous, it remains alive even if the I/O streams get closed.
 \end{frame}
