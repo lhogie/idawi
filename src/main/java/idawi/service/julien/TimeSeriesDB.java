@@ -41,29 +41,32 @@ public class TimeSeriesDB extends Service {
 	}
 
 	@Operation
-	public void addPoint(Message msg, Consumer<Object> returns) {
-		PointBuffer buf = (PointBuffer) msg.content;
-
+	public void addPoint(PointBuffer buf) {
 		for (Figure f : buf.values()) {
-			name2figure.get(f.name).addPoints(f);
+			Figure a = name2figure.get(f.name);
+
+			if (a == null)
+				throw new Error("figure not found: " + f.name);
+
+			a.addPoints(f);
 		}
 	}
 
 	@Operation
-	public void store(Message msg, Consumer<Object> returns) {
-		String workbench = (String) msg.content;
-		new RegularFile(baseDir, workbench).setContentAsJavaObject(name2figure);
+	public void store(String workbenchName) {
+		var file = new RegularFile(baseDir, workbenchName);
+		file.setContentAsJavaObject(name2figure);
 	}
 
 	@Operation
-	public void load(Message msg, Consumer<Object> returns) {
-		String workbench = (String) msg.content;
-		name2figure = (Map<String, Figure>) new RegularFile(baseDir, workbench).getContentAsJavaObject();
+	public void load(String workbenchName) {
+		var file = new RegularFile(baseDir, workbenchName);
+		name2figure = (Map<String, Figure>) file.getContentAsJavaObject();
 	}
 
 	@Operation
-	public void removeFigure(Message msg, Consumer<Object> returns) {
-		name2figure.remove((String) msg.content);
+	public void removeFigure(String figName) {
+		name2figure.remove(figName);
 	}
 
 	@Operation
@@ -72,8 +75,8 @@ public class TimeSeriesDB extends Service {
 	}
 
 	@Operation
-	public Set<String> getFigureList(Message msg, Consumer<Object> returns) {
-		return name2figure.keySet();
+	public Set<String> getFigureList() {
+		return new HashSet<>(name2figure.keySet());
 	}
 
 	@Operation

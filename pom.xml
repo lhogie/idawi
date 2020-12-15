@@ -81,11 +81,6 @@
 			<version>2.11.3</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.lhogie</groupId>
-			<artifactId>xycharter</artifactId>
-			<version>0.0.3</version>
-		</dependency>
-		<dependency>
 			<groupId>net.sf.bluecove</groupId>
 			<artifactId>bluecove</artifactId>
 			<version>2.1.0</version>

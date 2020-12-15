@@ -28,7 +28,7 @@ public class TimeSeriesDBClient extends Service {
 	}
 
 	public void sendBuf(ComponentInfo db) {
-		send(buf, new To(db, TimeSeriesDB.class, "addPoint")).collect();
+		call(db, TimeSeriesDB.class, "addPoint", buf).collect();
 		buf.clear();
 	}
 
@@ -71,8 +71,12 @@ public class TimeSeriesDBClient extends Service {
 				.first().content;
 	}
 
+	public Set<String> metricNames(ComponentInfo remoteTSDB) throws MessageException {
+		return (Set<String>) call(remoteTSDB, TimeSeriesDB.class, "getFigureList").collect().throwAnyError().resultMessages().first().content;
+	}
+
 	public Figure download(String figureName, ComponentInfo remoteTSDB) {
-		return (Figure) send(figureName, to(remoteTSDB, TimeSeriesDB.class, "retrieveFigure")).collect()
+		return (Figure) call(remoteTSDB, TimeSeriesDB.class, "retrieveFigure", figureName).collect()
 				.getContentOrNull(0);
 	}
 

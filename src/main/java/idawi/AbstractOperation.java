@@ -12,13 +12,13 @@ public class AbstractOperation {
 	double totalDuration;
 	private final Method method;
 	private final Object target;
-	public final OperationDescriptor signature;
+	public final OperationDescriptor descriptor;
 
 	public AbstractOperation(Object s, Method m) {
 		m.setAccessible(true);
 		this.method = m;
 		this.target = s;
-		this.signature = new OperationDescriptor(m);
+		this.descriptor = new OperationDescriptor(m);
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class AbstractOperation {
 	}
 
 	public OperationDescriptor descriptor() {
-		return signature;
+		return descriptor;
 	}
 
 	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
@@ -60,15 +60,15 @@ public class AbstractOperation {
 						method.getParameterTypes());
 			} else {
 				throw new IllegalStateException(
-						"expecting message content to be a parameter list but is " + msg.content.getClass().getName());
+						"operation " + descriptor.name + ": expecting message content to be a parameter list but is " + msg.content.getClass().getName());
 			}
 
 			// use return keyword instead of returns consumer
-			if (parms.size() == signature.parameterTypes.length) {
+			if (parms.size() == descriptor.parameterTypes.length) {
 				invoke(returns, parms.toArray());
-			} else if (signature.parameterTypes.length == parms.size() + 1) {
+			} else if (descriptor.parameterTypes.length == parms.size() + 1) {
 				// uses returns consumer
-				if (signature.parameterTypes[signature.parameterTypes.length - 1] == Consumer.class) {
+				if (descriptor.parameterTypes[descriptor.parameterTypes.length - 1] == Consumer.class) {
 					parms.add(returns);
 					invoke(returns, parms.toArray());
 				} else {
@@ -76,7 +76,7 @@ public class AbstractOperation {
 							+ " should be of type " + Consumer.class.getName());
 				}
 			} else {
-				throw new IllegalStateException("expecting parameters " + Arrays.toString(signature.parameterTypes)
+				throw new IllegalStateException("expecting parameters " + Arrays.toString(descriptor.parameterTypes)
 						+ " for operation " + method.getDeclaringClass().getName() + "." + method.getName()
 						+ " but received " + Arrays.toString(Clazz.getClasses(parms.toArray())));
 			}

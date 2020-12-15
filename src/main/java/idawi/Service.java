@@ -73,7 +73,7 @@ public class Service {
 
 	@Operation
 	public void listNativeActions(Consumer out) {
-		name2operation.values().forEach(o -> out.accept(o.signature));
+		name2operation.values().forEach(o -> out.accept(o.descriptor));
 	}
 
 	public String getFriendlyName() {
