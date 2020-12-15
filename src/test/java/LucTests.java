@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,9 @@ import idawi.CDLException;
 import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Message;
+import idawi.MessageException;
 import idawi.MessageList;
+import idawi.MessageQueue;
 import idawi.RouteEntry;
 import idawi.Service;
 import idawi.To;
@@ -25,8 +28,8 @@ import toools.io.ser.JavaSerializer;
 
 public class LucTests {
 
-	public static void main(String[] args) {
-		new LucTests().waitingFirst();
+	public static void main(String[] args) throws MessageException {
+		new LucTests().all2all();
 	}
 
 	@Test
@@ -77,8 +80,8 @@ public class LucTests {
 	public void waitingFirst() throws CDLException {
 		Cout.debugSuperVisible("Starting test");
 		Component root = new Component("name=root");
-		Set<Component> others = root.lookupService(ComponentDeployer.class).deployLocalPeers(2, i -> "other-" + i,
-				true, null);
+		Set<Component> others = root.lookupService(ComponentDeployer.class).deployLocalPeers(2, i -> "other-" + i, true,
+				null);
 		others.forEach(c -> LMI.connect(root, c));
 
 		Service client = root.addService(Service.class);
@@ -88,7 +91,6 @@ public class LucTests {
 				.first().route.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
-
 		Component.componentsInThisJVM.clear();
 	}
 
@@ -173,6 +175,39 @@ public class LucTests {
 		assertEquals(len, 5);
 
 		// clean
+		Component.componentsInThisJVM.clear();
+	}
+
+	@Test
+	public void all2all() throws MessageException {
+		MessageQueue.DEFAULT_TIMEOUT_IN_SECONDS = 1;
+		var all = new HashSet<ComponentInfo>();
+		System.out.println("Creating components");
+		for (int i = 0; i < 35; ++i) {
+			System.out.println(i);
+			var c = new Component();
+			all.add(c.descriptor());
+		}
+
+		System.out.println("Connecting them");
+//		LMI.randomTree(new ArrayList<>(Component.componentsInThisJVM.values()));
+		LMI.clique(Component.componentsInThisJVM.values());
+
+		System.out.println("messaging");
+		AtomicLong n = new AtomicLong();
+
+		for (var c : Component.componentsInThisJVM.values()) {
+			var allButMe = new HashSet<>(all);
+			allButMe.remove(c.descriptor());
+			System.out.println(c + " pings " + allButMe);
+			c.lookupService(PingPong.class).ping(allButMe).forEach2(r -> {
+				n.incrementAndGet();
+				System.out.println(n.get() + ": " + r);
+			});
+			break;
+		}
+
+		System.out.println("done");
 		Component.componentsInThisJVM.clear();
 	}
 

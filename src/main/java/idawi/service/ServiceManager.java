@@ -7,6 +7,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.MessageException;
 import idawi.Operation;
 import idawi.Service;
 import idawi.To;
@@ -46,7 +47,7 @@ public class ServiceManager extends Service {
 		return "start/stop services";
 	}
 
-	public void start(Class<? extends Service> clazz, ComponentInfo target, double timeoutS) {
-		send(clazz, new To(target, ServiceManager.class, "start")).setTimeout(timeoutS).collect();
+	public void start(Class<? extends Service> clazz, ComponentInfo target, double timeoutS) throws MessageException {
+		call(target, ServiceManager.class, "start", clazz).setTimeout(timeoutS).collect().throwAnyError();
 	}
 }

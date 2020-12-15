@@ -1,5 +1,6 @@
 package idawi.service.julien;
 
+import java.awt.Color;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
@@ -107,6 +108,11 @@ public class TimeSeriesDB extends Service {
 	}
 
 	@Operation
+	synchronized public void setFigureColor(String figName, Color color) {
+		name2figure.get(figName).setColor(color);
+	}
+
+	@Operation
 	synchronized public Set<Figure> filter(Message msg, Consumer<Object> returns) {
 		Filter filter = (Filter) msg.content;
 		Set<Figure> r = new HashSet<>();
@@ -133,30 +139,27 @@ public class TimeSeriesDB extends Service {
 	}
 
 	@Operation
-	public void getPlot(Message msg, Consumer<Object> returns) {
-		PlotRequest req = (PlotRequest) msg.content;
-		int nnn = 0;
+	public void getPlot(Set<String> metricNames, String title, String format, Consumer<Object> returns) {
 		Plot plot = new Plot();
-		req.figureNames.forEach(n -> plot.addFigure(name2figure.get(n)));
-		plot.getSpace().getLegend().setText(req.title);
-		byte[] rawData = getPlotRawData(plot, req.format);
+		metricNames.forEach(n -> plot.addFigure(name2figure.get(n)));
+		plot.getSpace().getLegend().setText(title);
+		byte[] rawData = getPlotRawData(plot, format);
 		returns.accept(rawData);
 	}
 
 	private final LongSet subscriptions = new LongOpenHashSet();
 
 	@Operation
-	public void getPlot_subscribe(Message msg, Consumer<Object> returns) {
-		PlotRequest req = (PlotRequest) msg.content;
+	public void getPlot_subscribe(Set<String> metricNames, String title, String format, Consumer<Object> returns) {
 		Plot plot = new Plot();
-		req.figureNames.forEach(n -> plot.addFigure(name2figure.get(n)));
-		plot.getSpace().getLegend().setText(req.title);
+		metricNames.forEach(n -> plot.addFigure(name2figure.get(n)));
+		plot.getSpace().getLegend().setText(title);
 		long id = ThreadLocalRandom.current().nextLong();
 		subscriptions.add(id);
 		returns.accept(id);
 		int periodMs = 1000;
 		Threads.newThread_loop_periodic(periodMs, () -> subscriptions.contains(id), () -> {
-			byte[] rawData = getPlotRawData(plot, req.format);
+			byte[] rawData = getPlotRawData(plot, format);
 			returns.accept(rawData);
 		});
 	}

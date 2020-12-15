@@ -2,6 +2,8 @@ package idawi.net;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import idawi.Component;
@@ -14,8 +16,6 @@ import idawi.RouteEntry;
 import idawi.Service;
 import idawi.TransportLayer;
 import idawi.routing.RoutingService;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.thread.Threads;
@@ -25,9 +25,9 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	static {
 		// delete deprecated messages
 		Threads.newThread_loop(1000, () -> true, () -> {
-			for (Component c : Component.componentsInThisJVM.values()) {
-				NetworkingService t = c.lookupService(NetworkingService.class);
-				synchronized (t.aliveMessages) {
+			try {
+				for (Component c : Component.componentsInThisJVM.values()) {
+					NetworkingService t = c.lookupService(NetworkingService.class);
 					for (Message m : t.aliveMessages.values()) {
 						if (m.isExpired()) {
 							t.alreadyReceivedMsgs.remove(m.ID);
@@ -36,12 +36,14 @@ public class NetworkingService extends Service implements Consumer<Message> {
 						}
 					}
 				}
+			} catch (Throwable e) {
+				System.err.println("The bad fastutil error is back in class " + NetworkingService.class);
 			}
 		});
 	}
 
 	public final MultiTransport transport;
-	public final Long2ObjectMap<Message> aliveMessages = new Long2ObjectOpenHashMap<>();
+	private final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
 	public final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 
@@ -57,7 +59,7 @@ public class NetworkingService extends Service implements Consumer<Message> {
 			public void peerJoined(ComponentInfo newPeer, TransportLayer protocol) {
 				synchronized (aliveMessages) {
 					for (Message msg : aliveMessages.values()) {
-						// send(msg, protocol, Set.of(newPeer));
+						send(msg, protocol, Set.of(newPeer));
 					}
 				}
 			}

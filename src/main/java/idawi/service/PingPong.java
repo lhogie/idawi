@@ -9,9 +9,10 @@ import idawi.ComponentInfo;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
+import idawi.MessageQueue.SUFFICIENCY;
+import idawi.Operation;
 import idawi.Service;
 import idawi.To;
-import idawi.MessageQueue.SUFFICIENCY;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -21,7 +22,17 @@ import idawi.MessageQueue.SUFFICIENCY;
 public class PingPong extends Service {
 	public PingPong(Component node) {
 		super(node);
-		registerOperation(null, (msg, out) -> out.accept(msg));
+	}
+
+	@Operation
+	public void ping() {
+		// don't need to send anything
+		// and EOT will be sent back (acting as a pong)
+	}
+
+	@Operation
+	public Message traceroute(Message ping) {
+		return ping;
 	}
 
 	@Override
@@ -38,11 +49,11 @@ public class PingPong extends Service {
 	}
 
 	public MessageList ping(Set<ComponentInfo> targets, double timeout) {
-		return send(null, new To(targets, PingPong.class, null)).setTimeout(timeout).collect();
+		return send(null, new To(targets, PingPong.class, "ping")).setTimeout(timeout).collect();
 	}
 
 	public MessageQueue ping(Set<ComponentInfo> targets) {
-		return send(null, new To(targets, PingPong.class, null));
+		return send(null, new To(targets, PingPong.class, "ping"));
 	}
 
 	public void discover(double timeout, Consumer<ComponentInfo> found) {

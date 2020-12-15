@@ -1,8 +1,5 @@
 package idawi.service;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,7 +12,7 @@ import toools.io.file.RegularFile;
 
 public class ExternalCommandsService extends Service {
 
-	public final Map<String, RegularFile> commandName2executableFile = ExternalProgram.listAvailableCommands();
+	private final static Map<String, RegularFile> commandName2executableFile = ExternalProgram.listAvailableCommands();
 
 	public ExternalCommandsService(Component t) {
 		super(t);
@@ -27,6 +24,8 @@ public class ExternalCommandsService extends Service {
 			r.accept(f != null && f.exists());
 		});
 	}
+
+
 
 	@Operation
 	public Set<String> commands() {

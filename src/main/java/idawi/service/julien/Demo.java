@@ -18,6 +18,7 @@ import org.w3c.dom.svg.SVGDocument;
 import idawi.CDLException;
 import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.MessageException;
 import idawi.service.ComponentDeployer;
 import idawi.service.RESTService;
 import idawi.service.ServiceManager;
@@ -26,7 +27,7 @@ import toools.thread.Threads;
 
 public class Demo {
 
-	public static void main(String[] args) throws CDLException, IOException {
+	public static void main(String[] args) throws CDLException, IOException, MessageException {
 		System.out.println("start");
 		// creates a service for the communication - analogous to a TCP socket
 		// loads the timeDB service locally, but just to talk to its remote peer
@@ -36,9 +37,7 @@ public class Demo {
 		// start a new JVM to host the time series DB
 		Set<Component> s = new HashSet<>();
 		ComponentInfo server = ComponentInfo.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
-		t.lookupService(ComponentDeployer.class).deploy(Set.of(server), true, 15, false, fdbk -> {
-		}, ok -> {
-		});
+		t.lookupService(ComponentDeployer.class).deploy(Set.of(server), true, 15, false, null, null);
 
 //		t.lookupService(Deployer.class).deployLocalPeers(Set.of(remoteDB), true, ok -> s.add(ok));
 //		Thing dbThing = s.iterator().next();
@@ -73,12 +72,12 @@ public class Demo {
 		AtomicInteger i = new AtomicInteger();
 
 		Threads.newThread_loop(() -> {
-			String svg = new String(localDB.getPlot(Set.of("some metric"), "my first plot", "svg", remoteDB));
 
 			try {
+				String svg = new String(localDB.getPlot(Set.of("some metric"), "my first plot", "svg", remoteDB));
 				SVGDocument document = factory.createSVGDocument(null, new StringReader(svg));
 				c.setSVGDocument(document);
-			} catch (IOException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -103,20 +102,25 @@ public class Demo {
 		AtomicInteger i = new AtomicInteger();
 
 		Threads.newThread_loop(() -> {
-			byte[] png = client.getPlot(Set.of("some metric"), "my first plot", "png", server);
+			try {
+				byte[] png = client.getPlot(Set.of("some metric"), "my first plot", "png", server);
 
-			if (png != null) {
-				c.setIcon(new ImageIcon(png));
+				if (png != null) {
+					c.setIcon(new ImageIcon(png));
 
-				double durationS = ((System.currentTimeMillis() - startDate) / 1000);
+					double durationS = ((System.currentTimeMillis() - startDate) / 1000);
 
-				if (durationS > 0) {
-					double freq = i.get() / durationS;
-					System.out.println("updated " + freq + "frame/s");
+					if (durationS > 0) {
+						double freq = i.get() / durationS;
+						System.out.println("updated " + freq + "frame/s");
+					}
+
 				}
-
+				i.incrementAndGet();
 			}
-			i.incrementAndGet();
+			catch (MessageException e) {
+				e.printStackTrace();
+			}
 		});
 	}
 }

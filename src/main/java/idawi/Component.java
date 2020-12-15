@@ -44,7 +44,7 @@ public class Component {
 
 	public Component(ComponentInfo descriptor) {
 		if (componentsInThisJVM.containsKey(descriptor.friendlyName)) {
-			throw new IllegalStateException(descriptor.friendlyName + " is already in use");
+			throw new IllegalStateException(descriptor.friendlyName + " is already in use in this JVM");
 		}
 
 		this.descriptor = descriptor;

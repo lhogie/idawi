@@ -12,7 +12,8 @@ public class MessageQueue extends Q<Message> {
 	private final Consumer<MessageQueue> destructor;
 	private final Set<ComponentInfo> allowedSenders;
 	private final Set<ComponentInfo> completedSenders = new HashSet<>();
-	private double timeoutS = 1;
+	private double timeoutS = DEFAULT_TIMEOUT_IN_SECONDS;
+	public static double DEFAULT_TIMEOUT_IN_SECONDS = 60;
 
 	public enum SUFFICIENCY {
 		ENOUGH, NOT_ENOUGH;
@@ -98,7 +99,7 @@ public class MessageQueue extends Q<Message> {
 	public MessageList collect(Function<Message, SUFFICIENCY> returnsHandler) {
 		MessageList l = new MessageList();
 
-		l.timeout = forEach(msg -> {
+		l.timeout = !forEach(msg -> {
 			l.add(msg);
 			return returnsHandler.apply(msg);
 		});

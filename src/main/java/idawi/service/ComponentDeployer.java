@@ -171,6 +171,7 @@ public class ComponentDeployer extends Service {
 			if (peerOk != null) {
 				peerOk.accept(t);
 			}
+
 			s.add(t);
 		}
 

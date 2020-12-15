@@ -136,4 +136,14 @@ public class LMI extends TransportLayer {
 
 		return out;
 	}
+
+	public static void clique(Collection<Component> components) {
+		for (var a : components) {
+			for (var b : components) {
+				if (a != b) {
+					connect(a, b);
+				}
+			}
+		}
+	}
 }

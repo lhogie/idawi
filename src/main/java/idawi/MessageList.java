@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -27,7 +26,6 @@ public class MessageList extends ArrayList<Message> {
 
 		return l;
 	}
-	
 
 	public MessageList retainFirstCompleted() {
 		ComponentInfo firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
@@ -120,6 +118,9 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList throwAnyError() throws MessageException {
+		if (timeout)
+			throw new MessageException("timeout");
+
 		for (var m : this) {
 			if (m.isError()) {
 				throw (MessageException) m.content;
