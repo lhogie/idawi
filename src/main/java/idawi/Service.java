@@ -2,6 +2,7 @@ package idawi;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,8 @@ import java.util.function.Consumer;
 
 import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import toools.io.file.Directory;
@@ -35,44 +38,86 @@ public class Service {
 	private final AtomicLong returnQueueID = new AtomicLong();
 	private long nbMessages;
 
-	public Service(Component t) {
-		this.component = t;
-		t.services.put(getClass(), this);
+	public Service() throws IOException {
+		this(new Component());
+		run();
+	}
+
+	protected <S> S service(Class<? extends S> serviceID) {
+		return component.lookupService(serviceID);
+	}
+
+	public void run() throws IOException {
+	}
+
+	public Service(Component component) {
+		this.component = component;
+		component.services.put(getClass(), this);
 		this.id = getClass();
 
-		for (Method m : getClass().getMethods()) {
-			if (m.isAnnotationPresent(Operation.class)) {
-				if (name2operation.containsKey(m.getName())) {
-					throw new IllegalStateException("operation name is already in use: " + m.getName());
-				}
+		for (Class c : getClasses2(getClass())) {
+			for (Method m : c.getDeclaredMethods()) {
+				if (m.isAnnotationPresent(Operation.class)) {
+					if ((m.getModifiers() & Modifier.PRIVATE) == 0) {
+						throw new IllegalStateException(
+								"operation should be private: " + c.getName() + "." + m.getName());
+					}
+					if (name2operation.containsKey(m.getName())) {
+						throw new IllegalStateException(
+								"operation name is already in use: " + c.getName() + "." + m.getName());
+					}
 
-				name2operation.put(m.getName(), new AbstractOperation(this, m));
+					name2operation.put(m.getName(), new AbstractOperation(this, m));
+				}
 			}
 		}
 	}
 
+	public static Set<Class> getClasses2(Class c) {
+		Set<Class> r = new HashSet<>();
+		List<Class> q = new ArrayList<>();
+		q.add(c);
+
+		while (!q.isEmpty()) {
+			c = q.remove(0);
+			r.add(c);
+
+			if (c.getSuperclass() != null) {
+				q.add(c.getSuperclass());
+			}
+
+			for (Class i : c.getInterfaces()) {
+				q.add(i);
+			}
+		}
+
+		return r;
+	}
+
 	@Operation
-	public Directory directory() {
+	private Directory directory() {
 		return new Directory(Component.directory, "/services/" + id);
 	}
 
 	@Operation
-	public long nbMessagesReceived() {
+	private long nbMessagesReceived() {
 		return nbMessages;
 	}
 
 	@Operation
-	public String html() {
+	private String html() {
 		return "<html>Hi!</html>";
 	}
 
+	public final static String listOperationNames = "listOperationNames";
+
 	@Operation
-	public Set<String> listNativeActionsNames() {
+	private Set<String> listOperationNames() {
 		return new HashSet<String>(name2operation.keySet());
 	}
 
 	@Operation
-	public void listNativeActions(Consumer out) {
+	private void listNativeActions(Consumer out) {
 		name2operation.values().forEach(o -> out.accept(o.descriptor));
 	}
 
@@ -85,9 +130,16 @@ public class Service {
 	public void requestStream(To to, To replyTo, Object... parms) {
 		call(to, new OperationParameterList(parms));
 	}
-	
+
+	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
+
+	@Operation
+	private Int2LongMap second2nbMessages() {
+		return second2nbMessages;
+	}
+
 	public void considerNewMessage(Message msg) {
-		++nbMessages;
+		second2nbMessages.put((int) Utils.time(), ++nbMessages);
 
 		if (msg.content instanceof Chunk) {
 			Chunk chunk = (Chunk) msg.content;

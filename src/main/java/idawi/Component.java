@@ -19,13 +19,12 @@ import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
 import idawi.service.PingPong;
-import idawi.service.RESTService;
 import idawi.service.ServiceManager;
+import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
-import toools.reflect.Clazz;
 
 public class Component {
-	public static final Directory directory = new Directory("$HOME/." + Component.class.getPackage().getName());
+	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
 
@@ -33,6 +32,7 @@ public class Component {
 	final Map<Class<? extends Service>, Service> services = new HashMap<>();
 	public final Set<ComponentInfo> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
+	public ComponentInfo parent;
 
 	public Component() {
 		this("name=c" + componentsInThisJVM.size());
@@ -50,17 +50,17 @@ public class Component {
 		this.descriptor = descriptor;
 
 		// start basic services
-		addService(NetworkingService.class);
-		addService(ServiceManager.class);
-		addService(ComponentDeployer.class);
-		addService(PingPong.class);
-		addService(Bencher.class);
-		addService(RoutingService.class);
-		addService(ErrorLog.class);
-		addService(DummyService.class);
-		addService(RESTService.class);
-		addService(ExternalCommandsService.class);
-		addService(FileService.class);
+		new NetworkingService(this);
+		new ServiceManager(this);
+		new ComponentDeployer(this);
+		new PingPong(this);
+		new Bencher(this);
+		new RoutingService(this);
+		new ErrorLog(this);
+		new DummyService(this);
+		new RESTService(this);
+		new ExternalCommandsService(this);
+		new FileService(this);
 
 		descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(descriptor.friendlyName, this);
@@ -89,20 +89,6 @@ public class Component {
 
 	public <S extends Service> void lookupServices(Class<S> c, Consumer<S> h) {
 		lookupServices(s -> c.isInstance(s), s -> h.accept((S) s));
-	}
-
-	public <S> S addService(Class<S> id) {
-		if (lookupService(id) != null) {
-			throw new IllegalArgumentException("service already running");
-		}
-
-		var constructor = Clazz.getConstructor(id, Component.class);
-
-		if (constructor == null) {
-			throw new IllegalStateException(id + " does not have constructor (" + Component.class.getName() + ")");
-		}
-
-		return Clazz.makeInstance(constructor, this);
 	}
 
 	public Service newService() {

@@ -1,4 +1,4 @@
-package idawi.service;
+package idawi.service.rest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,23 +43,21 @@ public class GSONSerializer<E> extends Serializer<E> {
 	}
 
 	public static class Holder<E> {
-		E o;
-		String msg;
+		E object;
 	}
 
 	@Override
 	public E read(InputStream is) throws IOException {
 		Reader r = new InputStreamReader(is);
 		Holder<E> m = gson.fromJson(r, Holder.class);
-		return m.o;
+		return m.object;
 	}
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
-		Holder<E> m = new Holder<>();
-		m.o = o;
-		m.msg = msg;
-		String json = gson.toJson(m);
+		Holder<E> holder = new Holder<>();
+		holder.object = o;
+		String json = gson.toJson(holder);
 		os.write(json.getBytes());
 	}
 

@@ -1,7 +1,6 @@
 package idawi.demo;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 
 import idawi.Component;
 import idawi.ComponentInfo;

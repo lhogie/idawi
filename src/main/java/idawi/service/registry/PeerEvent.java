@@ -1,9 +1,8 @@
-package idawi.service.map;
+package idawi.service.registry;
 
 import java.io.Serializable;
 
 import idawi.ComponentInfo;
-import idawi.TransportLayer;
 
 public class PeerEvent implements Serializable {
 	final public ComponentInfo peer;

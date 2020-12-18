@@ -1,7 +1,6 @@
 package idawi.service.publish_subscribe;
 
 import java.awt.GridLayout;
-import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
@@ -14,7 +13,6 @@ import idawi.ComponentInfo;
 import idawi.NeighborhoodListener;
 import idawi.Service;
 import idawi.TransportLayer;
-import idawi.net.Neighborhood;
 import idawi.net.NetworkingService;
 import toools.gui.Swingable;
 

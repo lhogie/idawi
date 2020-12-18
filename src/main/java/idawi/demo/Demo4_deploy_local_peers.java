@@ -51,7 +51,7 @@ public class Demo4_deploy_local_peers {
 		}
 
 		// install this service on all our things in the JVM
-		last.addService(DummyService.class);
+		new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
 		To to = new To(DummyService.class, null);

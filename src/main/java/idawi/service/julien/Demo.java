@@ -2,7 +2,6 @@ package idawi.service.julien;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,9 +15,9 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.svg.SVGDocument;
 
 import idawi.CDLException;
-import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.MessageException;
+import idawi.Service;
 import idawi.service.ComponentDeployer;
 import idawi.service.RESTService;
 import idawi.service.ServiceManager;
@@ -29,37 +28,34 @@ public class Demo {
 
 	public static void main(String[] args) throws CDLException, IOException, MessageException {
 		System.out.println("start");
-		// creates a service for the communication - analogous to a TCP socket
-		// loads the timeDB service locally, but just to talk to its remote peer
-		Component t = new Component();
-		TimeSeriesDBClient client = t.addService(TimeSeriesDBClient.class);
 
-		// start a new JVM to host the time series DB
-		Set<Component> s = new HashSet<>();
-		ComponentInfo server = ComponentInfo.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
-		t.lookupService(ComponentDeployer.class).deploy(Set.of(server), true, 15, false, null, null);
+		
+		new Service() {
+			@Override
+			public void run() throws IOException {
+				// start a new JVM to host the time series DB
+				ComponentInfo server = ComponentInfo.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
+				var stub = new TimeSeriesDBStub(this, server);
+				service(ComponentDeployer.class).deploy(Set.of(server), true, 15, false, null, null);
+				service(ServiceManager.class).start(Set.of(server), TimeSeriesDB.class);
+				service(RESTService.class).startHTTPServer();
 
-//		t.lookupService(Deployer.class).deployLocalPeers(Set.of(remoteDB), true, ok -> s.add(ok));
-//		Thing dbThing = s.iterator().next();
-//		LMI.connect(t, dbThing);
+				TimeSeriesDBClient client = new TimeSeriesDBClient(component);
 
-		// loads the timeDB on the server - this one will really store figures
-		t.lookupService(ServiceManager.class).start(TimeSeriesDB.class, server, 10);
-		t.lookupService(RESTService.class).startHTTPServer();
+				// creates the figure that will be fed
+				client.createFigure("some metric", server);
+				startGUI2(client, server);
 
-		// creates the figure that will be fed
-		client.createFigure("some metric", server);
-
-		startGUI2(client, server);
-
-		// runs the simulation
-		for (int step = 0;; ++step) {
-			// computes something
-			Threads.sleepMs(100);
-			System.out.println("sending point");
-			// send point
-			client.sendPoint("some metric", step, Math.random(), server, 1);
-		}
+				// runs the simulation
+				for (int step = 0;; ++step) {
+					// computes something
+					Threads.sleepMs(100);
+					System.out.println("sending point");
+					// send point
+					client.sendPoint("some metric", step, Math.random(), server, 1);
+				}
+			}
+		};
 	}
 
 	private static void startGUI(TimeSeriesDBClient localDB, ComponentInfo remoteDB) {
@@ -117,8 +113,7 @@ public class Demo {
 
 				}
 				i.incrementAndGet();
-			}
-			catch (MessageException e) {
+			} catch (MessageException e) {
 				e.printStackTrace();
 			}
 		});

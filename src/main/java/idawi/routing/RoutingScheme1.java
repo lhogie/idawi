@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import idawi.ComponentInfo;
 import idawi.Route;
 import idawi.TransportLayer;
-import toools.io.Cout;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer

@@ -1,4 +1,4 @@
-package idawi.service.map;
+package idawi.service.registry;
 
 import java.util.Set;
 
@@ -11,19 +11,18 @@ import idawi.TransportLayer;
 import idawi.net.NetworkingService;
 import toools.collections.Collections;
 
-public class MapService extends Service {
-
+public class RegistryService extends Service {
 	public NetworkMap localMap = new NetworkMap();
 
-	public MapService(Component thing) {
-		super(thing);
-		localMap.add(thing.descriptor());
+	public RegistryService(Component component) {
+		super(component);
+		localMap.add(component.descriptor());
 
 		newThread_loop(5000, () -> {
 			To to = new To();
 			to.service = id;
 			to.operationOrQueue = "neighborhood";
-			send(thing.lookupService(NetworkingService.class).neighbors(), to, null);
+			send(component.lookupService(NetworkingService.class).neighbors(), to, null);
 		});
 
 		registerOperation("neighborhood", (msg, returns) -> {
@@ -53,7 +52,7 @@ public class MapService extends Service {
 			localMap.remove(msg.route.source().component, oldNeighbor);
 		});
 
-		thing.lookupService(NetworkingService.class).transport.listeners.add(localNeighborhoodListener);
+		component.lookupService(NetworkingService.class).transport.listeners.add(localNeighborhoodListener);
 	}
 
 	@Override

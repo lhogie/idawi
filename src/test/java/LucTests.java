@@ -45,7 +45,7 @@ public class LucTests {
 		// a shortcut for creating a component from a description
 		Component c2 = new Component("name=c2");
 
-		// connect those 2 components via shared memory
+		// connect those 2 components
 		LMI.connect(c1, c2);
 
 		// ask c1 to ping c2
@@ -94,30 +94,7 @@ public class LucTests {
 		Component.componentsInThisJVM.clear();
 	}
 
-	@Test
-	public void pingViaSSH() throws CDLException, IOException {
-		Cout.debugSuperVisible("Starting test");
 
-		// creates a component in this JVM
-		System.out.println("peeeeers: " + Component.componentsInThisJVM);
-		Component c1 = new Component(ComponentInfo.fromCDL("name=c1"));
-
-		// and deploy another one in a separate JVM
-		// they will communicate through standard streams
-		ComponentInfo c2 = ComponentInfo.fromCDL("name=c2");
-		c1.lookupService(ComponentDeployer.class).deployOtherJVM(c2, true, fdbck -> System.out.println(fdbck),
-				p -> System.out.println("ok"));
-
-		// asks the master to ping the other component
-		Message pong = c1.lookupService(PingPong.class).ping(c2, 5);
-		System.out.println("pong: " + pong);
-
-// be sure it got an answer
-		assertNotEquals(null, pong);
-
-		// clean
-		Component.componentsInThisJVM.clear();
-	}
 
 	@Test
 	public void pingViaTCP() throws CDLException, IOException {

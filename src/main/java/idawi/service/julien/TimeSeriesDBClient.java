@@ -10,6 +10,8 @@ import idawi.ComponentInfo;
 import idawi.MessageException;
 import idawi.Service;
 import idawi.To;
+import idawi.service.ComponentStub;
+import idawi.service.ServiceManager;
 import xycharter.Figure;
 
 public class TimeSeriesDBClient extends Service {
@@ -18,6 +20,7 @@ public class TimeSeriesDBClient extends Service {
 		super(t);
 	}
 
+	
 	private final PointBuffer buf = new PointBuffer();
 
 	public void sendPoint(String metricName, double x, double y, ComponentInfo db, double uploadProbability)

@@ -8,6 +8,7 @@ import idawi.ComponentInfo;
 import idawi.MessageException;
 import idawi.service.ComponentDeployer;
 import idawi.service.ServiceManager;
+import idawi.service.ServiceManager.Stub;
 import idawi.service.julien.TimeSeriesDB;
 import idawi.service.julien.TimeSeriesDBClient;
 import xycharter.Figure;
@@ -24,6 +25,7 @@ public class TestTimeSeriesDB {
 		ComponentInfo c2 = c1.lookupService(ComponentDeployer.class).deployLocalPeers(1, i -> "other-" + i, true, null)
 				.iterator().next().descriptor();
 
+		
 		c1.lookupService(ServiceManager.class).start(TimeSeriesDB.class, c2, 1);
 		TimeSeriesDBClient client = c1.addService(TimeSeriesDBClient.class);
 

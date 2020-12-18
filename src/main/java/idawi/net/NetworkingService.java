@@ -18,6 +18,7 @@ import idawi.TransportLayer;
 import idawi.routing.RoutingService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -43,7 +44,7 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	}
 
 	public final MultiTransport transport;
-	private final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
+	public final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
 	public final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 
@@ -71,13 +72,13 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	}
 
 	@Operation
-	public Collection<ComponentInfo> listProtocols(Message msg, Consumer<Object> out) {
+	private Collection<ComponentInfo> listProtocols(Message msg, Consumer<Object> out) {
 		return transport.neighbors();
 	}
 
 	@Override
 	public synchronized void accept(Message msg) {
-//		 Cout.debug(component + " RECV " + msg);
+		 Cout.debug(component + " RECV " + msg);
 		msg.receptionDate = Date.time();
 		msg.route.forEach(routeEntry -> component.descriptorRegistry.update(routeEntry.component));
 

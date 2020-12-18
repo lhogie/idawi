@@ -3,7 +3,6 @@ package idawi.routing;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.Message;
 import idawi.Operation;
 import idawi.Service;
 import toools.reflect.Clazz;
@@ -25,7 +24,7 @@ public class RoutingService extends Service {
 	}
 
 	@Operation
-	public void listRoutes(Message m , Consumer<Object> out)
+	private void listRoutes(Consumer<Object> out)
 	{
 		
 	}

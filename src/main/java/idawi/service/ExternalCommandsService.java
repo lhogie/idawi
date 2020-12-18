@@ -28,12 +28,12 @@ public class ExternalCommandsService extends Service {
 
 
 	@Operation
-	public Set<String> commands() {
+	private Set<String> commands() {
 		return commandName2executableFile.keySet();
 	}
 
 	@Operation
-	public String exec(String name, String... parms) {
+	private String exec(String name, String... parms) {
 		RegularFile cmd = commandName2executableFile.get(name);
 		return new String(Proces.exec(cmd.getPath(), parms));
 	}

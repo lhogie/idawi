@@ -4,12 +4,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import idawi.ComponentInfo;
 import idawi.TransportLayer;
-
-import java.util.Set;
-
 import toools.thread.Threads;
 
 public class MessageBuiltNeighborhood {

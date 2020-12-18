@@ -1,4 +1,4 @@
-package idawi.service.map;
+package idawi.service.registry;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

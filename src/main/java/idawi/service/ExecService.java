@@ -6,9 +6,9 @@ import java.util.function.Function;
 
 import idawi.Component;
 import idawi.Message;
+import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
 import idawi.To;
-import idawi.MessageQueue.SUFFICIENCY;
 
 public class ExecService extends Service {
 	public static interface Request extends Serializable {

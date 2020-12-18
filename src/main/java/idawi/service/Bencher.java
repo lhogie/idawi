@@ -12,9 +12,9 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
 import idawi.To;
-import idawi.MessageQueue.SUFFICIENCY;
 import toools.thread.Q;
 
 /**

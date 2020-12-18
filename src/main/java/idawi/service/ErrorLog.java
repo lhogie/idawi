@@ -25,7 +25,7 @@ public class ErrorLog extends Service {
 	}
 
 	@Operation
-	public List<Throwable> listErrors() {
+	private List<Throwable> listErrors() {
 		return errors;
 	}
 }

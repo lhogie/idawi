@@ -6,8 +6,6 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentInfo;
-import idawi.Service;
-import j4u.CommandLine;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;

@@ -28,6 +28,7 @@ import idawi.net.PipeFromToParentProcess;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
+import toools.io.Utilities;
 import toools.io.file.Directory;
 import toools.net.SSHParms;
 import toools.net.SSHUtils;
@@ -39,7 +40,8 @@ import toools.thread.Threads;
 
 public class ComponentDeployer extends Service {
 	List<ComponentInfo> failed = new ArrayList<>();
-	String remoteClassDir = "jthing.classes/";
+
+	String remoteClassDir = Service.class.getPackageName() + ".classpath";
 
 	public static class DeploymentRequest implements Serializable {
 		public Collection<ComponentInfo> peers;
@@ -61,6 +63,12 @@ public class ComponentDeployer extends Service {
 	public ComponentDeployer(Component peer) {
 		super(peer);
 
+		if (remoteClassDir.contains("/")) {
+			throw new IllegalStateException();
+		}
+
+		remoteClassDir += "/";
+
 		// receives deployment requests from other peers
 		registerOperation("deploy", (msg, out) -> {
 			DeploymentRequest req = (DeploymentRequest) msg.content;
@@ -81,7 +89,6 @@ public class ComponentDeployer extends Service {
 			Graph deploymentPlan = (Graph) msg.content;
 			apply(deploymentPlan, 1, true, stdout -> out.accept(stdout), peerOk -> out.accept(peerOk));
 		});
-
 	}
 
 	public void apply(Graph deploymentPlan, double timeoutInSecond, boolean printRsync, Consumer<Object> feedback,
@@ -99,7 +106,7 @@ public class ComponentDeployer extends Service {
 	public List<Component> deploy(Collection<ComponentInfo> peers, boolean suicideWhenParentDie, double timeoutInSecond,
 			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentInfo> peerOk) throws IOException {
 
-		Collection<ComponentInfo> inThisJVM = findThoseForThisJVM(peers);
+		Collection<ComponentInfo> inThisJVM = findLocalhosts(peers);
 		List<Component> localThings = new ArrayList<>();
 		deployLocalPeers(inThisJVM, suicideWhenParentDie, okThing -> {
 			localThings.add(okThing);
@@ -191,6 +198,8 @@ public class ComponentDeployer extends Service {
 	}
 
 	private void deployLocalPeer(Component newThing, boolean suicideWhenParentDie) {
+		newThing.parent = component.descriptor();
+
 		if (suicideWhenParentDie) {
 			component.killOnDeath.add(newThing);
 		}
@@ -214,7 +223,7 @@ public class ComponentDeployer extends Service {
 				ComponentInfo n = nasGroup.iterator().next();
 
 				// sends the binaries there
-				rsync(n.sshParameters);
+				rsyncBinaries(n.sshParameters);
 
 				// makes sure the JVM is okay for all the nodes in the group
 				ensureCompliantJVM(n.sshParameters);
@@ -234,12 +243,12 @@ public class ComponentDeployer extends Service {
 					Threads.newThread_loop(1000, () -> !jdk14.get(),
 							() -> feedback.accept("Downloading and installing JDK 14 on " + n));
 					SSHUtils.execShAndWait(n,
-							"wget https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_linux-x64_bin.tar.gz && tar xzf openjdk-14.0.1_linux-x64_bin.tar.gz");
+							"wget https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_linux-x64_bin.tar.gz && tar xzf openjdk-14.0.1_linux-x64_bin.tar.gz && rm -f openjdk-14.0.1_linux-x64_bin.tar.gz");
 					jdk14.set(true);
 				}
 			}
 
-			private void rsync(SSHParms ssh) throws IOException {
+			private void rsyncBinaries(SSHParms ssh) throws IOException {
 				LongProcess rsyncing = new LongProcess("rsync to " + ssh, null, -1, line -> feedback.accept(line));
 				Consumer<String> rsyncOut = l -> {
 					if (printRsync) {
@@ -256,11 +265,53 @@ public class ComponentDeployer extends Service {
 				}
 			}
 
+			private int rsyncResources(Directory resourceDir, SSHParms sshParameters, String remotePath,
+					Consumer<String> stdout, Consumer<String> stderr) throws IOException {
+				LongProcess rsyncing = new LongProcess("rsync to " + sshParameters, null, -1,
+						line -> feedback.accept(line));
+				List<String> args = new ArrayList<>();
+				args.add("rsync");
+
+				if (sshParameters != null) {
+					args.add("-e");
+					List<String> ssh = new ArrayList<>();
+					ssh.add(SSHUtils.sshCmd());
+					SSHUtils.addSSHOptions(ssh, sshParameters);
+					args.add(toools.collections.Collections.toString(ssh, " "));
+				}
+
+				args.add("-a");
+				args.add("--delete");
+				args.add("--copy-links");
+				args.add("-v");
+
+				args.add(resourceDir.getPath() + "/");
+				args.add(sshParameters.hostname + ":" + remotePath + "/");
+
+				try {
+					// System.out.println(args);
+					Process rsync = Runtime.getRuntime().exec(args.toArray(new String[0]));
+					Utilities.grabLines(rsync.getInputStream(), stdout, err -> {
+					});
+					Utilities.grabLines(rsync.getErrorStream(), stderr, err -> {
+					});
+					rsync.waitFor();
+					rsyncing.end();
+					return rsync.exitValue();
+				} catch (InterruptedException e1) {
+					throw new IllegalStateException(e1);
+				}
+			}
+
 			private void startJVM(Set<ComponentInfo> nasGroup, Consumer<Object> feedback) {
 				new OneElementOneThreadProcessing<ComponentInfo>(peers) {
 
 					@Override
 					protected void process(ComponentInfo peer) {
+
+						// sends the resouces there
+						// rsyncResources(n.sshParameters);
+
 						try {
 							LongProcess startingNode = new LongProcess("starting node in JVM on " + peer + " via SSH",
 									null, -1, line -> feedback.accept(line));
@@ -271,6 +322,7 @@ public class ComponentDeployer extends Service {
 							feedback.accept("sending node startup info to " + peer);
 
 							init(p, peer, nasGroup, suicideWhenParentDie, feedback);
+							startingNode.end();
 						} catch (Exception e) {
 							feedback.accept(e);
 						}
@@ -280,7 +332,7 @@ public class ComponentDeployer extends Service {
 		};
 	}
 
-	private Collection<ComponentInfo> findThoseForThisJVM(Collection<ComponentInfo> peers) {
+	private static Collection<ComponentInfo> findLocalhosts(Collection<ComponentInfo> peers) {
 		Collection<ComponentInfo> r = new HashSet<>();
 
 		for (ComponentInfo p : peers) {
@@ -328,6 +380,7 @@ public class ComponentDeployer extends Service {
 			Cout.raw_stdout.println("instantiating thing");
 			Component t = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentInfo.class),
 					deployInfo.id);
+			t.parent = deployInfo.parent;
 
 			t.descriptorRegistry.add(deployInfo.parent);
 			t.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);

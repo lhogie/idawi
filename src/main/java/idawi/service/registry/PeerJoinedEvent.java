@@ -1,4 +1,4 @@
-package idawi.service.map;
+package idawi.service.registry;
 
 import idawi.ComponentInfo;
 
@@ -6,10 +6,9 @@ public class PeerJoinedEvent extends PeerEvent {
 	public PeerJoinedEvent(ComponentInfo p, String protocol) {
 		super(p, protocol);
 	}
-	
+
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return peer + " joined by " + protocol;
 	}
 }

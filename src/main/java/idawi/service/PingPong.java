@@ -24,14 +24,15 @@ public class PingPong extends Service {
 		super(node);
 	}
 
+	
 	@Operation
-	public void ping() {
+	private void ping() {
 		// don't need to send anything
 		// and EOT will be sent back (acting as a pong)
 	}
 
 	@Operation
-	public Message traceroute(Message ping) {
+	private Message traceroute(Message ping) {
 		return ping;
 	}
 
@@ -52,7 +53,7 @@ public class PingPong extends Service {
 		return send(null, new To(targets, PingPong.class, "ping")).setTimeout(timeout).collect();
 	}
 
-	public MessageQueue ping(Set<ComponentInfo> targets) {
+	public  MessageQueue ping(Set<ComponentInfo> targets) {
 		return send(null, new To(targets, PingPong.class, "ping"));
 	}
 
