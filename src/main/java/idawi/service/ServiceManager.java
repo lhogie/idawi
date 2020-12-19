@@ -5,11 +5,9 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentInfo;
-import idawi.RemoteException;
 import idawi.Operation;
 import idawi.Service;
 import idawi.ServiceDescriptor;
-import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {

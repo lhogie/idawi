@@ -1,6 +1,5 @@
 package idawi.service.julien;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,9 +13,7 @@ import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.svg.SVGDocument;
 
-import idawi.CDLException;
 import idawi.ComponentInfo;
-import idawi.RemoteException;
 import idawi.Service;
 import idawi.service.ComponentDeployer;
 import idawi.service.ServiceManager;
@@ -25,15 +22,15 @@ import toools.gui.Utilities;
 import toools.thread.Threads;
 
 public class Demo {
-
-	public static void main(String[] args) throws CDLException, IOException, RemoteException {
+	public static void main(String[] args) throws Throwable {
 		System.out.println("start");
 
 		new Service() {
 			@Override
-			public void run() throws IOException, RemoteException {
+			public void run() throws Throwable {
 				// start a new JVM to host the time series DB
-				ComponentInfo serverDescriptor = ComponentInfo.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
+				ComponentInfo serverDescriptor = ComponentInfo
+						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, Set.of(serverDescriptor));
 				service(ComponentDeployer.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
 				new ServiceManager.Stub(this, Set.of(serverDescriptor)).start(TimeSeriesDB.class);
@@ -70,7 +67,7 @@ public class Demo {
 				String svg = new String(localDB.getPlot(Set.of("some metric"), "my first plot", "svg"));
 				SVGDocument document = factory.createSVGDocument(null, new StringReader(svg));
 				c.setSVGDocument(document);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -110,7 +107,7 @@ public class Demo {
 
 				}
 				i.incrementAndGet();
-			} catch (RemoteException e) {
+			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		});

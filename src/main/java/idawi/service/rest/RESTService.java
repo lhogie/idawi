@@ -158,7 +158,7 @@ public class RESTService extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private Object processRESTRequest(List<String> path, Map<String, String> query) throws RemoteException {
+	private Object processRESTRequest(List<String> path, Map<String, String> query) throws Throwable {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
@@ -220,7 +220,7 @@ public class RESTService extends Service {
 	}
 
 	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout)
-			throws RemoteException {
+			throws Throwable {
 		Set<ComponentInfo> r = new HashSet<>();
 
 		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()
@@ -234,7 +234,7 @@ public class RESTService extends Service {
 	}
 
 	private Map<ComponentInfo, ServiceDescriptor> decribeService(Set<ComponentInfo> components,
-			Class<? extends Service> serviceID) throws RemoteException {
+			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentInfo, ServiceDescriptor> descriptors = new HashMap<>();
 
 		for (Message m : call(new To(components, serviceID, "descriptor")).collect().throwAnyError().resultMessages()) {
@@ -249,7 +249,7 @@ public class RESTService extends Service {
 		Set<ComponentInfo> knownComponents = new HashSet<>();
 	}
 
-	private Welcome welcomePage() throws RemoteException {
+	private Welcome welcomePage() throws Throwable {
 		Welcome w = new Welcome();
 		w.localComponent = component.descriptor();
 
