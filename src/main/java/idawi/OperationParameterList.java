@@ -10,7 +10,7 @@ public class OperationParameterList extends ArrayList {
 	}
 
 	public static OperationParameterList from(OperationStringParameterList l, Class<?>[] types)
-			throws MessageException {
+			 {
 		OperationParameterList r = new OperationParameterList();
 
 		for (int i = 0; i < types.length; ++i) {
@@ -20,7 +20,7 @@ public class OperationParameterList extends ArrayList {
 		return r;
 	}
 
-	private static Object fromString(String from, Class<?> to) throws MessageException {
+	private static Object fromString(String from, Class<?> to) throws IllegalArgumentException {
 		if (to == String.class) {
 			return from;
 		} else if (to == double.class || to == Double.class) {
@@ -32,7 +32,7 @@ public class OperationParameterList extends ArrayList {
 		} else if (to == int.class || to == Integer.class) {
 			return Integer.valueOf(from);
 		} else {
-			throw new MessageException("string cannot be converted to " + to.getClass());
+			throw new IllegalArgumentException("string cannot be converted to " + to.getClass());
 		}
 	}
 }

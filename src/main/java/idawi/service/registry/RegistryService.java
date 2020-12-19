@@ -1,85 +1,97 @@
 package idawi.service.registry;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentInfo;
-import idawi.NeighborhoodListener;
+import idawi.Operation;
+import idawi.Route;
+import idawi.RouteEntry;
 import idawi.Service;
-import idawi.To;
-import idawi.TransportLayer;
-import idawi.net.NetworkingService;
-import toools.collections.Collections;
 
 public class RegistryService extends Service {
-	public NetworkMap localMap = new NetworkMap();
+	private final Map<String, ComponentInfo> name2info = new HashMap<>();
 
 	public RegistryService(Component component) {
 		super(component);
-		localMap.add(component.descriptor());
+	}
 
-		newThread_loop(5000, () -> {
-			To to = new To();
-			to.service = id;
-			to.operationOrQueue = "neighborhood";
-			send(component.lookupService(NetworkingService.class).neighbors(), to, null);
-		});
+	@Operation
+	public int size() {
+		return name2info.size();
+	}
 
-		registerOperation("neighborhood", (msg, returns) -> {
-			ComponentInfo src = msg.route.source().component;
-			Set<ComponentInfo> updatedNeighborhood = (Set<ComponentInfo>) msg.content;
-			// System.out.println(msg);
-			Set<ComponentInfo> formerNeighborhood = localMap.get(src);
+	@Operation
+	public Set<String> names() {
+		return name2info.keySet();
+	}
 
-			if (formerNeighborhood == null) {
-				updatedNeighborhood.forEach(n -> localMap.add(src, n));
-			} else {
-				Collections.difference(updatedNeighborhood, formerNeighborhood).forEach(n -> localMap.add(src, n));
+	@Operation
+	public ComponentInfo lookup(String name) {
+		return name2info.get(name);
+	}
 
-				Collections.difference(formerNeighborhood, updatedNeighborhood).forEach(n -> localMap.remove(src, n));
-			}
-		});
+	@Operation
+	public ComponentInfo remove(String name) {
+		return name2info.remove(name);
+	}
 
-		registerOperation("new neighbor", (msg, returns) -> {
-			ComponentInfo newNeighbor = ((PeerJoinedEvent) msg.content).peer;
-			localMap.add(msg.route.source().component, newNeighbor);
-		});
+	@Operation
+	public void clear() {
+		name2info.clear();
+	}
 
-		registerOperation("get_map", (msg, returns) -> returns.accept(localMap));
-
-		registerOperation("neighbor left", (msg, returns) -> {
-			ComponentInfo oldNeighbor = ((PeerLeftEvent) msg.content).peer;
-			localMap.remove(msg.route.source().component, oldNeighbor);
-		});
-
-		component.lookupService(NetworkingService.class).transport.listeners.add(localNeighborhoodListener);
+	@Operation
+	public ComponentInfo local() {
+		return component.descriptor();
 	}
 
 	@Override
 	public String getFriendlyName() {
-		return "construct a map of the network";
+		return "component registry";
 	}
 
-	private NeighborhoodListener localNeighborhoodListener = new NeighborhoodListener() {
+	private ComponentInfo ensureExists(String name) {
+		ComponentInfo info = name2info.get(name);
 
-		@Override
-		public void peerJoined(ComponentInfo newPeer, TransportLayer protocol) {
-			localMap.add(component.descriptor(), newPeer);
-
-			To to = new To();
-			to.service = id;
-			to.operationOrQueue = "new neighbor";
-			send(new PeerJoinedEvent(newPeer, protocol.getName()), to, null);
+		if (info == null) {
+			name2info.put(name, info = new ComponentInfo());
 		}
 
-		@Override
-		public void peerLeft(ComponentInfo leftPeer, TransportLayer protcol) {
-			localMap.remove(component.descriptor(), leftPeer);
+		return info;
+	}
 
-			To to = new To();
-			to.service = id;
-			to.operationOrQueue = "neighbor left";
-			send(new PeerLeftEvent(leftPeer, protcol.getName()), to, null);
+	public void feedWith(Route route) {
+		int len = route.size();
+
+		for (int i = 0; i < len; ++i) {
+			RouteEntry e = route.get(i);
+			ComponentInfo info = ensureExists(e.component.friendlyName);
+
+			if (i > 0) {
+				ensureNeighbors(info, route.get(i - 1).component.friendlyName);
+			}
+
+			if (i < len - 1) {
+				ensureNeighbors(info, route.get(i + 1).component.friendlyName);
+			}
 		}
-	};
+	}
+
+	private void ensureNeighbors(ComponentInfo info, String neighbor) {
+		if (!info.neighbors.contains(neighbor)) {
+			info.neighbors.add(neighbor);
+		}
+	}
+
+	public void update(ComponentInfo c) {
+		name2info.put(c.friendlyName, c);
+	}
+
+	public Collection<ComponentInfo> descriptors() {
+		return name2info.values();
+	}
 }

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -20,15 +19,17 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Message;
-import idawi.MessageException;
+import idawi.RemoteException;
 import idawi.Operation;
-import idawi.OperationDescriptor;
 import idawi.Service;
+import idawi.ServiceDescriptor;
+import idawi.To;
 import idawi.net.JacksonSerializer;
 import idawi.net.LMI;
-import idawi.net.NetworkingService;
-import idawi.service.PingPong;
 import idawi.service.ServiceManager;
+import idawi.service.registry.RegistryService;
+import toools.io.JavaResource;
+import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
 import toools.io.ser.JavaSerializer;
@@ -97,25 +98,30 @@ public class RESTService extends Service {
 
 	private void processRequest(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
 		if (path == null) {
-			path = new ArrayList<>();
-			path.add("antonin");
-		}
-
-		String context = path.remove(0);
-
-		if (context.equals("api")) {
-			processAPI(path.subList(1, path.size()), query, out);
-		} else if (context.equals("antonin")) {
-			processHTML(path, query, out);
+			out.accept(new JavaResource(getClass(), "root.html").getByteArray());
+		} else {
+			String context = path.remove(0);
+			System.out.println("context: " + context);
+			if (context.equals("api")) {
+				processAPI(path, query, out);
+			} else if (context.equals("file")) {
+				serveFiles(path, query, out);
+			} else if (context.equals("idaweb")) {
+				serveIdaweb(path, query, out);
+			}
 		}
 	}
 
-	private void processHTML(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
-//		String html = new String(new JavaResource(getClass(), "index.html").getByteArray());
+	private void serveIdaweb(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
+		if (path.isEmpty()) {
+			out.accept(new JavaResource(getClass(), "index.html").getByteArray());
+		} else {
+			out.accept(new JavaResource(getClass(), TextUtilities.concatene(path, "/")).getByteArray());
+		}
+	}
 
-		var f = new RegularFile("$HOME/idawi/" + TextUtilities.concatene(path, "/"));
-		System.out.println("reading " + f);
-		out.accept(f.getContentAsText().getBytes());
+	private void serveFiles(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
+		out.accept(new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent());
 	}
 
 	private void processAPI(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
@@ -152,7 +158,7 @@ public class RESTService extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private Object processRESTRequest(List<String> path, Map<String, String> query) throws MessageException {
+	private Object processRESTRequest(List<String> path, Map<String, String> query) throws RemoteException {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
@@ -161,7 +167,7 @@ public class RESTService extends Service {
 			Set<ComponentInfo> components = componentsFromURL(path.get(0));
 
 			if (path.size() == 1) {
-				return describeComponent(components, timeout);
+				return describeComponent(components, timeout).toArray(new ComponentInfo[0]);
 			} else {
 				String serviceName = path.get(1);
 				Class<? extends Service> serviceID = Clazz.findClass(serviceName);
@@ -174,13 +180,19 @@ public class RESTService extends Service {
 					String operation = path.get(2);
 
 					if (path.size() > 4) {
-						throw new Error("path too long! Expecting: component/service/action");
+						throw new Error("path too long! Expecting: component/service/operation");
 					} else {
 						var stringParms = path.size() == 3 ? new String[0] : path.get(3).split(",");
-						System.out.println("calling action " + components + "/" + serviceID.toString() + "/" + operation
-								+ "(" + Arrays.toString(stringParms) + ")");
-						return call(components, serviceID, operation, stringParms).setTimeout(timeout).collect()
-								.resultMessages().contents();
+						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
+								+ operation + "(" + Arrays.toString(stringParms) + ")");
+						List<Object> r = call(new To(components, serviceID, operation), stringParms).setTimeout(timeout)
+								.collect().throwAnyError().resultMessages().contents();
+
+						if (r.size() == 1) {
+							return r.get(0);
+						} else {
+							return r;
+						}
 					}
 				}
 			}
@@ -207,10 +219,12 @@ public class RESTService extends Service {
 		return components;
 	}
 
-	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout) {
+	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout)
+			throws RemoteException {
 		Set<ComponentInfo> r = new HashSet<>();
 
-		for (var m : call(components, ServiceManager.class, "list").setTimeout(timeout).collect().resultMessages()) {
+		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()
+				.throwAnyError().resultMessages()) {
 			ComponentInfo c = m.route.source().component;
 			c.servicesStrings = (Set<String>) m.content;
 			r.add(c);
@@ -219,40 +233,32 @@ public class RESTService extends Service {
 		return r;
 	}
 
-	private Map<String, Set<OperationDescriptor>> decribeService(Set<ComponentInfo> components,
-			Class<? extends Service> serviceID) throws MessageException {
-		Map<String, Set<OperationDescriptor>> component2serviceList = new HashMap<>();
+	private Map<ComponentInfo, ServiceDescriptor> decribeService(Set<ComponentInfo> components,
+			Class<? extends Service> serviceID) throws RemoteException {
+		Map<ComponentInfo, ServiceDescriptor> descriptors = new HashMap<>();
 
-		for (Message m : call(components, serviceID, Service.listOperationNames).collect().throwAnyError()
-				.resultMessages()) {
-			component2serviceList.put(m.route.source().component.friendlyName + "/" + serviceID,
-					(Set<OperationDescriptor>) m.content);
+		for (Message m : call(new To(components, serviceID, "descriptor")).collect().throwAnyError().resultMessages()) {
+			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
 		}
 
-		return component2serviceList;
+		return descriptors;
 	}
 
 	public static class Welcome {
-		String localComponent;
-		Set<String> knownComponents = new HashSet<>();
+		ComponentInfo localComponent;
+		Set<ComponentInfo> knownComponents = new HashSet<>();
 	}
 
-	private Welcome welcomePage() {
+	private Welcome welcomePage() throws RemoteException {
 		Welcome w = new Welcome();
-		w.localComponent = component.descriptor().friendlyName;
+		w.localComponent = component.descriptor();
 
-		component.lookupService(PingPong.class).discover(1, found -> w.knownComponents.add(found.friendlyName));
+		// asks all components to send their descriptor, which will be catched by the
+		// networking service
+		// that will pass it to the registry
+		call(new To(RegistryService.class, "local")).setTimeout(1).collect().throwAnyError();
 
-		for (var c : component.descriptorRegistry) {
-			w.knownComponents.add(c.friendlyName);
-		}
-
-		w.knownComponents.add(component.descriptor().friendlyName);
-
-		for (ComponentInfo d : component.lookupService(NetworkingService.class).neighbors()) {
-			w.knownComponents.add(d.friendlyName);
-		}
-
+		w.knownComponents.addAll(service(RegistryService.class).descriptors());
 		return w;
 	}
 
@@ -274,6 +280,7 @@ public class RESTService extends Service {
 		return query;
 	}
 
+	@Operation
 	public void stopHTTPServer() throws IOException {
 		if (restServer == null) {
 			throw new IOException("REST server is not running");
@@ -288,22 +295,7 @@ public class RESTService extends Service {
 		startHTTPServer(port);
 	}
 
-	@Operation
-	private void stoptRestServer(Message msg, Consumer<Object> returns) throws IOException {
-		stopHTTPServer();
-	}
-
-	@Operation
-	private Object listServices(HttpExchange e) {
-		return component.services().stream().map(s -> s.getFriendlyName()).collect(Collectors.toSet());
-	}
-
-	@Operation
-	private Object printRequest(HttpExchange e) {
-		return e;
-	}
-
-	public static void main(String[] args) throws IOException, MessageException {
+	public static void main(String[] args) throws IOException, RemoteException {
 		List<Component> components = new ArrayList();
 
 		for (int i = 0; i < 20; ++i) {

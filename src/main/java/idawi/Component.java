@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
-import idawi.routing.RoutingService;
+import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
 import idawi.service.ComponentDeployer;
 import idawi.service.DummyService;
@@ -20,6 +20,7 @@ import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
 import idawi.service.PingPong;
 import idawi.service.ServiceManager;
+import idawi.service.registry.RegistryService;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
 
@@ -55,13 +56,15 @@ public class Component {
 		new ComponentDeployer(this);
 		new PingPong(this);
 		new Bencher(this);
-		new RoutingService(this);
+//		new RoutingScheme1(this);
+		new RoutingScheme_bcast(this);
 		new ErrorLog(this);
 		new DummyService(this);
 		new RESTService(this);
 		new ExternalCommandsService(this);
 		new FileService(this);
-
+		new RegistryService(this);
+		
 		descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(descriptor.friendlyName, this);
 	}

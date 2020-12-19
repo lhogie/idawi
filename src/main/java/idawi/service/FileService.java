@@ -11,6 +11,7 @@ import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Operation;
 import idawi.Service;
+import idawi.To;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
@@ -45,7 +46,7 @@ public class FileService extends Service {
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentInfo target, String pathOnTarget)
 			throws IOException {
-		call(target, FileService.class, "uploadFileAsOneSingleMessage", pathOnTarget, localFile.getContent());
+		call(new To(target, FileService.class, "uploadFileAsOneSingleMessage"), pathOnTarget, localFile.getContent());
 	}
 
 	@Operation

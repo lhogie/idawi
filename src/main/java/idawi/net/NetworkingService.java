@@ -12,13 +12,14 @@ import idawi.EOT;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.Operation;
+import idawi.RemoteException;
 import idawi.RouteEntry;
 import idawi.Service;
 import idawi.TransportLayer;
 import idawi.routing.RoutingService;
+import idawi.service.registry.RegistryService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import toools.io.Cout;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -72,19 +73,21 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	}
 
 	@Operation
-	private Collection<ComponentInfo> listProtocols(Message msg, Consumer<Object> out) {
+	private Collection<ComponentInfo> listProtocols() {
 		return transport.neighbors();
 	}
 
 	@Override
 	public synchronized void accept(Message msg) {
-		 Cout.debug(component + " RECV " + msg);
+		// Cout.debug(component + " RECV " + msg);
 		msg.receptionDate = Date.time();
 		msg.route.forEach(routeEntry -> component.descriptorRegistry.update(routeEntry.component));
 
 		for (Service s : component.services()) {
 			if (s instanceof RoutingService) {
-				((RoutingService) s).scheme.feedWith(msg.route);
+				((RoutingService) s).feedWith(msg.route);
+			} else if (s instanceof RegistryService) {
+				((RegistryService) s).feedWith(msg.route);
 			}
 		}
 
@@ -133,8 +136,7 @@ public class NetworkingService extends Service implements Consumer<Message> {
 							error("service not found: " + msg.to.service);
 //							System.err.println(msg.replyTo);
 							if (msg.replyTo != null) {
-								send(new IllegalStateException("service not found: " + msg.to.service), msg.replyTo,
-										null);
+								send(new RemoteException("service not found: " + msg.to.service), msg.replyTo, null);
 								send(new EOT(), msg.replyTo, null);
 							}
 						}
@@ -167,11 +169,16 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	}
 
 	public void send(Message msg, TransportLayer protocol) {
-		RoutingService router = component.lookupService(RoutingService.class);
-		Collection<ComponentInfo> relays = router.scheme.findRelaysToReach(protocol,
-				msg.to.notYetReachedExplicitRecipients);
-		// Cout.debug("ROUTING: " + msg.to.peers + " -> " + relays);
-		send(msg, protocol, relays);
+		for (var s : component.services()) {
+			if (s instanceof RoutingService) {
+				RoutingService router = (RoutingService) s;
+				Collection<ComponentInfo> relays = router.findRelaysToReach(protocol,
+						msg.to.notYetReachedExplicitRecipients);
+				// Cout.debug("ROUTING: " + msg.to.peers + " -> " + relays);
+				send(msg, protocol, relays);
+				return;
+			}
+		}
 	}
 
 	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {

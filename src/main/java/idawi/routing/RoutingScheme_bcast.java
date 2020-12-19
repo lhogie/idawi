@@ -2,17 +2,16 @@ package idawi.routing;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.function.Consumer;
 
+import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Route;
 import idawi.TransportLayer;
-import idawi.net.NetworkingService;
 
-public class RoutingScheme_bcast extends RoutingScheme {
+public class RoutingScheme_bcast extends RoutingService {
 
-	public RoutingScheme_bcast(RoutingService s) {
-		super(s);
+	public RoutingScheme_bcast(Component node) {
+		super(node);
 	}
 
 	@Override
@@ -36,7 +35,7 @@ public class RoutingScheme_bcast extends RoutingScheme {
 	}
 
 	@Override
-	public void print(Consumer<String> out) {
-		out.accept("all messages sent to neighbors: " + s.component.lookupService(NetworkingService.class).neighbors());
+	public String getAlgoName() {
+		return "broadcast";
 	}
 }

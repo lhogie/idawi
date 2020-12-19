@@ -38,8 +38,8 @@ public class AbstractOperation {
 		return descriptor;
 	}
 
-	
-	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
+	public void accept(Message msg, Consumer<Object> returns)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Class<?>[] types = method.getParameterTypes();
 
 		if (types.length == 0) {
@@ -60,11 +60,12 @@ public class AbstractOperation {
 				parms = OperationParameterList.from((OperationStringParameterList) msg.content,
 						method.getParameterTypes());
 			} else {
-				throw new IllegalStateException(
-						"operation " + descriptor.name + ": expecting message content to be a parameter list but is " + msg.content.getClass().getName());
+				throw new IllegalArgumentException("operation " + descriptor.name
+						+ " is parameterized. As such, it expects message content is a parameter list, but it founds a "
+						+ msg.content.getClass().getName());
 			}
 
-			// use return keyword instead of returns consumer
+			// exact match, the message nor the "return" consumer are passed
 			if (parms.size() == descriptor.parameterTypes.length) {
 				invoke(returns, parms.toArray());
 			} else if (descriptor.parameterTypes.length == parms.size() + 1) {
@@ -73,8 +74,7 @@ public class AbstractOperation {
 					parms.add(returns);
 					invoke(returns, parms.toArray());
 				} else {
-					throw new IllegalStateException("last parameter of operation " + method.getName()
-							+ " should be of type " + Consumer.class.getName());
+					throw new IllegalStateException("operation '" + descriptor.name + "': received parms: " + parms);
 				}
 			} else {
 				throw new IllegalStateException("expecting parameters " + Arrays.toString(descriptor.parameterTypes)

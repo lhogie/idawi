@@ -14,6 +14,7 @@ import com.google.gson.stream.JsonWriter;
 
 import toools.io.ser.Serializer;
 import toools.reflect.Clazz;
+import toools.text.TextUtilities;
 
 public class GSONSerializer<E> extends Serializer<E> {
 	public static final GSONSerializer instance = new GSONSerializer();
@@ -43,20 +44,22 @@ public class GSONSerializer<E> extends Serializer<E> {
 	}
 
 	public static class Holder<E> {
-		E object;
+		E value;
+		String type;
 	}
 
 	@Override
 	public E read(InputStream is) throws IOException {
 		Reader r = new InputStreamReader(is);
 		Holder<E> m = gson.fromJson(r, Holder.class);
-		return m.object;
+		return m.value;
 	}
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
 		Holder<E> holder = new Holder<>();
-		holder.object = o;
+		holder.value = o;
+		holder.type = TextUtilities.getNiceClassName(o.getClass());
 		String json = gson.toJson(holder);
 		os.write(json.getBytes());
 	}

@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import toools.io.Cout;
 import toools.thread.Q;
 
 public class MessageQueue extends Q<Message> {
@@ -80,18 +81,24 @@ public class MessageQueue extends Q<Message> {
 		});
 	}
 
-	public Object get() {
-		try {
-			return setTimeout(60).collectUntilFirstEOT().throwAnyError().resultMessages().first().content;
-		} catch (MessageException e) {
-			throw new Error(e);
-		}
+	public Object get() throws Throwable {
+		return collectUntilFirstEOT().throwAnyError().resultMessages().first().content;
 	}
 
+	/**
+	 * Collects until all components have replied or timeout has expired.
+	 * 
+	 * @return
+	 */
 	public MessageList collect() {
 		return collect(msg -> SUFFICIENCY.NOT_ENOUGH);
 	}
 
+	/**
+	 * Collects until one component have completed.
+	 * 
+	 * @return
+	 */
 	public MessageList collectUntilFirstEOT() {
 		return collect(msg -> msg.isEOT() ? SUFFICIENCY.ENOUGH : SUFFICIENCY.NOT_ENOUGH);
 	}
@@ -100,6 +107,10 @@ public class MessageQueue extends Q<Message> {
 		MessageList l = new MessageList();
 
 		l.timeout = !forEach(msg -> {
+
+			if (msg.content instanceof Throwable && !(msg.content instanceof RemoteException))
+				Cout.debugSuperVisible(msg.content);
+
 			l.add(msg);
 			return returnsHandler.apply(msg);
 		});

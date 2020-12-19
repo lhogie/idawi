@@ -1,4 +1,4 @@
-package idawi.routing;
+package idawi.service.registry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,12 +25,8 @@ public class MapTest {
 
 		for (ComponentInfo a : components) {
 			for (int i = 0; i < 3; ++i) {
-				var n = new ComponentInfo.Neighbor();
 				var b = Collections.pickRandomObject(components, new Random());
-				n.id = b.friendlyName;
-				n.latency = 1;
-				n.rate = 1;
-				a.neighbors.add(n);
+				a.neighbors.add(b.friendlyName);
 			}
 		}
 

@@ -1,8 +1,8 @@
 package idawi;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Q;
 import toools.thread.Threads;
@@ -38,16 +39,24 @@ public class Service {
 	private final AtomicLong returnQueueID = new AtomicLong();
 	private long nbMessages;
 
-	public Service() throws IOException {
+	public Service() throws IOException, RemoteException {
 		this(new Component());
 		run();
+	}
+
+	@Operation
+	public ServiceDescriptor descriptor() {
+		var d = new ServiceDescriptor();
+		d.name = id.getName();
+		name2operation.values().forEach(o -> d.operations.add(o.descriptor));
+		return d;
 	}
 
 	protected <S> S service(Class<? extends S> serviceID) {
 		return component.lookupService(serviceID);
 	}
 
-	public void run() throws IOException {
+	public void run() throws IOException, RemoteException {
 	}
 
 	public Service(Component component) {
@@ -58,16 +67,19 @@ public class Service {
 		for (Class c : getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
 				if (m.isAnnotationPresent(Operation.class)) {
-					if ((m.getModifiers() & Modifier.PRIVATE) == 0) {
-						throw new IllegalStateException(
-								"operation should be private: " + c.getName() + "." + m.getName());
-					}
 					if (name2operation.containsKey(m.getName())) {
 						throw new IllegalStateException(
 								"operation name is already in use: " + c.getName() + "." + m.getName());
 					}
 
 					name2operation.put(m.getName(), new AbstractOperation(this, m));
+
+					try {
+						Field f = c.getField(m.getName());
+					} catch (NoSuchFieldException e) {
+						System.err.println("warning: class " + c.getName() + ", missing: public final static String "
+								+ m.getName() + " = \"" + m.getName() + "\";");
+					}
 				}
 			}
 		}
@@ -94,19 +106,13 @@ public class Service {
 		return r;
 	}
 
-	@Operation
-	private Directory directory() {
+	public Directory directory() {
 		return new Directory(Component.directory, "/services/" + id);
 	}
 
 	@Operation
 	private long nbMessagesReceived() {
 		return nbMessages;
-	}
-
-	@Operation
-	private String html() {
-		return "<html>Hi!</html>";
 	}
 
 	public final static String listOperationNames = "listOperationNames";
@@ -171,7 +177,7 @@ public class Service {
 			// no queue, it has already expired
 			if (q == null) {
 				if (msg.replyTo != null) {
-					MessageException err = new MessageException("operation/queue '" + msg.to.operationOrQueue
+					RemoteException err = new RemoteException("operation/queue '" + msg.to.operationOrQueue
 							+ "' not existing on service " + getClass().getName());
 					error(err);
 					send(err, msg.replyTo, null);
@@ -184,7 +190,6 @@ public class Service {
 			if (!threadPool.isShutdown()) {
 				threadPool.submit(() -> {
 					try {
-						operation.nbCalls++;
 						double start = Utils.time();
 
 						// process the message
@@ -198,14 +203,15 @@ public class Service {
 						});
 
 						operation.totalDuration += Utils.time() - start;
+						operation.nbCalls++;
 
 						// tells the client the processing has completed
 						if (msg.replyTo != null) {
 							send(new EOT(), msg.replyTo, null);
 						}
 					} catch (Throwable exception) {
-						MessageException err = new MessageException(exception);
-						exception.printStackTrace();
+						RemoteException err = new RemoteException(exception);
+						//exception.printStackTrace();
 						error(err);
 
 						if (msg.replyTo != null) {
@@ -256,7 +262,7 @@ public class Service {
 	}
 
 	protected void error(Throwable err) {
-		err.printStackTrace();
+		//err.printStackTrace();
 		component.lookupServices(ErrorLog.class, s -> s.report(err));
 	}
 
@@ -335,18 +341,8 @@ public class Service {
 		return send(parms, to);
 	}
 
-	public MessageQueue call(Set<ComponentInfo> descriptors, Class<? extends Service> service, String operation,
-			Object... parms) {
-		return call(new To(descriptors, service, operation), new OperationParameterList(parms));
-	}
-
-	public MessageQueue call(ComponentInfo descriptor, Class<? extends Service> service, String operation,
-			Object... parms) {
-		return call(new To(descriptor, service, operation), new OperationParameterList(parms));
-	}
-
-	public MessageQueue call(Component target, Class<? extends Service> service, String operation, Object... parms) {
-		return call(new To(target.descriptor(), service, operation), new OperationParameterList(parms));
+	public MessageQueue call(To to, Object... parms) {
+		return call(to, new OperationParameterList(parms));
 	}
 
 	public void startOn(Set<ComponentInfo> c) {

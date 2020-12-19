@@ -117,13 +117,20 @@ public class MessageList extends ArrayList<Message> {
 		return r;
 	}
 
-	public MessageList throwAnyError() throws MessageException {
-		if (timeout)
-			throw new MessageException("timeout");
+	public MessageList throwAnyError() throws Throwable {
+		if (timeout) {
+			throw new RemoteException("timeout");
+		}
 
 		for (var m : this) {
 			if (m.isError()) {
-				throw (MessageException) m.content;
+				Throwable e = (Throwable) m.content;
+
+				while (e.getCause() != null) {
+					e = e.getCause();
+				}
+
+				throw e;
 			}
 		}
 

@@ -87,7 +87,7 @@ public class Message implements Externalizable {
 	}
 
 	public boolean isError() {
-		return content instanceof MessageException;
+		return content instanceof RemoteException;
 	}
 
 	public boolean isProgress() {

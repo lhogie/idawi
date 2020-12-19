@@ -1,40 +1,33 @@
 package idawi.routing;
 
-import java.util.function.Consumer;
+import java.util.Collection;
+import java.util.Set;
 
 import idawi.Component;
-import idawi.Operation;
+import idawi.ComponentInfo;
+import idawi.Route;
 import idawi.Service;
-import toools.reflect.Clazz;
+import idawi.TransportLayer;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
  * to bench.
  */
 
-public class RoutingService extends Service {
-
-	public RoutingScheme scheme = new RoutingScheme_bcast(this);
+public abstract class RoutingService extends Service {
 
 	public RoutingService(Component node) {
 		super(node);
-		registerOperation("retrieve", (msg, out) -> out.accept(scheme));
-		registerOperation("info", (msg, out) -> out.accept(scheme.toString()));
-		registerOperation("set", (msg, results) -> setScheme((Class<? extends RoutingScheme>) msg.content));
 	}
 
-	@Operation
-	private void listRoutes(Consumer<Object> out)
-	{
-		
-	}
-	
 	@Override
 	public String getFriendlyName() {
-		return "routing";
+		return "routing (" + getAlgoName() + ")";
 	}
 
-	public void setScheme(Class<? extends RoutingScheme> routingClass) {
-		scheme = Clazz.makeInstance(routingClass);
-	}
+	public abstract String getAlgoName();
+
+	public abstract Collection<ComponentInfo> findRelaysToReach(TransportLayer protocol, Set<ComponentInfo> to);
+
+	public abstract void feedWith(Route route);
 }

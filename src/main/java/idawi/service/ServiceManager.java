@@ -2,34 +2,37 @@ package idawi.service;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentInfo;
-import idawi.Message;
-import idawi.MessageException;
+import idawi.RemoteException;
 import idawi.Operation;
 import idawi.Service;
-import idawi.To;
+import idawi.ServiceDescriptor;
+import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
 
-	public static class Stub extends ComponentStub<ServiceManager> {
-		public Stub(ServiceManager localService, ComponentInfo remoteComponent) {
-			super(localService, remoteComponent);
+	public static class Stub extends ServiceStub {
+		public Stub(Service localService, Set<ComponentInfo> remoteComponents) {
+			super(localService, remoteComponents, ServiceManager.class);
 		}
 
-		public void start(Class<? extends Service> c) throws MessageException {
-			localService.start(remoteComponent, c);
+		public void start(Class<? extends Service> serviceID) throws Throwable {
+			localService.call(to(start), serviceID).collect().throwAnyError();
 		}
 
-		public void stop(Class<? extends Service> c) throws MessageException {
-			localService.stop(remoteComponent, c);
+		public void stop(Class<? extends Service> serviceID) throws Throwable {
+			localService.call(to(stop), serviceID).collect().throwAnyError();
 		}
 
-		public Set<String> list() throws MessageException {
-			return ServiceManager.list(localService, remoteComponent);
+		public boolean has(Class<? extends Service> serviceID) throws Throwable {
+			return (Boolean) localService.call(to(has), serviceID).get();
+		}
+
+		public Set<String> list() throws Throwable {
+			return (Set<String>) localService.call(to(list)).get();
 		}
 	}
 
@@ -37,35 +40,31 @@ public class ServiceManager extends Service {
 		super(peer);
 	}
 
-	public static String start = "start";
+	public final static String start = "start";
+	public final static String stop = "stop";
+	public final static String list = "list";
+	public final static String has = "has";
 
 	@Operation
-	private void start(Message msg, Consumer<Object> returns) {
-		if (service(id) != null) {
+	private ServiceDescriptor start(Class<? extends Service> serviceID) {
+		if (service(serviceID) != null) {
 			throw new IllegalArgumentException("service already running");
 		}
 
-		var constructor = Clazz.getConstructor(id, Component.class);
+		var constructor = Clazz.getConstructor(serviceID, Component.class);
 
 		if (constructor == null) {
-			throw new IllegalStateException(id + " does not have constructor (" + Component.class.getName() + ")");
+			throw new IllegalStateException(serviceID + " does not have constructor (" + Component.class.getName() + ")");
 		}
 
-		Service s = Clazz.makeInstance(constructor, this);
-	}
-
-	public void start(Set<ComponentInfo> targets, Class<? extends Service> clazz) throws MessageException {
-		send(clazz, new To(targets, ServiceManager.class, start)).collect().throwAnyError();
+		Service s = Clazz.makeInstance(constructor, component);
+		return s.descriptor();
 	}
 
 	@Operation
-	private void stop(Class<Service> clazz) {
-		Service s = component.lookupService(id);
+	private void stop(Class<Service> serviceID) {
+		Service s = component.lookupService(serviceID);
 		component.removeService(s);
-	}
-
-	public void stop(Set<ComponentInfo> targets, Class<? extends Service> c) throws MessageException {
-		send(c, new To(targets, ServiceManager.class, "stop")).collect().throwAnyError();
 	}
 
 	@Operation
@@ -75,9 +74,9 @@ public class ServiceManager extends Service {
 		return r;
 	}
 
-	public static Set<String> list(Service localService, Set<ComponentInfo> targets) throws MessageException {
-		return (Set<String>) localService.send(null, new To(targets, ServiceManager.class, "list")).collect()
-				.throwAnyError().resultMessages().first().content;
+	@Operation
+	private boolean has(Class serviceID) {
+		return service(serviceID) != null;
 	}
 
 	@Override

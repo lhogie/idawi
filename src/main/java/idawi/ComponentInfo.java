@@ -46,7 +46,7 @@ public class ComponentInfo implements Serializable {
 
 	// final Map<String, Object> map = new HashMap<>();
 	
-	public Set<Neighbor> neighbors = new HashSet<>();
+	public Set<String> neighbors = new HashSet<>();
 
 	public static class Neighbor implements Serializable{
 		public String id;

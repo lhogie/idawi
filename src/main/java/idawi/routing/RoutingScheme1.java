@@ -1,11 +1,14 @@
 package idawi.routing;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.Operation;
 import idawi.Route;
 import idawi.TransportLayer;
 
@@ -14,14 +17,25 @@ import idawi.TransportLayer;
  * to bench.
  */
 
-public class RoutingScheme1 extends RoutingScheme {
-
-	public final RoutingTable routingTable = new RoutingTable();
-	
-
-	public RoutingScheme1(RoutingService s) {
-		super(s);
+public class RoutingScheme1 extends RoutingService {
+	public RoutingScheme1(Component node) {
+		super(node);
+		// TODO Auto-generated constructor stub
 	}
+
+	public static class RoutingTable extends HashMap<ComponentInfo, ComponentInfo> {
+		public void feedWith(Route r) {
+			ComponentInfo relay = r.last().component;
+			int len = r.size();
+
+			for (int i = 0; i < len - 1; ++i) {
+				ComponentInfo p = r.get(i).component;
+				put(p, relay);
+			}
+		}
+	}
+	
+	private RoutingTable routingTable = new RoutingTable();
 
 	@Override
 	public Collection<ComponentInfo> findRelaysToReach(TransportLayer protocol, Set<ComponentInfo> to) {
@@ -31,9 +45,8 @@ public class RoutingScheme1 extends RoutingScheme {
 		if (to == null) {
 			// but the node is disconnected
 			if (currentNeighbors.isEmpty()) {
-				return s.component.descriptorRegistry;
-			}
-			else {
+				return component.descriptorRegistry;
+			} else {
 
 				return currentNeighbors;
 			}
@@ -44,8 +57,7 @@ public class RoutingScheme1 extends RoutingScheme {
 			if (currentNeighbors.isEmpty()) {
 				// try to reach the destinations directly
 				return to;
-			}
-			else {
+			} else {
 				Set<ComponentInfo> relays = new HashSet<>(to.size());
 
 				for (ComponentInfo t : to) {
@@ -70,7 +82,13 @@ public class RoutingScheme1 extends RoutingScheme {
 	}
 
 	@Override
-	public void print(Consumer<String> out) {
-		routingTable.forEach((k, v) -> out.accept(k + " -> " + v));
+	@Operation
+	public String getAlgoName() {
+		return "default";
+	}
+
+	@Operation
+	public RoutingTable getRoutingTable() {
+		return routingTable;
 	}
 }
