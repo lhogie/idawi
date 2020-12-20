@@ -19,6 +19,7 @@ public class Message implements Externalizable {
 	public To replyTo;
 	public Object content;
 	public double emissionDate, receptionDate;
+	public double creationDate = Utils.time();
 	public boolean dropIfRecipientQueueIsFull = false;
 
 	@Override
@@ -28,7 +29,6 @@ public class Message implements Externalizable {
 		}
 
 		Message m = (Message) o;
-
 		return ID == m.ID && Utils.equals(route, m.route) && Utils.equals(to, m.to) && Utils.equals(content, m.content)
 				&& emissionDate == m.emissionDate && receptionDate == m.receptionDate;
 	}
@@ -39,11 +39,11 @@ public class Message implements Externalizable {
 	}
 
 	public double expirationDate() {
-		return emissionDate + to.validityDuration;
+		return creationDate + to.validityDuration;
 	}
 
 	public double remainingTime() {
-		return expirationDate() - Date.time();
+		return expirationDate() - Utils.time();
 	}
 
 	public boolean isExpired() {
@@ -71,6 +71,7 @@ public class Message implements Externalizable {
 		out.writeObject(replyTo);
 		out.writeObject(content);
 		out.writeDouble(emissionDate);
+		out.writeDouble(creationDate);
 		out.writeBoolean(dropIfRecipientQueueIsFull);
 	}
 
@@ -83,6 +84,7 @@ public class Message implements Externalizable {
 		replyTo = (To) in.readObject();
 		content = in.readObject();
 		emissionDate = in.readDouble();
+		creationDate = in.readDouble();
 		dropIfRecipientQueueIsFull = in.readBoolean();
 	}
 

@@ -32,7 +32,7 @@ public class FileService extends Service {
 		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 	}
 
-	public final static OperationID downloadFileAsOneSingleMessage = null;
+	public final static String downloadFileAsOneSingleMessage = "downloadFileAsOneSingleMessage";
 
 	@Operation
 	private byte[] downloadFileAsOneSingleMessage(String path) throws IOException {

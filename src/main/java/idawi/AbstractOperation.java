@@ -21,11 +21,34 @@ public abstract class AbstractOperation {
 		this.descriptor = new OperationDescriptor(m);
 	}
 
+	// I did this to allow in class operations
+	private AbstractOperation() {
+		this.method = findServerMethod();
+		this.target = this;
+		this.descriptor = new OperationDescriptor(this.method);
+	}
+
+	private Method findServerMethod() {
+		Method r = null;
+
+		for (var m : getClass().getDeclaredMethods()) {
+			if (m.getName().equals("run")) {
+				if (r != null) {
+					throw new IllegalStateException("you cannot have multiple definitions of the run() methods");
+				}
+
+				r = m;
+			}
+		}
+
+		return r;
+	}
+
 	@Override
 	public String toString() {
 		return descriptor().toString();
 	}
-	
+
 	public abstract String getDescription();
 
 	public double avgDuration() {

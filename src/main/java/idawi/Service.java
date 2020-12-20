@@ -27,6 +27,7 @@ import toools.thread.Threads;
 public class Service {
 
 	// creates the threads that will process the messages
+//	public static ExecutorService threadPool = Executors.newFixedThreadPool(1);
 	public static ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 	public final Class<? extends Service> id;
@@ -62,7 +63,10 @@ public class Service {
 		this.component = component;
 		component.services.put(getClass(), this);
 		this.id = getClass();
+		registerInMethodOperations();
+	}
 
+	private void registerInMethodOperations() {
 		for (Class c : getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
 				if (m.isAnnotationPresent(Operation.class)) {
@@ -72,7 +76,6 @@ public class Service {
 					}
 
 					name2operation.put(m.getName(), new AbstractOperation(this, m) {
-
 						@Override
 						public String getDescription() {
 							return "in method operation";
@@ -81,9 +84,21 @@ public class Service {
 
 					try {
 						Field f = c.getField(m.getName());
+						/*
+						 * if ((f.getModifiers() & Modifier.STATIC) == 0) { System.err.println(
+						 * "warning: class " + c.getName() + ", field " + m.getName() +
+						 * " should be static"); } else if ((f.getModifiers() & Modifier.PUBLIC) == 0) {
+						 * System.err.println( "warning: class " + c.getName() + ", field " +
+						 * m.getName() + " should be public"); }
+						 * 
+						 * OperationID value = new OperationID(); value.name = m.getName();
+						 * System.out.println(c + "." + m.getName()); f.set(this, value);
+						 */
 					} catch (NoSuchFieldException e) {
-						System.err.println("warning: class " + c.getName() + ", missing: public final static String "
-								+ m.getName() + " = \"" + m.getName() + "\";");
+						System.err.println("warning: class " + c.getName() + ", missing: public final OperationID "
+								+ m.getName() + ";");
+					} catch (IllegalArgumentException e) {
+						throw new IllegalStateException(e);
 					}
 				}
 			}
@@ -120,7 +135,8 @@ public class Service {
 		return nbMessages;
 	}
 
-	public final static String listOperationNames = "listOperationNames";
+	@OperationName
+	public static OperationID listOperationNames;
 
 	@Operation
 	private Set<String> listOperationNames() {

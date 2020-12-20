@@ -17,8 +17,7 @@ public class To implements Externalizable {
 	public String operationOrQueue;
 	public int coverage = Integer.MAX_VALUE;
 
-	// valid 1s by default
-	public double validityDuration = 1;
+	public double validityDuration = 10;//Double.MAX_VALUE;
 
 	public To() {
 
@@ -30,13 +29,14 @@ public class To implements Externalizable {
 		this.operationOrQueue = qid;
 	}
 
-
 	public To(ComponentInfo t, Class<? extends Service> sid, String qid) {
 		this(Set.of(t), sid, qid);
 	}
+
 	public To(Component c, Class<? extends Service> sid, String qid) {
 		this(c.descriptor(), sid, qid);
 	}
+
 	public To(Class<? extends Service> sid, String qid) {
 		this((Set) null, sid, qid);
 	}

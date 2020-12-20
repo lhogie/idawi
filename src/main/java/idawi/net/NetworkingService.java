@@ -23,7 +23,7 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.thread.Threads;
 import toools.util.Date;
 
-public class NetworkingService extends Service implements Consumer<Message> {
+public class NetworkingService extends Service {
 	static {
 		// delete deprecated messages
 		Threads.newThread_loop(1000, () -> true, () -> {
@@ -53,7 +53,7 @@ public class NetworkingService extends Service implements Consumer<Message> {
 		super(t);
 		transport = new MultiTransport();
 		transport.update(t.descriptor());
-		transport.setNewMessageConsumer(this);
+		transport.setNewMessageConsumer(messagesFromNetwork);
 		transport.addProtocol(new LMI());
 
 		transport.listeners.add(new NeighborhoodListener() {
@@ -77,11 +77,24 @@ public class NetworkingService extends Service implements Consumer<Message> {
 		return transport.neighbors();
 	}
 
-	@Override
-	public synchronized void accept(Message msg) {
+	public final Consumer<Message> messagesFromNetwork = (msg) -> {
 		// Cout.debug(component + " RECV " + msg);
 		msg.receptionDate = Date.time();
-		msg.route.forEach(routeEntry -> component.descriptorRegistry.update(routeEntry.component));
+		learnFrom(msg);
+
+		if (!msg.isExpired()) {
+			// the message was already received
+			if (alreadyReceivedMsgs.contains(msg.ID)) {
+				alreadyReceivedMsg(msg);
+			} else {
+				alreadyReceivedMsgs.add(msg.ID);
+				notYetReceivedMsg(msg);
+			}
+		}
+	};
+
+	private void learnFrom(Message msg) {
+		msg.route.forEach(routeEntry -> Component.descriptorRegistry.update(routeEntry.component));
 
 		for (Service s : component.services()) {
 			if (s instanceof RoutingService) {
@@ -90,75 +103,56 @@ public class NetworkingService extends Service implements Consumer<Message> {
 				((RegistryService) s).feedWith(msg.route);
 			}
 		}
+	}
 
-		if (msg.isExpired()) {
-			return;
-		}
+	private void notYetReceivedMsg(Message msg) {
+		if (msg.to.isBroadcast()) {
+			Service targetService = component.lookupService(msg.to.service);
 
-		// the message was already received
-		if (alreadyReceivedMsgs.contains(msg.ID)) {
-			// updates recipients list
-			if (!msg.to.isBroadcast()) {
-				Message firstReceptionOfMsg;
-
-				synchronized (aliveMessages) {
-					firstReceptionOfMsg = aliveMessages.get(msg.ID);
-
-					if (firstReceptionOfMsg == null) {
-						aliveMessages.put(msg.ID, msg);
-					}
-				}
-
-				if (firstReceptionOfMsg != null) {
-					msg.to.notYetReachedExplicitRecipients
-							.retainAll(firstReceptionOfMsg.to.notYetReachedExplicitRecipients);
-				}
+			if (targetService != null) {
+				targetService.considerNewMessage(msg);
 			}
 		} else {
-			alreadyReceivedMsgs.add(msg.ID);
-
-			if (msg.to.isBroadcast()) {
+			// if I'm and explicit recipient
+			if (msg.to.notYetReachedExplicitRecipients.remove(component.descriptor())) {
 				Service targetService = component.lookupService(msg.to.service);
 
 				if (targetService != null) {
 					targetService.considerNewMessage(msg);
-				}
-			} else { // if I'm explicit recipient of the message
-				boolean explicitRecipient = msg.to.notYetReachedExplicitRecipients.remove(component.descriptor());
-
-				if (explicitRecipient) {
-					Service targetService = component.lookupService(msg.to.service);
-
-					if (targetService != null) {
-						targetService.considerNewMessage(msg);
-					} else {
-						if (explicitRecipient) {
-							error("service not found: " + msg.to.service);
-//							System.err.println(msg.replyTo);
-							if (msg.replyTo != null) {
-								send(new RemoteException("service not found: " + msg.to.service), msg.replyTo, null);
-								send(new EOT(), msg.replyTo, null);
-							}
-						}
-					}
+				} else if (msg.replyTo != null) {
+					send(new RemoteException("service not found: " + msg.to.service), msg.replyTo, null);
+					send(new EOT(), msg.replyTo, null);
 				}
 			}
+		}
 
-			if (alreadySentMsgs.contains(msg.ID)) {
-				// already sent
-			} else if (msg.route.size() >= msg.to.coverage) {
-				// went far enough
-			} else if (!msg.to.isBroadcast() && msg.to.notYetReachedExplicitRecipients.isEmpty()) {
-				// all recipients have been reached, if any
+		if (alreadySentMsgs.contains(msg.ID)) {
+			// already sent
+		} else if (msg.route.size() >= msg.to.coverage) {
+			// went far enough
+		} else if (!msg.to.isBroadcast() && msg.to.notYetReachedExplicitRecipients.isEmpty()) {
+			// all explicit recipients have been reached
+		} else {
+			Collection<ComponentInfo> neighbors = neighbors();
+
+			if (neighbors.size() == 1 && neighbors.contains(msg.route.last())) {
+				// don't resend to the guy who just sent it
 			} else {
-				Collection<ComponentInfo> neighbors = neighbors();
+//			Cout.debugSuperVisible(peer + " forwarding " + msg);
+				send(msg);
+			}
+		}
+	}
 
-				if (neighbors.size() == 1 && neighbors.contains(msg.route.last())) {
-					// don't resend to the guy who just sent it
-				} else {
-//				Cout.debugSuperVisible(peer + " forwarding " + msg);
-					send(msg, transport);
-				}
+	private void alreadyReceivedMsg(Message msg) {
+		if (!msg.to.isBroadcast()) {
+			Message firstReceptionOfMsg = aliveMessages.get(msg.ID);
+
+			if (firstReceptionOfMsg == null) {
+				aliveMessages.put(msg.ID, msg);
+			} else {
+				msg.to.notYetReachedExplicitRecipients
+						.retainAll(firstReceptionOfMsg.to.notYetReachedExplicitRecipients);
 			}
 		}
 	}
@@ -182,7 +176,6 @@ public class NetworkingService extends Service implements Consumer<Message> {
 	}
 
 	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {
-
 		if (relays.isEmpty()) {
 			return;
 		}

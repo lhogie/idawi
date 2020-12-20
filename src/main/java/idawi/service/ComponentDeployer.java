@@ -148,7 +148,7 @@ public class ComponentDeployer extends Service {
 		out.flush();
 
 		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(d, p);
-		childPipe.setNewMessageConsumer(component.lookupService(NetworkingService.class));
+		childPipe.setNewMessageConsumer(component.lookupService(NetworkingService.class).messagesFromNetwork);
 		NetworkingService network = component.lookupService(NetworkingService.class);
 		network.transport.addProtocol(childPipe);
 		network.transport.peer2protocol.put(d, childPipe);
