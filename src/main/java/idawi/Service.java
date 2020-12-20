@@ -71,7 +71,13 @@ public class Service {
 								"operation name is already in use: " + c.getName() + "." + m.getName());
 					}
 
-					name2operation.put(m.getName(), new AbstractOperation(this, m));
+					name2operation.put(m.getName(), new AbstractOperation(this, m) {
+
+						@Override
+						public String getDescription() {
+							return "in method operation";
+						}
+					});
 
 					try {
 						Field f = c.getField(m.getName());
@@ -230,7 +236,13 @@ public class Service {
 
 		try {
 			name2operation.put(name, new AbstractOperation(userCode,
-					userCode.getClass().getMethod("accept", Message.class, Consumer.class)));
+					userCode.getClass().getMethod("accept", Message.class, Consumer.class)) {
+
+				@Override
+				public String getDescription() {
+					return "in lambda operation";
+				}
+			});
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new IllegalStateException(e);
 		}

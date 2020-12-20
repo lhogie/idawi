@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 import toools.reflect.Clazz;
 
-public class AbstractOperation {
+public abstract class AbstractOperation {
 	int nbCalls;
 	double totalDuration;
 	private final Method method;
@@ -25,6 +25,8 @@ public class AbstractOperation {
 	public String toString() {
 		return descriptor().toString();
 	}
+	
+	public abstract String getDescription();
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;
