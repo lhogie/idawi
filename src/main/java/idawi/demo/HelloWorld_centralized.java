@@ -7,6 +7,7 @@ import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Service;
 import idawi.To;
+import idawi.service.registry.RegistryService;
 
 public class HelloWorld_centralized {
 	public static void main(String[] args) throws UnknownHostException {
@@ -16,19 +17,19 @@ public class HelloWorld_centralized {
 			Component node = new Component(ComponentInfo.fromCDL("name=" + i));
 			ComponentInfo next = new ComponentInfo();
 			next.friendlyName = "" + ((i + 1) % nbNodes);
-			node.descriptorRegistry.add(next);
+			node.lookupService(RegistryService.class).add(next);
 
 			new Service(node) {
 				{
-					newThread_loop_periodic(1000, () -> node.descriptorRegistry.toList().forEach(peer -> {
+					newThread_loop_periodic(1000, () -> node.lookupService(RegistryService.class).list().forEach(peer -> {
 						To to = new To();
 						to.notYetReachedExplicitRecipients = Set.of(peer);
 						to.service = id;
 						send("Hello World!", to, null);
 					}));
 
-					registerOperation(null, (msg, results) -> System.out.println(node.descriptor().friendlyName + " just received : "
-							+ msg.content + " from " + msg.route.source()));
+					registerOperation(null, (msg, results) -> System.out.println(node.descriptor().friendlyName
+							+ " just received : " + msg.content + " from " + msg.route.source()));
 				}
 
 				@Override

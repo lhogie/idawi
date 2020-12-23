@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import toools.io.file.Directory;
+import toools.reflect.Clazz;
 import toools.thread.Q;
 import toools.thread.Threads;
 
@@ -67,12 +69,14 @@ public class Service {
 	}
 
 	private void registerInMethodOperations() {
-		for (Class c : getClasses2(getClass())) {
+		for (Class c : Clazz.getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
 				if (m.isAnnotationPresent(Operation.class)) {
-					if (name2operation.containsKey(m.getName())) {
-						throw new IllegalStateException(
-								"operation name is already in use: " + c.getName() + "." + m.getName());
+					var o = name2operation.get(m.getName());
+
+					if (o != null) {
+						throw new IllegalStateException("operation name is already in use: " + c.getName() + "."
+								+ m.getName() + " with signature " + Arrays.toString(o.descriptor().parameterTypes));
 					}
 
 					name2operation.put(m.getName(), new AbstractOperation(this, m) {
@@ -95,35 +99,14 @@ public class Service {
 						 * System.out.println(c + "." + m.getName()); f.set(this, value);
 						 */
 					} catch (NoSuchFieldException e) {
-						System.err.println("warning: class " + c.getName() + ", missing: public final OperationID "
-								+ m.getName() + ";");
+//						System.err.println("warning: class " + c.getName() + ", missing: public final OperationID "
+//								+ m.getName() + ";");
 					} catch (IllegalArgumentException e) {
 						throw new IllegalStateException(e);
 					}
 				}
 			}
 		}
-	}
-
-	public static Set<Class> getClasses2(Class c) {
-		Set<Class> r = new HashSet<>();
-		List<Class> q = new ArrayList<>();
-		q.add(c);
-
-		while (!q.isEmpty()) {
-			c = q.remove(0);
-			r.add(c);
-
-			if (c.getSuperclass() != null) {
-				q.add(c.getSuperclass());
-			}
-
-			for (Class i : c.getInterfaces()) {
-				q.add(i);
-			}
-		}
-
-		return r;
 	}
 
 	public Directory directory() {
@@ -193,7 +176,7 @@ public class Service {
 		// this queue is not associated to any processing, to leave in a queue and some
 		// thread will pick it up later
 		if (operation == null) {
-			Q<Message> q = getQueue(msg.to.operationOrQueue);
+			MessageQueue q = getQueue(msg.to.operationOrQueue);
 
 			// no queue, it has already expired
 			if (q == null) {
@@ -205,6 +188,7 @@ public class Service {
 					send(new EOT(), msg.replyTo, null);
 				}
 			} else {
+				System.out.println("adding to " + System.identityHashCode(q));
 				q.add_blocking(msg);
 			}
 		} else {
@@ -384,7 +368,7 @@ public class Service {
 	}
 
 	public void inform(ComponentInfo p) {
-		p.servicesStrings.add(id.getName());
+		p.services.add(id.getName());
 	}
 
 }

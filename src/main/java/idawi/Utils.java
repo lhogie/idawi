@@ -3,6 +3,7 @@ package idawi;
 import java.util.Arrays;
 
 public class Utils {
+	// Objects.equals() does not support arrays
 	public static boolean equals(Object a, Object b) {
 		if (a == null) {
 			return b == null;
@@ -14,7 +15,7 @@ public class Utils {
 			return a.equals(b);
 		}
 	}
-	
+
 	public static double time() {
 		return System.nanoTime() / 1000000000;
 	}

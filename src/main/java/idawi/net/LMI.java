@@ -38,7 +38,14 @@ public class LMI extends TransportLayer {
 					lmi.processIncomingMessage(clone);
 				} else {
 					if (!executorService.isShutdown()) {
-						executorService.submit(() -> lmi.processIncomingMessage(clone));
+						executorService.submit(() -> {
+							try {
+								lmi.processIncomingMessage(clone);
+							}
+							catch(Throwable e) {
+								e.printStackTrace();
+							}
+						});
 					}
 				}
 			}

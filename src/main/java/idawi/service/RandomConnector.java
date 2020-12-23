@@ -5,6 +5,7 @@ import idawi.ComponentInfo;
 import idawi.PeerRegistry;
 import idawi.Service;
 import idawi.net.NetworkingService;
+import idawi.service.registry.RegistryService;
 import toools.collections.Collections;
 
 /**
@@ -17,7 +18,7 @@ public class RandomConnector extends Service {
 		super(node);
 		newThread_loop_periodic(1000, () -> {
 			PeerRegistry peersNotInNeighborhood = new PeerRegistry(
-					Collections.difference(component.descriptorRegistry, component.lookupService(NetworkingService.class).neighbors()));
+					Collections.difference(component.lookupService(RegistryService.class).list(), component.lookupService(NetworkingService.class).neighbors()));
 			ComponentInfo randomPeer = peersNotInNeighborhood.pickRandomPeer();
 			node.lookupService(PingPong.class).ping(randomPeer, 1000);
 		});

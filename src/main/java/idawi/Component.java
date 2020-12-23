@@ -27,7 +27,7 @@ import toools.io.file.Directory;
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
-	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
+//	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
 
 	private ComponentInfo descriptor;
 	final Map<Class<? extends Service>, Service> services = new HashMap<>();
@@ -64,8 +64,8 @@ public class Component {
 		new ExternalCommandsService(this);
 		new FileService(this);
 		new RegistryService(this);
-		
-		descriptorRegistry.add(descriptor());
+
+		// descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(descriptor.friendlyName, this);
 	}
 
@@ -99,6 +99,10 @@ public class Component {
 	}
 
 	public ComponentInfo descriptor() {
+		if (Utils.time() - descriptor.date > 1) {
+			updateDescriptor();
+		}
+
 		return descriptor;
 	}
 
@@ -106,6 +110,8 @@ public class Component {
 		for (var s : services()) {
 			s.inform(descriptor);
 		}
+
+		descriptor.date = Utils.time();
 	}
 
 	@Override

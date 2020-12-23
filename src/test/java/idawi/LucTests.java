@@ -1,25 +1,15 @@
 package idawi;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.CDLException;
-import idawi.Component;
-import idawi.ComponentInfo;
-import idawi.Message;
-import idawi.MessageList;
-import idawi.MessageQueue;
-import idawi.RemoteException;
-import idawi.RouteEntry;
-import idawi.Service;
-import idawi.To;
 import idawi.net.LMI;
 import idawi.service.ComponentDeployer;
 import idawi.service.DummyService;
@@ -30,6 +20,10 @@ import toools.io.ser.JavaSerializer;
 public class LucTests {
 
 	public static void main(String[] args) throws RemoteException {
+		var o = new Object[] { 4, true, new String[] { "1st element" } };
+		var clone = (Object[]) new JavaSerializer<>().clone(o);
+		System.out.println(Utils.equals(o, clone));
+
 	}
 
 	@Test
@@ -131,6 +125,8 @@ public class LucTests {
 		a.route.add(re);
 		a.content = new Object[] { 4, true, new String[] { "1st element" } };
 		Message clone = (Message) new JavaSerializer<>().clone(a);
+		System.out.println("orig:  " + a);
+		System.out.println("clone: " + clone);
 		assertEquals(a, clone);
 	}
 
@@ -152,7 +148,5 @@ public class LucTests {
 		// clean
 		Component.componentsInThisJVM.clear();
 	}
-
-
 
 }

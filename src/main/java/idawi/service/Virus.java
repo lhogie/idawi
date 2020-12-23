@@ -11,6 +11,7 @@ import idawi.ComponentInfo;
 import idawi.MessageList;
 import idawi.Service;
 import idawi.To;
+import idawi.service.registry.RegistryService;
 
 public class Virus extends Service {
 
@@ -27,8 +28,8 @@ public class Virus extends Service {
 	public void activate(Consumer<Object> feedback) {
 		newThread_loop_periodic(1000, () -> {
 
-			if (component.descriptorRegistry.size() > 0) {
-				ComponentInfo c = component.descriptorRegistry.pickRandomPeer();
+			if (component.lookupService(RegistryService.class).list().size() > 0) {
+				ComponentInfo c = component.lookupService(RegistryService.class).pickRandomPeer();
 				To to = new To();
 				to.notYetReachedExplicitRecipients = Set.of(c);
 				to.service = id;

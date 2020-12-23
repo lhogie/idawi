@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import idawi.Component;
@@ -20,6 +21,7 @@ import idawi.routing.RoutingService;
 import idawi.service.registry.RegistryService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -48,6 +50,8 @@ public class NetworkingService extends Service {
 	public final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
 	public final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
+	private final AtomicLong nbMsgReceived = new AtomicLong();
+	private boolean debug;
 
 	public NetworkingService(Component t) {
 		super(t);
@@ -77,8 +81,18 @@ public class NetworkingService extends Service {
 		return transport.neighbors();
 	}
 
+	@Operation
+	public long getNbMessagesReceived() {
+		return nbMsgReceived.get();
+	}
+
 	public final Consumer<Message> messagesFromNetwork = (msg) -> {
-		// Cout.debug(component + " RECV " + msg);
+		nbMsgReceived.incrementAndGet();
+
+		if (debug) {
+			Cout.debug(component + " RECV " + msg);
+		}
+
 		msg.receptionDate = Date.time();
 		learnFrom(msg);
 
@@ -94,7 +108,7 @@ public class NetworkingService extends Service {
 	};
 
 	private void learnFrom(Message msg) {
-		msg.route.forEach(routeEntry -> Component.descriptorRegistry.update(routeEntry.component));
+		msg.route.forEach(routeEntry -> service(RegistryService.class).update(routeEntry.component));
 
 		for (Service s : component.services()) {
 			if (s instanceof RoutingService) {
@@ -158,21 +172,25 @@ public class NetworkingService extends Service {
 	}
 
 	public void send(Message msg) {
-//		Cout.debugSuperVisible(component +  " sends " + msg);
+		if (debug) {
+			Cout.debugSuperVisible(component + " sends " + msg);
+		}
+
 		send(msg, transport);
 	}
 
 	public void send(Message msg, TransportLayer protocol) {
+		Collection<ComponentInfo> relays = new HashSet<>();
+
 		for (var s : component.services()) {
 			if (s instanceof RoutingService) {
 				RoutingService router = (RoutingService) s;
-				Collection<ComponentInfo> relays = router.findRelaysToReach(protocol,
-						msg.to.notYetReachedExplicitRecipients);
+				relays.addAll(router.findRelaysToReach(protocol, msg.to.notYetReachedExplicitRecipients));
 				// Cout.debug("ROUTING: " + msg.to.peers + " -> " + relays);
-				send(msg, protocol, relays);
-				return;
 			}
 		}
+
+		send(msg, protocol, relays);
 	}
 
 	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {

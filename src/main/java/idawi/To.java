@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import toools.reflect.Clazz;
@@ -58,8 +59,8 @@ public class To implements Externalizable {
 			return false;
 
 		To t = (To) o;
-		return Utils.equals(notYetReachedExplicitRecipients, t.notYetReachedExplicitRecipients)
-				&& Utils.equals(operationOrQueue, t.operationOrQueue) && Utils.equals(service, t.service)
+		return Objects.equals(notYetReachedExplicitRecipients, t.notYetReachedExplicitRecipients)
+				&& Objects.equals(operationOrQueue, t.operationOrQueue) && Objects.equals(service, t.service)
 				&& coverage == t.coverage;
 	}
 

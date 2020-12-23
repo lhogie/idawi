@@ -33,6 +33,7 @@ public class ComponentInfo implements Serializable {
 		here, new_jvm, ssh
 	}
 
+	public double date = Utils.time();
 	public String friendlyName;
 	public SSHParms sshParameters = new SSHParms();
 	public Directory inboxDirectory;
@@ -41,7 +42,7 @@ public class ComponentInfo implements Serializable {
 	public final List<String> webServers = new ArrayList<>();
 	public WHERE where;
 //	public Set<Class<? extends Service>> services = new HashSet<>();
-	public Set<String> servicesStrings = new HashSet<>();
+	public Set<String> services = new HashSet<>();
 	// private int isLocalhost;
 
 	// final Map<String, Object> map = new HashMap<>();

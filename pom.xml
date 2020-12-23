@@ -90,12 +90,11 @@
 			<artifactId>xycharter</artifactId>
 			<version>0.0.4</version>
 		</dependency>
-
-		<!-- <dependency> -->
-		<!-- <groupId>io.github.lhogie</groupId> -->
-		<!-- <artifactId>toools</artifactId> -->
-		<!-- <version>0.0.2</version> -->
-		<!-- </dependency> -->
+		<dependency>
+		<groupId>io.github.lhogie</groupId>
+		<artifactId>toools</artifactId>
+		<version>0.0.4</version>
+		</dependency>
 		<dependency>
 			<groupId>io.github.lhogie</groupId>
 			<artifactId>java4unix</artifactId>

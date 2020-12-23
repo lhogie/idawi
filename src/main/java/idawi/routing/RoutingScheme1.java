@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Operation;
 import idawi.Route;
 import idawi.TransportLayer;
+import idawi.service.registry.RegistryService;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -20,41 +20,45 @@ import idawi.TransportLayer;
 public class RoutingScheme1 extends RoutingService {
 	public RoutingScheme1(Component node) {
 		super(node);
-		// TODO Auto-generated constructor stub
 	}
 
 	public static class RoutingTable extends HashMap<ComponentInfo, ComponentInfo> {
-		public void feedWith(Route r) {
-			ComponentInfo relay = r.last().component;
+		public void feedWith(Route r, ComponentInfo me) {
 			int len = r.size();
 
-			for (int i = 0; i < len - 1; ++i) {
-				ComponentInfo p = r.get(i).component;
-				put(p, relay);
+			if (len > 1) {
+				ComponentInfo relay = r.last().component;
+
+				for (int i = 0; i < len - 1; ++i) {
+					ComponentInfo p = r.get(i).component;
+
+					if (!p.equals(me)) {
+						put(p, relay);
+					}
+				}
 			}
 		}
 	}
-	
+
 	private RoutingTable routingTable = new RoutingTable();
 
 	@Override
 	public Collection<ComponentInfo> findRelaysToReach(TransportLayer protocol, Set<ComponentInfo> to) {
-		Collection<ComponentInfo> currentNeighbors = protocol.neighbors();
+		Collection<ComponentInfo> neighbors = protocol.neighbors();
 
-		// the msg is targeted to anyone
+		// if it's a broadcast message
 		if (to == null) {
 			// but the node is disconnected
-			if (currentNeighbors.isEmpty()) {
-				return component.descriptorRegistry;
+			if (neighbors.isEmpty()) {
+				return service(RegistryService.class).list();
 			} else {
-
-				return currentNeighbors;
+				return neighbors;
 			}
 		}
 		// the msg is targeted to specific nodes
 		else {
 			// but the node is disconnected
-			if (currentNeighbors.isEmpty()) {
+			if (neighbors.isEmpty()) {
 				// try to reach the destinations directly
 				return to;
 			} else {
@@ -65,7 +69,7 @@ public class RoutingScheme1 extends RoutingService {
 
 					// if one relay can't be found, broadcast
 					if (relay == null) {
-						return currentNeighbors;
+						return neighbors;
 					}
 
 					relays.add(relay);
@@ -78,7 +82,10 @@ public class RoutingScheme1 extends RoutingService {
 
 	@Override
 	public void feedWith(Route route) {
-		routingTable.feedWith(route);
+		System.out.println(component + " rt: " + routingTable);
+		System.out.println(component + " route: " + route);
+		routingTable.feedWith(route, component.descriptor());
+		System.out.println(component + " rt: " + routingTable);
 	}
 
 	@Override

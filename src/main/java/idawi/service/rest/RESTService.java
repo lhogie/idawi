@@ -19,8 +19,8 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Message;
-import idawi.RemoteException;
 import idawi.Operation;
+import idawi.RemoteException;
 import idawi.Service;
 import idawi.ServiceDescriptor;
 import idawi.To;
@@ -127,14 +127,14 @@ public class RESTService extends Service {
 	private void processAPI(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
 		String format = query.get("format");
 		var serializer = name2serializer.getOrDefault(format, new GSONSerializer<>());
+		System.out.println("using " + serializer.getClass());
 
 		if (serializer == null) {
 			out.accept(("unknow format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes());
 		} else {
 			try {
 				Object result = processRESTRequest(path, query);
-				byte[] json = serializer.toBytes(result);
-				out.accept(json);
+				out.accept(serializer.toBytes(result));
 			} catch (Throwable t) {
 				out.accept(serializer.toBytes(t));
 				throw t;
@@ -207,12 +207,12 @@ public class RESTService extends Service {
 		Set<ComponentInfo> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			Set<ComponentInfo> found = component.descriptorRegistry.lookupByName(name);
+			var found = service(RegistryService.class).lookup(name);
 
-			if (components.isEmpty()) {
+			if (found == null) {
 				components.add(ComponentInfo.fromCDL("name=" + name));
 			} else {
-				components.addAll(found);
+				components.add(found);
 			}
 		}
 
@@ -226,7 +226,7 @@ public class RESTService extends Service {
 		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()
 				.throwAnyError().resultMessages()) {
 			ComponentInfo c = m.route.source().component;
-			c.servicesStrings = (Set<String>) m.content;
+			c.services = (Set<String>) m.content;
 			r.add(c);
 		}
 
@@ -256,7 +256,8 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		call(new To(RegistryService.class, "local")).setTimeout(1).collect().throwAnyError();
+		var q = call(new To(RegistryService.class, "local"));
+		q.setTimeout(1).collect();
 
 		w.knownComponents.addAll(service(RegistryService.class).descriptors());
 		return w;
@@ -298,7 +299,7 @@ public class RESTService extends Service {
 	public static void main(String[] args) throws IOException, RemoteException {
 		List<Component> components = new ArrayList();
 
-		for (int i = 0; i < 20; ++i) {
+		for (int i = 0; i < 2; ++i) {
 			components.add(new Component());
 		}
 

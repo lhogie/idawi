@@ -7,13 +7,14 @@ import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Message;
 import idawi.service.PingPong;
+import idawi.service.registry.RegistryService;
 
 public class tracerouteBackend extends CommandBackend {
 
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 		var parms = cmdline.findParameters();
-		Set<ComponentInfo> to = n.descriptorRegistry.lookupByName(parms.get(0));
+		Set<ComponentInfo> to = n.lookupService(RegistryService.class).lookupByRegexp(parms.get(0));
 
 		for (ComponentInfo t : to) {
 			out.accept("ping " + t);

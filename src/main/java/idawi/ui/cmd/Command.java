@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.service.registry.RegistryService;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;
@@ -52,18 +53,14 @@ public abstract class Command extends CommandLineApplication {
 		for (String p : list.split(" *, *")) {
 			if (p.equals("_")) {
 				peers.add(n.descriptor());
-			}
-			else {
-				var pp = n.descriptorRegistry.lookupByName(p);
+			} else {
+				var pp = n.lookupService(RegistryService.class).lookup(p);
 
-				if (pp.isEmpty()) {
-					out.accept("no peer with name: " + p);
+				if (pp == null) {
+					out.accept("no component with name: " + p);
+				} else {
+					peers.add(pp);
 				}
-				else if (pp.size() > 1) {
-					out.accept(pp.size() + " peers with name: " + p);
-				}
-
-				peers.addAll(pp);
 			}
 		}
 

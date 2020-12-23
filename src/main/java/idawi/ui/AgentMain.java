@@ -7,6 +7,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentInfo;
+import idawi.service.registry.RegistryService;
 import j4u.CommandLine;
 import toools.io.file.RegularFile;
 
@@ -27,8 +28,7 @@ public class AgentMain extends JThingLineCmd {
 		List<String> parms = cmdLine.findParameters();
 
 		if (parms.isEmpty()) {
-			parms.add(System.getProperty("user.name") + "@"
-					+ InetAddress.getLocalHost().getHostName());
+			parms.add(System.getProperty("user.name") + "@" + InetAddress.getLocalHost().getHostName());
 		}
 
 		Set<Component> peers = new HashSet<>();
@@ -44,7 +44,7 @@ public class AgentMain extends JThingLineCmd {
 		for (Component p : peers) {
 			for (Component p2 : peers) {
 				if (p != p2) {
-					p.descriptorRegistry.add(p2.descriptor());
+					p.lookupService(RegistryService.class).add(p2.descriptor());
 				}
 			}
 		}

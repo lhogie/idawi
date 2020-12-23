@@ -25,6 +25,7 @@ import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
 import idawi.net.PipeFromToParentProcess;
+import idawi.service.registry.RegistryService;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
@@ -382,7 +383,7 @@ public class ComponentDeployer extends Service {
 					deployInfo.id);
 			t.parent = deployInfo.parent;
 
-			t.descriptorRegistry.add(deployInfo.parent);
+			t.lookupService(RegistryService.class).add(deployInfo.parent);
 			t.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
 			t.lookupService(NetworkingService.class).transport

@@ -105,9 +105,8 @@ public class MessageQueue extends Q<Message> {
 
 	public MessageList collect(Function<Message, SUFFICIENCY> returnsHandler) {
 		MessageList l = new MessageList();
-
 		l.timeout = !forEach(msg -> {
-
+System.out.println("*****");
 			if (msg.content instanceof Throwable && !(msg.content instanceof RemoteException))
 				Cout.debugSuperVisible(msg.content);
 

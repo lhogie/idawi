@@ -24,7 +24,6 @@ public class PingPong extends Service {
 		super(node);
 	}
 
-	
 	@Operation
 	private void ping() {
 		// don't need to send anything
@@ -53,11 +52,18 @@ public class PingPong extends Service {
 		return send(null, new To(targets, PingPong.class, "ping")).setTimeout(timeout).collect();
 	}
 
-	public  MessageQueue ping(Set<ComponentInfo> targets) {
+	public MessageQueue ping(Set<ComponentInfo> targets) {
 		return send(null, new To(targets, PingPong.class, "ping"));
 	}
 
-	public void discover(double timeout, Consumer<ComponentInfo> found) {
-		ping(null).setTimeout(timeout).forEach(newMsg -> SUFFICIENCY.NOT_ENOUGH);
+	public MessageQueue pingAround() {
+		return ping(null);
+	}
+
+	public void pingAround(double timeout, Consumer<ComponentInfo> found) {
+		ping(null).setTimeout(timeout).forEach(newMsg -> {
+			newMsg.route.forEach(e -> found.accept(e.component));
+			return SUFFICIENCY.NOT_ENOUGH;
+		});
 	}
 }

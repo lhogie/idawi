@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentInfo;
 import idawi.Service;
+import idawi.service.registry.RegistryService;
 import j4u.CommandLine;
 import j4u.License;
 import toools.io.Cout;
@@ -34,7 +35,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(ComponentInfo.fromCDL("name="+getCommandName()));
+		Component localNode = new Component(ComponentInfo.fromCDL("name=" + getCommandName()));
 		Service localService = new Service(localNode) {
 			@Override
 			public String getFriendlyName() {
@@ -93,15 +94,13 @@ public abstract class CommunicatingCommand extends Command {
 			if (p.equals("_")) {
 				peers.add(n.descriptor());
 			} else {
-				var pp = n.descriptorRegistry.lookupByName(p);
+				var pp = n.lookupService(RegistryService.class).lookup(p);
 
-				if (pp.isEmpty()) {
+				if (pp == null) {
 					out.accept("no peer with name: " + p);
-				} else if (pp.size() > 1) {
-					out.accept(pp.size() + " peers with name: " + p);
+				} else {
+					peers.add(pp);
 				}
-
-				peers.addAll(pp);
 			}
 		}
 

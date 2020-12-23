@@ -44,7 +44,7 @@ public class ServiceManager extends Service {
 	public final static String has = "has";
 
 	@Operation
-	private ServiceDescriptor start(Class<? extends Service> serviceID) {
+	public ServiceDescriptor start(Class<? extends Service> serviceID) {
 		if (service(serviceID) != null) {
 			throw new IllegalArgumentException("service already running");
 		}
@@ -60,20 +60,20 @@ public class ServiceManager extends Service {
 	}
 
 	@Operation
-	private void stop(Class<Service> serviceID) {
+	public void stop(Class<? extends Service> serviceID) {
 		Service s = component.lookupService(serviceID);
 		component.removeService(s);
 	}
 
 	@Operation
-	private Set<String> list() {
+	public Set<String> list() {
 		Set<String> r = new HashSet<>();
 		component.services().forEach(s -> r.add(s.id.getName()));
 		return r;
 	}
 
 	@Operation
-	private boolean has(Class serviceID) {
+	public boolean has(Class serviceID) {
 		return service(serviceID) != null;
 	}
 

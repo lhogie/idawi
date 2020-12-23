@@ -18,6 +18,7 @@ import idawi.TransportLayer;
 import idawi.net.MultiTransport;
 import idawi.net.NetworkingService;
 import idawi.net.UDPDriver;
+import idawi.service.registry.RegistryService;
 import idawi.ui.JThingLineCmd;
 import j4u.CommandLine;
 import toools.gui.Swingable;
@@ -36,8 +37,7 @@ public class start extends JThingLineCmd {
 		List<String> names = cmdLine.findParameters();
 
 		if (names.isEmpty()) {
-			names.add(System.getProperty("user.name") + "@"
-					+ InetAddress.getLocalHost().getHostName());
+			names.add(System.getProperty("user.name") + "@" + InetAddress.getLocalHost().getHostName());
 		}
 
 		int nbPeers = names.size();
@@ -47,8 +47,7 @@ public class start extends JThingLineCmd {
 			++nbCols;
 
 		int nbRows = (int) Math.sqrt(nbPeers);
-		Rectangle screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment()
-				.getMaximumWindowBounds();
+		Rectangle screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
 		int width = Math.min(screenSize.width / nbCols, 600);
 		int height = Math.min(screenSize.height / nbRows, 800);
 		Set<Component> peers = new HashSet<>();
@@ -59,7 +58,7 @@ public class start extends JThingLineCmd {
 			UDPDriver udp = new UDPDriver();
 			mp.addProtocol(udp);
 
-			Component peer = new Component(ComponentInfo.fromCDL("name="+name));
+			Component peer = new Component(ComponentInfo.fromCDL("name=" + name));
 
 			peers.add(peer);
 
@@ -99,8 +98,7 @@ public class start extends JThingLineCmd {
 			// new ExecApplication(peer);
 
 			peer.services().stream().filter(app -> app instanceof Swingable)
-					.forEach(app -> tabs.addTab(app.id.toString(),
-							((Swingable) app).getComponent()));
+					.forEach(app -> tabs.addTab(app.id.toString(), ((Swingable) app).getComponent()));
 
 			// tabs.setSelectedComponent(chat.getComponent());
 			f.setVisible(true);
@@ -109,7 +107,7 @@ public class start extends JThingLineCmd {
 		for (Component p : peers) {
 			for (Component p2 : peers) {
 				if (p != p2) {
-					p.descriptorRegistry.add(p2.descriptor());
+					p.lookupService(RegistryService.class).add(p2.descriptor());
 				}
 			}
 		}

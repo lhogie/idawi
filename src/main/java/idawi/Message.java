@@ -4,10 +4,10 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import toools.text.TextUtilities;
-import toools.util.Date;
 
 public class Message implements Externalizable {
 	private static final long serialVersionUID = 1L;
@@ -24,13 +24,14 @@ public class Message implements Externalizable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof Message)) {
+		if (o instanceof Message) {
+			Message m = (Message) o;
+			return ID == m.ID && Utils.equals(route, m.route) && Utils.equals(to, m.to)
+					&& Utils.equals(content, m.content) && emissionDate == m.emissionDate
+					&& receptionDate == m.receptionDate;
+		} else {
 			return false;
 		}
-
-		Message m = (Message) o;
-		return ID == m.ID && Utils.equals(route, m.route) && Utils.equals(to, m.to) && Utils.equals(content, m.content)
-				&& emissionDate == m.emissionDate && receptionDate == m.receptionDate;
 	}
 
 	@Override
