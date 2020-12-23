@@ -6,7 +6,7 @@ import java.util.Objects;
 public class RouteEntry implements Serializable {
 	public ComponentInfo component;
 	public String protocolName;
-	public long date;
+	public double emissionDate;
 
 	@Override
 	public String toString() {
@@ -20,6 +20,6 @@ public class RouteEntry implements Serializable {
 		}
 
 		RouteEntry e = (RouteEntry) o;
-		return component.equals(e.component) && Objects.equals(protocolName, protocolName) && date == e.date;
+		return component.equals(e.component) && Objects.equals(protocolName, protocolName) && emissionDate == e.emissionDate;
 	}
 }

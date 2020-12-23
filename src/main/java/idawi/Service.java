@@ -25,6 +25,7 @@ import toools.io.file.Directory;
 import toools.reflect.Clazz;
 import toools.thread.Q;
 import toools.thread.Threads;
+import toools.util.Date;
 
 public class Service {
 
@@ -149,7 +150,7 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
-		second2nbMessages.put((int) Utils.time(), ++nbMessages);
+		second2nbMessages.put((int) Date.time(), ++nbMessages);
 
 		if (msg.content instanceof Chunk) {
 			Chunk chunk = (Chunk) msg.content;
@@ -194,7 +195,7 @@ public class Service {
 			if (!threadPool.isShutdown()) {
 				threadPool.submit(() -> {
 					try {
-						double start = Utils.time();
+						double start = Date.time();
 
 						// process the message
 						operation.accept(msg, someResult -> {
@@ -206,7 +207,7 @@ public class Service {
 							}
 						});
 
-						operation.totalDuration += Utils.time() - start;
+						operation.totalDuration += Date.time() - start;
 						operation.nbCalls++;
 
 						// tells the client the processing has completed

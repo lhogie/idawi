@@ -21,6 +21,7 @@ import toools.io.file.Directory;
 import toools.net.NetUtilities;
 import toools.net.SSHParms;
 import toools.text.TextUtilities;
+import toools.util.Date;
 
 /**
  * Specifies how to reach a given peer.
@@ -33,7 +34,7 @@ public class ComponentInfo implements Serializable {
 		here, new_jvm, ssh
 	}
 
-	public double date = Utils.time();
+	public double date = Date.time();
 	public String friendlyName;
 	public SSHParms sshParameters = new SSHParms();
 	public Directory inboxDirectory;

@@ -1,4 +1,5 @@
 package idawi;
+
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
@@ -6,10 +7,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.CDLException;
-import idawi.Component;
-import idawi.ComponentInfo;
-import idawi.Message;
+import idawi.net.NetworkingService;
 import idawi.service.ComponentDeployer;
 import idawi.service.PingPong;
 import toools.io.Cout;
@@ -19,11 +17,12 @@ public class SSH {
 		new SSH().pingViaSSH();
 	}
 
-	public static final String ssh = "musclotte.inria.fr";
+	public static final String ssh = "nicoati.inria.fr";
 
 	@Test
 	public void pingViaSSH() throws CDLException, IOException {
 		Cout.debugSuperVisible("Starting test");
+		NetworkingService.debug = false;
 
 		// creates a component in this JVM
 		Component c1 = new Component();

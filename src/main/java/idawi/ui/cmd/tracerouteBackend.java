@@ -28,7 +28,7 @@ public class tracerouteBackend extends CommandBackend {
 			Message ping = (Message) pong.content;
 			out.accept("forward route:  " + ping.route);
 			out.accept("backward route: " + pong.route);
-			double time = pong.receptionDate - ((Message) pong.content).emissionDate;
+			double time = pong.receptionDate - ((Message) pong.content).route.last().emissionDate;
 			out.accept("time: " + time + "s");
 		}
 	}

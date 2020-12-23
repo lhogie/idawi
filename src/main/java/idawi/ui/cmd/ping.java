@@ -67,7 +67,7 @@ public class ping extends CommunicatingCommand {
 				}
 
 				double duration = pong.receptionDate
-						- ((Message) pong.content).emissionDate;
+						- ((Message) pong.content).route.last().emissionDate;
 
 				if (printIndividualPings) {
 					System.out.println("Pong after " + duration + "s");

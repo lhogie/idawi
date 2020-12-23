@@ -31,6 +31,6 @@ public class ConnectionBencher extends Service {
 		to.notYetReachedExplicitRecipients = Set.of(peer);
 		to.service = id;
 		MessageList msg = send(null, to).collect();
-		return Date.time() - msg.last().emissionDate;
+		return Date.time() - msg.last().route.last().emissionDate;
 	}
 }

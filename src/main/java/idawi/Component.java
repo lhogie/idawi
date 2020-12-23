@@ -23,6 +23,7 @@ import idawi.service.ServiceManager;
 import idawi.service.registry.RegistryService;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
+import toools.util.Date;
 
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
@@ -99,7 +100,7 @@ public class Component {
 	}
 
 	public ComponentInfo descriptor() {
-		if (Utils.time() - descriptor.date > 1) {
+		if (Date.time() - descriptor.date > 1) {
 			updateDescriptor();
 		}
 
@@ -111,7 +112,7 @@ public class Component {
 			s.inform(descriptor);
 		}
 
-		descriptor.date = Utils.time();
+		descriptor.date = Date.time();
 	}
 
 	@Override

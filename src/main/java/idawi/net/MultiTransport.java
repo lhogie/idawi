@@ -11,6 +11,7 @@ import idawi.ComponentInfo;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.TransportLayer;
+import toools.io.Cout;
 
 public class MultiTransport extends TransportLayer {
 	private final Map<String, TransportLayer> name2protocol = new HashMap<>();
@@ -31,7 +32,6 @@ public class MultiTransport extends TransportLayer {
 
 			if (!peer2protocol.containsKey(msg.route.last().component)) {
 				TransportLayer pp = name2protocol.get(msg.route.last().protocolName);
-
 				if (pp != null) {
 					peer2protocol.put(msg.route.last().component, pp);
 				}
@@ -63,8 +63,10 @@ public class MultiTransport extends TransportLayer {
 
 		for (ComponentInfo relay : relays) {
 			// if a working protocol has been identified, use it
-			if (peer2protocol.containsKey(relay)) {
-				TransportLayer p = peer2protocol.get(relay);
+			TransportLayer p = peer2protocol.get(relay);
+
+			if (p != null) {
+//				Cout.debug("using " + p);
 				msg.route.last().protocolName = p.getName();
 				p.send(msg, Arrays.asList(relay));
 			} else {
@@ -83,7 +85,7 @@ public class MultiTransport extends TransportLayer {
 	@Override
 	public String getName() {
 		StringBuilder b = new StringBuilder();
-		b.append("multiprotocol - ");
+		b.append("multiprotocol/");
 		name2protocol.values().forEach(p -> b.append(p.getName() + "/"));
 		return b.substring(0, b.length() - 1);
 	}

@@ -46,19 +46,13 @@ public class PipeFromToChildProcess extends TransportLayer {
 
 	@Override
 	public void send(Message msg, Collection<ComponentInfo> neighbors) {
-		if ( ! run)
+		if (!run)
 			return;
-//		Cout.debugSuperVisible(msg);
-
-		// if (neighbors.size() != 1 || !
-		// neighbors.iterator().next().equals(child))
-		// throw new IllegalStateException(neighbors.toString());
 
 		try {
 			serializer.write(msg, stdin);
 			stdin.flush();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -100,7 +94,7 @@ public class PipeFromToChildProcess extends TransportLayer {
 			String line = new String(l.bytes.toByteArray());
 
 			if (l.eof) {
-				if ( ! line.isEmpty()) {
+				if (!line.isEmpty()) {
 					ps.add(child + "> " + line);
 				}
 
@@ -109,31 +103,24 @@ public class PipeFromToChildProcess extends TransportLayer {
 				if (eofHandler != null) {
 					eofHandler.found();
 				}
-			}
-			else if (line.equals(started)) {
+			} else if (line.equals(started)) {
 				waitForChild.add_blocking(started);
-			}
-			else if (line.equals(failed)) {
+			} else if (line.equals(failed)) {
 				waitForChild.add_blocking(failed);
-			}
-			else if (line.equals(msgMark)) {
+			} else if (line.equals(msgMark)) {
 				try {
 					Message msg = (Message) serializer.read(in);
 					processIncomingMessage(msg);
-				}
-				catch (IOException e) {
+				} catch (IOException e) {
 					// the binary input stream was dirty
 					// e.printStackTrace();
 				}
-			}
-			else if (TextUtilities.isASCIIPrintable(line)) {
+			} else if (TextUtilities.isASCIIPrintable(line)) {
 				ps.add(child + "> " + line);
-			}
-			else {
+			} else {
 				ps.add(child + "> *** non-printable data ***: " + line);
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			run = false;
 		}
 	}

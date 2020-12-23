@@ -15,8 +15,4 @@ public class Utils {
 			return a.equals(b);
 		}
 	}
-
-	public static double time() {
-		return System.nanoTime() / 1000000000;
-	}
 }

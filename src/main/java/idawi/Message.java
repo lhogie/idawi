@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import toools.text.TextUtilities;
+import toools.util.Date;
 
 public class Message implements Externalizable {
 	private static final long serialVersionUID = 1L;
@@ -18,8 +19,8 @@ public class Message implements Externalizable {
 	public To to;
 	public To replyTo;
 	public Object content;
-	public double emissionDate, receptionDate;
-	public double creationDate = Utils.time();
+	public double receptionDate;
+	public double creationDate = Date.time();
 	public boolean dropIfRecipientQueueIsFull = false;
 
 	@Override
@@ -27,7 +28,7 @@ public class Message implements Externalizable {
 		if (o instanceof Message) {
 			Message m = (Message) o;
 			return ID == m.ID && Utils.equals(route, m.route) && Utils.equals(to, m.to)
-					&& Utils.equals(content, m.content) && emissionDate == m.emissionDate
+					&& Utils.equals(content, m.content) 
 					&& receptionDate == m.receptionDate;
 		} else {
 			return false;
@@ -44,7 +45,7 @@ public class Message implements Externalizable {
 	}
 
 	public double remainingTime() {
-		return expirationDate() - Utils.time();
+		return expirationDate() - Date.time();
 	}
 
 	public boolean isExpired() {
@@ -71,7 +72,6 @@ public class Message implements Externalizable {
 		out.writeObject(to);
 		out.writeObject(replyTo);
 		out.writeObject(content);
-		out.writeDouble(emissionDate);
 		out.writeDouble(creationDate);
 		out.writeBoolean(dropIfRecipientQueueIsFull);
 	}
@@ -84,7 +84,6 @@ public class Message implements Externalizable {
 		to = (To) in.readObject();
 		replyTo = (To) in.readObject();
 		content = in.readObject();
-		emissionDate = in.readDouble();
 		creationDate = in.readDouble();
 		dropIfRecipientQueueIsFull = in.readBoolean();
 	}
@@ -103,5 +102,9 @@ public class Message implements Externalizable {
 
 	public boolean isResult() {
 		return !isError() && !isProgress() && !isEOT();
+	}
+
+	public double transportDuration() {
+		return receptionDate - route.last().emissionDate;
 	}
 }

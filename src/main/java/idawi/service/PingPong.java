@@ -10,6 +10,7 @@ import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.MessageQueue.SUFFICIENCY;
+import toools.io.Cout;
 import idawi.Operation;
 import idawi.Service;
 import idawi.To;

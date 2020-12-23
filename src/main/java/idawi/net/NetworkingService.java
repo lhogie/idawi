@@ -17,6 +17,7 @@ import idawi.RemoteException;
 import idawi.RouteEntry;
 import idawi.Service;
 import idawi.TransportLayer;
+import idawi.Utils;
 import idawi.routing.RoutingService;
 import idawi.service.registry.RegistryService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -51,7 +52,7 @@ public class NetworkingService extends Service {
 	public final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 	private final AtomicLong nbMsgReceived = new AtomicLong();
-	private boolean debug;
+	public static boolean debug=false;
 
 	public NetworkingService(Component t) {
 		super(t);
@@ -172,10 +173,6 @@ public class NetworkingService extends Service {
 	}
 
 	public void send(Message msg) {
-		if (debug) {
-			Cout.debugSuperVisible(component + " sends " + msg);
-		}
-
 		send(msg, transport);
 	}
 
@@ -194,28 +191,29 @@ public class NetworkingService extends Service {
 	}
 
 	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {
+		if (debug) {
+			Cout.debugSuperVisible(
+					component + " sends via transport " + protocol + " and relays " + relays + ", msg: " + msg);
+		}
+
 		if (relays.isEmpty()) {
 			return;
 		}
 
 		alreadySentMsgs.add(msg.ID);
 
-		synchronized (aliveMessages) {
-			// in order to avoid modifying the immutable set created by Set.of()
-			if (msg.to.notYetReachedExplicitRecipients != null) {
-				msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentInfo>(
-						msg.to.notYetReachedExplicitRecipients);
-			}
-
-			aliveMessages.put(msg.ID, msg);
+		// in order to avoid modifying the immutable set created by Set.of()
+		if (msg.to.notYetReachedExplicitRecipients != null) {
+			msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentInfo>(msg.to.notYetReachedExplicitRecipients);
 		}
+
+		aliveMessages.put(msg.ID, msg);
 
 		RouteEntry e = new RouteEntry();
 		e.component = component.descriptor();
-		e.date = System.nanoTime();
+		e.emissionDate = Date.time();
 		e.protocolName = protocol.getName();
 		msg.route.add(e);
-		msg.emissionDate = Date.time();
 		// Cout.debug("sending: " + msg + " via " + protocol.getName());
 		// Cout.debug(descriptor + " SEND " + protocol + " sending via " + relays + ": "
 		// + msg);

@@ -39,12 +39,12 @@ public class PingPong_sequential extends Service {
 		To to = new To();
 		to.notYetReachedExplicitRecipients = Set.of(peer);
 		to.service = id;
-		MessageList msg = send("ping", to).setTimeout(timeoutMs/1000d).collect();
+		MessageList response = send("ping", to).setTimeout(timeoutMs/1000d).collect();
 
-		if (msg.isEmpty()) {
+		if (response.isEmpty()) {
 			return - 1;
 		}
 
-		return Date.time() - msg.last().emissionDate;
+		return Date.time() - response.last().route.last().emissionDate;
 	}
 }
