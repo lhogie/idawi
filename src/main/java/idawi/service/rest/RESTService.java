@@ -248,13 +248,13 @@ public class RESTService extends Service {
 	}
 
 	public static class Welcome {
-		ComponentInfo localComponent;
+		String localComponent;
 		Set<ComponentInfo> knownComponents = new HashSet<>();
 	}
 
 	private Welcome welcomePage() throws Throwable {
 		Welcome w = new Welcome();
-		w.localComponent = component.descriptor();
+		w.localComponent = component.descriptor().friendlyName;
 
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service

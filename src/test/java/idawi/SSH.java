@@ -38,7 +38,7 @@ public class SSH {
 		Message pong = c1.lookupService(PingPong.class).ping(c2, 5);
 		System.out.println("pong: " + pong);
 
-// be sure it got an answer
+		// be sure it got an answer
 		assertNotEquals(null, pong);
 
 		// clean
