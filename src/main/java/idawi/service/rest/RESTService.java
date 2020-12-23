@@ -306,7 +306,8 @@ public class RESTService extends Service {
 			components.add(new Component());
 		}
 
-		LMI.randomTree(components);
+//		LMI.randomTree(components);
+		LMI.chain(components);
 		components.get(0).lookupService(RESTService.class).startHTTPServer();
 
 		Threads.sleepForever();
