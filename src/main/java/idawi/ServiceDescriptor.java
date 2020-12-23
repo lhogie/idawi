@@ -8,4 +8,16 @@ public class ServiceDescriptor implements Serializable {
 	public String name;
 	public Set<OperationDescriptor> operations = new HashSet<>();
 	public long nbMessagesReceived = 0;
+
+	@Override
+	public String toString() {
+		String s = "service " + name;
+
+		for (var o : operations) {
+			s += "- " + o + "\n";
+		}
+
+		s+= nbMessagesReceived+ " messages received";
+		return s;
+	}
 }

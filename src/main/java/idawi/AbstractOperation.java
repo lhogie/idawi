@@ -13,12 +13,14 @@ public abstract class AbstractOperation {
 	private final Method method;
 	private final Object target;
 	public final OperationDescriptor descriptor;
+	private final Class<?>[] parmTypes;
 
 	public AbstractOperation(Object s, Method m) {
 		m.setAccessible(true);
 		this.method = m;
 		this.target = s;
 		this.descriptor = new OperationDescriptor(m);
+		this.parmTypes = m.getParameterTypes();
 	}
 
 	// I did this to allow in class operations
@@ -26,6 +28,7 @@ public abstract class AbstractOperation {
 		this.method = findServerMethod();
 		this.target = this;
 		this.descriptor = new OperationDescriptor(this.method);
+		this.parmTypes = this.method.getParameterTypes();
 	}
 
 	private Method findServerMethod() {
@@ -91,20 +94,20 @@ public abstract class AbstractOperation {
 			}
 
 			// exact match, the message nor the "return" consumer are passed
-			if (parms.size() == descriptor.parameterTypes.length) {
+			if (parms.size() == parmTypes.length) {
 				invoke(returns, parms.toArray());
-			} else if (descriptor.parameterTypes.length == parms.size() + 1) {
+			} else if (parmTypes.length == parms.size() + 1) {
 				// uses returns consumer
-				if (descriptor.parameterTypes[descriptor.parameterTypes.length - 1] == Consumer.class) {
+				if (parmTypes[parmTypes.length - 1] == Consumer.class) {
 					parms.add(returns);
 					invoke(returns, parms.toArray());
 				} else {
 					throw new IllegalStateException("operation '" + descriptor.name + "': received parms: " + parms);
 				}
 			} else {
-				throw new IllegalStateException("expecting parameters " + Arrays.toString(descriptor.parameterTypes)
-						+ " for operation " + method.getDeclaringClass().getName() + "." + method.getName()
-						+ " but received " + Arrays.toString(Clazz.getClasses(parms.toArray())));
+				throw new IllegalStateException("expecting parameters " + descriptor.parameterTypes + " for operation "
+						+ method.getDeclaringClass().getName() + "." + method.getName() + " but received "
+						+ Arrays.toString(Clazz.getClasses(parms.toArray())));
 			}
 		}
 	}

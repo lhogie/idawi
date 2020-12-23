@@ -101,7 +101,7 @@ public class RESTService extends Service {
 			out.accept(new JavaResource(getClass(), "root.html").getByteArray());
 		} else {
 			String context = path.remove(0);
-			System.out.println("context: " + context);
+
 			if (context.equals("api")) {
 				processAPI(path, query, out);
 			} else if (context.equals("file")) {
@@ -125,20 +125,24 @@ public class RESTService extends Service {
 	}
 
 	private void processAPI(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
-		String format = query.get("format");
-		var serializer = name2serializer.getOrDefault(format, new GSONSerializer<>());
-		System.out.println("using " + serializer.getClass());
+		Serializer serializer = new GSONSerializer<>();
 
-		if (serializer == null) {
-			out.accept(("unknow format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes());
-		} else {
-			try {
-				Object result = processRESTRequest(path, query);
-				out.accept(serializer.toBytes(result));
-			} catch (Throwable t) {
-				out.accept(serializer.toBytes(t));
-				throw t;
+		if (query.containsKey("format")) {
+			String format = query.get("format");
+			serializer = name2serializer.get(format);
+
+			if (serializer == null) {
+				out.accept(("unknow format: " + format + ". Available format are: " + name2serializer.keySet())
+						.getBytes());
 			}
+		}
+
+		try {
+			Object result = processRESTRequest(path, query);
+			out.accept(serializer.toBytes(result));
+		} catch (Throwable t) {
+			out.accept(serializer.toBytes(t));
+			throw t;
 		}
 	}
 
@@ -219,8 +223,7 @@ public class RESTService extends Service {
 		return components;
 	}
 
-	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout)
-			throws Throwable {
+	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout) throws Throwable {
 		Set<ComponentInfo> r = new HashSet<>();
 
 		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()

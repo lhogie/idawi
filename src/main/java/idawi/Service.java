@@ -76,7 +76,7 @@ public class Service {
 
 					if (o != null) {
 						throw new IllegalStateException("operation name is already in use: " + c.getName() + "."
-								+ m.getName() + " with signature " + Arrays.toString(o.descriptor().parameterTypes));
+								+ m.getName() + " with signature " + o.descriptor().parameterTypes);
 					}
 
 					name2operation.put(m.getName(), new AbstractOperation(this, m) {
@@ -188,7 +188,6 @@ public class Service {
 					send(new EOT(), msg.replyTo, null);
 				}
 			} else {
-				System.out.println("adding to " + System.identityHashCode(q));
 				q.add_blocking(msg);
 			}
 		} else {
