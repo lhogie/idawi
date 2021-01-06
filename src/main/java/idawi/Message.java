@@ -4,7 +4,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import toools.text.TextUtilities;
@@ -22,14 +21,14 @@ public class Message implements Externalizable {
 	public double receptionDate;
 	public double creationDate = Date.time();
 	public boolean dropIfRecipientQueueIsFull = false;
+	public Object routingData;
 
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Message) {
 			Message m = (Message) o;
 			return ID == m.ID && Utils.equals(route, m.route) && Utils.equals(to, m.to)
-					&& Utils.equals(content, m.content) 
-					&& receptionDate == m.receptionDate;
+					&& Utils.equals(content, m.content) && receptionDate == m.receptionDate;
 		} else {
 			return false;
 		}
@@ -74,6 +73,7 @@ public class Message implements Externalizable {
 		out.writeObject(content);
 		out.writeDouble(creationDate);
 		out.writeBoolean(dropIfRecipientQueueIsFull);
+		out.writeObject(routingData);
 	}
 
 	@Override
@@ -86,6 +86,7 @@ public class Message implements Externalizable {
 		content = in.readObject();
 		creationDate = in.readDouble();
 		dropIfRecipientQueueIsFull = in.readBoolean();
+		routingData = in.readObject();
 	}
 
 	public boolean isError() {

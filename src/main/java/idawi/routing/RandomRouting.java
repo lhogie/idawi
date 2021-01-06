@@ -1,6 +1,7 @@
 package idawi.routing;
 
 import java.util.Collection;
+import java.util.Random;
 import java.util.Set;
 
 import idawi.Component;
@@ -9,32 +10,24 @@ import idawi.NetworkMap;
 import idawi.Route;
 import idawi.net.NetworkingService;
 import idawi.net.TransportLayer;
+import toools.collections.Collections;
 
-public class RoutingScheme_bcast extends RoutingService {
+public class RandomRouting extends RoutingService {
 
-	public RoutingScheme_bcast(Component node) {
-		super(node);
+	private final static Random r = new Random();
+
+	public RandomRouting(Component component) {
+		super(component);
 	}
 
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
-		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
-
-		// if this is a bcast message
-		if (to == null) {
-			return neighbors;
-		}
-
-		if (neighbors.isEmpty()) {
-			return to;
-		}
-
-		return neighbors;
+		return Set.of(Collections.pickRandomObject(protocol.neighbors(), r));
 	}
 
 	@Override
 	public String getAlgoName() {
-		return "broadcast";
+		return "random";
 	}
 
 	@Override

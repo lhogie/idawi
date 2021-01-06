@@ -5,7 +5,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Set;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.To;
 import idawi.net.IPDriver;
@@ -25,7 +25,7 @@ public class Demo1_chain {
 		final int basePort = 4000;
 
 		for (int port = basePort; port < basePort + 20; ++port) {
-			ComponentInfo me = new ComponentInfo();
+			ComponentDescriptor me = new ComponentDescriptor();
 			me.friendlyName = "node-" + port;
 			me.inetAddresses.add(InetAddress.getLoopbackAddress());
 			me.tcpPort = port;
@@ -37,7 +37,7 @@ public class Demo1_chain {
 			network.setNewMessageConsumer(msg -> System.out.println(me + "> just received from " + msg.route.source()
 					+ " via protocol " + msg.route.last().protocolName + ": " + msg.content));
 
-			ComponentInfo next = new ComponentInfo();
+			ComponentDescriptor next = new ComponentDescriptor();
 			next.friendlyName = "node-" + (port + 1);
 			next.inetAddresses.add(me.inetAddresses.get(0)); // same host as me
 			next.udpPort = next.tcpPort = port + 1;

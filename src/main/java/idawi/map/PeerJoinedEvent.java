@@ -1,9 +1,9 @@
-package idawi.service.registry;
+package idawi.map;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 
 public class PeerJoinedEvent extends PeerEvent {
-	public PeerJoinedEvent(ComponentInfo p, String protocol) {
+	public PeerJoinedEvent(ComponentDescriptor p, String protocol) {
 		super(p, protocol);
 	}
 

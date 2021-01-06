@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class RouteEntry implements Serializable {
-	public ComponentInfo component;
+	public ComponentDescriptor component;
 	public String protocolName;
 	public double emissionDate;
 

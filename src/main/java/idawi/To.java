@@ -13,24 +13,31 @@ import toools.reflect.Clazz;
 public class To implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	public Set<ComponentInfo> notYetReachedExplicitRecipients;
+	public Set<ComponentDescriptor> notYetReachedExplicitRecipients;
 	public Class<? extends Service> service;
 	public String operationOrQueue;
-	public int coverage = Integer.MAX_VALUE;
-
-	public double validityDuration = 10;//Double.MAX_VALUE;
+	public int coverage;
+	public double forwardProbability;
+	public double validityDuration = 10;// Double.MAX_VALUE;
 
 	public To() {
 
 	}
 
-	public To(Set<ComponentInfo> peers, Class<? extends Service> sid, String qid) {
+	public To(Set<ComponentDescriptor> peers, Class<? extends Service> sid, String qid, int maxDistance,
+			double forwardProbability) {
 		this.notYetReachedExplicitRecipients = peers;
 		this.service = sid;
 		this.operationOrQueue = qid;
+		this.coverage = maxDistance;
+		this.forwardProbability = forwardProbability;
 	}
 
-	public To(ComponentInfo t, Class<? extends Service> sid, String qid) {
+	public To(Set<ComponentDescriptor> peers, Class<? extends Service> sid, String qid) {
+		this(peers, sid, qid, Integer.MAX_VALUE, 1);
+	}
+
+	public To(ComponentDescriptor t, Class<? extends Service> sid, String qid) {
 		this(Set.of(t), sid, qid);
 	}
 
@@ -72,7 +79,7 @@ public class To implements Externalizable {
 		} else {
 			out.writeInt(notYetReachedExplicitRecipients.size());
 
-			for (ComponentInfo p : notYetReachedExplicitRecipients) {
+			for (ComponentDescriptor p : notYetReachedExplicitRecipients) {
 				out.writeObject(p);
 			}
 		}
@@ -81,6 +88,7 @@ public class To implements Externalizable {
 		out.writeObject(operationOrQueue);
 		out.writeInt(coverage);
 		out.writeDouble(validityDuration);
+		out.writeDouble(forwardProbability);
 	}
 
 	@Override
@@ -88,10 +96,10 @@ public class To implements Externalizable {
 		int toLen = in.readInt();
 
 		if (toLen != -1) {
-			notYetReachedExplicitRecipients = new HashSet<ComponentInfo>(toLen);
+			notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(toLen);
 
 			for (int i = 0; i < toLen; ++i) {
-				notYetReachedExplicitRecipients.add((ComponentInfo) in.readObject());
+				notYetReachedExplicitRecipients.add((ComponentDescriptor) in.readObject());
 			}
 		}
 
@@ -99,6 +107,7 @@ public class To implements Externalizable {
 		operationOrQueue = (String) in.readObject();
 		coverage = in.readInt();
 		validityDuration = in.readDouble();
+		forwardProbability = in.readDouble();
 	}
 
 	public boolean isBroadcast() {

@@ -8,18 +8,16 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.EOT;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.Operation;
+import idawi.RegistryService;
 import idawi.RemoteException;
 import idawi.RouteEntry;
 import idawi.Service;
-import idawi.TransportLayer;
-import idawi.Utils;
 import idawi.routing.RoutingService;
-import idawi.service.registry.RegistryService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.io.Cout;
@@ -52,7 +50,7 @@ public class NetworkingService extends Service {
 	public final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 	private final AtomicLong nbMsgReceived = new AtomicLong();
-	public static boolean debug=false;
+	public static boolean debug = false;
 
 	public NetworkingService(Component t) {
 		super(t);
@@ -63,7 +61,7 @@ public class NetworkingService extends Service {
 
 		transport.listeners.add(new NeighborhoodListener() {
 			@Override
-			public void peerJoined(ComponentInfo newPeer, TransportLayer protocol) {
+			public void peerJoined(ComponentDescriptor newPeer, TransportLayer protocol) {
 				synchronized (aliveMessages) {
 					for (Message msg : aliveMessages.values()) {
 						send(msg, protocol, Set.of(newPeer));
@@ -72,13 +70,13 @@ public class NetworkingService extends Service {
 			}
 
 			@Override
-			public void peerLeft(ComponentInfo p, TransportLayer neighborhood) {
+			public void peerLeft(ComponentDescriptor p, TransportLayer neighborhood) {
 			}
 		});
 	}
 
 	@Operation
-	private Collection<ComponentInfo> listProtocols() {
+	private Collection<ComponentDescriptor> listProtocols() {
 		return transport.neighbors();
 	}
 
@@ -95,7 +93,7 @@ public class NetworkingService extends Service {
 		}
 
 		msg.receptionDate = Date.time();
-		learnFrom(msg);
+		service(RegistryService.class).feedWith(msg.route);
 
 		if (!msg.isExpired()) {
 			// the message was already received
@@ -108,17 +106,6 @@ public class NetworkingService extends Service {
 		}
 	};
 
-	private void learnFrom(Message msg) {
-		msg.route.forEach(routeEntry -> service(RegistryService.class).update(routeEntry.component));
-
-		for (Service s : component.services()) {
-			if (s instanceof RoutingService) {
-				((RoutingService) s).feedWith(msg.route);
-			} else if (s instanceof RegistryService) {
-				((RegistryService) s).feedWith(msg.route);
-			}
-		}
-	}
 
 	private void notYetReceivedMsg(Message msg) {
 		if (msg.to.isBroadcast()) {
@@ -145,10 +132,12 @@ public class NetworkingService extends Service {
 			// already sent
 		} else if (msg.route.size() >= msg.to.coverage) {
 			// went far enough
+		} else if (Math.random() > msg.to.forwardProbability) {
+			// probabilistic drop
 		} else if (!msg.to.isBroadcast() && msg.to.notYetReachedExplicitRecipients.isEmpty()) {
 			// all explicit recipients have been reached
 		} else {
-			Collection<ComponentInfo> neighbors = neighbors();
+			Collection<ComponentDescriptor> neighbors = neighbors();
 
 			if (neighbors.size() == 1 && neighbors.contains(msg.route.last())) {
 				// don't resend to the guy who just sent it
@@ -177,7 +166,7 @@ public class NetworkingService extends Service {
 	}
 
 	public void send(Message msg, TransportLayer protocol) {
-		Collection<ComponentInfo> relays = new HashSet<>();
+		Collection<ComponentDescriptor> relays = new HashSet<>();
 
 		for (var s : component.services()) {
 			if (s instanceof RoutingService) {
@@ -190,7 +179,7 @@ public class NetworkingService extends Service {
 		send(msg, protocol, relays);
 	}
 
-	public void send(Message msg, TransportLayer protocol, Collection<ComponentInfo> relays) {
+	public void send(Message msg, TransportLayer protocol, Collection<ComponentDescriptor> relays) {
 		if (debug) {
 			Cout.debugSuperVisible(
 					component + " sends via transport " + protocol + " and relays " + relays + ", msg: " + msg);
@@ -204,7 +193,8 @@ public class NetworkingService extends Service {
 
 		// in order to avoid modifying the immutable set created by Set.of()
 		if (msg.to.notYetReachedExplicitRecipients != null) {
-			msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentInfo>(msg.to.notYetReachedExplicitRecipients);
+			msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(
+					msg.to.notYetReachedExplicitRecipients);
 		}
 
 		aliveMessages.put(msg.ID, msg);
@@ -221,15 +211,9 @@ public class NetworkingService extends Service {
 		protocol.send(msg, relays);
 	}
 
-	public Collection<ComponentInfo> neighbors() {
-		Collection<ComponentInfo> s = transport.neighbors();
+	public Collection<ComponentDescriptor> neighbors() {
+		Collection<ComponentDescriptor> s = transport.neighbors();
 		s.remove(component.descriptor());
 		return s;
-	}
-
-	@Override
-	public void inform(ComponentInfo p) {
-		super.inform(p);
-		transport.injectLocalInfoTo(p);
 	}
 }

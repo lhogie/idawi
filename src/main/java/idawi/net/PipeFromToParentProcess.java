@@ -5,29 +5,28 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.TransportLayer;
 import toools.io.Cout;
 import toools.thread.Threads;
 
 public class PipeFromToParentProcess extends TransportLayer {
 	private boolean run = false;
 	private final boolean suicideWhenParentDies;
-	private final ComponentInfo parent;
+	private final ComponentDescriptor parent;
 
-	public PipeFromToParentProcess(ComponentInfo parent, boolean suicideWhenParentDies) {
+	public PipeFromToParentProcess(ComponentDescriptor parent, boolean suicideWhenParentDies) {
 		this.suicideWhenParentDies = suicideWhenParentDies;
 		this.parent = parent;
 	}
 
 	@Override
-	public Set<ComponentInfo> neighbors() {
+	public Set<ComponentDescriptor> neighbors() {
 		return Collections.singleton(parent);
 	}
 
 	@Override
-	public void send(Message msg, Collection<ComponentInfo> neighbors) {
+	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
 		if ( ! run)
 			return;
 
@@ -53,12 +52,12 @@ public class PipeFromToParentProcess extends TransportLayer {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return c.equals(parent);
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 	}
 
 	@Override

@@ -5,7 +5,7 @@ import java.net.InetAddress;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.service.ComponentDeployer;
 import idawi.service.PingPong;
@@ -24,10 +24,10 @@ public class Demo2_simple_deployment {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 		// creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentInfo.fromCDL("name=parent"));
+		Component t = new Component(ComponentDescriptor.fromCDL("name=parent"));
 
 		// describes the child peer that will be deployed to
-		ComponentInfo child = new ComponentInfo();
+		ComponentDescriptor child = new ComponentDescriptor();
 		InetAddress childHost = InetAddress.getByName(args[0]);
 		child.inetAddresses.add(childHost);
 		child.friendlyName = childHost.getHostName();

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.To;
 import idawi.net.LMI;
@@ -26,7 +26,7 @@ public class Demo4_deploy_local_peers {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		Component initialThing = new Component(ComponentInfo.fromCDL("name=0"));
+		Component initialThing = new Component(ComponentDescriptor.fromCDL("name=0"));
 		initialThing.lookupService(ComponentDeployer.class).deployLocalPeers(50, i -> "c" + i, true,
 				peerOk -> things.add(peerOk));
 		LMI.chain(things);

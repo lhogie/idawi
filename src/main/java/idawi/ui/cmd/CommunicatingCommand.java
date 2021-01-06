@@ -5,9 +5,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import idawi.Service;
-import idawi.service.registry.RegistryService;
 import j4u.CommandLine;
 import j4u.License;
 import toools.io.Cout;
@@ -35,7 +35,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(ComponentInfo.fromCDL("name=" + getCommandName()));
+		Component localNode = new Component(ComponentDescriptor.fromCDL("name=" + getCommandName()));
 		Service localService = new Service(localNode) {
 			@Override
 			public String getFriendlyName() {
@@ -87,8 +87,8 @@ public abstract class CommunicatingCommand extends Command {
 		return "2019-2020";
 	}
 
-	public static Set<ComponentInfo> targetPeers(Component n, String list, Consumer<Object> out) {
-		Set<ComponentInfo> peers = new HashSet<>();
+	public static Set<ComponentDescriptor> targetPeers(Component n, String list, Consumer<Object> out) {
+		Set<ComponentDescriptor> peers = new HashSet<>();
 
 		for (String p : list.split(" *, *")) {
 			if (p.equals("_")) {

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import idawi.ByteSource;
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Operation;
 import idawi.Service;
 import idawi.To;
@@ -44,7 +44,7 @@ public class FileService extends Service {
 		new RegularFile(dir, path).setContent(bytes);
 	}
 
-	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentInfo target, String pathOnTarget)
+	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
 		call(new To(target, FileService.class, "uploadFileAsOneSingleMessage"), pathOnTarget, localFile.getContent());
 	}

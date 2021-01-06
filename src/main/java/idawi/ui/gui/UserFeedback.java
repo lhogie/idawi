@@ -3,7 +3,7 @@ package idawi.ui.gui;
 import java.util.Vector;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.ui.gui.UserFeedback.Entry.TYPE;
 
@@ -15,13 +15,13 @@ public abstract class UserFeedback extends Service {
 			msg, warning, exception, error
 		}
 
-		Entry(ComponentInfo source, TYPE t, Object v) {
+		Entry(ComponentDescriptor source, TYPE t, Object v) {
 			this.type = t;
 			this.value = v;
 			this.source = source;
 		}
 
-		final ComponentInfo source;
+		final ComponentDescriptor source;
 		final TYPE type;
 		final Object value;
 	}

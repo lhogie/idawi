@@ -6,9 +6,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.Operation;
-import idawi.RegistryService;
 import idawi.Route;
 import idawi.net.TransportLayer;
 
@@ -17,12 +15,12 @@ import idawi.net.TransportLayer;
  * to bench.
  */
 
-public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable> {
+public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
+	public FullRouteTable routingTable = new FullRouteTable();
 
-	public RoutingScheme1(Component node) {
+	public TraceRouting(Component node) {
 		super(node);
 	}
-
 
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
@@ -30,12 +28,7 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 
 		// if it's a broadcast message
 		if (to == null) {
-			// but the node is disconnected
-			if (neighbors.isEmpty()) {
-				return service(RegistryService.class).list();
-			} else {
-				return neighbors;
-			}
+			return neighbors;
 		}
 		// the msg is targeted to specific nodes
 		else {
@@ -47,7 +40,7 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 				Set<ComponentDescriptor> relays = new HashSet<>(to.size());
 
 				for (ComponentDescriptor t : to) {
-					ComponentDescriptor relay = routingTable.get(t);
+					Route relay = routingTable.get(t);
 
 					// if one relay can't be found, broadcast
 					if (relay == null) {
@@ -67,5 +60,4 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 	public String getAlgoName() {
 		return "default";
 	}
-
 }

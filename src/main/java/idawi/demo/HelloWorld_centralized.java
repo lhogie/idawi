@@ -4,18 +4,18 @@ import java.net.UnknownHostException;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import idawi.Service;
 import idawi.To;
-import idawi.service.registry.RegistryService;
 
 public class HelloWorld_centralized {
 	public static void main(String[] args) throws UnknownHostException {
 		int nbNodes = 300;
 
 		for (int i = 0; i < nbNodes; ++i) {
-			Component node = new Component(ComponentInfo.fromCDL("name=" + i));
-			ComponentInfo next = new ComponentInfo();
+			Component node = new Component(ComponentDescriptor.fromCDL("name=" + i));
+			ComponentDescriptor next = new ComponentDescriptor();
 			next.friendlyName = "" + ((i + 1) % nbNodes);
 			node.lookupService(RegistryService.class).add(next);
 

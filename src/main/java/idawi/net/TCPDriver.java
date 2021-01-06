@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import toools.thread.Threads;
 
@@ -28,7 +28,7 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	private final Map<ComponentInfo, Entry> peer_socket = new HashMap<>();
+	private final Map<ComponentDescriptor, Entry> peer_socket = new HashMap<>();
 	private ServerSocket ss;
 
 	@Override
@@ -37,13 +37,13 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 		super.injectLocalInfoTo(c);
 		c.tcpPort = getPort();
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return super.canContact(c) && c.tcpPort != null;
 	}
 
@@ -75,7 +75,7 @@ public class TCPDriver extends IPDriver {
 					Message msg = (Message) serializer.read(is);
 
 					if (msg.route.size() > 0) {
-						ComponentInfo relay = msg.route.last().component;
+						ComponentDescriptor relay = msg.route.last().component;
 
 						synchronized (peer_socket) {
 							Entry e = peer_socket.get(relay);
@@ -98,14 +98,14 @@ public class TCPDriver extends IPDriver {
 	private void errorOn(Socket s) {
 		// new Exception().printStackTrace();
 		synchronized (peer_socket) {
-			Iterator<java.util.Map.Entry<ComponentInfo, Entry>> i = peer_socket.entrySet().iterator();
+			Iterator<java.util.Map.Entry<ComponentDescriptor, Entry>> i = peer_socket.entrySet().iterator();
 
 			while (i.hasNext()) {
-				java.util.Map.Entry<ComponentInfo, Entry> e = i.next();
+				java.util.Map.Entry<ComponentDescriptor, Entry> e = i.next();
 
 				if (e.getValue().socket == s) {
 					i.remove();
-					ComponentInfo peer = e.getKey();
+					ComponentDescriptor peer = e.getKey();
 					listeners.forEach(l -> l.peerLeft(peer, this));
 				}
 			}
@@ -118,8 +118,8 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public void send(Message msg, Collection<ComponentInfo> neighbors) {
-		for (ComponentInfo n : neighbors) {
+	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
+		for (ComponentDescriptor n : neighbors) {
 			Entry entry = null;
 
 			synchronized (peer_socket) {
@@ -152,7 +152,7 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	private Socket createSocket(ComponentInfo to) {
+	private Socket createSocket(ComponentDescriptor to) {
 		InetAddress ip = to.inetAddresses.get(0);
 
 		try {
@@ -191,7 +191,7 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public Collection<ComponentInfo> neighbors() {
+	public Collection<ComponentDescriptor> neighbors() {
 		return peer_socket.keySet();
 	}
 }

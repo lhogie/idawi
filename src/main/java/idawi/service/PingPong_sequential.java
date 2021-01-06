@@ -3,7 +3,7 @@ package idawi.service;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.Service;
@@ -35,7 +35,7 @@ public class PingPong_sequential extends Service {
 		return "ping agents (imperative version)";
 	}
 	
-	public double ping(ComponentInfo peer, long timeoutMs) {
+	public double ping(ComponentDescriptor peer, long timeoutMs) {
 		To to = new To();
 		to.notYetReachedExplicitRecipients = Set.of(peer);
 		to.service = id;

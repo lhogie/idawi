@@ -20,7 +20,6 @@ import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
 import idawi.service.PingPong;
 import idawi.service.ServiceManager;
-import idawi.service.registry.RegistryService;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -28,28 +27,30 @@ import toools.util.Date;
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
-//	public static PeerRegistry descriptorRegistry = new PeerRegistry(new Directory(directory, "registry"));
 
-	private ComponentInfo descriptor;
+	private long id;
+	private ComponentDescriptor descriptor;
+	public String friendlyName;
 	final Map<Class<? extends Service>, Service> services = new HashMap<>();
-	public final Set<ComponentInfo> otherComponentsSharingFilesystem = new HashSet<>();
+	public final Set<ComponentDescriptor> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
-	public ComponentInfo parent;
+	public ComponentDescriptor parent;
 
 	public Component() {
 		this("name=c" + componentsInThisJVM.size());
 	}
 
 	public Component(String cdl) {
-		this(ComponentInfo.fromCDL(cdl));
+		this(ComponentDescriptor.fromCDL(cdl));
 	}
 
-	public Component(ComponentInfo descriptor) {
+	public Component(ComponentDescriptor descriptor) {
 		if (componentsInThisJVM.containsKey(descriptor.friendlyName)) {
 			throw new IllegalStateException(descriptor.friendlyName + " is already in use in this JVM");
 		}
 
-		this.descriptor = descriptor;
+		this.friendlyName = descriptor.friendlyName;
+		this.id = descriptor.id;
 
 		// start basic services
 		new NetworkingService(this);
@@ -65,6 +66,8 @@ public class Component {
 		new ExternalCommandsService(this);
 		new FileService(this);
 		new RegistryService(this);
+
+		this.descriptor = createDescriptor();
 
 		// descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(descriptor.friendlyName, this);
@@ -99,20 +102,20 @@ public class Component {
 		return new Service(this);
 	}
 
-	public ComponentInfo descriptor() {
-		if (Date.time() - descriptor.date > 1) {
-			updateDescriptor();
+	public ComponentDescriptor descriptor() {
+		// outdates after 1 second
+		if (descriptor == null || Date.time() - descriptor.date > 1) {
+			this.descriptor = createDescriptor();
 		}
 
 		return descriptor;
 	}
 
-	public void updateDescriptor() {
-		for (var s : services()) {
-			s.inform(descriptor);
-		}
-
-		descriptor.date = Date.time();
+	public ComponentDescriptor createDescriptor() {
+		ComponentDescriptor d = new ComponentDescriptor();
+		d.friendlyName = friendlyName;
+		services().forEach(s -> d.services.add(s.descriptor()));
+		return d;
 	}
 
 	@Override

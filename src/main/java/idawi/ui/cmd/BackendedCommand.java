@@ -2,7 +2,7 @@ package idawi.ui.cmd;
 
 import java.util.Set;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.ProgressMessage;
 import idawi.Service;
@@ -22,7 +22,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	@Override
 	protected int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable {
-		ComponentInfo hook = ComponentInfo.fromCDL(getOptionValue(cmdLine, "--hook"));
+		ComponentDescriptor hook = ComponentDescriptor.fromCDL(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
 		if (localService.component.lookupService(PingPong.class).ping(hook, timeout) == null) {
@@ -59,7 +59,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		return Clazz.makeInstance(backendClass);
 	}
 
-	private void newReturn(Message feedback, Set<ComponentInfo> peers) {
+	private void newReturn(Message feedback, Set<ComponentDescriptor> peers) {
 
 		if (feedback.content instanceof ProgressMessage) {
 			progress(feedback.route.source().component, (ProgressMessage) feedback.content);
@@ -85,7 +85,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	}
 
-	protected void progress(ComponentInfo peer, ProgressMessage progress) {
+	protected void progress(ComponentDescriptor peer, ProgressMessage progress) {
 		System.out.println("..." + peer + "\t..." + progress);
 	}
 }

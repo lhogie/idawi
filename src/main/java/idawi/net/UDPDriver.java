@@ -5,7 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Collection;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 
 public class UDPDriver extends IPDriver {
@@ -23,20 +23,20 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 		super.injectLocalInfoTo(c);
 		c.udpPort = getPort();
 	}
 
 	@Override
-	public void send(Message msg, Collection<ComponentInfo> relays) {
+	public void send(Message msg, Collection<ComponentDescriptor> relays) {
 		if (socket == null)
 			return;
 
 		byte[] buf = serializer.toBytes(msg);
 		// Cout.debugSuperVisible("sending to " + neighbors);
 
-		for (ComponentInfo relay : relays) {
+		for (ComponentDescriptor relay : relays) {
 			// System.out.println(n.toHTML());
 
 			if (msg.route.isEmpty())
@@ -58,7 +58,7 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return super.canContact(c) && c.udpPort != null;
 	}
 
@@ -109,7 +109,7 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	public Collection<ComponentInfo> neighbors() {
+	public Collection<ComponentDescriptor> neighbors() {
 		return neighbors.peers();
 	}
 

@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,18 +21,25 @@ import toools.io.ser.JavaSerializer;
 
 public class LucTests {
 
-	public static void main(String[] args) throws RemoteException {
-		var o = new Object[] { 4, true, new String[] { "1st element" } };
-		var clone = (Object[]) new JavaSerializer<>().clone(o);
-		System.out.println(Utils.equals(o, clone));
+	public static void main(String[] args) throws Throwable {
+		List<Component> l = new ArrayList<>();
 
+		for (int i = 0; i < 10; ++i) {
+			l.add(new Component());
+		}
+
+		LMI.chain(l);
+		var b = l.get(l.size() - 1).descriptor();
+		List<Route> routes = l.get(0).lookupService(PingPong.class).traceroute(Set.of(b), 1);
+System.out.println(routes);
+Component.stopPlatformThreads();
 	}
 
 	@Test
 	public void twoComponentsConversation() throws CDLException {
 		Cout.debugSuperVisible("Starting test");
 		// describes a component by its name only
-		ComponentInfo me = new ComponentInfo();
+		ComponentDescriptor me = new ComponentDescriptor();
 		me.friendlyName = "c1";
 
 		// trigger the creation of a component from its description
@@ -79,9 +88,9 @@ public class LucTests {
 		others.forEach(c -> LMI.connect(root, c));
 
 		Service client = new Service(root);
-		Set<ComponentInfo> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
+		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentInfo first = client.call(new To(ss, DummyService.class, "waiting"), 1).collectUntilFirstEOT()
+		ComponentDescriptor first = client.call(new To(ss, DummyService.class, "waiting"), 1).collectUntilFirstEOT()
 				.resultMessages(1).first().route.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
@@ -97,7 +106,7 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentInfo other = ComponentInfo.fromCDL("name=other_peer /  tcp_port=56757");
+		ComponentDescriptor other = ComponentDescriptor.fromCDL("name=other_peer /  tcp_port=56757");
 		master.lookupService(ComponentDeployer.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
@@ -117,10 +126,10 @@ public class LucTests {
 		Message a = new Message();
 		a.to = new To();
 		a.to.notYetReachedExplicitRecipients = new HashSet<>();
-		a.to.notYetReachedExplicitRecipients.add(ComponentInfo.fromCDL("name=Luc"));
+		a.to.notYetReachedExplicitRecipients.add(ComponentDescriptor.fromCDL("name=Luc"));
 		a.to.service = DummyService.class;
 		RouteEntry re = new RouteEntry();
-		re.component = ComponentInfo.fromCDL("name=test");
+		re.component = ComponentDescriptor.fromCDL("name=test");
 		re.protocolName = "tcp";
 		a.route.add(re);
 		a.content = new Object[] { 4, true, new String[] { "1st element" } };
@@ -133,7 +142,7 @@ public class LucTests {
 	@Test
 	public void signature() {
 		Cout.debugSuperVisible("Starting test");
-		ComponentInfo me = new ComponentInfo();
+		ComponentDescriptor me = new ComponentDescriptor();
 		me.friendlyName = "c1";
 		Component c1 = new Component(me);
 		Component c2 = new Component("name=c2");
@@ -144,6 +153,24 @@ public class LucTests {
 		int len = (Integer) returns.resultMessages(1).first().content;
 		System.out.println(len);
 		assertEquals(len, 5);
+
+		// clean
+		Component.componentsInThisJVM.clear();
+	}
+
+	@Test
+	public void multihop() {
+		Cout.debugSuperVisible("Starting test multihop");
+		List<Component> l = new ArrayList<>();
+
+		for (int i = 0; i < 10; ++i) {
+			l.add(new Component());
+		}
+
+		LMI.chain(l);
+		Message pong = l.get(0).lookupService(PingPong.class).ping(l.get(l.size() - 1).descriptor(), 1);
+System.out.println(pong.route);
+		assertNotEquals(pong, null);
 
 		// clean
 		Component.componentsInThisJVM.clear();

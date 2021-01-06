@@ -21,7 +21,7 @@ public class TestTimeSeriesDB {
 	@Test
 	public void startService() throws Throwable {
 		Component c1 = new Component();
-		ComponentInfo c2 = c1.lookupService(ComponentDeployer.class).deployLocalPeers(1, i -> "other-" + i, true, null)
+		ComponentDescriptor c2 = c1.lookupService(ComponentDeployer.class).deployLocalPeers(1, i -> "other-" + i, true, null)
 				.iterator().next().descriptor();
 
 		Service s = new Service(c1);

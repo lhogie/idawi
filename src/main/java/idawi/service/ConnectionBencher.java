@@ -3,7 +3,7 @@ package idawi.service;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.Service;
 import idawi.To;
@@ -26,7 +26,7 @@ public class ConnectionBencher extends Service {
 		return "bench connection speed";
 	}
 
-	public double benchLinkTo2(ComponentInfo peer, double timeout) {
+	public double benchLinkTo2(ComponentDescriptor peer, double timeout) {
 		To to = new To();
 		to.notYetReachedExplicitRecipients = Set.of(peer);
 		to.service = id;

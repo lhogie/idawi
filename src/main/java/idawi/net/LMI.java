@@ -12,23 +12,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.TransportLayer;
 
 public class LMI extends TransportLayer {
 	public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
-	public final Map<ComponentInfo, LMI> peer_lmi = new HashMap<>();
+	public final Map<ComponentDescriptor, LMI> peer_lmi = new HashMap<>();
 
 	private boolean run;
 
 	@Override
-	synchronized public void send(Message msg, Collection<ComponentInfo> neighbors) {
+	synchronized public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
 		if (!run) {
 			return;
 		}
 
-		for (ComponentInfo n : neighbors) {
+		for (ComponentDescriptor n : neighbors) {
 			LMI lmi = peer_lmi.get(n);
 
 			if (lmi != null && lmi.run) {
@@ -58,12 +57,12 @@ public class LMI extends TransportLayer {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return c.friendlyName != null;
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 	}
 
 	@Override
@@ -77,7 +76,7 @@ public class LMI extends TransportLayer {
 	}
 
 	@Override
-	public Collection<ComponentInfo> neighbors() {
+	public Collection<ComponentDescriptor> neighbors() {
 		return peer_lmi.keySet();
 	}
 

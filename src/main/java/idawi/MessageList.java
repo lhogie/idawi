@@ -28,7 +28,7 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList retainFirstCompleted() {
-		ComponentInfo firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
+		ComponentDescriptor firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
 		MessageList l = new MessageList();
 
 		for (Message m : this) {
@@ -101,8 +101,8 @@ public class MessageList extends ArrayList<Message> {
 		}).collect(Collectors.toList());
 	}
 
-	public Map<ComponentInfo, MessageList> classifyByComponent() {
-		Map<ComponentInfo, MessageList> r = new HashMap<>();
+	public Map<ComponentDescriptor, MessageList> classifyByComponent() {
+		Map<ComponentDescriptor, MessageList> r = new HashMap<>();
 
 		for (Message m : this) {
 			MessageList l = r.get(m.route.source().component);

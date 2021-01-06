@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.MessageList;
+import idawi.RegistryService;
 import idawi.Service;
 import idawi.To;
-import idawi.service.registry.RegistryService;
 
 public class Virus extends Service {
 
@@ -29,7 +29,7 @@ public class Virus extends Service {
 		newThread_loop_periodic(1000, () -> {
 
 			if (component.lookupService(RegistryService.class).list().size() > 0) {
-				ComponentInfo c = component.lookupService(RegistryService.class).pickRandomPeer();
+				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
 				To to = new To();
 				to.notYetReachedExplicitRecipients = Set.of(c);
 				to.service = id;

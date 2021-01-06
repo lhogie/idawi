@@ -3,13 +3,13 @@ package idawi;
 import java.io.Serializable;
 
 public class DeploymentPlan implements Serializable {
-	private final Graph<ComponentInfo> g = new Graph<>();
+	private final Graph<ComponentDescriptor> g = new Graph<>();
 
-	public void addChild(ComponentInfo parent, ComponentInfo child) {
+	public void addChild(ComponentDescriptor parent, ComponentDescriptor child) {
 		g.add(parent, child);
 	}
 
-	public void removeChild(ComponentInfo parent, ComponentInfo child) {
+	public void removeChild(ComponentDescriptor parent, ComponentDescriptor child) {
 		g.remove(parent, child);
 	}
 	

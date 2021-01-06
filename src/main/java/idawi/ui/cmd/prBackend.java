@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
-import idawi.service.registry.RegistryService;
+import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import toools.io.file.RegularFile;
 
 public class prBackend extends CommandBackend {
@@ -22,7 +22,7 @@ public class prBackend extends CommandBackend {
 		}
 		else if (action.equals("add")) {
 			while ( ! parms.isEmpty()) {
-				n.lookupService(RegistryService.class).add(ComponentInfo.fromCDL(parms.remove(0)));
+				n.lookupService(RegistryService.class).add(ComponentDescriptor.fromCDL(parms.remove(0)));
 			}
 		}
 		else if (action.equals("save")) {
@@ -32,7 +32,7 @@ public class prBackend extends CommandBackend {
 		}
 		else if (action.equals("load")) {
 			RegularFile f = new RegularFile(Component.directory, "peers");
-			n.lookupService(RegistryService.class).addAll((Set<ComponentInfo>) f.getContentAsJavaObject());
+			n.lookupService(RegistryService.class).addAll((Set<ComponentDescriptor>) f.getContentAsJavaObject());
 		}
 	}
 }

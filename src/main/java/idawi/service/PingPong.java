@@ -1,17 +1,19 @@
 package idawi.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.MessageQueue.SUFFICIENCY;
-import toools.io.Cout;
 import idawi.Operation;
+import idawi.Route;
 import idawi.Service;
 import idawi.To;
 
@@ -41,19 +43,24 @@ public class PingPong extends Service {
 		return "ping/pong";
 	}
 
-	public Message ping(ComponentInfo target, double timeout) {
+	public List<Route> traceroute(Set<ComponentDescriptor> targets, double timeout) throws Throwable {
+		return send(null, new To(targets, PingPong.class, "traceroute")).setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream().map(m -> ((Message)m).route).collect(Collectors.toList());
+	}
+
+	public Message ping(ComponentDescriptor target, double timeout) {
 		return ping(Set.of(target)).setTimeout(timeout).collect().getOrNull(0);
 	}
 
-	public void ping(Set<ComponentInfo> targets, double timeout, Function<ComponentInfo, SUFFICIENCY> pong) {
+	public void ping(Set<ComponentDescriptor> targets, double timeout,
+			Function<ComponentDescriptor, SUFFICIENCY> pong) {
 		ping(targets).forEach(msg -> pong.apply(msg.route.source().component));
 	}
 
-	public MessageList ping(Set<ComponentInfo> targets, double timeout) {
+	public MessageList ping(Set<ComponentDescriptor> targets, double timeout) {
 		return send(null, new To(targets, PingPong.class, "ping")).setTimeout(timeout).collect();
 	}
 
-	public MessageQueue ping(Set<ComponentInfo> targets) {
+	public MessageQueue ping(Set<ComponentDescriptor> targets) {
 		return send(null, new To(targets, PingPong.class, "ping"));
 	}
 
@@ -61,7 +68,7 @@ public class PingPong extends Service {
 		return ping(null);
 	}
 
-	public void pingAround(double timeout, Consumer<ComponentInfo> found) {
+	public void pingAround(double timeout, Consumer<ComponentDescriptor> found) {
 		ping(null).setTimeout(timeout).forEach(newMsg -> {
 			newMsg.route.forEach(e -> found.accept(e.component));
 			return SUFFICIENCY.NOT_ENOUGH;

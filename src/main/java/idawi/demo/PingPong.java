@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.net.LMI;
 import idawi.service.ComponentDeployer;
@@ -24,13 +24,13 @@ public class PingPong {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		things.add(new Component(ComponentInfo.fromCDL("name=root")));
+		things.add(new Component(ComponentDescriptor.fromCDL("name=root")));
 
 		for (int i = 1; i < 350; ++i) {
 			// Thing t = things.get(ThreadLocalRandom.current().nextInt(things.size()));
 			Component t = things.get(i - 1);
 
-			ComponentInfo newPeer = new ComponentInfo();
+			ComponentDescriptor newPeer = new ComponentDescriptor();
 			newPeer.friendlyName = "t" +i;
 
 			// gets the deployment service
@@ -54,7 +54,7 @@ public class PingPong {
 		
 		
 
-		assert pong.route.source().component.friendlyName.equals(last.descriptor().friendlyName);
+		assert pong.route.source().component.friendlyName.equals(last.friendlyName);
 		System.out.println("***  " + pong.route);
 
 	}

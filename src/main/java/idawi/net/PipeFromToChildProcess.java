@@ -7,9 +7,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.TransportLayer;
 import toools.io.Cout;
 import toools.io.Utilities;
 import toools.io.Utilities.ReadUntilResult;
@@ -21,7 +20,7 @@ public class PipeFromToChildProcess extends TransportLayer {
 	final InputStream stdout, stderr;
 	final OutputStream stdin;
 	public EOFFound eofHandler;
-	public final ComponentInfo child;
+	public final ComponentDescriptor child;
 
 	// the mark that announces a binary message coming from child stdout
 	public static final String msgMark = "dfmskfjqmkrgjhqsljkvbn<jksfh";
@@ -32,7 +31,7 @@ public class PipeFromToChildProcess extends TransportLayer {
 
 	private boolean run = false;
 
-	public PipeFromToChildProcess(ComponentInfo child, Process p) throws IOException {
+	public PipeFromToChildProcess(ComponentDescriptor child, Process p) throws IOException {
 		this.stdout = p.getInputStream();
 		this.stderr = p.getErrorStream();
 		this.stdin = p.getOutputStream();
@@ -40,12 +39,12 @@ public class PipeFromToChildProcess extends TransportLayer {
 	}
 
 	@Override
-	public Set<ComponentInfo> neighbors() {
+	public Set<ComponentDescriptor> neighbors() {
 		return Collections.singleton(child);
 	}
 
 	@Override
-	public void send(Message msg, Collection<ComponentInfo> neighbors) {
+	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
 		if (!run)
 			return;
 
@@ -63,12 +62,12 @@ public class PipeFromToChildProcess extends TransportLayer {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return c.equals(child);
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 	}
 
 	@Override

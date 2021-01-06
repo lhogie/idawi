@@ -3,7 +3,7 @@ package idawi.demo;
 import java.io.IOException;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.service.ComponentDeployer;
 import idawi.service.PingPong;
@@ -20,12 +20,12 @@ public class Demo1_multi_jvm {
 	public static void main(String[] args) throws IOException {
 		final int basePort = 4000;
 
-		ComponentInfo t1d = new ComponentInfo();
+		ComponentDescriptor t1d = new ComponentDescriptor();
 		t1d.friendlyName = "this jvm";
 		t1d.tcpPort = 6677;
 		Component t1 = new Component(t1d);
 
-		ComponentInfo t2d = new ComponentInfo();
+		ComponentDescriptor t2d = new ComponentDescriptor();
 		t2d.friendlyName = "this jvm";
 		t2d.tcpPort = 6678;
 

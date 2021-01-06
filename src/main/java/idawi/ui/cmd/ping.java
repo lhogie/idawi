@@ -2,7 +2,7 @@ package idawi.ui.cmd;
 
 import java.util.List;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.Service;
 import idawi.service.PingPong;
@@ -29,10 +29,10 @@ public class ping extends CommunicatingCommand {
 		int n = Integer.valueOf(getOptionValue(cmdLine, "--nbTimes"));
 		boolean printIndividualPings = ! isOptionSpecified(cmdLine, "--hide");
 		boolean progress = isOptionSpecified(cmdLine, "--progress");
-		List<ComponentInfo> peers = ComponentInfo.fromPDL(cmdLine.findParameters());
+		List<ComponentDescriptor> peers = ComponentDescriptor.fromPDL(cmdLine.findParameters());
 		
-		for (ComponentInfo p : peers) {
-			Cout.info("pinging: " + p.toTDL());
+		for (ComponentDescriptor p : peers) {
+			Cout.info("pinging: " + p.toCDL());
 		}
 		int nbFailure = 0;
 
@@ -49,7 +49,7 @@ public class ping extends CommunicatingCommand {
 				lp.temporaryResult = nbFailure + " failures on " + i + " attempts";
 			}
 
-			for (ComponentInfo p : peers) {
+			for (ComponentDescriptor p : peers) {
 				if (printIndividualPings) {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}

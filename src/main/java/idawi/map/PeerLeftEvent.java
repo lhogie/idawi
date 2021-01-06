@@ -1,9 +1,9 @@
-package idawi.service.registry;
+package idawi.map;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 
 public class PeerLeftEvent extends PeerEvent {
-	public PeerLeftEvent(ComponentInfo p, String protocol) {
+	public PeerLeftEvent(ComponentDescriptor p, String protocol) {
 		super(p, protocol);
 	}
 

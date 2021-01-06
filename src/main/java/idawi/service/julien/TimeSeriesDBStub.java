@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.service.ServiceStub;
 import xycharter.Figure;
@@ -13,7 +13,7 @@ import xycharter.Figure;
 public class TimeSeriesDBStub extends ServiceStub {
 	private final PointBuffer buf = new PointBuffer();
 
-	public TimeSeriesDBStub(Service localService, Set<ComponentInfo> remoteComponents) {
+	public TimeSeriesDBStub(Service localService, Set<ComponentDescriptor> remoteComponents) {
 		super(localService, remoteComponents, TimeSeriesDB.class);
 	}
 

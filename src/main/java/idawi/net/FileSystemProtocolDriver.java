@@ -4,9 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.TransportLayer;
 import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -32,13 +31,13 @@ public class FileSystemProtocolDriver extends TransportLayer {
 	}
 
 	@Override
-	public Collection<ComponentInfo> neighbors() {
+	public Collection<ComponentDescriptor> neighbors() {
 		return peers.peers();
 	}
 
 	@Override
-	public void send(Message msg, Collection<ComponentInfo> neighbors) {
-		for (ComponentInfo n : neighbors) {
+	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
+		for (ComponentDescriptor n : neighbors) {
 			String filename = String.valueOf(Math.abs(new Random().nextLong()));
 			Directory toDir = new Directory(baseDirectory, n.toString());
 			toDir.ensureExists();
@@ -54,13 +53,12 @@ public class FileSystemProtocolDriver extends TransportLayer {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return c.friendlyName != null;
 	}
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
-		c.inboxDirectory = inboxDirectory;
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 	}
 
 	private boolean run = false;

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
-import idawi.service.registry.RegistryService;
+import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import j4u.CommandLine;
 import toools.io.file.RegularFile;
 
@@ -35,10 +35,10 @@ public class AgentMain extends JThingLineCmd {
 
 		for (int i = 0; i < parms.size(); ++i) {
 			String name = parms.get(i);
-			Component peer = new Component(ComponentInfo.fromCDL("name=" + name));
-			ComponentInfo c = new ComponentInfo();
-			c.friendlyName = name;
-			peers.add(peer);
+			Component c = new Component(ComponentDescriptor.fromCDL("name=" + name));
+			ComponentDescriptor d = new ComponentDescriptor();
+			d.friendlyName = name;
+			peers.add(c);
 		}
 
 		for (Component p : peers) {

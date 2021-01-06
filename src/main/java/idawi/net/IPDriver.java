@@ -5,8 +5,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import idawi.ComponentInfo;
-import idawi.TransportLayer;
+import idawi.ComponentDescriptor;
 import toools.io.Cout;
 import toools.net.NetUtilities;
 import toools.thread.Q;
@@ -46,7 +45,7 @@ public abstract class IPDriver extends TransportLayer {
 	}
 
 	@Override
-	public boolean canContact(ComponentInfo c) {
+	public boolean canContact(ComponentDescriptor c) {
 		return !c.inetAddresses.isEmpty();
 	}
 
@@ -84,7 +83,7 @@ public abstract class IPDriver extends TransportLayer {
 	protected abstract void startServer();
 
 	@Override
-	public void injectLocalInfoTo(ComponentInfo c) {
+	public void injectLocalInfoTo(ComponentDescriptor c) {
 		try {
 			c.inetAddresses.add(InetAddress.getLocalHost());
 		} catch (UnknownHostException e) {

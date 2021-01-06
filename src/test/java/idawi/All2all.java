@@ -23,7 +23,7 @@ public class All2all {
 	@Test
 	public void all2all() throws RemoteException {
 //		MessageQueue.DEFAULT_TIMEOUT_IN_SECONDS = 1;
-		var all = new HashSet<ComponentInfo>();
+		var all = new HashSet<ComponentDescriptor>();
 
 		System.out.println("Creating components");
 		for (int i = 0; i < 10; ++i) {
@@ -48,7 +48,7 @@ public class All2all {
 
 		System.out.println("messaging");
 		AtomicLong n = new AtomicLong();
-		var repliers = new HashMap<ComponentInfo, Message>();
+		var repliers = new HashMap<ComponentDescriptor, Message>();
 
 		for (var c : componentList) {
 			var allButMe = new HashSet<>(all);

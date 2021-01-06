@@ -39,7 +39,7 @@ public class Route extends ArrayList<RouteEntry> {
 		return b.toString();
 	}
 
-	public void add(ComponentInfo d) {
+	public void add(ComponentDescriptor d) {
 		RouteEntry e = new RouteEntry();
 		e.component = d;
 		add(d);

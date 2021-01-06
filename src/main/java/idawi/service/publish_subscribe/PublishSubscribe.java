@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.To;
 
@@ -93,7 +93,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public static void subscribe(Service localService, ComponentInfo newPeer, Subscription subscription) {
+	public static void subscribe(Service localService, ComponentDescriptor newPeer, Subscription subscription) {
 		To to = new To();
 		to.notYetReachedExplicitRecipients = Set.of(newPeer);
 		to.service = PublishSubscribe.class;

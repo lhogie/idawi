@@ -11,8 +11,8 @@ import toools.thread.Q;
 public class MessageQueue extends Q<Message> {
 	public final String name;
 	private final Consumer<MessageQueue> destructor;
-	private final Set<ComponentInfo> allowedSenders;
-	private final Set<ComponentInfo> completedSenders = new HashSet<>();
+	private final Set<ComponentDescriptor> allowedSenders;
+	private final Set<ComponentDescriptor> completedSenders = new HashSet<>();
 	private double timeoutS = DEFAULT_TIMEOUT_IN_SECONDS;
 	public static double DEFAULT_TIMEOUT_IN_SECONDS = 60;
 
@@ -20,7 +20,7 @@ public class MessageQueue extends Q<Message> {
 		ENOUGH, NOT_ENOUGH;
 	}
 
-	public MessageQueue(String name, Set<ComponentInfo> expectedSenders, int capacity,
+	public MessageQueue(String name, Set<ComponentDescriptor> expectedSenders, int capacity,
 			Consumer<MessageQueue> destructor) {
 		super(capacity);
 		this.destructor = destructor;

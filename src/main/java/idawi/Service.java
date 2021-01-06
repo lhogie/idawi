@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +22,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
-import toools.thread.Q;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -45,14 +43,6 @@ public class Service {
 	public Service() throws Throwable {
 		this(new Component());
 		run();
-	}
-
-	@Operation
-	public ServiceDescriptor descriptor() {
-		var d = new ServiceDescriptor();
-		d.name = id.getName();
-		name2operation.values().forEach(o -> d.operations.add(o.descriptor));
-		return d;
 	}
 
 	protected <S> S service(Class<? extends S> serviceID) {
@@ -128,10 +118,11 @@ public class Service {
 	}
 
 	@Operation
-	private void listNativeActions(Consumer out) {
-		name2operation.values().forEach(o -> out.accept(o.descriptor));
+	private void listNativeOperations(Consumer out) {
+		name2operation.values().forEach(o -> out.accept(o.descriptor()));
 	}
 
+	@Operation
 	public String getFriendlyName() {
 		return getClass().getName();
 	}
@@ -281,6 +272,7 @@ public class Service {
 		return askToRun;
 	}
 
+	@Operation
 	public void shutdown() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
@@ -296,16 +288,13 @@ public class Service {
 
 	@Override
 	public String toString() {
-		return component.descriptor().friendlyName + "/" + id;
+		return component.friendlyName + "/" + id;
 	}
 
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 
-	public Set<String> actionNames() {
-		return name2queue.keySet();
-	}
 
-	protected MessageQueue createQueue(String qid, Set<ComponentInfo> expectedSenders) {
+	protected MessageQueue createQueue(String qid, Set<ComponentDescriptor> expectedSenders) {
 		MessageQueue q = new MessageQueue(qid, expectedSenders, 10, wannaDie -> delete(wannaDie));
 		name2queue.put(qid, q);
 		return q;
@@ -320,7 +309,7 @@ public class Service {
 		q.cancelEventisation();
 	}
 
-	public To to(ComponentInfo c, Class<? extends Service> s, String operation) {
+	public To to(ComponentDescriptor c, Class<? extends Service> s, String operation) {
 		return new To(c, s, operation);
 	}
 
@@ -348,15 +337,11 @@ public class Service {
 		return returnQueue;
 	}
 
-	public MessageQueue call(To to, OperationParameterList parms) {
-		return send(parms, to);
-	}
-
 	public MessageQueue call(To to, Object... parms) {
-		return call(to, new OperationParameterList(parms));
+		return send(new OperationParameterList(parms), to);
 	}
 
-	public void startOn(Set<ComponentInfo> c) {
+	public void startOn(Set<ComponentDescriptor> c) {
 		send(getClass(), new To(c, Service.class, "start")).collect();
 	}
 
@@ -367,8 +352,13 @@ public class Service {
 		send(o, to);
 	}
 
-	public void inform(ComponentInfo p) {
-		p.services.add(id.getName());
+	@Operation
+	public ServiceDescriptor descriptor() {
+		var d = new ServiceDescriptor();
+		d.name = id.getName();
+		name2operation.values().forEach(o -> d.operationDescriptors.add(o.descriptor()));
+		d.nbMessagesReceived = nbMessages;
+		return d;
 	}
 
 }

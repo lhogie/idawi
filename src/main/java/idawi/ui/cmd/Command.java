@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
-import idawi.service.registry.RegistryService;
+import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;
@@ -47,8 +47,8 @@ public abstract class Command extends CommandLineApplication {
 		return "2019-2020";
 	}
 
-	public static Set<ComponentInfo> targetPeers(Component n, String list, Consumer<Object> out) {
-		Set<ComponentInfo> peers = new HashSet<>();
+	public static Set<ComponentDescriptor> targetPeers(Component n, String list, Consumer<Object> out) {
+		Set<ComponentDescriptor> peers = new HashSet<>();
 
 		for (String p : list.split(" *, *")) {
 			if (p.equals("_")) {

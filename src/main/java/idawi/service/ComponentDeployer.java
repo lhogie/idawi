@@ -16,16 +16,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Graph;
+import idawi.RegistryService;
 import idawi.Service;
 import idawi.To;
-import idawi.TransportLayer;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
 import idawi.net.PipeFromToParentProcess;
-import idawi.service.registry.RegistryService;
+import idawi.net.TransportLayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
@@ -40,12 +40,12 @@ import toools.thread.OneElementOneThreadProcessing;
 import toools.thread.Threads;
 
 public class ComponentDeployer extends Service {
-	List<ComponentInfo> failed = new ArrayList<>();
+	List<ComponentDescriptor> failed = new ArrayList<>();
 
 	String remoteClassDir = Service.class.getPackageName() + ".classpath";
 
 	public static class DeploymentRequest implements Serializable {
-		public Collection<ComponentInfo> peers;
+		public Collection<ComponentDescriptor> peers;
 		public double timeoutInSecond;
 		public boolean suicideWhenParentDie;
 		public boolean printRsync;
@@ -93,8 +93,8 @@ public class ComponentDeployer extends Service {
 	}
 
 	public void apply(Graph deploymentPlan, double timeoutInSecond, boolean printRsync, Consumer<Object> feedback,
-			Consumer<ComponentInfo> peerOk) throws IOException {
-		Set<ComponentInfo> toDeploy = deploymentPlan.get(component.descriptor());
+			Consumer<ComponentDescriptor> peerOk) throws IOException {
+		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
 		To to = new To();
@@ -104,17 +104,17 @@ public class ComponentDeployer extends Service {
 		send(deploymentPlan, to).collect();
 	}
 
-	public List<Component> deploy(Collection<ComponentInfo> peers, boolean suicideWhenParentDie, double timeoutInSecond,
-			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentInfo> peerOk) throws IOException {
+	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie, double timeoutInSecond,
+			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk) throws IOException {
 
-		Collection<ComponentInfo> inThisJVM = findLocalhosts(peers);
+		Collection<ComponentDescriptor> inThisJVM = findLocalhosts(peers);
 		List<Component> localThings = new ArrayList<>();
 		deployLocalPeers(inThisJVM, suicideWhenParentDie, okThing -> {
 			localThings.add(okThing);
 			peerOk.accept(okThing.descriptor());
 		});
 
-		Set<ComponentInfo> remotePeers = toools.collections.Collections.difference(peers, inThisJVM);
+		Set<ComponentDescriptor> remotePeers = toools.collections.Collections.difference(peers, inThisJVM);
 
 		if (!remotePeers.isEmpty()) {
 			deployRemote(remotePeers, suicideWhenParentDie, timeoutInSecond, printRsync, feedback, peerOk);
@@ -123,8 +123,8 @@ public class ComponentDeployer extends Service {
 		return localThings;
 	}
 
-	public void deployOtherJVM(ComponentInfo d, boolean suicideWhenParentDie, Consumer<Object> feedback,
-			Consumer<ComponentInfo> peerOk) throws IOException {
+	public void deployOtherJVM(ComponentDescriptor d, boolean suicideWhenParentDie, Consumer<Object> feedback,
+			Consumer<ComponentDescriptor> peerOk) throws IOException {
 		String java = System.getProperty("java.home") + "/bin/java";
 		String classpath = System.getProperty("java.class.path");
 
@@ -137,7 +137,7 @@ public class ComponentDeployer extends Service {
 		startingNode.end();
 	}
 
-	private void init(Process p, ComponentInfo d, Set<ComponentInfo> peersSharingFS, boolean suicideWhenParentDie,
+	private void init(Process p, ComponentDescriptor d, Set<ComponentDescriptor> peersSharingFS, boolean suicideWhenParentDie,
 			Consumer<Object> feedback) throws IOException {
 		OutputStream out = p.getOutputStream();
 		DeployInfo deployInfo = new DeployInfo();
@@ -186,9 +186,9 @@ public class ComponentDeployer extends Service {
 		return s;
 	}
 
-	public void deployLocalPeers(Collection<ComponentInfo> localPeers, boolean suicideWhenParentDie,
+	public void deployLocalPeers(Collection<ComponentDescriptor> localPeers, boolean suicideWhenParentDie,
 			Consumer<Component> peerOk) {
-		for (ComponentInfo d : localPeers) {
+		for (ComponentDescriptor d : localPeers) {
 			Component t = new Component(d);
 			deployLocalPeer(t, suicideWhenParentDie);
 
@@ -208,20 +208,20 @@ public class ComponentDeployer extends Service {
 		LMI.connect(component, newThing);
 	}
 
-	public void deployRemote(Collection<ComponentInfo> peers, boolean suicideWhenParentDie, double timeoutInSecond,
-			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentInfo> peerOk) throws IOException {
+	public void deployRemote(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie, double timeoutInSecond,
+			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk) throws IOException {
 
 		// identifies the set of peers that have filesystem in common
-		Set<Set<ComponentInfo>> nasGroups = groupByNAS(peers, feedback);
+		Set<Set<ComponentDescriptor>> nasGroups = groupByNAS(peers, feedback);
 		feedback.accept("found NAS groups: " + nasGroups);
 
 		// rsync the classes to the remote groups and start the nodes
-		new OneElementOneThreadProcessing<Set<ComponentInfo>>(nasGroups) {
+		new OneElementOneThreadProcessing<Set<ComponentDescriptor>>(nasGroups) {
 
 			@Override
-			protected void process(Set<ComponentInfo> nasGroup) throws Throwable {
+			protected void process(Set<ComponentDescriptor> nasGroup) throws Throwable {
 				// picks a random peer in the group
-				ComponentInfo n = nasGroup.iterator().next();
+				ComponentDescriptor n = nasGroup.iterator().next();
 
 				// sends the binaries there
 				rsyncBinaries(n.sshParameters);
@@ -304,11 +304,11 @@ public class ComponentDeployer extends Service {
 				}
 			}
 
-			private void startJVM(Set<ComponentInfo> nasGroup, Consumer<Object> feedback) {
-				new OneElementOneThreadProcessing<ComponentInfo>(peers) {
+			private void startJVM(Set<ComponentDescriptor> nasGroup, Consumer<Object> feedback) {
+				new OneElementOneThreadProcessing<ComponentDescriptor>(peers) {
 
 					@Override
-					protected void process(ComponentInfo peer) {
+					protected void process(ComponentDescriptor peer) {
 
 						// sends the resouces there
 						// rsyncResources(n.sshParameters);
@@ -333,10 +333,10 @@ public class ComponentDeployer extends Service {
 		};
 	}
 
-	private static Collection<ComponentInfo> findLocalhosts(Collection<ComponentInfo> peers) {
-		Collection<ComponentInfo> r = new HashSet<>();
+	private static Collection<ComponentDescriptor> findLocalhosts(Collection<ComponentDescriptor> peers) {
+		Collection<ComponentDescriptor> r = new HashSet<>();
 
-		for (ComponentInfo p : peers) {
+		for (ComponentDescriptor p : peers) {
 			if (p.isLocalhost()) {
 				r.add(p);
 			}
@@ -345,10 +345,10 @@ public class ComponentDeployer extends Service {
 		return r;
 	}
 
-	private Collection<ComponentInfo> findThoseForAnotherJVMInTheSameComputer(Collection<ComponentInfo> peers) {
-		Collection<ComponentInfo> r = new HashSet<>();
+	private Collection<ComponentDescriptor> findThoseForAnotherJVMInTheSameComputer(Collection<ComponentDescriptor> peers) {
+		Collection<ComponentDescriptor> r = new HashSet<>();
 
-		for (ComponentInfo p : peers) {
+		for (ComponentDescriptor p : peers) {
 			if (p.isLocalhost()) {
 				r.add(p);
 			}
@@ -358,10 +358,10 @@ public class ComponentDeployer extends Service {
 	}
 
 	public static class DeployInfo implements Serializable {
-		ComponentInfo id;
+		ComponentDescriptor id;
 		boolean suicideWhenParentDies;
-		ComponentInfo parent;
-		Set<ComponentInfo> peersSharingFileSystem;
+		ComponentDescriptor parent;
+		Set<ComponentDescriptor> peersSharingFileSystem;
 	}
 
 	// this method should be called only by this class
@@ -379,7 +379,7 @@ public class ComponentDeployer extends Service {
 			DeployInfo deployInfo = (DeployInfo) o;
 
 			Cout.raw_stdout.println("instantiating thing");
-			Component t = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentInfo.class),
+			Component t = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentDescriptor.class),
 					deployInfo.id);
 			t.parent = deployInfo.parent;
 
@@ -404,8 +404,8 @@ public class ComponentDeployer extends Service {
 		}
 	}
 
-	public Set<ComponentInfo> findNASGroupOf(Set<Set<ComponentInfo>> nasGroups, ComponentInfo n) {
-		for (Set<ComponentInfo> g : nasGroups) {
+	public Set<ComponentDescriptor> findNASGroupOf(Set<Set<ComponentDescriptor>> nasGroups, ComponentDescriptor n) {
+		for (Set<ComponentDescriptor> g : nasGroups) {
 			if (g.contains(n)) {
 				return g;
 			}
@@ -414,10 +414,10 @@ public class ComponentDeployer extends Service {
 		return null;
 	}
 
-	public Set<Set<ComponentInfo>> groupByNAS(Collection<ComponentInfo> nodes, Consumer<Object> feedback) {
+	public Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes, Consumer<Object> feedback) {
 
 		if (nodes.size() == 1) {
-			Set<Set<ComponentInfo>> r = new HashSet<>();
+			Set<Set<ComponentDescriptor>> r = new HashSet<>();
 			r.add(new HashSet<>(nodes));
 			return r;
 		}
@@ -432,14 +432,14 @@ public class ComponentDeployer extends Service {
 			localDir.deleteRecursively();
 		}
 
-		Vector<ComponentInfo> syncPeerList = new Vector<>(nodes);
+		Vector<ComponentDescriptor> syncPeerList = new Vector<>(nodes);
 
 		localDir.mkdirs();
 		feedback.accept("marking NAS");
-		new OneElementOneThreadProcessing<ComponentInfo>(new ArrayList<>(syncPeerList)) {
+		new OneElementOneThreadProcessing<ComponentDescriptor>(new ArrayList<>(syncPeerList)) {
 
 			@Override
-			protected void process(ComponentInfo peer) {
+			protected void process(ComponentDescriptor peer) {
 				String filename = dir + peer.friendlyName;
 
 				try {
@@ -452,13 +452,13 @@ public class ComponentDeployer extends Service {
 			}
 		};
 
-		Set<Set<ComponentInfo>> nasGroups = Collections.synchronizedSet(new HashSet<Set<ComponentInfo>>());
+		Set<Set<ComponentDescriptor>> nasGroups = Collections.synchronizedSet(new HashSet<Set<ComponentDescriptor>>());
 
 		feedback.accept("fetching marks");
-		new OneElementOneThreadProcessing<ComponentInfo>(new ArrayList<>(syncPeerList)) {
+		new OneElementOneThreadProcessing<ComponentDescriptor>(new ArrayList<>(syncPeerList)) {
 			@Override
-			protected void process(ComponentInfo peer) {
-				Set<ComponentInfo> s = new HashSet<>();
+			protected void process(ComponentDescriptor peer) {
+				Set<ComponentDescriptor> s = new HashSet<>();
 
 				try {
 					List<String> stdout = SSHUtils.execShAndWait(peer.sshParameters, "ls " + dir);
@@ -470,8 +470,8 @@ public class ComponentDeployer extends Service {
 				}
 			}
 
-			private ComponentInfo findByName(String name, Iterable<ComponentInfo> nodes) {
-				for (ComponentInfo p : nodes) {
+			private ComponentDescriptor findByName(String name, Iterable<ComponentDescriptor> nodes) {
+				for (ComponentDescriptor p : nodes) {
 					if (p.friendlyName.equals(name)) {
 						return p;
 					}
@@ -482,10 +482,10 @@ public class ComponentDeployer extends Service {
 		};
 
 		feedback.accept("removing marks");
-		new OneElementOneThreadProcessing<Set<ComponentInfo>>(nasGroups) {
+		new OneElementOneThreadProcessing<Set<ComponentDescriptor>>(nasGroups) {
 			@Override
-			protected void process(Set<ComponentInfo> group) {
-				for (ComponentInfo p : group) {
+			protected void process(Set<ComponentDescriptor> group) {
+				for (ComponentDescriptor p : group) {
 					try {
 						SSHUtils.execShAndWait(p.sshParameters, "rm -rf " + dir);
 						return;
@@ -505,10 +505,10 @@ public class ComponentDeployer extends Service {
 		return nasGroups;
 	}
 
-	public Set<ComponentInfo> pickOneNodeInEveryNASGroup(Set<Set<ComponentInfo>> nasGroups, Random r) {
-		Set<ComponentInfo> s = new HashSet<>();
+	public Set<ComponentDescriptor> pickOneNodeInEveryNASGroup(Set<Set<ComponentDescriptor>> nasGroups, Random r) {
+		Set<ComponentDescriptor> s = new HashSet<>();
 
-		for (Set<ComponentInfo> g : nasGroups) {
+		for (Set<ComponentDescriptor> g : nasGroups) {
 			s.add(g.iterator().next());
 		}
 

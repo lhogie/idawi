@@ -15,8 +15,8 @@ public class lsBackend extends CommandBackend {
 			out.accept(s.getFriendlyName() + " (" + s.id + ")");
 
 			if (lsQueues) {
-				for (String q : s.actionNames()) {
-					out.accept("\t- " + q);
+				for (var od : s.descriptor().operationDescriptors) {
+					out.accept("\t- " + od.name);
 				}
 			}
 		}

@@ -12,13 +12,13 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.NeighborhoodListener;
-import idawi.TransportLayer;
+import idawi.RegistryService;
 import idawi.net.MultiTransport;
 import idawi.net.NetworkingService;
+import idawi.net.TransportLayer;
 import idawi.net.UDPDriver;
-import idawi.service.registry.RegistryService;
 import idawi.ui.JThingLineCmd;
 import j4u.CommandLine;
 import toools.gui.Swingable;
@@ -58,7 +58,7 @@ public class start extends JThingLineCmd {
 			UDPDriver udp = new UDPDriver();
 			mp.addProtocol(udp);
 
-			Component peer = new Component(ComponentInfo.fromCDL("name=" + name));
+			Component peer = new Component(ComponentDescriptor.fromCDL("name=" + name));
 
 			peers.add(peer);
 
@@ -66,12 +66,12 @@ public class start extends JThingLineCmd {
 
 			peer.lookupService(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
 				@Override
-				public void peerLeft(ComponentInfo p, TransportLayer protocol) {
+				public void peerLeft(ComponentDescriptor p, TransportLayer protocol) {
 					upateTitle();
 				}
 
 				@Override
-				public void peerJoined(ComponentInfo newPeer, TransportLayer protocol) {
+				public void peerJoined(ComponentDescriptor newPeer, TransportLayer protocol) {
 					upateTitle();
 				}
 

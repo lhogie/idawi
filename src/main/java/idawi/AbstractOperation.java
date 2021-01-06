@@ -12,7 +12,7 @@ public abstract class AbstractOperation {
 	double totalDuration;
 	private final Method method;
 	private final Object target;
-	public final OperationDescriptor descriptor;
+	private final OperationDescriptor descriptor;
 	private final Class<?>[] parmTypes;
 
 	public AbstractOperation(Object s, Method m) {
@@ -63,6 +63,8 @@ public abstract class AbstractOperation {
 	}
 
 	public OperationDescriptor descriptor() {
+		descriptor.nbCalls = this.nbCalls;
+		descriptor.totalDuration = this.totalDuration;
 		return descriptor;
 	}
 

@@ -29,7 +29,7 @@ public class SSH {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentInfo c2 = ComponentInfo.fromCDL("name=c2 / ssh=" + ssh);
+		ComponentDescriptor c2 = ComponentDescriptor.fromCDL("name=c2 / ssh=" + ssh);
 
 		c1.lookupService(ComponentDeployer.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));

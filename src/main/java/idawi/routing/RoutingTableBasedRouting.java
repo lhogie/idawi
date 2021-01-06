@@ -17,12 +17,17 @@ import idawi.net.TransportLayer;
  * to bench.
  */
 
-public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable> {
+public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingService {
+	public T routingTable;
 
-	public RoutingScheme1(Component node) {
+	public RoutingTableBasedRouting(Component node) {
 		super(node);
 	}
 
+	@Override
+	public void feedWith(Route route) {
+		this.routingTable.feedWith(route, component.descriptor());
+	}
 
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
@@ -47,7 +52,7 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 				Set<ComponentDescriptor> relays = new HashSet<>(to.size());
 
 				for (ComponentDescriptor t : to) {
-					ComponentDescriptor relay = routingTable.get(t);
+					ComponentDescriptor relay = routingTable.getRelay(t);
 
 					// if one relay can't be found, broadcast
 					if (relay == null) {
@@ -68,4 +73,8 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 		return "default";
 	}
 
+	@Override
+	public NetworkMap map() {
+		return routingTable.map();
+	}
 }

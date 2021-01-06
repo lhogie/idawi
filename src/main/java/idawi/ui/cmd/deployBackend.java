@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.service.ComponentDeployer;
 
 public class deployBackend extends CommandBackend {
@@ -14,7 +14,7 @@ public class deployBackend extends CommandBackend {
 	public void runOnServer(Component n, Consumer<Object> out)
 			throws Throwable {
 
-		List<ComponentInfo> peers = ComponentInfo
+		List<ComponentDescriptor> peers = ComponentDescriptor
 				.fromPDL(Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")));
 		peers.remove(n.descriptor());
 

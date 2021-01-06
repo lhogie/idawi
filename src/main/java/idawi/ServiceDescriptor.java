@@ -6,14 +6,14 @@ import java.util.Set;
 
 public class ServiceDescriptor implements Serializable {
 	public String name;
-	public Set<OperationDescriptor> operations = new HashSet<>();
+	public Set<OperationDescriptor> operationDescriptors = new HashSet<>();
 	public long nbMessagesReceived = 0;
 
 	@Override
 	public String toString() {
 		String s = "service " + name;
 
-		for (var o : operations) {
+		for (var o : operationDescriptors) {
 			s += "- " + o + "\n";
 		}
 

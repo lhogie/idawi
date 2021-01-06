@@ -1,4 +1,4 @@
-package idawi.service.registry;
+package idawi;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -10,26 +10,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import idawi.ComponentInfo;
+import idawi.map.NetworkMapListener;
 
 public class NetworkMap {
-	private final Map<ComponentInfo, Set<ComponentInfo>> m = new HashMap<>();
+	private final Map<ComponentDescriptor, Set<ComponentDescriptor>> m = new HashMap<>();
 	public final List<NetworkMapListener> listener = new ArrayList<>();
 
-	public Set<ComponentInfo> get(ComponentInfo p) {
+	public Set<ComponentDescriptor> get(ComponentDescriptor p) {
 		return m.get(p);
 	}
 
-	public Set<ComponentInfo> peers() {
+	public Set<ComponentDescriptor> peers() {
 		return m.keySet();
 	}
 
-	public void add(ComponentInfo p) {
+	public void add(ComponentDescriptor p) {
 		m.put(p, new HashSet<>());
 		listener.forEach(l -> l.newNode(p));
 	}
 
-	public void add(ComponentInfo a, ComponentInfo b) {
+	public void add(ComponentDescriptor a, ComponentDescriptor b) {
 		if ( ! contains(a)) {
 			add(a);
 		}
@@ -45,15 +45,15 @@ public class NetworkMap {
 		}
 	}
 
-	public boolean contains(ComponentInfo a, ComponentInfo b) {
+	public boolean contains(ComponentDescriptor a, ComponentDescriptor b) {
 		return contains(a) && get(a).contains(b);
 	}
 
-	public boolean contains(ComponentInfo a) {
+	public boolean contains(ComponentDescriptor a) {
 		return m.containsKey(a);
 	}
 
-	public void remove(ComponentInfo a, ComponentInfo b) {
+	public void remove(ComponentDescriptor a, ComponentDescriptor b) {
 		if (contains(a, b)) {
 			m.get(a).remove(b);
 			m.get(b).remove(a);
@@ -62,12 +62,12 @@ public class NetworkMap {
 	}
 
 	public static class Edge {
-		public ComponentInfo a, b;
+		public ComponentDescriptor a, b;
 	}
 
 	public void forEachEdge(Consumer<Edge> c) {
-		for (ComponentInfo u : m.keySet()) {
-			for (ComponentInfo v : m.get(u)) {
+		for (ComponentDescriptor u : m.keySet()) {
+			for (ComponentDescriptor v : m.get(u)) {
 				if (u.toString().compareTo(v.toString()) < 0) {
 					Edge e = new Edge();
 					e.a = u;

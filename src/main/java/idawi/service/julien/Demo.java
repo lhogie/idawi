@@ -13,7 +13,7 @@ import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.svg.SVGDocument;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.service.ComponentDeployer;
 import idawi.service.ServiceManager;
@@ -29,7 +29,7 @@ public class Demo {
 			@Override
 			public void run() throws Throwable {
 				// start a new JVM to host the time series DB
-				ComponentInfo serverDescriptor = ComponentInfo
+				ComponentDescriptor serverDescriptor = ComponentDescriptor
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, Set.of(serverDescriptor));
 				service(ComponentDeployer.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
@@ -52,7 +52,7 @@ public class Demo {
 		};
 	}
 
-	private static void startGUI(TimeSeriesDBStub localDB, ComponentInfo remoteDB) {
+	private static void startGUI(TimeSeriesDBStub localDB, ComponentDescriptor remoteDB) {
 		String parser = XMLResourceDescriptor.getXMLParserClassName();
 		SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
 		JSVGCanvas c = new JSVGCanvas();
@@ -83,7 +83,7 @@ public class Demo {
 		});
 	}
 
-	private static void startGUI2(TimeSeriesDBStub client, ComponentInfo server) {
+	private static void startGUI2(TimeSeriesDBStub client, ComponentDescriptor server) {
 		JLabel c = new JLabel();
 		JFrame frame = Utilities.displayInJFrame(c, "demo for Julien");
 		frame.setSize(800, 600);

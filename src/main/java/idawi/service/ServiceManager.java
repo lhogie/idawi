@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Operation;
 import idawi.Service;
 import idawi.ServiceDescriptor;
@@ -13,7 +13,7 @@ import toools.reflect.Clazz;
 public class ServiceManager extends Service {
 
 	public static class Stub extends ServiceStub {
-		public Stub(Service localService, Set<ComponentInfo> remoteComponents) {
+		public Stub(Service localService, Set<ComponentDescriptor> remoteComponents) {
 			super(localService, remoteComponents, ServiceManager.class);
 		}
 

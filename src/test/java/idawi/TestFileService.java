@@ -17,7 +17,7 @@ public class TestFileService {
 	@Test
 	public void pingViaSSH() throws Throwable {
 		Component c1 = new Component();
-		ComponentInfo c2 = ComponentInfo.fromCDL("name=c2 / ssh=" + ssh);
+		ComponentDescriptor c2 = ComponentDescriptor.fromCDL("name=c2 / ssh=" + ssh);
 		c1.lookupService(ComponentDeployer.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 

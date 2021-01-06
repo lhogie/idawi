@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
 import idawi.To;
@@ -55,14 +55,14 @@ public class Bencher extends Service {
 	}
 
 	// client
-	public Map<ComponentInfo, Results> bench(Set<ComponentInfo> peers, int size,
-			BiConsumer<ComponentInfo, String> msg) {
+	public Map<ComponentDescriptor, Results> bench(Set<ComponentDescriptor> peers, int size,
+			BiConsumer<ComponentDescriptor, String> msg) {
 		Arguments parms = new Arguments();
 		parms.size = size;
 		To to = new To();
 		to.notYetReachedExplicitRecipients = peers;
 		to.service = id;
-		Map<ComponentInfo, Results> map = new HashMap<>();
+		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
 		send(parms, to).forEach(r -> {
 			if (r.content instanceof String) {

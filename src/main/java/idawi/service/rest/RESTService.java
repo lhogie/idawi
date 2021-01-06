@@ -17,9 +17,10 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.Operation;
+import idawi.RegistryService;
 import idawi.RemoteException;
 import idawi.Service;
 import idawi.ServiceDescriptor;
@@ -27,7 +28,6 @@ import idawi.To;
 import idawi.net.JacksonSerializer;
 import idawi.net.LMI;
 import idawi.service.ServiceManager;
-import idawi.service.registry.RegistryService;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -168,10 +168,10 @@ public class RESTService extends Service {
 		if (path == null || path.isEmpty()) {
 			return welcomePage();
 		} else {
-			Set<ComponentInfo> components = componentsFromURL(path.get(0));
+			Set<ComponentDescriptor> components = componentsFromURL(path.get(0));
 
 			if (path.size() == 1) {
-				return describeComponent(components, timeout).toArray(new ComponentInfo[0]);
+				return describeComponent(components, timeout).toArray(new ComponentDescriptor[0]);
 			} else {
 				String serviceName = path.get(1);
 				Class<? extends Service> serviceID = Clazz.findClass(serviceName);
@@ -203,18 +203,18 @@ public class RESTService extends Service {
 		}
 	}
 
-	private Set<ComponentInfo> componentsFromURL(String s) {
+	private Set<ComponentDescriptor> componentsFromURL(String s) {
 		if (s.isEmpty()) {
 			return null;
 		}
 
-		Set<ComponentInfo> components = new HashSet<>();
+		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
 			var found = service(RegistryService.class).lookup(name);
 
 			if (found == null) {
-				components.add(ComponentInfo.fromCDL("name=" + name));
+				components.add(ComponentDescriptor.fromCDL("name=" + name));
 			} else {
 				components.add(found);
 			}
@@ -223,22 +223,23 @@ public class RESTService extends Service {
 		return components;
 	}
 
-	private Set<ComponentInfo> describeComponent(Set<ComponentInfo> components, double timeout) throws Throwable {
-		Set<ComponentInfo> r = new HashSet<>();
+	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
+			throws Throwable {
+		Set<ComponentDescriptor> r = new HashSet<>();
 
 		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()
 				.throwAnyError().resultMessages()) {
-			ComponentInfo c = m.route.source().component;
-			c.services = (Set<String>) m.content;
+			ComponentDescriptor c = m.route.source().component;
+			c.services = (Set<ServiceDescriptor>) m.content;
 			r.add(c);
 		}
 
 		return r;
 	}
 
-	private Map<ComponentInfo, ServiceDescriptor> decribeService(Set<ComponentInfo> components,
+	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
-		Map<ComponentInfo, ServiceDescriptor> descriptors = new HashMap<>();
+		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
 
 		for (Message m : call(new To(components, serviceID, "descriptor")).collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
@@ -249,12 +250,12 @@ public class RESTService extends Service {
 
 	public static class Welcome {
 		String localComponent;
-		Set<ComponentInfo> knownComponents = new HashSet<>();
+		Set<ComponentDescriptor> knownComponents = new HashSet<>();
 	}
 
 	private Welcome welcomePage() throws Throwable {
 		Welcome w = new Welcome();
-		w.localComponent = component.descriptor().friendlyName;
+		w.localComponent = component.friendlyName;
 
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
@@ -262,7 +263,7 @@ public class RESTService extends Service {
 		var q = call(new To(RegistryService.class, "local"));
 		q.setTimeout(1).collect();
 
-		w.knownComponents.addAll(service(RegistryService.class).descriptors());
+		w.knownComponents.addAll(service(RegistryService.class).list());
 		return w;
 	}
 
@@ -306,8 +307,8 @@ public class RESTService extends Service {
 			components.add(new Component());
 		}
 
-//		LMI.randomTree(components);
-		LMI.chain(components);
+		LMI.randomTree(components);
+//		LMI.chain(components);
 		components.get(0).lookupService(RESTService.class).startHTTPServer();
 
 		Threads.sleepForever();

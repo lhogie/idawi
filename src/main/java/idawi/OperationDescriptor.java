@@ -7,11 +7,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OperationDescriptor implements Serializable {
-
 	public final List<String> parameterTypes;
 	public final List<String> parameterTypesNames;
 	public final String[] returnTypes;
 	public final String name;
+	public int nbCalls;
+	public double totalDuration;
 
 	public OperationDescriptor(Method m) {
 		this.parameterTypes = Arrays.stream(m.getParameterTypes()).map(c -> c.getName()).collect(Collectors.toList());

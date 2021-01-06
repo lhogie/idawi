@@ -9,11 +9,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.NeighborhoodListener;
 import idawi.Service;
-import idawi.TransportLayer;
 import idawi.net.NetworkingService;
+import idawi.net.TransportLayer;
 import toools.gui.Swingable;
 
 public class PublishSubscribeApp extends Service implements Swingable {
@@ -34,12 +34,12 @@ public class PublishSubscribeApp extends Service implements Swingable {
 		c.add(renderer);
 		peer.lookupService(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
 			@Override
-			public void peerLeft(ComponentInfo peer, TransportLayer protocol) {
+			public void peerLeft(ComponentDescriptor peer, TransportLayer protocol) {
 				((DefaultListModel) nodeList.getModel()).removeElement(peer);
 			}
 
 			@Override
-			public void peerJoined(ComponentInfo peer, TransportLayer protocol) {
+			public void peerJoined(ComponentDescriptor peer, TransportLayer protocol) {
 				((DefaultListModel) nodeList.getModel()).addElement(peer);
 			}
 		});

@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Graph;
 import idawi.Message;
 import idawi.service.ComponentDeployer;
@@ -22,17 +22,17 @@ public class Demo_deploymentPlan {
 	public static void main(String[] args) throws Throwable {
 
 		// creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentInfo.fromCDL("name=master"));
+		Component t = new Component(ComponentDescriptor.fromCDL("name=master"));
 
-		ComponentInfo musclotte = ComponentInfo.fromCDL("ssh=musclotte.inria.fr");
-		ComponentInfo nicoati = ComponentInfo.fromCDL("ssh=nicoati.inria.fr");
-		ComponentInfo dronic = ComponentInfo.fromCDL("ssh=dronic.i3s.unice.fr");
-		ComponentInfo t2 = ComponentInfo.fromCDL("name=t2");
-		ComponentInfo t3 = ComponentInfo.fromCDL("name=t3");
-		ComponentInfo t4 = ComponentInfo.fromCDL("name=t4");
-		ComponentInfo jvm2 = ComponentInfo.fromCDL("name=jvm1 / where=new_jvm");
+		ComponentDescriptor musclotte = ComponentDescriptor.fromCDL("ssh=musclotte.inria.fr");
+		ComponentDescriptor nicoati = ComponentDescriptor.fromCDL("ssh=nicoati.inria.fr");
+		ComponentDescriptor dronic = ComponentDescriptor.fromCDL("ssh=dronic.i3s.unice.fr");
+		ComponentDescriptor t2 = ComponentDescriptor.fromCDL("name=t2");
+		ComponentDescriptor t3 = ComponentDescriptor.fromCDL("name=t3");
+		ComponentDescriptor t4 = ComponentDescriptor.fromCDL("name=t4");
+		ComponentDescriptor jvm2 = ComponentDescriptor.fromCDL("name=jvm1 / where=new_jvm");
 
-		Graph<ComponentInfo> g = new Graph<>();
+		Graph<ComponentDescriptor> g = new Graph<>();
 		g.add(t.descriptor(), musclotte);
 		g.add(t.descriptor(), nicoati);
 		g.add(t.descriptor(), dronic);
@@ -46,7 +46,7 @@ public class Demo_deploymentPlan {
 		t.lookupService(ComponentDeployer.class).apply(g, 10, true,feedback -> System.out.println(feedback), (p) -> System.out.println(p));
 
 		// describes the child peer that will be deployed to
-		ComponentInfo child = new ComponentInfo();
+		ComponentDescriptor child = new ComponentDescriptor();
 		InetAddress childHost = InetAddress.getByName(args[0]);
 		child.inetAddresses.add(childHost);
 		child.friendlyName = childHost.getHostName();

@@ -1,4 +1,4 @@
-package idawi;
+package idawi.net;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import idawi.ComponentDescriptor;
+import idawi.Message;
+import idawi.NeighborhoodListener;
 import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
@@ -28,13 +31,13 @@ public abstract class TransportLayer {
 
 	public abstract String getName();
 
-	public abstract boolean canContact(ComponentInfo c);
+	public abstract boolean canContact(ComponentDescriptor c);
 
-	public abstract void injectLocalInfoTo(ComponentInfo c);
+	public abstract void injectLocalInfoTo(ComponentDescriptor c);
 
-	public abstract Collection<ComponentInfo> neighbors();
+	public abstract Collection<ComponentDescriptor> neighbors();
 
-	public abstract void send(Message msg, Collection<ComponentInfo> toNeighbors);
+	public abstract void send(Message msg, Collection<ComponentDescriptor> toNeighbors);
 
 	public void setNewMessageConsumer(Consumer<Message> newConsumer) {
 		if (newConsumer == this.messageConsumer)
@@ -61,7 +64,7 @@ public abstract class TransportLayer {
 		return getName();
 	}
 
-	public static List<TransportLayer> findProtocolsWhichCanDealWith(ComponentInfo c,
+	public static List<TransportLayer> findProtocolsWhichCanDealWith(ComponentDescriptor c,
 			List<TransportLayer> protocols) {
 		return protocols.stream().filter(p -> p.canContact(c)).collect(Collectors.toList());
 	}

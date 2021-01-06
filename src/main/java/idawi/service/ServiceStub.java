@@ -2,18 +2,18 @@ package idawi.service;
 
 import java.util.Set;
 
-import idawi.ComponentInfo;
+import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.ServiceDescriptor;
 import idawi.To;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 
 public class ServiceStub {
-	protected final Set<ComponentInfo> remoteComponents;
+	protected final Set<ComponentDescriptor> remoteComponents;
 	protected final Service localService;
 	private final Class<? extends Service> service;
 
-	public ServiceStub(Service localService, Set<ComponentInfo> remoteComponents, Class<? extends Service> service) {
+	public ServiceStub(Service localService, Set<ComponentDescriptor> remoteComponents, Class<? extends Service> service) {
 		this.localService = localService;
 		this.remoteComponents = remoteComponents;
 		this.service = service;

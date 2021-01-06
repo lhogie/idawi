@@ -6,12 +6,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import idawi.ComponentInfo;
-import idawi.TransportLayer;
+import idawi.ComponentDescriptor;
 import toools.thread.Threads;
 
 public class MessageBuiltNeighborhood {
-	private final Map<ComponentInfo, Long> name_lastSeenDate = new HashMap<>();
+	private final Map<ComponentDescriptor, Long> name_lastSeenDate = new HashMap<>();
 	public long timeOutMs = 5000;
 	private final TransportLayer protocol;
 
@@ -21,11 +20,11 @@ public class MessageBuiltNeighborhood {
 	}
 
 	public synchronized void removeOutDated() {
-		Iterator<Entry<ComponentInfo, Long>> i = name_lastSeenDate.entrySet().iterator();
+		Iterator<Entry<ComponentDescriptor, Long>> i = name_lastSeenDate.entrySet().iterator();
 
 		while (i.hasNext()) {
-			Entry<ComponentInfo, Long> e = i.next();
-			ComponentInfo p = e.getKey();
+			Entry<ComponentDescriptor, Long> e = i.next();
+			ComponentDescriptor p = e.getKey();
 			long lastSeen = e.getValue();
 
 			// the peer has not been seen for a while
@@ -37,7 +36,7 @@ public class MessageBuiltNeighborhood {
 		}
 	}
 
-	public synchronized void messageJustReceivedFrom(ComponentInfo peer) {
+	public synchronized void messageJustReceivedFrom(ComponentDescriptor peer) {
 		boolean alreadyKnown = name_lastSeenDate.containsKey(peer);
 		name_lastSeenDate.put(peer, System.currentTimeMillis());
 
@@ -46,12 +45,12 @@ public class MessageBuiltNeighborhood {
 		}
 	}
 
-	public synchronized void remove(ComponentInfo peer) {
+	public synchronized void remove(ComponentDescriptor peer) {
 		if (name_lastSeenDate.remove(peer) != null) {
 		}
 	}
 
-	public Set<ComponentInfo> peers() {
+	public Set<ComponentDescriptor> peers() {
 		return name_lastSeenDate.keySet();
 	}
 }
