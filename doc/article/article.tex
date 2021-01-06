@@ -1,0 +1,210 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{xspace}
+\usepackage[affil-it]{authblk}
+\newcommand{\idawi}[1]{\textsc{Idawi}\xspace}
+
+\title{\idawi a middleware for the investigation of decentralized systems}
+\author{Luc Hogie \\ luc.hogie@cnrs.fr \\
+I3S Computer Science laboratory, Inria, Universit\'e C\^ote d'Azur, France}
+
+\begin{document}
+
+\maketitle
+
+\idawi is an open source middleware for decentralized/parallel applications. 
+Its aims at being an  for the experimentation and construction of distributed systems.
+
+It is developed at I3S computer science laboratory (Cnrs, Inria Sophia Antipolis, Université Côte d'Azur, France).
+Its design is driven by the multiple use cases for scientific and engineering projects we have in the lab, and it benefits from the experience we acquired in the past. For many years we have been studying distributed systems from both theoretical and practical perspectives. Also we have been conducting experiments on data sets which are so huge that they not have been processed without resorting to distributed computing. , its existing software solutions, and to face their limitations. Indeed each new experiment came with its peculiar data model and specific requirements, and existing frameworks turned out to be inadequate. Each time we had to write significant amounts of code to have suitable software solutions to our problems.
+In this context \idawi can be seen as a synthesis of these past developments and of our experience in the field distributed computing. As such it gathers implementations of the concepts that proved useful to our past studies, and that we believe will be useful to future Research not only useful in our local Research groups but to a broader community.
+
+Distributed computing is notoriously difficult field. Writing distributed applications is hard as programmers have to deal with complexities at all stages: heterogeneous hardware and networks technologies, sophisticated protocols, complex software infrastructures, concurrent access to data, performance issues, reliability issues, etc.
+\idawi tackles this issues as a whole by using an elegant approach which proved highly successful when used as the core of world-scale P2P infrastructures: decentralization. \idawi defines a dynamic graph  in which nodes can rely only on their local view and on their interactions with their changing neighborhood, without relying on any centralized service. Decentralization endows \idawi an elastic nature that has numerous intrinsic advantages, such as the ability to grow or shrink dynamically, to be resilient to failures, to accommodate to node mobility and churn.
+This  makes \idawi suitable to a wide range of applications like IOT, MANETs, cluster and cloud computing, etc.
+
+
+On top of this decentralized model, \idawi proposes the following features, among others: 
+\begin{itemize}
+    \item automatized deployment of nodes through SSH
+    \item both asynchronous and synchronous messaging
+    \item unicast, multicast, and broadcast communication
+    \item streaming
+    \item scalable
+    \item massive multi-core parallelism
+    \item multi-protocol: support SSH, TCP, UDP, etc
+    \item REST-based web interface
+\end{itemize}
+
+The design objectives of \idawi are to make it scalable/efficient, easy to use, elastic, versatile. Also, in order to be usable on the largest variety of devices, ranging from IOT sensors to super-calculators, \idawi is written in Java.
+
+
+\section{Component}
+\idawi defines an overlay network of components. Components can be physically located within a same JVM, in different JVMs on the same computer of in remote computers.
+
+
+A component can be referred to in the graph by its ID.It essentially is a container of services.
+
+
+
+
+\section{Service}
+
+Components have no application logic. Application code is held by \textit{service}s exposed by components. A service is the atomic application element in a \idawi distributed application.
+
+A service provides implementation of code targeting a specific concern.
+Generic concerns like routing, error management, deployment, benching, are already tackled by builtin services. Likewise, an new user application will implement its own specific concerns as one or several services.
+
+A service is organized as set of operations. An operation implements a specific action in a given concern. Operations are exposed to other services in the host component as well as to other components in the network.
+
+The code of an operation is triggered upon the reception of a certain type of message. More precisely when such a message is received, the corresponding  operation is scheduled to be executed by a pool of threads. This execution will happen as soon as possible, possibly in parallel to the execution of other operations of any other or same service/component in the system.
+
+At runtime, an operation is able to return information to it caller service, thereby allowing remote monitoring. This introduces a second type of message, which does not trigger the execution of an operation, but delivers information in a queue previously created by the caller of the operation.
+
+The formal description of an operation is $operation_name(msg, returns)$ where $msg$ is the incoming message and $returns$ is the way to return information not only at the end of the execution (as the $return$ keyword does) but also anytime in the execution of the operation. 
+
+But operation can also be expressed in a more programmer-friendly way, known as \em{parameterized} operations. In this mode, the description of an operation takes the common form of a method declaration, where the returns type is specified and parameters are defined along with their expected type and names. Such a declaration can be augmented with an optional parameter allowing the return of information. For example \texttt{int exampleOperation(int parm1, String parm2)} and \texttt{int exampleOperation(int parm1, String parm2, Consumer returns)}
+
+
+\section{Descriptors}
+A component descriptor contains information  about a component at a certain date. The set of descriptors held by a component constitutes the local knowledge of the system.
+If changes occur in the system (addition/removal of components/services/operations, network conditions, computer loads), this local knowledge tends to get outdated. For this reason, components periodically produce up-to-date descriptors of themselves and disseminate them across the system.
+
+Also descriptors are fed by neighborhood information carried by messages as they travel in the graph.
+
+Note that a component descriptor may refer to a non-existing component.
+
+
+Nodes have a local registry which stores information about their peers. This information is not necessarily complete for a given peer nor it  The \textit{neighborhood} of a node is the set of peers. Node incorporate a routing service, which enables nodes to interact with peers not in their neighborhood by 
+using neighbors as relays.
+
+\section{On scalability}
+This graph of component does not have constraints regarding its dimensions. It can be as small as the singleton graph, consisting of one single component, or made of huge amount of components.  As a consequence, it cannot be ensured that components have a complete knowledge of the graph: the larger the graph, the less accurate the \em{local view} of components.
+
+This local view consists of a set of descriptors for the components in the graph. 
+
+\section{Deployment}
+A unique feature of \idawi is its ability to deploying new nodes programmatically.
+More precisely, if a node (called the parent node) is given the ability to connect through SSH to a remote host, it becomes able to start new nodes (called the child nodes) on this host.
+To do that, the parent node uses the ubiquitous \texttt{rsync} utility to incrementally transfer all its binaries (the whole content of its Java classpath) to the remote host. Once the binaries transferred , the parent node starts a new Java Virtual Machine on the remote host, with an instance of the node class in it. This new node will instantly being in capacity to communicate with its parent node, as well as with other peers in the overlay.
+
+In practise, instead of deploying one single node to one single host at a time, a parent node will rather try to deploy new nodes onto multiple hosts in parallel. Here arises the problem of shared file-systems to which writing operations must deal with  conflicting resources: before transferring binaries to remote hosts, the parent node executes a distributed algorithm for the computation of the set of hosts sharing a same file-system. Then binaries are transferred in parallel to one single (random) computer in every set. As soon as a set as received its binaries, child nodes are in parallel  started on all hosts in it.
+
+At any time, a child node can be set to be dependant on its parent node. In this case, child nodes terminates on their own as soon as they lose the SSH connection to their parent node. On the contrary an independent child node will continue running even so the SSH connected that were used to start it gets lost. Note that an independent node may have other ways to communicate with its parent if it is still running, thereby not losing contact.
+
+
+\section{Message}
+
+A message is identified by a unique random 64-bit numerical ID.
+\idawi messages transfer is based on multicast/broadcast, meaning that  messages are targeted to not a single peer but to a set of peers. Unicast can be emulated by specifying one single element in the set of recipient peers.  It carries a content which can be any Java object. 
+
+
+Analogously to e-mail messages, messages have a {\em to:} as well as an optional {\em reply-to:} address.
+
+An address is defined by a 5-uplet $(C, s, o, e, p)$ where
+\begin{description}
+\item[C] is the set of component IDs (messaging in \idawi is multicast by nature). If C is not set, the address is considered to be a broadcast address
+\item[s] is the identifier of a service on all target components
+\item[o] is the identifier of an operation on all target services
+\item[e] is the maximum number of hops allowed
+\item[p] is the forward probability
+\end{description}
+
+After a message has been processed by a component, it is not dropped. Instead, until it expires, it is stored and considered for re-emission each time a new neighbor component pops up. This enables \idawi to deal with node mobility and scarce connectivity found for example in delay tolerant networks (DTNs).
+
+
+\section{Asynchronous communication}
+
+The base primitive for sending messages is
+\texttt{send(msg, to, reply-to)}
+where $msg$ is the message to send, $to$ is the destination address and $replyTo$ is the optional address for sending results.
+
+Messages is sent asynchronously. This primitive is not blocking and the emitter gets no acknowledgement of reception.
+
+If the {\em reply-to:} is undefined, the target operation has no mean to send anything, and in particular to send returns back to its caller.
+
+
+If defined, the {\em reply-to:} address is not related to the {\em to:} address: the target operation may send results to any address.
+
+When using the \texttt{send(msg, to)} primitive, prior to issuing the message the emitter service 1) sets a default {\em reply-to:} address back to the emitter, and 2)
+creates a local message queue dedicated to the reception of eventual return information.
+
+\section{Synchronous communication}
+A message queue is analogous to a {\em future}. It defines a \texttt{get(timeout)} primitive which blocks until a message is available or the specified timeout expires. By invoking this primitive, the emitter service does synchronous communication. If set to a non-infinite value, the timeout ensures no dead-locks will occur in the system.
+
+
+\section{Underlying transport protocols}
+\idawi features an abstraction for the network communications. It defines a protocol driver as a component able to send messages asynchronously, to trigger a consumer each time a new message is received, and to provides a set of peer in its current neighborhood.
+The following protocols are currently supported.
+
+LMI is used when the two components involved in the communication are in the same JVM.
+
+UDP
+is the fast IP-based transport layer. Lack of ACK is compensated by \idawi synchronous communications.
+
+TCP
+is slower than UDP but has two significant advantages. 1) it imposes no constraint on the size of messages 2) it permits SSH-tunneling, which is required when the plain TCP ports are inacessible because of a firewall or a NAS.
+
+SSH
+is primarily used to deploy components on remote computers. The communication streams between the SSH client and SSH server are used to transport messages. This mechanism can be used even when SSH tunelling not available.
+
+Sometimes nodes have no direct neither indirect way to reach one another using other protocols, but they share a common file system. This is the case of two computers in different LANs, each one connected to a common cloud storage.
+
+
+\section{Multi-thread parallelism}
+Some systems like ProActive define that every entity (active objects in the case of ProActive) have their own thread. This appealing model has one major drawback: as the number of threads is limited, the system cannot scale.
+
+In \idawi, components have no threads associated to them. Their executable parts (operations) are scheduled to a pool of threads shared by all components into a JVM. By default, there is only one JVM per computer and as many threads as cores on the local computer.
+
+\subsection{Service lifecycle}
+
+Thanks to the \textit{service manager} service, services can dynamically start and stop other services in their node using an object-oriented API, as well as in other nodes, using a message-based API. 
+
+
+
+\section{Fitting to experimentation}
+R\&D and experimentation have their own requirements. In particular, designing and tuning a distributed algorithm often is a {\em trial and error} process. As such, it is crucial that the developer is able to perform runs very quickly and to get useful report of errors. 
+
+\subsection{trials...}
+In order to allow quick trial runs, \idawi features automatic deployment of the local code.  More precisely, \idawi automatically transfers to the remote hosts the whole content of the local Java classpath. Then, Java code and resources get  transparently deploy across the network, be they located in a project directory for an IDE, or packaged in a Jar file. This constitutes a significant departure from other middleware which usually impose the programmer to deploy its code by hand. 
+
+\subsection{errors...}
+In order to report errors to the programmer, \idawi 1) forwards back the standard output and standard error streams of remote virtual machines, and 2) it features a specific distributed service dedicated to logging and disseminating errors, which allow any component in the system to identify faulty code.
+
+\section{REST interface}
+\idawi components come with a specific service dedicated to monitoring the system. This services starts a REST-compliant HTTP server which make all components/services/operations in the system accessible from a web browser.
+
+The Web interface uses \textit{Bootstrap} and \textit{Vis.js} on top of HTML 5 so as to propose modern scientific views of the graph.
+
+\section{Comparison to existing platforms}
+
+\url{https://dl.acm.org/doi/10.1109/TSE.2015.2476797}
+
+ZeroMQ
+
+Monix
+
+Zio 
+
+JGroups
+
+Akka
+
+Hazelcasts
+
+Terracota
+
+Apache River
+
+Jade is supported by Telecom Italia.
+Its naming service is centralized
+In accordance to the FIPA standard, Jade imposes a number of component-specific high-level asbractions which concern their behavior, their interactions, etc.
+It receives messages in blocking mode.
+
+Unique features of \idawi are P2P, deployment/
+
+
+
+
+
+\end{document}
