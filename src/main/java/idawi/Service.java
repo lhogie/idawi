@@ -35,7 +35,7 @@ public class Service {
 	public final Component component;
 	private boolean askToRun = true;
 	protected final List<Thread> threads = new ArrayList<>();
-	final Map<String, AbstractOperation> name2operation = new HashMap<>();
+	private final Map<String, Operation> name2operation = new HashMap<>();
 
 	private final AtomicLong returnQueueID = new AtomicLong();
 	private long nbMessages;
@@ -62,41 +62,41 @@ public class Service {
 	private void registerInMethodOperations() {
 		for (Class c : Clazz.getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
-				if (m.isAnnotationPresent(Operation.class)) {
-					var o = name2operation.get(m.getName());
-
-					if (o != null) {
-						throw new IllegalStateException("operation name is already in use: " + c.getName() + "."
-								+ m.getName() + " with signature " + o.descriptor().parameterTypes);
-					}
-
-					name2operation.put(m.getName(), new AbstractOperation(this, m) {
-						@Override
-						public String getDescription() {
-							return "in method operation";
-						}
-					});
-
-					try {
-						Field f = c.getField(m.getName());
-						/*
-						 * if ((f.getModifiers() & Modifier.STATIC) == 0) { System.err.println(
-						 * "warning: class " + c.getName() + ", field " + m.getName() +
-						 * " should be static"); } else if ((f.getModifiers() & Modifier.PUBLIC) == 0) {
-						 * System.err.println( "warning: class " + c.getName() + ", field " +
-						 * m.getName() + " should be public"); }
-						 * 
-						 * OperationID value = new OperationID(); value.name = m.getName();
-						 * System.out.println(c + "." + m.getName()); f.set(this, value);
-						 */
-					} catch (NoSuchFieldException e) {
-//						System.err.println("warning: class " + c.getName() + ", missing: public final OperationID "
-//								+ m.getName() + ";");
-					} catch (IllegalArgumentException e) {
-						throw new IllegalStateException(e);
-					}
+				if (m.isAnnotationPresent(ExposedOperation.class)) {
+					registerOperation(new InMethodOperation(this, m));
 				}
 			}
+		}
+	}
+
+	private void registerInFieldOperations() {
+		for (Field field : getClass().getFields()) {
+			if (field.isAnnotationPresent(ExposedOperation.class)) {
+				Object v = get(field);
+
+				if (v instanceof OperationField) {
+					var of = (OperationField) v;
+					of.name = field.getName();
+					registerOperation(of);
+				} else {
+					InFieldOperation fi = InFieldOperation.toOperation(field, v);
+
+					if (fi == null) {
+						throw new IllegalStateException(
+								"don't know what to do with field " + getClass().getName() + "." + field.getName());
+					}
+
+					registerOperation(fi);
+				}
+			}
+		}
+	}
+
+	private Object get(Field field) {
+		try {
+			return field.get(this);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new IllegalStateException(e);
 		}
 	}
 
@@ -104,7 +104,7 @@ public class Service {
 		return new Directory(Component.directory, "/services/" + id);
 	}
 
-	@Operation
+	@ExposedOperation
 	private long nbMessagesReceived() {
 		return nbMessages;
 	}
@@ -112,17 +112,17 @@ public class Service {
 	@OperationName
 	public static OperationID listOperationNames;
 
-	@Operation
+	@ExposedOperation
 	private Set<String> listOperationNames() {
 		return new HashSet<String>(name2operation.keySet());
 	}
 
-	@Operation
+	@ExposedOperation
 	private void listNativeOperations(Consumer out) {
 		name2operation.values().forEach(o -> out.accept(o.descriptor()));
 	}
 
-	@Operation
+	@ExposedOperation
 	public String getFriendlyName() {
 		return getClass().getName();
 	}
@@ -135,7 +135,7 @@ public class Service {
 
 	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
 
-	@Operation
+	@ExposedOperation
 	private Int2LongMap second2nbMessages() {
 		return second2nbMessages;
 	}
@@ -163,7 +163,7 @@ public class Service {
 			return;
 		}
 
-		AbstractOperation operation = name2operation.get(msg.to.operationOrQueue);
+		Operation operation = name2operation.get(msg.to.operationOrQueue);
 
 		// this queue is not associated to any processing, to leave in a queue and some
 		// thread will pick it up later
@@ -220,23 +220,32 @@ public class Service {
 		}
 	}
 
-	public void registerOperation(String name, OperationFunctionalInterface userCode) {
-		if (name2operation.containsKey(name)) {
-			throw new IllegalStateException("operation name is already in use: " + name);
+	public void registerOperation(String name, OperationFI userCode) {
+		registerOperation(new Operation() {
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public String getDescription() {
+				return null;
+			}
+
+			@Override
+			public void accept(Message msg, Consumer<Object> returns) throws Throwable {
+				userCode.accept(msg, returns);
+			}
+		});
+	}
+
+	public void registerOperation(Operation o) {
+		if (name2operation.containsKey(o.getName())) {
+			throw new IllegalStateException("operation name is already in use: " + o.getName());
 		}
 
-		try {
-			name2operation.put(name, new AbstractOperation(userCode,
-					userCode.getClass().getMethod("accept", Message.class, Consumer.class)) {
-
-				@Override
-				public String getDescription() {
-					return "in lambda operation";
-				}
-			});
-		} catch (NoSuchMethodException | SecurityException e) {
-			throw new IllegalStateException(e);
-		}
+		name2operation.put(o.getName(), o);
 	}
 
 	public void newThread_loop_periodic(long periodMs, Runnable r) {
@@ -272,7 +281,7 @@ public class Service {
 		return askToRun;
 	}
 
-	@Operation
+	@ExposedOperation
 	public void shutdown() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
@@ -292,7 +301,6 @@ public class Service {
 	}
 
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
-
 
 	protected MessageQueue createQueue(String qid, Set<ComponentDescriptor> expectedSenders) {
 		MessageQueue q = new MessageQueue(qid, expectedSenders, 10, wannaDie -> delete(wannaDie));
@@ -352,7 +360,7 @@ public class Service {
 		send(o, to);
 	}
 
-	@Operation
+	@ExposedOperation
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();

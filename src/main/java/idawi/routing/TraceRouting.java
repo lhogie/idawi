@@ -6,7 +6,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Operation;
+import idawi.ExposedOperation;
 import idawi.Route;
 import idawi.net.TransportLayer;
 
@@ -56,7 +56,7 @@ public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
 	}
 
 	@Override
-	@Operation
+	@ExposedOperation
 	public String getAlgoName() {
 		return "default";
 	}

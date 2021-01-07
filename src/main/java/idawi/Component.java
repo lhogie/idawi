@@ -18,7 +18,7 @@ import idawi.service.DummyService;
 import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import idawi.service.ServiceManager;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
@@ -56,7 +56,7 @@ public class Component {
 		new NetworkingService(this);
 		new ServiceManager(this);
 		new ComponentDeployer(this);
-		new PingPong(this);
+		new PingService(this);
 		new Bencher(this);
 //		new RoutingScheme1(this);
 		new RoutingScheme_bcast(this);

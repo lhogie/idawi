@@ -6,7 +6,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.service.ComponentDeployer;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 
 /**
  * 
@@ -32,7 +32,7 @@ public class Demo1_multi_jvm {
 		t1.lookupService(ComponentDeployer.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 		
-		Message pong = t1.lookupService(PingPong.class).ping(t2d, 1);
+		Message pong = t1.lookupService(PingService.class).ping(t2d, 1);
 		System.out.println("pong: " + pong);
 
 	}

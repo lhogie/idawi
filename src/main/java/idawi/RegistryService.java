@@ -25,67 +25,67 @@ public class RegistryService extends Service {
 		super(component);
 	}
 
-	@Operation
+	@ExposedOperation
 	public void broadcastLocalInfo() {
 		send(component.descriptor(), new To(RegistryService.class, "add"), null);
 	}
 
-	@Operation
-	public void add(ComponentDescriptor newInfo) {
-		var alreadyHere = name2descriptor.get(newInfo.friendlyName);
+	@ExposedOperation
+	public void add(ComponentDescriptor d) {
+		var alreadyHere = name2descriptor.get(d.friendlyName);
 
-		if (alreadyHere == null || newInfo.isNewerThan(alreadyHere)) {
-			name2descriptor.put(newInfo.friendlyName, newInfo);
+		if (alreadyHere == null || d.isNewerThan(alreadyHere)) {
+			name2descriptor.put(d.friendlyName, d);
 		}
 	}
 
-	@Operation
+	@ExposedOperation
 	public void addAll(Collection<ComponentDescriptor> s) {
 		s.forEach(i -> add(i));
 	}
 
-	@Operation
+	@ExposedOperation
 	public int size() {
 		return name2descriptor.size();
 	}
 
-	@Operation
+	@ExposedOperation
 	public Set<String> names() {
 		return name2descriptor.keySet();
 	}
 
-	@Operation
+	@ExposedOperation
 	public void updateAll() {
 		call(new To(new HashSet<>(name2descriptor.values()), RegistryService.class, "local")).collect().resultMessages()
 				.contents().forEach(d -> add((ComponentDescriptor) d));
 	}
 
-	@Operation
+	@ExposedOperation
 	public ComponentDescriptor lookup(String name) {
 		return name2descriptor.get(name);
 	}
 
-	@Operation
+	@ExposedOperation
 	public ComponentDescriptor remove(String name) {
 		return name2descriptor.remove(name);
 	}
 
-	@Operation
+	@ExposedOperation
 	public void clear() {
 		name2descriptor.clear();
 	}
 
-	@Operation
+	@ExposedOperation
 	public Set<ComponentDescriptor> list() {
 		return new HashSet<>(name2descriptor.values());
 	}
 
-	@Operation
+	@ExposedOperation
 	public ComponentDescriptor local() {
 		return component.descriptor();
 	}
 
-	@Operation
+	@ExposedOperation
 	public ComponentDescriptor pickRandomPeer() {
 		if (name2descriptor.isEmpty()) {
 			return null;
@@ -134,7 +134,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	@Operation
+	@ExposedOperation
 	public Set<ComponentDescriptor> lookupByRegexp(String re) {
 		var r = new HashSet<ComponentDescriptor>();
 

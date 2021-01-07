@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import idawi.ByteSource;
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Operation;
+import idawi.ExposedOperation;
 import idawi.Service;
 import idawi.To;
 import toools.io.Utilities;
@@ -24,7 +24,7 @@ public class FileService extends Service {
 		super(t);
 	}
 
-	@Operation
+	@ExposedOperation
 	private Set<String> listFiles() throws IOException {
 		dir.ensureExists();
 		List<AbstractFile> files = dir.retrieveTree();
@@ -34,12 +34,12 @@ public class FileService extends Service {
 
 	public final static String downloadFileAsOneSingleMessage = "downloadFileAsOneSingleMessage";
 
-	@Operation
+	@ExposedOperation
 	private byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
 		return new RegularFile(dir, path).getContent();
 	}
 
-	@Operation
+	@ExposedOperation
 	private void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
 		new RegularFile(dir, path).setContent(bytes);
 	}
@@ -49,7 +49,7 @@ public class FileService extends Service {
 		call(new To(target, FileService.class, "uploadFileAsOneSingleMessage"), pathOnTarget, localFile.getContent());
 	}
 
-	@Operation
+	@ExposedOperation
 	private ByteSource downloadFile(String name, long seek) throws IOException {
 		dir.ensureExists();
 		var f = new RegularFile(dir, name);
@@ -59,7 +59,7 @@ public class FileService extends Service {
 		return new ByteSource(is, (int) (len - seek), name);
 	}
 
-	@Operation
+	@ExposedOperation
 	private void upload(String name, boolean append, InputStream in) throws IOException {
 		dir.ensureExists();
 		var fos = new RegularFile(dir, name).createWritingStream(append);
@@ -67,19 +67,19 @@ public class FileService extends Service {
 		fos.close();
 	}
 
-	@Operation
+	@ExposedOperation
 	private boolean exists(String name) {
 		dir.ensureExists();
 		return new RegularFile(dir, name).exists();
 	}
 
-	@Operation
+	@ExposedOperation
 	private void delete(String name) {
 		dir.ensureExists();
 		new RegularFile(dir, name).delete();
 	}
 
-	@Operation
+	@ExposedOperation
 	private long size(String name) {
 		dir.ensureExists();
 		return new RegularFile(name).getSize();

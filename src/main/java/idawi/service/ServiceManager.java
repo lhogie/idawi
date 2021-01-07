@@ -5,7 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Operation;
+import idawi.ExposedOperation;
 import idawi.Service;
 import idawi.ServiceDescriptor;
 import toools.reflect.Clazz;
@@ -43,7 +43,7 @@ public class ServiceManager extends Service {
 	public final static String list = "list";
 	public final static String has = "has";
 
-	@Operation
+	@ExposedOperation
 	public ServiceDescriptor start(Class<? extends Service> serviceID) {
 		if (service(serviceID) != null) {
 			throw new IllegalArgumentException("service already running");
@@ -59,20 +59,20 @@ public class ServiceManager extends Service {
 		return s.descriptor();
 	}
 
-	@Operation
+	@ExposedOperation
 	public void stop(Class<? extends Service> serviceID) {
 		Service s = component.lookupService(serviceID);
 		component.removeService(s);
 	}
 
-	@Operation
+	@ExposedOperation
 	public Set<String> list() {
 		Set<String> r = new HashSet<>();
 		component.services().forEach(s -> r.add(s.id.getName()));
 		return r;
 	}
 
-	@Operation
+	@ExposedOperation
 	public boolean has(Class serviceID) {
 		return service(serviceID) != null;
 	}

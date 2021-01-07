@@ -9,7 +9,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.service.ComponentDeployer;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 
 public class Demo3_multi_deployment {
 
@@ -39,7 +39,7 @@ public class Demo3_multi_deployment {
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = t.lookupService(PingPong.class).ping(children, 1000);
+		MessageList pongs = t.lookupService(PingService.class).ping(children, 1000);
 
 		if (pongs.isEmpty()) {
 			System.err.println("no response");

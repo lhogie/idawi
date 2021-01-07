@@ -12,7 +12,7 @@ import idawi.ComponentDescriptor;
 import idawi.EOT;
 import idawi.Message;
 import idawi.NeighborhoodListener;
-import idawi.Operation;
+import idawi.ExposedOperation;
 import idawi.RegistryService;
 import idawi.RemoteException;
 import idawi.RouteEntry;
@@ -75,12 +75,12 @@ public class NetworkingService extends Service {
 		});
 	}
 
-	@Operation
+	@ExposedOperation
 	private Collection<ComponentDescriptor> listProtocols() {
 		return transport.neighbors();
 	}
 
-	@Operation
+	@ExposedOperation
 	public long getNbMessagesReceived() {
 		return nbMsgReceived.get();
 	}

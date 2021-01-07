@@ -12,7 +12,7 @@ import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.routing.RoutingScheme1;
 import idawi.routing.RoutingScheme_bcast;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import idawi.service.ServiceManager;
 
 public class All2all {
@@ -54,7 +54,7 @@ public class All2all {
 			var allButMe = new HashSet<>(all);
 			allButMe.remove(c.descriptor());
 			System.out.println(c + " pings " + allButMe);
-			c.lookupService(PingPong.class).pingAround().forEach2(msg -> {
+			c.lookupService(PingService.class).pingAround().forEach2(msg -> {
 				n.incrementAndGet();
 				System.out.println(n.get() + ": " + msg);
 				var sender = msg.route.source().component;

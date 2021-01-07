@@ -17,9 +17,7 @@ public class ExecService extends Service {
 
 	public ExecService(Component peer) {
 		super(peer);
-		registerOperation(null, (msg, results) -> {
-			((Request) msg.content).execute(results);
-		});
+		registerOperation(null, (msg, results) -> ((Request) msg.content).execute(results));
 	}
 
 	@Override

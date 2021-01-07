@@ -50,7 +50,7 @@ public class PingPong {
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);
 
-		Message pong = first.lookupService(idawi.service.PingPong.class).ping(last.descriptor(), 10);
+		Message pong = first.lookupService(idawi.service.PingService.class).ping(last.descriptor(), 10);
 		
 		
 

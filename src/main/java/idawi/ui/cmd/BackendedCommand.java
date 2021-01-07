@@ -7,7 +7,7 @@ import idawi.Message;
 import idawi.ProgressMessage;
 import idawi.Service;
 import idawi.To;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -25,7 +25,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		ComponentDescriptor hook = ComponentDescriptor.fromCDL(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
-		if (localService.component.lookupService(PingPong.class).ping(hook, timeout) == null) {
+		if (localService.component.lookupService(PingService.class).ping(hook, timeout) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}

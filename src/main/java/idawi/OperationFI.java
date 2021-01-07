@@ -2,6 +2,6 @@ package idawi;
 
 import java.util.function.Consumer;
 
-public interface OperationFunctionalInterface {
+public interface OperationFI {
 	void accept(Message incomingMsg, Consumer<Object> returns) throws Throwable;
 }

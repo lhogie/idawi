@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import idawi.net.LMI;
 import idawi.service.ComponentDeployer;
 import idawi.service.DummyService;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
 
@@ -30,7 +30,7 @@ public class LucTests {
 
 		LMI.chain(l);
 		var b = l.get(l.size() - 1).descriptor();
-		List<Route> routes = l.get(0).lookupService(PingPong.class).traceroute(Set.of(b), 1);
+		List<Route> routes = l.get(0).lookupService(PingService.class).traceroute(Set.of(b), 1);
 System.out.println(routes);
 Component.stopPlatformThreads();
 	}
@@ -52,7 +52,7 @@ Component.stopPlatformThreads();
 		LMI.connect(c1, c2);
 
 		// ask c1 to ping c2
-		Message pong = c1.lookupService(PingPong.class).ping(c2.descriptor(), 1);
+		Message pong = c1.lookupService(PingService.class).ping(c2.descriptor(), 1);
 
 		// be sure c1 got an answer
 		assertNotEquals(null, pong);
@@ -111,7 +111,7 @@ Component.stopPlatformThreads();
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = master.lookupService(PingPong.class).ping(other, 1);
+		Message pong = master.lookupService(PingService.class).ping(other, 1);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
@@ -168,7 +168,7 @@ Component.stopPlatformThreads();
 		}
 
 		LMI.chain(l);
-		Message pong = l.get(0).lookupService(PingPong.class).ping(l.get(l.size() - 1).descriptor(), 1);
+		Message pong = l.get(0).lookupService(PingService.class).ping(l.get(l.size() - 1).descriptor(), 1);
 System.out.println(pong.route);
 		assertNotEquals(pong, null);
 

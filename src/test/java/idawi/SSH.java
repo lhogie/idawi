@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import idawi.net.NetworkingService;
 import idawi.service.ComponentDeployer;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import toools.io.Cout;
 
 public class SSH {
@@ -35,7 +35,7 @@ public class SSH {
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = c1.lookupService(PingPong.class).ping(c2, 5);
+		Message pong = c1.lookupService(PingService.class).ping(c2, 5);
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer

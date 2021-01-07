@@ -29,12 +29,11 @@ import toools.util.Date;
  * @author lhogie
  *
  */
-public class ComponentDescriptor implements Serializable {
+public class ComponentDescriptor implements Descriptor {
 	enum WHERE {
 		here, new_jvm, ssh
 	}
 
-	public double date = Date.time();
 	public long id = ThreadLocalRandom.current().nextLong();
 	public String friendlyName;
 	public SSHParms sshParameters = new SSHParms();
@@ -49,12 +48,6 @@ public class ComponentDescriptor implements Serializable {
 	// final Map<String, Object> map = new HashMap<>();
 
 	public Set<String> neighbors = new HashSet<>();
-
-	public static class Neighbor implements Serializable {
-		public String id;
-		public double latency;
-		public int rate;
-	}
 
 	@Override
 	public String toString() {
@@ -219,7 +212,5 @@ public class ComponentDescriptor implements Serializable {
 		return true;
 	}
 
-	public boolean isNewerThan(ComponentDescriptor b) {
-		return date > b.date;
-	}
+
 }

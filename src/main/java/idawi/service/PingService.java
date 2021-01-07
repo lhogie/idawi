@@ -8,11 +8,11 @@ import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
+import idawi.ExposedOperation;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.MessageQueue.SUFFICIENCY;
-import idawi.Operation;
 import idawi.Route;
 import idawi.Service;
 import idawi.To;
@@ -22,21 +22,30 @@ import idawi.To;
  * to bench.
  */
 
-public class PingPong extends Service {
-	public PingPong(Component node) {
+public class PingService extends Service {
+	public PingService(Component node) {
 		super(node);
 	}
 
-	@Operation
-	private void ping() {
-		// don't need to send anything
-		// and EOT will be sent back (acting as a pong)
+	@ExposedOperation
+	public void ping() {
 	}
 
-	@Operation
+	@ExposedOperation
+	public Consumer<Message> ping2 = m -> {
+	};
+
+	@ExposedOperation
+	public void ping3() {
+	}
+
+	@ExposedOperation
 	private Message traceroute(Message ping) {
 		return ping;
 	}
+
+	@ExposedOperation
+	private Function<Message, Message> traceroute2 = ping -> ping;
 
 	@Override
 	public String getFriendlyName() {
@@ -44,7 +53,9 @@ public class PingPong extends Service {
 	}
 
 	public List<Route> traceroute(Set<ComponentDescriptor> targets, double timeout) throws Throwable {
-		return send(null, new To(targets, PingPong.class, "traceroute")).setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream().map(m -> ((Message)m).route).collect(Collectors.toList());
+		return send(null, new To(targets, PingService.class, "traceroute")).setTimeout(timeout).collect()
+				.throwAnyError().resultMessages().contents().stream().map(m -> ((Message) m).route)
+				.collect(Collectors.toList());
 	}
 
 	public Message ping(ComponentDescriptor target, double timeout) {
@@ -57,11 +68,11 @@ public class PingPong extends Service {
 	}
 
 	public MessageList ping(Set<ComponentDescriptor> targets, double timeout) {
-		return send(null, new To(targets, PingPong.class, "ping")).setTimeout(timeout).collect();
+		return send(null, new To(targets, PingService.class, "ping")).setTimeout(timeout).collect();
 	}
 
 	public MessageQueue ping(Set<ComponentDescriptor> targets) {
-		return send(null, new To(targets, PingPong.class, "ping"));
+		return send(null, new To(targets, PingService.class, "ping"));
 	}
 
 	public MessageQueue pingAround() {

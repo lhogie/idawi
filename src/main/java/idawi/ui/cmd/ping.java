@@ -5,7 +5,7 @@ import java.util.List;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.Service;
-import idawi.service.PingPong;
+import idawi.service.PingService;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -54,7 +54,7 @@ public class ping extends CommunicatingCommand {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = localService.component.lookupService(PingPong.class).ping(p,
+				Message pong = localService.component.lookupService(PingService.class).ping(p,
 						timeout);
 
 				if (pong == null) {

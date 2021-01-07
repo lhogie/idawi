@@ -1,10 +1,9 @@
 package idawi;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ServiceDescriptor implements Serializable {
+public class ServiceDescriptor implements Descriptor {
 	public String name;
 	public Set<OperationDescriptor> operationDescriptors = new HashSet<>();
 	public long nbMessagesReceived = 0;
@@ -17,7 +16,7 @@ public class ServiceDescriptor implements Serializable {
 			s += "- " + o + "\n";
 		}
 
-		s+= nbMessagesReceived+ " messages received";
+		s += nbMessagesReceived + " messages received";
 		return s;
 	}
 }
