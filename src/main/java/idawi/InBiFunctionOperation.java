@@ -16,9 +16,4 @@ public class InBiFunctionOperation extends InFieldOperation {
 	public void accept(Message msg, Consumer<Object> returns) {
 		r.apply(msg, returns);
 	}
-
-	@Override
-	public String getDescription() {
-		return null;
-	}
 }

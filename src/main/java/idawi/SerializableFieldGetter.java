@@ -1,19 +1,19 @@
 package idawi;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-public class InSupplierOperation extends InFieldOperation {
-	private final Supplier r;
+public class SerializableFieldGetter extends InFieldOperation {
+	private final Serializable r;
 
-	public InSupplierOperation(Field f, Supplier m) {
+	public SerializableFieldGetter(Field f, Serializable m) {
 		super(f);
 		this.r = m;
 	}
 
 	@Override
 	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
-		returns.accept(r.get());
+		returns.accept(r);
 	}
 }

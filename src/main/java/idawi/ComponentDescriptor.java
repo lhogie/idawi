@@ -45,7 +45,7 @@ public class ComponentDescriptor implements Descriptor {
 
 	// final Map<String, Object> map = new HashMap<>();
 
-	public Map<String, String> protocol2neighbors = new HashMap<>();
+	public Map<String, Set<String>> protocol2neighbors = new HashMap<>();
 
 	@Override
 	public String toString() {

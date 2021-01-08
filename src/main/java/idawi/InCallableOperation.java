@@ -16,9 +16,4 @@ public class InCallableOperation extends InFieldOperation {
 	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
 		r.call();
 	}
-
-	@Override
-	public String getDescription() {
-		return null;
-	}
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import idawi.map.NetworkMap;
 import toools.thread.Threads;
 
 public class RegistryService extends Service {
@@ -111,7 +112,6 @@ public class RegistryService extends Service {
 		return info;
 	}
 
-
 	@ExposedOperation
 	public Set<ComponentDescriptor> lookupByRegexp(String re) {
 		var r = new HashSet<ComponentDescriptor>();
@@ -127,10 +127,26 @@ public class RegistryService extends Service {
 
 	public NetworkMap map() {
 		var m = new NetworkMap();
+		Map<String, ComponentDescriptor> missing = new HashMap<>();
 
-		for (var d : name2descriptor.values()) {
-			for (var n : d.neighbors) {
-				m.add(d, ensureExists(n));
+		for (var c : name2descriptor.values()) {
+			for (var e : c.protocol2neighbors.entrySet()) {
+				String protocol = e.getKey();
+
+				for (var n : e.getValue()) {
+					ComponentDescriptor b = name2descriptor.get(n);
+
+					if (b == null) {
+						b = missing.get(n);
+
+						if (b == null) {
+							b = missing.put(n, b = new ComponentDescriptor());
+							b.friendlyName = n;
+						}
+					}
+
+					m.add(c, protocol, b);
+				}
 			}
 		}
 

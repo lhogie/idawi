@@ -15,9 +15,4 @@ public class InRunnableOperation extends InFieldOperation {
 	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
 		r.run();
 	}
-
-	@Override
-	public String getDescription() {
-		return null;
-	}
 }

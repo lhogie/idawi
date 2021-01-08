@@ -1,5 +1,6 @@
 package idawi;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
@@ -28,7 +29,7 @@ public abstract class InFieldOperation extends Operation {
 
 	@Override
 	public String getDescription() {
-		return null;
+		return getClass().getName() + " " + getName();
 	}
 
 	static InFieldOperation toOperation(Field f, Object v) {
@@ -53,6 +54,9 @@ public abstract class InFieldOperation extends Operation {
 		} else if (is(v, BiFunction.class, Message.class, Consumer.class, Object.class)) {
 			return new InBiFunctionOperation(f, (BiFunction<Message, Consumer<Object>, Object>) v);
 		} else if (is(v, OperationFI.class)) {
+			return new InFIOperation(f, (OperationFI) v);
+		} else if (v instanceof Serializable) {
+			// an annotated field can be requested as an operation
 			return new InFIOperation(f, (OperationFI) v);
 		} else {
 			return null;

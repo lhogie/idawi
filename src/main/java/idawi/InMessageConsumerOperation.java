@@ -15,9 +15,4 @@ public class InMessageConsumerOperation extends InFieldOperation {
 	public void accept(Message msg, Consumer<Object> returns) throws Throwable {
 		r.accept(msg);
 	}
-
-	@Override
-	public String getDescription() {
-		return null;
-	}
 }
