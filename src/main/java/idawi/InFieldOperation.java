@@ -50,7 +50,7 @@ public abstract class InFieldOperation extends Operation {
 			return new InBiConsumerOperation(f, (BiConsumer<Message, Consumer<Object>>) v);
 		} else if (is(v, Supplier.class)) {
 			return new InSupplierOperation(f, (Supplier) v);
-		} else if (is(v, BiFunction.class, Message.class, Consumer.class)) {
+		} else if (is(v, BiFunction.class, Message.class, Consumer.class, Object.class)) {
 			return new InBiFunctionOperation(f, (BiFunction<Message, Consumer<Object>, Object>) v);
 		} else if (is(v, OperationFI.class)) {
 			return new InFIOperation(f, (OperationFI) v);

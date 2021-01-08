@@ -1,11 +1,16 @@
 package idawi.service;
 
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import idawi.Component;
-import idawi.Message;
 import idawi.ExposedOperation;
+import idawi.Message;
+import idawi.OperationFI;
 import idawi.ProgressRatio;
 import idawi.Service;
 import toools.math.MathsUtilities;
@@ -28,6 +33,32 @@ public class DummyService extends Service {
 		return s.length();
 	}
 
+	@ExposedOperation
+	public Object nullOperation;
+
+	@ExposedOperation
+	public Runnable runnable = () -> {
+	};
+
+	@ExposedOperation
+	public Callable callable = () -> "I'm a callable operation!";
+
+	@ExposedOperation
+	public Supplier supplier = () -> "I'm a supplier operation!";
+
+	@ExposedOperation
+	public Consumer<Message> msgConsumer = (msg) -> {
+	};
+
+	@ExposedOperation
+	public BiConsumer<Message, Consumer> biConsumer = (msg, r) -> r.accept("I'm a biconsumer");
+
+	@ExposedOperation
+	public BiFunction<Message, Consumer, Object> biFunction = (m, r) -> "I'm a bifunction operation!";
+
+	@ExposedOperation
+	public OperationFI fi = (m, r) -> r.accept("I'm a bifunction operation!");
+	
 	@ExposedOperation
 	private void countFrom1toN(Message m, Consumer<Object> r) {
 		for (int i = 0; i < (Integer) m.content; ++i) {

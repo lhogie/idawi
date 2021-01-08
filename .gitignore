@@ -4,3 +4,8 @@
 bin/
 target/
 .DS_Store
+release4julien.sh
+release2maven.sh
+.gitignore
+.classpath
+.project

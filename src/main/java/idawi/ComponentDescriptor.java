@@ -1,7 +1,6 @@
 package idawi;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -21,7 +20,6 @@ import idawi.net.UDPDriver;
 import toools.net.NetUtilities;
 import toools.net.SSHParms;
 import toools.text.TextUtilities;
-import toools.util.Date;
 
 /**
  * Specifies how to reach a given peer.
@@ -47,7 +45,7 @@ public class ComponentDescriptor implements Descriptor {
 
 	// final Map<String, Object> map = new HashMap<>();
 
-	public Set<String> neighbors = new HashSet<>();
+	public Map<String, String> protocol2neighbors = new HashMap<>();
 
 	@Override
 	public String toString() {
@@ -211,6 +209,5 @@ public class ComponentDescriptor implements Descriptor {
 
 		return true;
 	}
-
 
 }

@@ -10,13 +10,13 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.EOT;
+import idawi.ExposedOperation;
 import idawi.Message;
 import idawi.NeighborhoodListener;
-import idawi.ExposedOperation;
-import idawi.RegistryService;
 import idawi.RemoteException;
 import idawi.RouteEntry;
 import idawi.Service;
+import idawi.map.MapService;
 import idawi.routing.RoutingService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -93,7 +93,12 @@ public class NetworkingService extends Service {
 		}
 
 		msg.receptionDate = Date.time();
-		service(RegistryService.class).feedWith(msg.route);
+
+		for (var s : component.services()) {
+			if (s instanceof MapService) {
+				((MapService) s).feedWith(msg.route);
+			}
+		}
 
 		if (!msg.isExpired()) {
 			// the message was already received
@@ -105,7 +110,6 @@ public class NetworkingService extends Service {
 			}
 		}
 	};
-
 
 	private void notYetReceivedMsg(Message msg) {
 		if (msg.to.isBroadcast()) {

@@ -111,28 +111,6 @@ public class RegistryService extends Service {
 		return info;
 	}
 
-	public void feedWith(Route route) {
-		int len = route.size();
-
-		for (int i = 0; i < len; ++i) {
-			RouteEntry e = route.get(i);
-			ComponentDescriptor info = ensureExists(e.component.friendlyName);
-
-			if (i > 0) {
-				ensureNeighbors(info, route.get(i - 1).component.friendlyName);
-			}
-
-			if (i < len - 1) {
-				ensureNeighbors(info, route.get(i + 1).component.friendlyName);
-			}
-		}
-	}
-
-	private void ensureNeighbors(ComponentDescriptor info, String neighbor) {
-		if (!info.neighbors.contains(neighbor)) {
-			info.neighbors.add(neighbor);
-		}
-	}
 
 	@ExposedOperation
 	public Set<ComponentDescriptor> lookupByRegexp(String re) {
