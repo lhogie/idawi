@@ -6,10 +6,12 @@ public abstract class Operation {
 	int nbCalls;
 	double totalDuration;
 	protected final OperationDescriptor descriptor;
-
-	public Operation() {
+	final Class declaringClass;
+	
+	public Operation(Class declaringClass) {
 		this.descriptor = new OperationDescriptor();
 		this.descriptor.impl = getClass().getName();
+		this.declaringClass = declaringClass;
 	}
 
 	public abstract String getName();

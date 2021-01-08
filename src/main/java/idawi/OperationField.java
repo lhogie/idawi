@@ -3,8 +3,14 @@ package idawi;
 import java.lang.reflect.Method;
 
 public abstract class OperationField extends Operation {
+
 	// the name is set when the service scans for its fields operations
 	String name;
+
+	public OperationField(Class declaringClass) {
+		super(declaringClass);
+		// TODO Auto-generated constructor stub
+	}
 
 	public String getName() {
 		return name;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +21,6 @@ import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
 import toools.thread.Threads;
@@ -39,7 +39,9 @@ public class Service {
 	private final Map<String, Operation> name2operation = new HashMap<>();
 
 	private final AtomicLong returnQueueID = new AtomicLong();
-	private long nbMessages;
+
+	@ExposedOperation
+	private long nbMessagesReceived;
 
 	public Service() throws Throwable {
 		this(new Component());
@@ -70,7 +72,7 @@ public class Service {
 		}
 	}
 
-	private void registerInFieldOperations() {
+	public void registerInFieldOperations() {
 		for (Field field : getClass().getFields()) {
 			if (field.isAnnotationPresent(ExposedOperation.class)) {
 				Object v = get(field);
@@ -91,6 +93,8 @@ public class Service {
 				}
 			}
 		}
+
+		fieldOperationScanned = true;
 	}
 
 	private Object get(Field field) {
@@ -107,7 +111,7 @@ public class Service {
 
 	@ExposedOperation
 	private long nbMessagesReceived() {
-		return nbMessages;
+		return nbMessagesReceived;
 	}
 
 	@OperationName
@@ -120,7 +124,7 @@ public class Service {
 
 	@ExposedOperation
 	private void listNativeOperations(Consumer out) {
-		name2operation.values().forEach(o -> out.accept(o.descriptor()));
+		getOperations().forEach(o -> out.accept(o.descriptor()));
 	}
 
 	@ExposedOperation
@@ -136,13 +140,15 @@ public class Service {
 
 	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
 
+	private boolean fieldOperationScanned = false;
+
 	@ExposedOperation
 	private Int2LongMap second2nbMessages() {
 		return second2nbMessages;
 	}
 
 	public void considerNewMessage(Message msg) {
-		second2nbMessages.put((int) Date.time(), ++nbMessages);
+		second2nbMessages.put((int) Date.time(), ++nbMessagesReceived);
 
 		if (msg.content instanceof Chunk) {
 			Chunk chunk = (Chunk) msg.content;
@@ -164,7 +170,7 @@ public class Service {
 			return;
 		}
 
-		Operation operation = name2operation.get(msg.to.operationOrQueue);
+		Operation operation = getOperation(msg.to.operationOrQueue);
 
 		// this queue is not associated to any processing, to leave in a queue and some
 		// thread will pick it up later
@@ -221,8 +227,25 @@ public class Service {
 		}
 	}
 
+	private Collection<Operation> getOperations() {
+		ensureInFieldOperationsScanned();
+		return name2operation.values();
+	}
+
+	private Operation getOperation(String name) {
+		ensureInFieldOperationsScanned();
+		return name2operation.get(name);
+	}
+
+	@ExposedOperation
+	private void ensureInFieldOperationsScanned() {
+		if (!fieldOperationScanned) {
+			registerInFieldOperations();
+		}
+	}
+
 	public void registerOperation(String name, OperationFI userCode) {
-		registerOperation(new Operation() {
+		registerOperation(new Operation(getClass()) {
 
 			@Override
 			public String getName() {
@@ -231,7 +254,7 @@ public class Service {
 
 			@Override
 			public String getDescription() {
-				return null;
+				return "operation " + name + " has been added programmatically (it can hence be removed)";
 			}
 
 			@Override
@@ -365,8 +388,8 @@ public class Service {
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();
-		name2operation.values().forEach(o -> d.operationDescriptors.add(o.descriptor()));
-		d.nbMessagesReceived = nbMessages;
+		getOperations().forEach(o -> d.operationDescriptors.add(o.descriptor()));
+		d.nbMessagesReceived = nbMessagesReceived;
 		return d;
 	}
 

@@ -13,6 +13,7 @@ public abstract class InFieldOperation extends Operation {
 	private final Field field;
 
 	public InFieldOperation(Field m) {
+		super(m.getDeclaringClass());
 		m.setAccessible(true);
 		this.field = m;
 	}
@@ -33,15 +34,7 @@ public abstract class InFieldOperation extends Operation {
 	}
 
 	static InFieldOperation toOperation(Field f, Object v) {
-		if (v == null) {
-			return new InFieldOperation(f) {
-
-				@Override
-				public void accept(Message msg, Consumer<Object> returns) throws Throwable {
-					returns.accept("field " + f.getDeclaringClass().getName() + "." + f.getName() + " is null");
-				}
-			};
-		} else if (is(v, Runnable.class)) {
+		if (is(v, Runnable.class)) {
 			return new InRunnableOperation(f, (Runnable) v);
 		} else if (is(v, Callable.class)) {
 			return new InCallableOperation(f, (Callable) v);

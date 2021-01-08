@@ -13,6 +13,7 @@ public class InMethodOperation extends Operation {
 	private final Object target;
 
 	public InMethodOperation(Object target, Method m) {
+		super(m.getDeclaringClass());
 		m.setAccessible(true);
 		this.method = m;
 		this.target = target;
