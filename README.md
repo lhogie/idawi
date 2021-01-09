@@ -1,4 +1,6 @@
-*Idawi* is a Java decentralized middleware for distributed applications. It is developed at the Computer Science Laboratory of the Universté Côte d'Azur (Nice, France), which is a joint lab of Cnrs (Centre National de la Recherche Scientifique) and Inria Sophia Antipolis.
+*Idawi* is a Java decentralized middleware for distributed applications. It is developed at the
+[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/) (Nice, France),
+which is a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
 
 *Idawi* is extensively described in the on-going working paper there:
 https://sharelatex.irisa.fr/read/drmkyvwckyzz
