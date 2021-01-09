@@ -3,10 +3,10 @@ package idawi;
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
 
-public class InFIOperation extends InFieldOperation {
-	private final OperationFI r;
+public class InStandardFormOperation extends InFieldOperation {
+	private final OperationStandardForm r;
 
-	public InFIOperation(Field f, OperationFI m) {
+	public InStandardFormOperation(Field f, OperationStandardForm m) {
 		super(f);
 		this.r = m;
 	}

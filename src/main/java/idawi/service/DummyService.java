@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 import idawi.Component;
 import idawi.ExposedOperation;
 import idawi.Message;
-import idawi.OperationFI;
+import idawi.OperationStandardForm;
 import idawi.ProgressRatio;
 import idawi.Service;
 import toools.math.MathsUtilities;
@@ -57,7 +57,7 @@ public class DummyService extends Service {
 	public BiFunction<Message, Consumer, Object> biFunction = (m, r) -> "I'm a bifunction operation!";
 
 	@ExposedOperation
-	public OperationFI fi = (m, r) -> r.accept("I'm a bifunction operation!");
+	public OperationStandardForm fi = (m, r) -> r.accept("I'm a bifunction operation!");
 	
 	@ExposedOperation
 	private void countFrom1toN(Message m, Consumer<Object> r) {

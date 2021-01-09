@@ -48,8 +48,8 @@ public abstract class InFieldOperation extends Operation {
 			return new InSupplierOperation(f, (Supplier) v);
 		} else if (is(v, BiFunction.class, Message.class, Consumer.class, Object.class)) {
 			return new InBiFunctionOperation(f, (BiFunction<Message, Consumer<Object>, Object>) v);
-		} else if (is(v, OperationFI.class)) {
-			return new InFIOperation(f, (OperationFI) v);
+		} else if (is(v, OperationStandardForm.class)) {
+			return new InStandardFormOperation(f, (OperationStandardForm) v);
 		} else if (v instanceof Serializable) {
 			// an annotated field can be requested as an operation
 			return new SerializableFieldGetter(f, (Serializable) v);

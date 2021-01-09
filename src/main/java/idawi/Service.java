@@ -245,7 +245,7 @@ public class Service {
 		}
 	}
 
-	public void registerOperation(String name, OperationFI userCode) {
+	public void registerOperation(String name, OperationStandardForm userCode) {
 		registerOperation(new Operation(getClass()) {
 
 			@Override
