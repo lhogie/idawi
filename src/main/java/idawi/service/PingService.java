@@ -28,15 +28,7 @@ public class PingService extends Service {
 	}
 
 	@ExposedOperation
-	public void ping() {
-	}
-
-	@ExposedOperation
-	public Consumer<Message> ping2 = m -> {
-	};
-
-	@ExposedOperation
-	public void ping3() {
+	private void ping() {
 	}
 
 	@ExposedOperation
@@ -54,7 +46,7 @@ public class PingService extends Service {
 
 	public List<Route> traceroute(Set<ComponentDescriptor> targets, double timeout) throws Throwable {
 		return send(null, new To(targets, PingService.class, "traceroute")).setTimeout(timeout).collect()
-				.throwAnyError().resultMessages().contents().stream().map(m -> ((Message) m).route)
+				.throwAnyError().resultMessages().contents().stream().map(r -> ((Message) r).route)
 				.collect(Collectors.toList());
 	}
 
