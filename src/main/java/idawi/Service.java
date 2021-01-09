@@ -40,7 +40,7 @@ public class Service {
 
 	private final AtomicLong returnQueueID = new AtomicLong();
 
-	@ExposedOperation
+	@IdawiExposed
 	private long nbMessagesReceived;
 
 	public Service() throws Throwable {
@@ -65,7 +65,7 @@ public class Service {
 	private void registerInMethodOperations() {
 		for (Class c : Clazz.getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
-				if (m.isAnnotationPresent(ExposedOperation.class)) {
+				if (m.isAnnotationPresent(IdawiExposed.class)) {
 					registerOperation(new InMethodOperation(this, m));
 				}
 			}
@@ -74,7 +74,7 @@ public class Service {
 
 	public void registerInFieldOperations() {
 		for (Field field : getClass().getFields()) {
-			if (field.isAnnotationPresent(ExposedOperation.class)) {
+			if (field.isAnnotationPresent(IdawiExposed.class)) {
 				Object v = get(field);
 
 				if (v instanceof OperationField) {
@@ -109,7 +109,7 @@ public class Service {
 		return new Directory(Component.directory, "/services/" + id);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private long nbMessagesReceived() {
 		return nbMessagesReceived;
 	}
@@ -117,17 +117,17 @@ public class Service {
 	@OperationName
 	public static OperationID listOperationNames;
 
-	@ExposedOperation
+	@IdawiExposed
 	private Set<String> listOperationNames() {
 		return new HashSet<String>(name2operation.keySet());
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void listNativeOperations(Consumer out) {
 		getOperations().forEach(o -> out.accept(o.descriptor()));
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public String getFriendlyName() {
 		return getClass().getName();
 	}
@@ -142,7 +142,7 @@ public class Service {
 
 	private boolean fieldOperationScanned = false;
 
-	@ExposedOperation
+	@IdawiExposed
 	private Int2LongMap second2nbMessages() {
 		return second2nbMessages;
 	}
@@ -184,7 +184,8 @@ public class Service {
 							+ "' not existing on service " + getClass().getName());
 					error(err);
 					send(err, msg.replyTo, null);
-					send(new EOT(), msg.replyTo, null);
+
+					send(EOT.instance, msg.replyTo, null);
 				}
 			} else {
 				q.add_blocking(msg);
@@ -210,7 +211,7 @@ public class Service {
 
 						// tells the client the processing has completed
 						if (msg.replyTo != null) {
-							send(new EOT(), msg.replyTo, null);
+							send(EOT.instance, msg.replyTo, null);
 						}
 					} catch (Throwable exception) {
 						RemoteException err = new RemoteException(exception);
@@ -219,7 +220,7 @@ public class Service {
 
 						if (msg.replyTo != null) {
 							send(err, msg.replyTo, null);
-							send(new EOT(), msg.replyTo, null);
+							send(EOT.instance, msg.replyTo, null);
 						}
 					}
 				});
@@ -237,7 +238,7 @@ public class Service {
 		return name2operation.get(name);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void ensureInFieldOperationsScanned() {
 		if (!fieldOperationScanned) {
 			registerInFieldOperations();
@@ -305,7 +306,7 @@ public class Service {
 		return askToRun;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void shutdown() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
@@ -384,7 +385,7 @@ public class Service {
 		send(o, to);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();

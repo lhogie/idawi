@@ -26,12 +26,12 @@ public class RegistryService extends Service {
 		super(component);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void broadcastLocalInfo() {
 		send(component.descriptor(), new To(RegistryService.class, "add"), null);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void add(ComponentDescriptor d) {
 		var alreadyHere = name2descriptor.get(d.friendlyName);
 
@@ -40,53 +40,53 @@ public class RegistryService extends Service {
 		}
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void addAll(Collection<ComponentDescriptor> s) {
 		s.forEach(i -> add(i));
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public int size() {
 		return name2descriptor.size();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public Set<String> names() {
 		return name2descriptor.keySet();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void updateAll() {
 		call(new To(new HashSet<>(name2descriptor.values()), RegistryService.class, "local")).collect().resultMessages()
 				.contents().forEach(d -> add((ComponentDescriptor) d));
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public ComponentDescriptor lookup(String name) {
 		return name2descriptor.get(name);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public ComponentDescriptor remove(String name) {
 		return name2descriptor.remove(name);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void clear() {
 		name2descriptor.clear();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public Set<ComponentDescriptor> list() {
 		return new HashSet<>(name2descriptor.values());
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public ComponentDescriptor local() {
 		return component.descriptor();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public ComponentDescriptor pickRandomPeer() {
 		if (name2descriptor.isEmpty()) {
 			return null;
@@ -112,7 +112,7 @@ public class RegistryService extends Service {
 		return info;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public Set<ComponentDescriptor> lookupByRegexp(String re) {
 		var r = new HashSet<ComponentDescriptor>();
 

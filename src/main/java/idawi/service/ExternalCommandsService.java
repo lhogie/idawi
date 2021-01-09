@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ExposedOperation;
+import idawi.IdawiExposed;
 import idawi.Service;
 import toools.extern.ExternalProgram;
 import toools.extern.Proces;
@@ -27,12 +27,12 @@ public class ExternalCommandsService extends Service {
 
 
 
-	@ExposedOperation
+	@IdawiExposed
 	private Set<String> commands() {
 		return commandName2executableFile.keySet();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private String exec(String name, String... parms) {
 		RegularFile cmd = commandName2executableFile.get(name);
 		return new String(Proces.exec(cmd.getPath(), parms));

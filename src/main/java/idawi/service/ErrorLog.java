@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import idawi.Component;
-import idawi.ExposedOperation;
+import idawi.IdawiExposed;
 import idawi.Service;
 
 public class ErrorLog extends Service {
@@ -24,7 +24,7 @@ public class ErrorLog extends Service {
 		report(new Error(msg));
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private List<Throwable> listErrors() {
 		return errors;
 	}

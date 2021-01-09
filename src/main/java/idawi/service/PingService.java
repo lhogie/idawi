@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.ExposedOperation;
+import idawi.IdawiExposed;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
@@ -27,16 +27,16 @@ public class PingService extends Service {
 		super(node);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void ping() {
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private Message traceroute(Message ping) {
 		return ping;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private Function<Message, Message> traceroute2 = ping -> ping;
 
 	@Override

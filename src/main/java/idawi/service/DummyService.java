@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import idawi.Component;
-import idawi.ExposedOperation;
+import idawi.IdawiExposed;
 import idawi.Message;
 import idawi.OperationStandardForm;
 import idawi.ProgressRatio;
@@ -21,64 +21,64 @@ public class DummyService extends Service {
 		super(component);
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private double waiting(double maxSeconds) {
 		double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 		Threads.sleepMs((long) (seconds * 1000));
 		return seconds;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private int stringLength(String s) {
 		return s.length();
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public Object nullOperation;
 
-	@ExposedOperation
+	@IdawiExposed
 	public Runnable runnable = () -> {
 	};
 
-	@ExposedOperation
+	@IdawiExposed
 	public Callable callable = () -> "I'm a callable operation!";
 
-	@ExposedOperation
+	@IdawiExposed
 	public Supplier supplier = () -> "I'm a supplier operation!";
 
-	@ExposedOperation
+	@IdawiExposed
 	public Consumer<Message> msgConsumer = (msg) -> {
 	};
 
-	@ExposedOperation
+	@IdawiExposed
 	public BiConsumer<Message, Consumer> biConsumer = (msg, r) -> r.accept("I'm a biconsumer");
 
-	@ExposedOperation
+	@IdawiExposed
 	public BiFunction<Message, Consumer, Object> biFunction = (m, r) -> "I'm a bifunction operation!";
 
-	@ExposedOperation
+	@IdawiExposed
 	public OperationStandardForm fi = (m, r) -> r.accept("I'm a bifunction operation!");
 	
-	@ExposedOperation
+	@IdawiExposed
 	private void countFrom1toN(Message m, Consumer<Object> r) {
 		for (int i = 0; i < (Integer) m.content; ++i) {
 			r.accept(i);
 		}
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void countFromAtoB(int a, int b, Consumer<Object> r) {
 		for (int i = a; i < b; ++i) {
 			r.accept(i);
 		}
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void throwError() {
 		throw new Error("this is a test error");
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void sendProgressInformation(Message m, Consumer<Object> r) {
 		int target = (Integer) m.content;
 

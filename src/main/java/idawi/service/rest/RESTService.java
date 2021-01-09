@@ -19,7 +19,7 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.ExposedOperation;
+import idawi.IdawiExposed;
 import idawi.RegistryService;
 import idawi.RemoteException;
 import idawi.Service;
@@ -285,7 +285,7 @@ public class RESTService extends Service {
 		return query;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	public void stopHTTPServer() throws IOException {
 		if (restServer == null) {
 			throw new IOException("REST server is not running");
@@ -295,7 +295,7 @@ public class RESTService extends Service {
 		restServer = null;
 	}
 
-	@ExposedOperation
+	@IdawiExposed
 	private void startHTTPServerOperation(int port) throws IOException {
 		startHTTPServer(port);
 	}
