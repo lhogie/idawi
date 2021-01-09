@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -22,17 +24,25 @@ import toools.io.ser.JavaSerializer;
 public class LucTests {
 
 	public static void main(String[] args) throws Throwable {
-		List<Component> l = new ArrayList<>();
 
-		for (int i = 0; i < 10; ++i) {
-			l.add(new Component());
+		Consumer<Message> c = m -> {
+		};
+		
+		System.out.println(c.getClass());
+		
+	
+		
+		System.out.println("gen " + c.getClass().getTypeName());
+		System.out.println(((((ParameterizedType) c.getClass().getInterfaces()[0].getGenericSuperclass())
+				.getActualTypeArguments())));
+
+		System.out.println(c.getClass().getGenericSuperclass());
+		System.out.println(c.getClass().getGenericSuperclass() instanceof ParameterizedType);
+
+		for (var a : ((ParameterizedType) c.getClass().getGenericSuperclass()).getActualTypeArguments()) {
+			System.out.println("< " + a);
 		}
-
-		LMI.chain(l);
-		var b = l.get(l.size() - 1).descriptor();
-		List<Route> routes = l.get(0).lookupService(PingService.class).traceroute(Set.of(b), 1);
-System.out.println(routes);
-Component.stopPlatformThreads();
+		Component.stopPlatformThreads();
 	}
 
 	@Test
@@ -169,7 +179,7 @@ Component.stopPlatformThreads();
 
 		LMI.chain(l);
 		Message pong = l.get(0).lookupService(PingService.class).ping(l.get(l.size() - 1).descriptor(), 1);
-System.out.println(pong.route);
+		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 
 		// clean

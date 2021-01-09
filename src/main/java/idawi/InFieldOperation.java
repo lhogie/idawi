@@ -34,7 +34,9 @@ public abstract class InFieldOperation extends Operation {
 	}
 
 	static InFieldOperation toOperation(Field f, Object v) {
-		if (is(v, Runnable.class)) {
+		if (v == null) {
+			return new SerializableFieldGetter(f, (Serializable) v);
+		} else if (is(v, Runnable.class)) {
 			return new InRunnableOperation(f, (Runnable) v);
 		} else if (is(v, Callable.class)) {
 			return new InCallableOperation(f, (Callable) v);
@@ -50,13 +52,17 @@ public abstract class InFieldOperation extends Operation {
 			return new InFIOperation(f, (OperationFI) v);
 		} else if (v instanceof Serializable) {
 			// an annotated field can be requested as an operation
-			return new InFIOperation(f, (OperationFI) v);
+			return new SerializableFieldGetter(f, (Serializable) v);
 		} else {
 			return null;
 		}
 	}
 
 	private static boolean is(Object v, Class c, Class... genericType) {
+		return c.isAssignableFrom(v.getClass());
+	}
+
+	private static boolean is2(Object v, Class c, Class... genericType) {
 		if (!c.isAssignableFrom(v.getClass())) {
 			return false;
 		}
