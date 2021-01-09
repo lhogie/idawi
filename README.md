@@ -5,7 +5,7 @@ which is a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis]
 *Idawi* is extensively described in the [on-going working paper](https://sharelatex.irisa.fr/read/drmkyvwckyzz).
 
 Its most notable features include:
-- fully decentralized P2P architecture
+- fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) (P2P) architecture
 - automatized deployment of nodes through SSH
 - both asynchronous and synchronous messaging
 - unicast, multicast, and broadcast communication
@@ -14,3 +14,4 @@ Its most notable features include:
 - multi-protocol: support SSH, TCP, UDP, etc
 - REST-based web interface
 
+Target applications for *Idawi* include distributed computing, High Performance Computing, Internet of Things, Artificial Intelligence, and simulation.
