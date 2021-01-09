@@ -14,4 +14,6 @@ Its most notable features include:
 - multi-protocol: support SSH, TCP, UDP, etc
 - REST-based web interface
 
-Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Artificial Intelligence (IA), Research in distributed/parallel algorithms, simulation.
+Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Artificial Intelligence (IA), Research in distributed/parallel algorithms, and simulation.
+
+Contact information: <luc.hogie@cnrs.fr>
