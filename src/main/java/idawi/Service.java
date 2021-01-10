@@ -3,6 +3,7 @@ package idawi;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,7 +62,31 @@ public class Service {
 		for (Class c : Clazz.getClasses2(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
 				if (m.isAnnotationPresent(IdawiExposed.class)) {
-					registerOperation(new InMethodOperation(this, m));
+					var o = new InMethodOperation(this, m);
+					registerOperation(o);
+					try {
+						Field f = c.getField(m.getName());
+
+						if (f.getType() != AAA.class) {
+							throw new IllegalStateException(
+									"field " + c.getName() + "." + f.getName() + " should be of type " + AAA.class);
+						}
+
+						if ((f.getModifiers() & Modifier.STATIC) == 0) {
+							throw new IllegalStateException(
+									"field " + c.getName() + "." + f.getName() + " should be static");
+						}
+
+						if ((f.getModifiers() & Modifier.FINAL) != 0) {
+							throw new IllegalStateException(
+									"field " + c.getName() + "." + f.getName() + " cannot not be declared final");
+						}
+
+						f.set(this, new AAA(o));
+					} catch (NoSuchFieldException e) {
+					} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -119,9 +144,6 @@ public class Service {
 	private long nbMessagesReceived() {
 		return nbMessagesReceived;
 	}
-
-	@OperationName
-	public static OperationID listOperationNames;
 
 	@IdawiExposed
 	private Set<String> listOperationNames() {

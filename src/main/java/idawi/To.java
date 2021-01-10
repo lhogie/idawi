@@ -49,6 +49,24 @@ public class To implements Externalizable {
 		this((Set) null, sid, qid);
 	}
 
+	public To(Set<ComponentDescriptor> s, Class<? extends Service> sid, AAA operationID) {
+		this(s, sid, operationID.operation.getName());
+	}
+
+	public To(ComponentDescriptor c, Class<? extends Service> sid, AAA operationID) {
+		this(c, sid, operationID.operation.getName());
+	}
+
+	private Class enclosingClass(Object lambda) {
+		int i = lambda.getClass().getName().indexOf("$$Lambda$");
+
+		if (i < 0) {
+			throw new IllegalStateException("this is not a lambda");
+		}
+
+		return Clazz.findClass(lambda.getClass().getName().substring(0, i));
+	}
+
 	@Override
 	public String toString() {
 		return (notYetReachedExplicitRecipients == null ? "*" : notYetReachedExplicitRecipients) + "->"

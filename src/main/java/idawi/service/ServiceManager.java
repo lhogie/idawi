@@ -3,6 +3,7 @@ package idawi.service;
 import java.util.HashSet;
 import java.util.Set;
 
+import idawi.AAA;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.IdawiExposed;
@@ -38,10 +39,10 @@ public class ServiceManager extends Service {
 		super(peer);
 	}
 
-	public final static String start = "start";
-	public final static String stop = "stop";
-	public final static String list = "list";
-	public final static String has = "has";
+	public static AAA start;
+	public static AAA stop;
+	public static AAA list;
+	public static AAA has;
 
 	@IdawiExposed
 	public ServiceDescriptor start(Class<? extends Service> serviceID) {
@@ -52,7 +53,8 @@ public class ServiceManager extends Service {
 		var constructor = Clazz.getConstructor(serviceID, Component.class);
 
 		if (constructor == null) {
-			throw new IllegalStateException(serviceID + " does not have constructor (" + Component.class.getName() + ")");
+			throw new IllegalStateException(
+					serviceID + " does not have constructor (" + Component.class.getName() + ")");
 		}
 
 		Service s = Clazz.makeInstance(constructor, component);

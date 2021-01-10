@@ -79,10 +79,10 @@ public class ComponentDeployer extends Service {
 
 		registerOperation("local_deploy", (msg, out) -> {
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
-			List<Component> things = new ArrayList<>();
-			deployLocalPeers(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> things.add(peerOk));
-			out.accept(req.n + " things created");
-			LMI.chain(things);
+			List<Component> compoennts = new ArrayList<>();
+			deployLocalPeers(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> compoennts.add(peerOk));
+			out.accept(req.n + " compoennts created");
+			LMI.chain(compoennts);
 			out.accept("chained");
 		});
 
@@ -378,7 +378,7 @@ public class ComponentDeployer extends Service {
 			// Cout.raw_stdout.println("deployment info: " + o);
 			DeployInfo deployInfo = (DeployInfo) o;
 
-			Cout.raw_stdout.println("instantiating thing");
+			Cout.raw_stdout.println("instantiating component");
 			Component t = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentDescriptor.class),
 					deployInfo.id);
 			t.parent = deployInfo.parent;

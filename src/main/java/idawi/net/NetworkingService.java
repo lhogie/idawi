@@ -127,7 +127,7 @@ public class NetworkingService extends Service {
 					targetService.considerNewMessage(msg);
 				} else if (msg.replyTo != null) {
 					send(new RemoteException("service not found: " + msg.to.service), msg.replyTo, null);
-					send(new EOT(), msg.replyTo, null);
+					send(EOT.instance, msg.replyTo, null);
 				}
 			}
 		}

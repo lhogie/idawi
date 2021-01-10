@@ -51,7 +51,7 @@ public class InMethodOperation extends Operation {
 					parmsList.add(returns);
 					invoke(returns, parmsList.toArray());
 				} else {
-					throw new IllegalStateException("only extra parameter allowed is " + Consumer.class.getName());
+					throw new IllegalStateException(target.getClass() + "." + getName() + ": only extra parameter allowed is " + Consumer.class.getName() + ", but found " + types[types.length - 1].getName());
 				}
 			} else {
 				throw new IllegalStateException("expecting parameters " + types + " for operation "

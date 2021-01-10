@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import idawi.AAA;
 import idawi.Component;
 import idawi.IdawiExposed;
 import idawi.Service;
@@ -13,7 +14,7 @@ import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 
 public class FileService extends Service {
-	final Directory dir = new Directory(directory(), "shared_files");
+	final private Directory dir = new Directory(directory(), "shared_files");
 
 	public FileService(Component t) {
 		super(t);
@@ -24,6 +25,8 @@ public class FileService extends Service {
 		return dir.getPath();
 	}
 
+	public static AAA find;
+
 	@IdawiExposed
 	private Set<String> find() throws IOException {
 		dir.ensureExists();
@@ -32,21 +35,7 @@ public class FileService extends Service {
 		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 	}
 
-	@IdawiExposed
-	private Set<String> lsFiles(String directory) throws IOException {
-		dir.ensureExists();
-		var d = new Directory(dir, directory);
-		return d.listRegularFiles().stream().map(f -> f.getName()).collect(Collectors.toSet());
-	}
-
-	@IdawiExposed
-	private Set<String> lsDirectories(String directory) throws IOException {
-		dir.ensureExists();
-		var d = new Directory(directory);
-		return d.listDirectories().stream().map(f -> f.getName()).collect(Collectors.toSet());
-	}
-
-	public final static String download = "download";
+	public static AAA download;
 
 	@IdawiExposed
 	private byte[] download(String path) throws IOException {
