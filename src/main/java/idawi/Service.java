@@ -37,7 +37,7 @@ public class Service {
 	private boolean askToRun = true;
 	protected final List<Thread> threads = new ArrayList<>();
 	private final Map<String, Operation> name2operation = new HashMap<>();
-
+	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	private final AtomicLong returnQueueID = new AtomicLong();
 
 	@IdawiExposed
@@ -46,13 +46,6 @@ public class Service {
 	public Service() throws Throwable {
 		this(new Component());
 		run();
-	}
-
-	protected <S> S service(Class<? extends S> serviceID) {
-		return component.lookupService(serviceID);
-	}
-
-	public void run() throws Throwable {
 	}
 
 	public Service(Component component) {
@@ -95,6 +88,13 @@ public class Service {
 		}
 
 		fieldOperationScanned = true;
+	}
+
+	protected <S> S service(Class<? extends S> serviceID) {
+		return component.lookupService(serviceID);
+	}
+
+	public void run() throws Throwable {
 	}
 
 	private Object get(Field field) {
@@ -315,7 +315,7 @@ public class Service {
 			try {
 				t.join();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				error(e);
 			}
 		});
 	}
@@ -324,8 +324,6 @@ public class Service {
 	public String toString() {
 		return component.friendlyName + "/" + id;
 	}
-
-	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 
 	protected MessageQueue createQueue(String qid, Set<ComponentDescriptor> expectedSenders) {
 		MessageQueue q = new MessageQueue(qid, expectedSenders, 10, wannaDie -> delete(wannaDie));

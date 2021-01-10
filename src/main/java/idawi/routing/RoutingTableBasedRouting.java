@@ -37,7 +37,7 @@ public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingSer
 		if (to == null) {
 			// but the node is disconnected
 			if (neighbors.isEmpty()) {
-				return service(RegistryService.class).list();
+				return lookupService(RegistryService.class).list();
 			} else {
 				return neighbors;
 			}

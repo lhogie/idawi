@@ -32,9 +32,9 @@ public class Demo {
 				ComponentDescriptor serverDescriptor = ComponentDescriptor
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, Set.of(serverDescriptor));
-				service(ComponentDeployer.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
+				lookupService(ComponentDeployer.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
 				new ServiceManager.Stub(this, Set.of(serverDescriptor)).start(TimeSeriesDB.class);
-				service(RESTService.class).startHTTPServer();
+				lookupService(RESTService.class).startHTTPServer();
 
 				// creates the figure that will be fed
 				server.createFigure("some metric");

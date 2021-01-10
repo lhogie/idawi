@@ -211,7 +211,7 @@ public class RESTService extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = service(RegistryService.class).lookup(name);
+			var found = lookupService(RegistryService.class).lookup(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));
@@ -263,7 +263,7 @@ public class RESTService extends Service {
 		var q = call(new To(RegistryService.class, "local"));
 		q.setTimeout(1).collect();
 
-		w.knownComponents.addAll(service(RegistryService.class).list());
+		w.knownComponents.addAll(lookupService(RegistryService.class).list());
 		return w;
 	}
 

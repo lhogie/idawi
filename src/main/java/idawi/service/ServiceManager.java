@@ -45,7 +45,7 @@ public class ServiceManager extends Service {
 
 	@IdawiExposed
 	public ServiceDescriptor start(Class<? extends Service> serviceID) {
-		if (service(serviceID) != null) {
+		if (lookupService(serviceID) != null) {
 			throw new IllegalArgumentException("service already running");
 		}
 
@@ -74,7 +74,7 @@ public class ServiceManager extends Service {
 
 	@IdawiExposed
 	public boolean has(Class serviceID) {
-		return service(serviceID) != null;
+		return lookupService(serviceID) != null;
 	}
 
 	@Override
