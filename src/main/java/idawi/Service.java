@@ -43,6 +43,8 @@ public class Service {
 	@IdawiExposed
 	private long nbMessagesReceived;
 
+	private Directory directory;
+
 	public Service() throws Throwable {
 		this(new Component());
 		run();
@@ -90,7 +92,7 @@ public class Service {
 		fieldOperationScanned = true;
 	}
 
-	protected <S> S service(Class<? extends S> serviceID) {
+	protected <S> S lookupService(Class<? extends S> serviceID) {
 		return component.lookupService(serviceID);
 	}
 
@@ -106,7 +108,11 @@ public class Service {
 	}
 
 	public Directory directory() {
-		return new Directory(Component.directory, "/services/" + id);
+		if (this.directory == null) {
+			this.directory = new Directory(Component.directory, "/services/" + id);
+		}
+
+		return this.directory;
 	}
 
 	@IdawiExposed
