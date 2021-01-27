@@ -4,10 +4,10 @@ public abstract class Operation implements OperationStandardForm {
 	int nbCalls;
 	double totalDuration;
 	protected final OperationDescriptor descriptor;
-	protected final Class<? extends Service> declaringClass;
+	protected Class<? extends Service> declaringClass;
+	public String description, name;
 
-	public Operation(Class<? extends Service> declaringClass) {
-		this.declaringClass = declaringClass;
+	public Operation() {
 		this.descriptor = new OperationDescriptor();
 		this.descriptor.impl = getClass().getName();
 	}
@@ -16,14 +16,18 @@ public abstract class Operation implements OperationStandardForm {
 		return declaringClass != Service.class;
 	}
 
-	public abstract String getName();
+	public  String getName() {
+		return name;
+	}
 
 	@Override
 	public String toString() {
 		return getName();
 	}
 
-	public abstract String getDescription();
+	public String getDescription() {
+		return description;
+	}
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;

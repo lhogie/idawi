@@ -3,15 +3,13 @@ package idawi.service;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import idawi.BasicOperation;
 import idawi.Component;
 import idawi.EOT;
 import idawi.FrontEnd;
 import idawi.IdawiExposed;
 import idawi.Message;
 import idawi.MessageQueue;
-import idawi.Operation2;
-import idawi.OperationStandardForm;
+import idawi.Operation;
 import idawi.ParameterizedOperation;
 import idawi.ProgressRatio;
 import idawi.Service;
@@ -35,7 +33,7 @@ public class DummyService extends Service {
 	}
 
 	@IdawiExposed
-	public static class grep implements Operation2 {
+	public static class grep extends Operation {
 		public static String description = "unix-like grep";
 
 		public static void backEnd(DummyService s, MessageQueue in) {
@@ -95,7 +93,7 @@ public class DummyService extends Service {
 //	}
 
 	@IdawiExposed
-	public class stringLength implements OperationStandardForm {
+	public class stringLength extends Operation {
 		@Override
 		public void accept(MessageQueue in) {
 			var msg = in.get_non_blocking();
@@ -104,8 +102,8 @@ public class DummyService extends Service {
 		}
 	}
 
-	public static interface stringLengthSIgnature {
-		int f(String s);
+	static interface stringLengthSIgnature {
+		int length(String s);
 	}
 
 	@IdawiExposed
@@ -114,14 +112,14 @@ public class DummyService extends Service {
 
 		public static class frontEnd extends FrontEnd implements stringLengthSIgnature {
 			@Override
-			public int f(String s) {
+			public int length(String s) {
 				MessageQueue future = from.send(s, new To(target, DummyService.stringLengthParameterized.class));
 				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
 			}
 		}
 
 		@Override
-		public int f(String s) {
+		public int length(String s) {
 			service.dummyData.hashCode();
 			return s.length();
 		}

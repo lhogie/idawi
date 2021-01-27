@@ -65,7 +65,7 @@ public class Service {
 	private void registerOperations() {
 		for (Class innerClass : getClass().getClasses()) {
 			if (innerClass.isAnnotationPresent(IdawiExposed.class)) {
-				var o = (OperationStandardForm) Clazz.makeInstance(innerClass);
+				var o = (Operation) Clazz.makeInstance(innerClass);
 				registerOperation(o);
 			}
 		}
@@ -111,8 +111,19 @@ public class Service {
 		}
 	}
 
+	interface listOperationNamesSig {
+		Set<String> listOperationNames();
+	}
+
 	@IdawiExposed
-	private Set<String> listOperationNames() {
+	public class listOperationNames extends ParameterizedOperation<Service> implements listOperationNamesSig {
+		@Override
+		public Set<String> listOperationNames() {
+			return Service.this.listOperationNames();
+		}
+	}
+
+	public Set<String> listOperationNames() {
 		return new HashSet<String>(name2operation.keySet());
 	}
 
