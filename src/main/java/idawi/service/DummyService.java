@@ -1,22 +1,28 @@
 package idawi.service;
 
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import idawi.BasicOperation;
 import idawi.Component;
+import idawi.EOT;
+import idawi.FrontEnd;
 import idawi.IdawiExposed;
 import idawi.Message;
+import idawi.MessageQueue;
+import idawi.Operation2;
 import idawi.OperationStandardForm;
+import idawi.ParameterizedOperation;
 import idawi.ProgressRatio;
 import idawi.Service;
+import idawi.To;
+import idawi.net.LMI;
 import toools.math.MathsUtilities;
 import toools.thread.Threads;
 
 public class DummyService extends Service {
+	private String dummyData = "some fake data hold by the dummy service";
+
 	public DummyService(Component component) {
 		super(component);
 	}
@@ -29,36 +35,98 @@ public class DummyService extends Service {
 	}
 
 	@IdawiExposed
-	private int stringLength(String s) {
-		return s.length();
+	public static class grep implements Operation2 {
+		public static String description = "unix-like grep";
+
+		public static void backEnd(DummyService s, MessageQueue in) {
+			String re = (String) in.get_non_blocking().content;
+
+			while (true) {
+				var msg = in.get_non_blocking();
+
+				if (msg.content instanceof EOT) {
+					break;
+				}
+
+				String line = (String) msg.content;
+
+				if (line.matches(re)) {
+					s.reply(msg, line);
+				}
+			}
+		}
+	}
+
+	public static void main(String[] args) {
+		Component a = new Component();
+		Component b = new Component();
+		LMI.connect(a, b);
+
+		Service s = new Service(a);
+
+		OperationStub stub = new OperationStub(s, new To(b.descriptor(), DummyService.grep.class));
+
+		for (int i = 0; i < 50; ++i) {
+			stub.send("" + i);
+		}
+
+		stub.dispose();
+
+	}
+
+//	public static interface stringLength extends Operation2 {
+//		public static String description = "compute length";
+//
+//		public static class frontEnd extends FrontEnd {
+//			public int f(String s) {
+//				MessageQueue future = from.send(s, new To(target, DummyService.stringLength.class));
+//				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
+//			}
+//		}
+//
+//		public static class backEnd extends Backend<DummyService> {
+//			@Override
+//			public void f(MessageQueue in) {
+//				var msg = in.get_non_blocking();
+//				String s = (String) msg.content;
+//				service.send(s.length(), msg.replyTo);
+//			}
+//		}
+//	}
+
+	@IdawiExposed
+	public class stringLength implements OperationStandardForm {
+		@Override
+		public void accept(MessageQueue in) {
+			var msg = in.get_non_blocking();
+			String s = (String) msg.content;
+			send(s.length(), msg.replyTo);
+		}
+	}
+
+	public static interface stringLengthSIgnature {
+		int f(String s);
 	}
 
 	@IdawiExposed
-	public Object nullOperation;
+	public static class stringLengthParameterized extends ParameterizedOperation<DummyService>
+			implements stringLengthSIgnature {
 
-	@IdawiExposed
-	public Runnable runnable = () -> {
-	};
+		public static class frontEnd extends FrontEnd implements stringLengthSIgnature {
+			@Override
+			public int f(String s) {
+				MessageQueue future = from.send(s, new To(target, DummyService.stringLengthParameterized.class));
+				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
+			}
+		}
 
-	@IdawiExposed
-	public Callable callable = () -> "I'm a callable operation!";
+		@Override
+		public int f(String s) {
+			service.dummyData.hashCode();
+			return s.length();
+		}
+	}
 
-	@IdawiExposed
-	public Supplier supplier = () -> "I'm a supplier operation!";
-
-	@IdawiExposed
-	public Consumer<Message> msgConsumer = (msg) -> {
-	};
-
-	@IdawiExposed
-	public BiConsumer<Message, Consumer> biConsumer = (msg, r) -> r.accept("I'm a biconsumer");
-
-	@IdawiExposed
-	public BiFunction<Message, Consumer, Object> biFunction = (m, r) -> "I'm a bifunction operation!";
-
-	@IdawiExposed
-	public OperationStandardForm fi = (m, r) -> r.accept("I'm a bifunction operation!");
-	
 	@IdawiExposed
 	private void countFrom1toN(Message m, Consumer<Object> r) {
 		for (int i = 0; i < (Integer) m.content; ++i) {
@@ -74,8 +142,10 @@ public class DummyService extends Service {
 	}
 
 	@IdawiExposed
-	private void throwError() {
-		throw new Error("this is a test error");
+	public class throwError {
+		public void backEnd(MessageQueue in) throws Throwable {
+			throw new Error("this is a test error");
+		}
 	}
 
 	@IdawiExposed

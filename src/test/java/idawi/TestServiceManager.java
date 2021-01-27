@@ -29,19 +29,19 @@ public class TestServiceManager {
 
 		var stub = new ServiceManager.Stub(new Service(a), Set.of(bd));
 
-		stub.list().forEach(o -> System.out.println(o));
+		stub.list().forEach(o -> System.out.println(operationName));
 
 		if (!stub.has(DummyService.class)) {
 			System.out.println("starting service " + DummyService.class);
 			stub.start(DummyService.class);
 		}
-		stub.list().forEach(o -> System.out.println(o));
+		stub.list().forEach(o -> System.out.println(operationName));
 		System.out.println("stopping service " + DummyService.class);
 		stub.stop(DummyService.class);
-		stub.list().forEach(o -> System.out.println(o));
+		stub.list().forEach(o -> System.out.println(operationName));
 		System.out.println("starting service " + DummyService.class);
 		stub.start(DummyService.class);
-		stub.list().forEach(o -> System.out.println(o));
+		stub.list().forEach(o -> System.out.println(operationName));
 		// assertEquals(sms.list().contains(DummyService.class), false);
 
 //		assertEquals(sms.list().contains(DummyService.class), true);

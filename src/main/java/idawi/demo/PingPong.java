@@ -9,7 +9,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.net.LMI;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 
 /**
  * 
@@ -34,7 +34,7 @@ public class PingPong {
 			newPeer.friendlyName = "t" +i;
 
 			// gets the deployment service
-			ComponentDeployer deployer = t.lookupService(ComponentDeployer.class);
+			DeployerService deployer = t.lookupService(DeployerService.class);
 
 			// and asks it to deploy a new thing within the JVM
 			List<Component> newThings = deployer.deploy(Set.of(newPeer), true, 1d, true, msg -> System.out.println(msg),

@@ -10,7 +10,7 @@ import idawi.Service;
 import idawi.To;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import toools.thread.Q;
 
 /**
@@ -27,7 +27,7 @@ public class Demo4_deploy_local_peers {
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
 		Component initialThing = new Component(ComponentDescriptor.fromCDL("name=0"));
-		initialThing.lookupService(ComponentDeployer.class).deployLocalPeers(50, i -> "c" + i, true,
+		initialThing.lookupService(DeployerService.class).deployLocalPeers(50, i -> "c" + i, true,
 				peerOk -> things.add(peerOk));
 		LMI.chain(things);
 		Component first = things.get(0);

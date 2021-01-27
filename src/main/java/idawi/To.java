@@ -49,15 +49,30 @@ public class To implements Externalizable {
 		this((Set) null, sid, qid);
 	}
 
-	public To(Set<ComponentDescriptor> s, Class<? extends Service> sid, AAA operationID) {
-		this(s, sid, operationID.operation.getName());
+	/*
+	 * public To(Set<ComponentDescriptor> r, Class<? extends OperationHelper> c) {
+	 * this(r, (Class<? extends Service>) c.getEnclosingClass(), innerClassName(c));
+	 * }
+	 */
+
+	public To(Set<ComponentDescriptor> r, Class<? extends OperationStandardForm> c) {
+		this(r, (Class<? extends Service>) c.getEnclosingClass(), innerClassName(c));
 	}
 
-	public To(ComponentDescriptor c, Class<? extends Service> sid, AAA operationID) {
-		this(c, sid, operationID.operation.getName());
+	public To(ComponentDescriptor r, Class<? extends OperationStandardForm> c) {
+		this(Set.of(r), (Class<? extends Service>) c.getEnclosingClass(), innerClassName(c));
 	}
 
-	private Class enclosingClass(Object lambda) {
+	private static String innerClassName(Class c) {
+		var ec = c.getEnclosingClass();
+
+		if (ec == null)
+			throw new IllegalArgumentException("not an inner class");
+
+		return c.getName().substring(ec.getName().length() + 1);
+	}
+
+	private static Class enclosingClass(Object lambda) {
 		int i = lambda.getClass().getName().indexOf("$$Lambda$");
 
 		if (i < 0) {

@@ -7,7 +7,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.PingService;
 
 /**
@@ -34,7 +34,7 @@ public class Demo2_simple_deployment {
 		child.sshParameters.hostname = childHost.getHostName();
 
 		// deploy
-		t.lookupService(ComponentDeployer.class).deploy(Set.of(child), true, 10000, true,
+		t.lookupService(DeployerService.class).deploy(Set.of(child), true, 10000, true,
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		// at this step the child is running on the remote host. We can interact with

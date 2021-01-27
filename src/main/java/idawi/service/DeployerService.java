@@ -39,7 +39,7 @@ import toools.reflect.Clazz;
 import toools.thread.OneElementOneThreadProcessing;
 import toools.thread.Threads;
 
-public class ComponentDeployer extends Service {
+public class DeployerService extends Service {
 	List<ComponentDescriptor> failed = new ArrayList<>();
 
 	String remoteClassDir = Service.class.getPackageName() + ".classpath";
@@ -61,7 +61,7 @@ public class ComponentDeployer extends Service {
 		return "deployer";
 	}
 
-	public ComponentDeployer(Component peer) {
+	public DeployerService(Component peer) {
 		super(peer);
 
 		if (remoteClassDir.contains("/")) {
@@ -99,7 +99,7 @@ public class ComponentDeployer extends Service {
 
 		To to = new To();
 		to.notYetReachedExplicitRecipients = toDeploy;
-		to.service = ComponentDeployer.class;
+		to.service = DeployerService.class;
 		to.operationOrQueue = "d3";
 		send(deploymentPlan, to).collect();
 	}
@@ -130,7 +130,7 @@ public class ComponentDeployer extends Service {
 
 		LongProcess startingNode = new LongProcess("starting new JVM", null, -1, line -> feedback.accept(line));
 		Process p = Runtime.getRuntime()
-				.exec(new String[] { java, "-cp", classpath, ComponentDeployer.class.getName() });
+				.exec(new String[] { java, "-cp", classpath, DeployerService.class.getName() });
 
 		feedback.accept("sending node startup info");
 		init(p, d, Set.of(component.descriptor()), suicideWhenParentDie, feedback);
@@ -318,7 +318,7 @@ public class ComponentDeployer extends Service {
 									null, -1, line -> feedback.accept(line));
 							Process p = SSHUtils.exec(peer.sshParameters, "jdk-14.0.1/bin/java", "-cp",
 									remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)",
-									ComponentDeployer.class.getName());
+									DeployerService.class.getName());
 
 							feedback.accept("sending node startup info to " + peer);
 

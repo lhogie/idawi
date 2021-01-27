@@ -15,7 +15,7 @@ import org.w3c.dom.svg.SVGDocument;
 
 import idawi.ComponentDescriptor;
 import idawi.Service;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.ServiceManager;
 import idawi.service.rest.RESTService;
 import toools.gui.Utilities;
@@ -32,8 +32,8 @@ public class Demo {
 				ComponentDescriptor serverDescriptor = ComponentDescriptor
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, Set.of(serverDescriptor));
-				lookupService(ComponentDeployer.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
-				new ServiceManager.Stub(this, Set.of(serverDescriptor)).start(TimeSeriesDB.class);
+				lookupService(DeployerService.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
+				frondEnd(ServiceManager., target)(this, Set.of(serverDescriptor)).start(TimeSeriesDB.class);
 				lookupService(RESTService.class).startHTTPServer();
 
 				// creates the figure that will be fed

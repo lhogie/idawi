@@ -137,4 +137,15 @@ public class MessageList extends ArrayList<Message> {
 		return this;
 	}
 
+	public MessageList throwAnyError_Runtime() {
+		try {
+			return throwAnyError();
+		} catch (Throwable e) {
+			if (e instanceof RuntimeException) {
+				throw (RuntimeException) e;
+			} else {
+				throw new RuntimeException(e);
+			}
+		}
+	}
 }

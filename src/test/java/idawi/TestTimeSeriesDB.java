@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.ServiceManager;
 import idawi.service.julien.TimeSeriesDB;
 import idawi.service.julien.TimeSeriesDBStub;
@@ -21,7 +21,7 @@ public class TestTimeSeriesDB {
 	@Test
 	public void startService() throws Throwable {
 		Component c1 = new Component();
-		ComponentDescriptor c2 = c1.lookupService(ComponentDeployer.class).deployLocalPeers(1, i -> "other-" + i, true, null)
+		ComponentDescriptor c2 = c1.lookupService(DeployerService.class).deployLocalPeers(1, i -> "other-" + i, true, null)
 				.iterator().next().descriptor();
 
 		Service s = new Service(c1);

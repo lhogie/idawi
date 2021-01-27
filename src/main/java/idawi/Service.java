@@ -1,9 +1,6 @@
 package idawi;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,6 +15,7 @@ import java.util.function.Consumer;
 
 import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
+import idawi.service.OperationStub;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -41,7 +39,9 @@ public class Service {
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	private final AtomicLong returnQueueID = new AtomicLong();
 
-	@IdawiExposed
+	// stores the number of message received at each second
+	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
+
 	private long nbMessagesReceived;
 
 	private Directory directory;
@@ -55,66 +55,38 @@ public class Service {
 		this.component = component;
 		component.services.put(getClass(), this);
 		this.id = getClass();
-		registerInMethodOperations();
+		registerOperations();
 	}
 
-	private void registerInMethodOperations() {
-		for (Class c : Clazz.getClasses2(getClass())) {
-			for (Method m : c.getDeclaredMethods()) {
-				if (m.isAnnotationPresent(IdawiExposed.class)) {
-					var o = new InMethodOperation(this, m);
-					registerOperation(o);
-					try {
-						Field f = c.getField(m.getName());
+	protected void reply(Message msg, Object... r) {
+		send(r, msg.replyTo);
+	}
 
-						if (f.getType() != AAA.class) {
-							throw new IllegalStateException(
-									"field " + c.getName() + "." + f.getName() + " should be of type " + AAA.class);
-						}
-
-						if ((f.getModifiers() & Modifier.STATIC) == 0) {
-							throw new IllegalStateException(
-									"field " + c.getName() + "." + f.getName() + " should be static");
-						}
-
-						if ((f.getModifiers() & Modifier.FINAL) != 0) {
-							throw new IllegalStateException(
-									"field " + c.getName() + "." + f.getName() + " cannot not be declared final");
-						}
-
-						f.set(this, new AAA(o));
-					} catch (NoSuchFieldException e) {
-					} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
-						e.printStackTrace();
-					}
-				}
+	private void registerOperations() {
+		for (Class innerClass : getClass().getClasses()) {
+			if (innerClass.isAnnotationPresent(IdawiExposed.class)) {
+				var o = (OperationStandardForm) Clazz.makeInstance(innerClass);
+				registerOperation(o);
 			}
 		}
 	}
 
-	public void registerInFieldOperations() {
-		for (Field field : getClass().getFields()) {
-			if (field.isAnnotationPresent(IdawiExposed.class)) {
-				Object v = get(field);
+	protected <S extends OperationStandardForm> S frondEnd(Class<S> operationInnerClass, ComponentDescriptor target) {
+		return frontEnd(operationInnerClass, Set.of(target));
+	}
 
-				if (v instanceof OperationField) {
-					var of = (OperationField) v;
-					of.name = field.getName();
-					registerOperation(of);
-				} else {
-					InFieldOperation fi = InFieldOperation.toOperation(field, v);
-
-					if (fi == null) {
-						throw new IllegalStateException(
-								"don't know what to do with field " + getClass().getName() + "." + field.getName());
-					}
-
-					registerOperation(fi);
-				}
+	protected <S extends OperationStandardForm> S frontEnd(Class<S> operationInnerClass,
+			Set<ComponentDescriptor> target) {
+		for (Class c : operationInnerClass.getClasses()) {
+			if (FrontEnd.class.isAssignableFrom(c)) {
+				FrontEnd fe = (FrontEnd) Clazz.makeInstance(c);
+				fe.from = this;
+				fe.target = target;
+				return (S) fe;
 			}
 		}
 
-		fieldOperationScanned = true;
+		return null;
 	}
 
 	protected <S> S lookupService(Class<? extends S> serviceID) {
@@ -122,14 +94,6 @@ public class Service {
 	}
 
 	public void run() throws Throwable {
-	}
-
-	private Object get(Field field) {
-		try {
-			return field.get(this);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new IllegalStateException(e);
-		}
 	}
 
 	public Directory directory() {
@@ -141,8 +105,10 @@ public class Service {
 	}
 
 	@IdawiExposed
-	private long nbMessagesReceived() {
-		return nbMessagesReceived;
+	public static class nbMessagesReceived extends ParameterizedOperation<Service> {
+		public long f() {
+			return service.nbMessagesReceived;
+		}
 	}
 
 	@IdawiExposed
@@ -166,10 +132,6 @@ public class Service {
 		call(to, new OperationParameterList(parms));
 	}
 
-	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
-
-	private boolean fieldOperationScanned = false;
-
 	@IdawiExposed
 	private Int2LongMap second2nbMessages() {
 		return second2nbMessages;
@@ -177,100 +139,79 @@ public class Service {
 
 	public void considerNewMessage(Message msg) {
 		second2nbMessages.put((int) Date.time(), ++nbMessagesReceived);
+		MessageQueue q = getQueue(msg.to.operationOrQueue);
 
-		if (msg.content instanceof Chunk) {
-			Chunk chunk = (Chunk) msg.content;
-			ChunkReceiver receiver = chunk2buf.get(chunk.id);
+		if (q == null) {
+			// that's a new invocation
+			if (msg.content instanceof OperationStub.InitialContent) {
+				OperationStub.InitialContent ic = (OperationStub.InitialContent) msg.content;
+				Operation operation = getOperation(ic.operationName);
 
-			if (receiver == null) {
-//				chunk2buf.put(chunk.id, receiver = new ChunkReceiver(chunk.end));
-			}
-
-//			receiver.addChunk(chunk, msg.route);
-
-			if (receiver.hasCompleteData()) {
-				chunk2buf.remove(chunk.id);
-				Message m = new Message();
-				m.content = receiver;
-				considerNewMessage(m);
-			}
-
-			return;
-		}
-
-		Operation operation = getOperation(msg.to.operationOrQueue);
-
-		// this queue is not associated to any processing, to leave in a queue and some
-		// thread will pick it up later
-		if (operation == null) {
-			MessageQueue q = getQueue(msg.to.operationOrQueue);
-
-			// no queue, it has already expired
-			if (q == null) {
-				if (msg.replyTo != null) {
-					RemoteException err = new RemoteException("operation/queue '" + msg.to.operationOrQueue
-							+ "' not existing on service " + getClass().getName());
-					error(err);
-					send(err, msg.replyTo, null);
-
-					send(EOT.instance, msg.replyTo, null);
+				// but no such operation can be found
+				if (operation == null) {
+					err(msg, "operation not found: " + getClass().getName() + "+" + ic.operationName);
+				} else {
+					initiate(msg, operation);
 				}
 			} else {
-				q.add_blocking(msg);
+				err(msg, "no queue and");
 			}
 		} else {
-			if (!threadPool.isShutdown()) {
-				threadPool.submit(() -> {
-					try {
-						double start = Date.time();
+			q.add_blocking(msg);
+		}
+	}
 
-						// process the message
-						operation.accept(msg, someResult -> {
-							if (msg.replyTo != null) {
-								send(someResult, msg.replyTo, null);
-							} else {
-								error("returns for queue " + msg.to.operationOrQueue + " in service  " + id
-										+ " are discarded because the message specifies no return recipient");
-							}
-						});
+	private void err(Message msg, String s) {
+		RemoteException err = new RemoteException(s);
+		error(err);
 
-						operation.totalDuration += Date.time() - start;
-						operation.nbCalls++;
+		// report the error to the guy who asked
+		if (msg.replyTo != null) {
+			send(err, msg.replyTo, null);
+			send(EOT.instance, msg.replyTo, null);
+		}
+	}
 
-						// tells the client the processing has completed
-						if (msg.replyTo != null) {
-							send(EOT.instance, msg.replyTo, null);
-						}
-					} catch (Throwable exception) {
-						RemoteException err = new RemoteException(exception);
-						// exception.printStackTrace();
-						error(err);
+	private void initiate(Message msg, Operation operation) {
+		if (!threadPool.isShutdown()) {
+			var sender = msg.route.get(0).component;
+			var q = createQueue(msg.to.operationOrQueue, Set.of(sender));
+			q.add_blocking(msg);
 
-						if (msg.replyTo != null) {
-							send(err, msg.replyTo, null);
-							send(EOT.instance, msg.replyTo, null);
-						}
+			threadPool.submit(() -> {
+				try {
+					double start = Date.time();
+
+					// process the message
+					operation.accept(q);
+
+					operation.totalDuration += Date.time() - start;
+					operation.nbCalls++;
+
+					// tells the client the processing has completed
+					if (msg.replyTo != null) {
+						send(EOT.instance, msg.replyTo, null);
 					}
-				});
-			}
+				} catch (Throwable exception) {
+					RemoteException err = new RemoteException(exception);
+					// exception.printStackTrace();
+					error(err);
+
+					if (msg.replyTo != null) {
+						send(err, msg.replyTo, null);
+						send(EOT.instance, msg.replyTo, null);
+					}
+				}
+			});
 		}
 	}
 
 	private Collection<Operation> getOperations() {
-		ensureInFieldOperationsScanned();
 		return name2operation.values();
 	}
 
 	private Operation getOperation(String name) {
-		ensureInFieldOperationsScanned();
 		return name2operation.get(name);
-	}
-
-	@IdawiExposed
-	private void ensureInFieldOperationsScanned() {
-		if (!fieldOperationScanned) {
-			registerInFieldOperations();
-		}
 	}
 
 	public void registerOperation(String name, OperationStandardForm userCode) {
@@ -287,15 +228,15 @@ public class Service {
 			}
 
 			@Override
-			public void accept(Message msg, Consumer<Object> returns) throws Throwable {
-				userCode.accept(msg, returns);
+			public void accept(MessageQueue in) throws Throwable {
+				userCode.accept(in);
 			}
 		});
 	}
 
 	public void registerOperation(Operation o) {
 		if (name2operation.containsKey(o.getName())) {
-			throw new IllegalStateException("operation name is already in use: " + o.getName());
+			throw new IllegalStateException("operation name is already in use: " + o);
 		}
 
 		name2operation.put(o.getName(), o);
@@ -321,7 +262,7 @@ public class Service {
 	}
 
 	protected void error(String msg) {
-		System.err.println(component + "/" + id + " error: " + msg);
+		// System.err.println(component + "/" + id + " error: " + msg);
 		component.lookupServices(ErrorLog.class, s -> s.report(msg));
 	}
 
@@ -377,12 +318,13 @@ public class Service {
 		component.lookupService(NetworkingService.class).send(msg);
 	}
 
-	public void send(Object content, To to, To returns) {
+	public Message send(Object content, To to, To returns) {
 		Message msg = new Message();
 		msg.to = to;
 		msg.replyTo = returns;
 		msg.content = content;
 		send(msg);
+		return msg;
 	}
 
 	public void transfer(ByteSource in, To to, To returns) throws IOException {
@@ -392,7 +334,7 @@ public class Service {
 	public MessageQueue send(Object content, To to) {
 		To returns = new To(Set.of(component.descriptor()), id, "queue_" + returnQueueID.getAndIncrement());
 		MessageQueue returnQueue = createQueue(returns.operationOrQueue, to.notYetReachedExplicitRecipients);
-		send(content, to, returns);
+		Message msg = send(content, to, returns);
 		return returnQueue;
 	}
 

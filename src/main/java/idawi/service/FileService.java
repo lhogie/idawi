@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import idawi.AAA;
+import idawi.OperationHelper;
 import idawi.Component;
 import idawi.IdawiExposed;
 import idawi.Service;
@@ -25,7 +25,7 @@ public class FileService extends Service {
 		return dir.getPath();
 	}
 
-	public static AAA find;
+	public static OperationHelper find;
 
 	@IdawiExposed
 	private Set<String> find() throws IOException {
@@ -35,7 +35,7 @@ public class FileService extends Service {
 		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 	}
 
-	public static AAA download;
+	public static OperationHelper download;
 
 	@IdawiExposed
 	private byte[] download(String path) throws IOException {

@@ -43,7 +43,7 @@ public class Virus extends Service {
 
 							if (ip.isReachable(timeoutS * 1000)) {
 								try {
-									component.lookupService(ComponentDeployer.class).deploy(Collections.singleton(c), true, timeoutS,
+									component.lookupService(DeployerService.class).deploy(Collections.singleton(c), true, timeoutS,
 											false, feedback, p -> {
 											});
 									break;

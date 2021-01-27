@@ -5,7 +5,7 @@ import java.io.IOException;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.PingService;
 
 /**
@@ -29,7 +29,7 @@ public class Demo1_multi_jvm {
 		t2d.friendlyName = "this jvm";
 		t2d.tcpPort = 6678;
 
-		t1.lookupService(ComponentDeployer.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
+		t1.lookupService(DeployerService.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 		
 		Message pong = t1.lookupService(PingService.class).ping(t2d, 1);

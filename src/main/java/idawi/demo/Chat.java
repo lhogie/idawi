@@ -29,7 +29,9 @@ public class Chat extends Service implements Swingable {
 			textInput.setText("");
 		});
 
-		registerOperation(null, (msg, out) -> {
+		registerOperation(null, (in, out) -> {
+			var msg = in.get_non_blocking();
+
 			if (msg.route.source().equals(peer.descriptor())) {
 				conversationPane.append("> ");
 			}

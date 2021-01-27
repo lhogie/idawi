@@ -16,6 +16,7 @@ public class ErrorLog extends Service {
 	}
 
 	public void report(Throwable error) {
+		error.printStackTrace();
 		errors.add(error);
 		broadcast(error, 5);
 	}

@@ -2,7 +2,6 @@ package idawi.service;
 
 import java.util.Set;
 
-import idawi.AAA;
 import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.ServiceDescriptor;
@@ -19,10 +18,6 @@ public class ServiceStub {
 		this.localService = localService;
 		this.remoteComponents = remoteComponents;
 		this.service = service;
-	}
-
-	protected To to(AAA operation) {
-		return new To(remoteComponents, service, operation);
 	}
 
 	protected To to(String operation) {

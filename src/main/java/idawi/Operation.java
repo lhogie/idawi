@@ -1,17 +1,15 @@
 package idawi;
 
-import java.util.function.Consumer;
-
-public abstract class Operation {
+public abstract class Operation implements OperationStandardForm {
 	int nbCalls;
 	double totalDuration;
 	protected final OperationDescriptor descriptor;
-	final Class declaringClass;
+	protected final Class<? extends Service> declaringClass;
 
-	public Operation(Class declaringClass) {
+	public Operation(Class<? extends Service> declaringClass) {
+		this.declaringClass = declaringClass;
 		this.descriptor = new OperationDescriptor();
 		this.descriptor.impl = getClass().getName();
-		this.declaringClass = declaringClass;
 	}
 
 	public boolean isSystemOperation() {
@@ -41,6 +39,4 @@ public abstract class Operation {
 		this.descriptor.totalDuration = this.totalDuration;
 		return descriptor;
 	}
-
-	public abstract void accept(Message msg, Consumer<Object> returns) throws Throwable;
 }

@@ -28,16 +28,16 @@ public class PingService extends Service {
 	}
 
 	@IdawiExposed
-	private void ping() {
+	public static class ping
+	{
+		private void ping() {
+		}
 	}
 
 	@IdawiExposed
 	private Message traceroute(Message ping) {
 		return ping;
 	}
-
-	@IdawiExposed
-	private Function<Message, Message> traceroute2 = ping -> ping;
 
 	@Override
 	public String getFriendlyName() {

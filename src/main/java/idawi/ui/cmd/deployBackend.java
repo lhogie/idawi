@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 
 public class deployBackend extends CommandBackend {
 
@@ -25,7 +25,7 @@ public class deployBackend extends CommandBackend {
 
 		boolean suicideWhenParentDie = ! cmdline.isOptionSpecified("--autonomous");
 		boolean printRsync = ! cmdline.isOptionSpecified("--rsync");
-		n.lookupService(ComponentDeployer.class).deploy(peers, suicideWhenParentDie, 2000,
+		n.lookupService(DeployerService.class).deploy(peers, suicideWhenParentDie, 2000,
 				printRsync, out, peerOk -> out.accept(peerOk + " is ready"));
 	}
 }

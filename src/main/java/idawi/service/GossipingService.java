@@ -6,10 +6,10 @@ import idawi.Component;
 import idawi.Service;
 import idawi.To;
 
-public class PeriodicBroadcastService extends Service {
+public class GossipingService extends Service {
 	private int nbBeaconsReceived = 0;
 
-	public PeriodicBroadcastService(Component node) {
+	public GossipingService(Component node) {
 		super(node);
 	}
 

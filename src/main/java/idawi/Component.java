@@ -13,7 +13,7 @@ import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.DummyService;
 import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
@@ -55,7 +55,7 @@ public class Component {
 		// start basic services
 		new NetworkingService(this);
 		new ServiceManager(this);
-		new ComponentDeployer(this);
+		new DeployerService(this);
 		new PingService(this);
 		new Bencher(this);
 //		new RoutingScheme1(this);

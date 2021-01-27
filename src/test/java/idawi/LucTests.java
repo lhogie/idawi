@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
-import idawi.service.ComponentDeployer;
+import idawi.service.DeployerService;
 import idawi.service.DummyService;
 import idawi.service.PingService;
 import toools.io.Cout;
@@ -75,7 +75,7 @@ public class LucTests {
 	public void waitingFirst() throws CDLException {
 		Cout.debugSuperVisible("Starting test");
 		Component root = new Component("name=root");
-		Set<Component> others = root.lookupService(ComponentDeployer.class).deployLocalPeers(2, i -> "other-" + i, true,
+		Set<Component> others = root.lookupService(DeployerService.class).deployLocalPeers(2, i -> "other-" + i, true,
 				null);
 		others.forEach(c -> LMI.connect(root, c));
 
@@ -99,7 +99,7 @@ public class LucTests {
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
 		ComponentDescriptor other = ComponentDescriptor.fromCDL("name=other_peer /  tcp_port=56757");
-		master.lookupService(ComponentDeployer.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
+		master.lookupService(DeployerService.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component

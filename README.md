@@ -5,15 +5,14 @@ a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://
 *Idawi* is described in this [under progress working paper](http://www.i3s.unice.fr/~hogie/idawi.pdf).
 
 Its most notable features include:
-- fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) (P2P) architecture
-- automatized deployment of nodes through SSH
-- both asynchronous and synchronous messaging
-- unicast, multicast, and broadcast communication
-- streaming
-- massive multi-core parallelism
-- multi-protocol: support SSH, TCP, UDP, etc
+- a group-based stream/object-oriented asynchronous/synchronous communication model
+- fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) P2P [service-oriented](https://en.wikipedia.org/wiki/Service-oriented_architecture) architecture
+- independance to transport network (includes support for SSH, TCP and UDP)
+- massive [lock-free](https://preshing.com/20120612/an-introduction-to-lock-free-programming/) multi-core parallelism
+- ability to do emulation
+- automatized deployment/bootstrapping of nodes through SSH
 - REST-based web interface
 
-Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Artificial Intelligence (IA), Research in distributed/parallel algorithms, and simulation.
+Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Fog and Edge Computing, Artificial Intelligence (IA), Research in distributed/parallel algorithms, and emulation.
 
 Author: [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
