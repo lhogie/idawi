@@ -1,14 +1,17 @@
 \documentclass[11pt]{beamer}
 \usetheme{JuanLesPins}
+\usepackage{xspace}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{amsmath}
 \usepackage{listings, xcolor}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\newcommand{\idawi}[1]{\textsc{Idawi}\xspace}
+
 \usepackage{graphicx}
 \author{Luc Hogie}
-\title{Elasticware - a parallel/distributed middleware tailored to Research}
+\title{\idawi - a parallel/distributed librairy tailored to Research in IOT/fog/edge/distributed computing}
 %\setbeamercovered{transparent} 
 %\setbeamertemplate{navigation symbols}{} 
 %\logo{} 
@@ -28,8 +31,8 @@
 
 \begin{frame}
 \frametitle{What is this all about?}
-This is about Elasticware, a new middleware for parallel/distributed computing.
-Elasticware is being designed to:
+This is about \idawi, a new librarry for parallel/distributed computing.
+\idawi is being designed to:
 \begin{itemize}
 	\item meet the needs of our on-going/future R\&D projects
 		\begin{itemize}
@@ -40,33 +43,33 @@ Elasticware is being designed to:
 	\item besides, be helpful to other labs (Open Source license)
 	\item avoid the pitfalls of existing tools
 \end{itemize}
-\url{https://github.com/lhogie/pafadipo}
+\url{https://github.com/lhogie/idawi}
 \end{frame}
 
 
 \begin{frame}
 \frametitle{Lastest product of a software suite?}
-JThing benefits from the experience we gained in past devs:
+\idawi benefits from the experience we gained in past devs:
 \begin{description}
 	\item[BigGrph] set of modules dedicated to distributed graph computing. Supported by Inria. Now discontinued.
 	\item[JMR] disk-based distributed batch processor.
 	\item[JMaxGraph] multi-thread graph library for   processing large graphs.
 	\item[MPI4Lectures]multi-thread message-passing library dedicated to teaching at University of Luxembourg
 \end{description}
-Also, Elasticware learns a lot from ProActive,  a distributed implementation of the Fractal specification  developed by another team in our lab.
+Also, \idawi learns a lot from ProActive,  a distributed implementation of the Fractal specification  developed by another team in our lab.
 \end{frame}
 
 
 \begin{frame}
 \frametitle{In a few words...}
-Elasticware enables its user to execute software components on networked computers. These components have message-oriented communication facilities that is embeds built-in and user-defined services   will interact with each other by sending/receives messages. Also they expose . Doing this, they  distributed application made of services within the components.
+\idawi enables its user to execute software components on networked computers. These components have message-oriented communication facilities that is embeds built-in and user-defined services   will interact with each other by sending/receives messages. Also they expose . Doing this, they  distributed application made of services within the components.
 \end{frame}
 
 
 
 \begin{frame}
 \frametitle{Components: what they \emph{are}}
-There is no global consensus on what a component is. In Elasticware, a component is an object augmented with the following features:
+There is no global consensus on what a component is. In \idawi, a component is an object augmented with the following features:
 \begin{itemize}
 	\item it organizes, along with other components, in a multi-graph
 	\item it is able send/receive \emph{messages} to/from other components, using a variety of transport protocols
@@ -78,7 +81,7 @@ There is no global consensus on what a component is. In Elasticware, a component
 
 \begin{frame}
 \frametitle{Components: what they \emph{are used for}}
-Elasticware components can be used to several purposes:
+\idawi components can be used to several purposes:
 \begin{itemize}
 	\item exposing computational resources in a cluster
 	\item simulating complex systems by representing domain-specific entities and their interoperations
@@ -174,7 +177,7 @@ Queues enable:
 
 \begin{frame}
 \frametitle{Communication protocols}
-Elasticware currently support the following transport protocols:
+\idawi currently support the following transport protocols:
 \begin{itemize}
 	\item TCP: ensures reception
 	\item UDP: is quick
