@@ -1,7 +1,7 @@
 package idawi.map;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiExposed;
 import idawi.Route;
 import idawi.RouteEntry;
 import idawi.Service;
@@ -14,7 +14,8 @@ public class MapService extends Service {
 		super(component);
 	}
 
-	@IdawiExposed
+	public static OperationID get;
+
 	public NetworkMap get() {
 		return map;
 	}

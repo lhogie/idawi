@@ -6,12 +6,13 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.To;
 
 public class Virus extends Service {
 
@@ -30,10 +31,8 @@ public class Virus extends Service {
 
 			if (component.lookupService(RegistryService.class).list().size() > 0) {
 				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
-				To to = new To();
-				to.notYetReachedExplicitRecipients = Set.of(c);
-				to.service = id;
-				MessageList response = send(null, to).collect();
+				var to = new ComponentAddress(Set.of(c));
+				MessageList response = exec(to, new OperationID(id, null)).returnQ.collect();
 
 				// the node doesn't respond
 				if (response.isEmpty()) {
@@ -43,8 +42,8 @@ public class Virus extends Service {
 
 							if (ip.isReachable(timeoutS * 1000)) {
 								try {
-									component.lookupService(DeployerService.class).deploy(Collections.singleton(c), true, timeoutS,
-											false, feedback, p -> {
+									component.lookupService(DeployerService.class).deploy(Collections.singleton(c),
+											true, timeoutS, false, feedback, p -> {
 											});
 									break;
 								} catch (Throwable t) {

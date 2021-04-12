@@ -1,19 +1,49 @@
 package idawi.service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.IdawiExposed;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
+import idawi.ServiceStub;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
 
+	public static class Stub extends ServiceStub {
+
+		public Stub(Service localService, ComponentAddress remoteComponents) {
+			super(localService, new ServiceAddress(remoteComponents, ServiceManager.class));
+		}
+
+		public List<String> list() {
+			return (List<String>) (List) localService.exec(to, list).returnQ.collect().contents();
+		}
+
+		public boolean has(Class<? extends Service> s) {
+			return localService.exec(to, has).returnQ.collect().contents().contains(true);
+		}
+
+		public void start(Class<? extends Service> s) {
+			localService.exec(to, start).returnQ.collect();
+		}
+
+		public void stop(Class<? extends Service> s) {
+			localService.exec(to, stop).returnQ.collect();
+		}
+	}
+
 	public ServiceManager(Component peer) {
 		super(peer);
 	}
+
+	public static OperationID start;
 
 	@IdawiExposed
 	public ServiceDescriptor start(Class<? extends Service> serviceID) {
@@ -32,11 +62,15 @@ public class ServiceManager extends Service {
 		return s.descriptor();
 	}
 
+	public static OperationID stop;
+
 	@IdawiExposed
 	public void stop(Class<? extends Service> serviceID) {
 		Service s = component.lookupService(serviceID);
 		component.removeService(s);
 	}
+
+	public static OperationID list;
 
 	@IdawiExposed
 	public Set<String> list() {
@@ -45,9 +79,20 @@ public class ServiceManager extends Service {
 		return r;
 	}
 
+	public static OperationID has;
+
 	@IdawiExposed
 	public boolean has(Class serviceID) {
 		return lookupService(serviceID) != null;
+	}
+
+	public static OperationID ensureStarted;
+
+	@IdawiExposed
+	public void ensureStarted(Class serviceID) {
+		if (!has(serviceID)) {
+			start(serviceID);
+		}
 	}
 
 	@Override

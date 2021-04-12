@@ -8,8 +8,10 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.Service;
 import idawi.net.LMI;
 import idawi.service.DeployerService;
+import idawi.service.PingService;
 
 /**
  * 
@@ -31,7 +33,7 @@ public class PingPong {
 			Component t = things.get(i - 1);
 
 			ComponentDescriptor newPeer = new ComponentDescriptor();
-			newPeer.friendlyName = "t" +i;
+			newPeer.friendlyName = "t" + i;
 
 			// gets the deployment service
 			DeployerService deployer = t.lookupService(DeployerService.class);
@@ -50,9 +52,7 @@ public class PingPong {
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);
 
-		Message pong = first.lookupService(idawi.service.PingService.class).ping(last.descriptor(), 10);
-		
-		
+		Message pong = PingService.ping(new Service(first), last.descriptor(), 10);
 
 		assert pong.route.source().component.friendlyName.equals(last.friendlyName);
 		System.out.println("***  " + pong.route);

@@ -9,7 +9,7 @@ import javax.swing.JTextField;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.To;
+import idawi.QueueAddress;
 import toools.gui.Swingable;
 
 public class Chat extends Service implements Swingable {
@@ -25,19 +25,17 @@ public class Chat extends Service implements Swingable {
 
 		textInput.addActionListener(e -> {
 			String text = textInput.getText().trim();
-			send(text, new To(), null);
+			send(text, new QueueAddress());
 			textInput.setText("");
 		});
 
-		registerOperation(null, (in, out) -> {
-			var msg = in.get_non_blocking();
-
+		registerOperation(null, (msg, out) -> {
 			if (msg.route.source().equals(peer.descriptor())) {
 				conversationPane.append("> ");
 			}
 
 			conversationPane.append(msg.content.toString() + '\n');
-			send(msg.content, new To(), null);
+			send(msg.content, new QueueAddress());
 		});
 	}
 

@@ -1,11 +1,9 @@
 package idawi;
+
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.Component;
-import idawi.MessageQueue;
-import idawi.Service;
 import idawi.net.LMI;
 import idawi.service.DummyService;
 import idawi.service.ServiceManager;
@@ -27,21 +25,22 @@ public class TestServiceManager {
 
 		var bd = b.descriptor();
 
-		var stub = new ServiceManager.Stub(new Service(a), Set.of(bd));
+		var stub = new ServiceManager.Stub(new Service(a), new ComponentAddress(Set.of(bd)));
 
-		stub.list().forEach(o -> System.out.println(operationName));
+		stub.list().forEach(operationName -> System.out.println(operationName));
 
 		if (!stub.has(DummyService.class)) {
 			System.out.println("starting service " + DummyService.class);
 			stub.start(DummyService.class);
 		}
-		stub.list().forEach(o -> System.out.println(operationName));
+
+		stub.list().forEach(operationName -> System.out.println(operationName));
 		System.out.println("stopping service " + DummyService.class);
 		stub.stop(DummyService.class);
-		stub.list().forEach(o -> System.out.println(operationName));
+		stub.list().forEach(operationName -> System.out.println(operationName));
 		System.out.println("starting service " + DummyService.class);
 		stub.start(DummyService.class);
-		stub.list().forEach(o -> System.out.println(operationName));
+		stub.list().forEach(operationName -> System.out.println(operationName));
 		// assertEquals(sms.list().contains(DummyService.class), false);
 
 //		assertEquals(sms.list().contains(DummyService.class), true);

@@ -32,18 +32,18 @@
 \begin{frame}
 \frametitle{What is this all about?}
 This is about \idawi, a new library for parallel/distributed computing.
-\idawi is being designed to:
+\idawi is designed to:
 \begin{itemize}
-	\item meet the needs of our on-going/future R\&D projects
+	\item meet the needs of our on-going/future R\&D projects:
 		\begin{itemize}
-			\item investigate IOT/decentralized algorithms (Map/Liquori)
-			\item provide scientific services to our applications (Gemoc)
-			\item compute very large graphs (Coati)
+			\item emulating IOT/decentralized networks (Map/Liquori)
+			\item providing infrastructure services to Gemoc (Deantoni)
+			\item computing very large graphs (Coati)
 		\end{itemize}
-	\item besides, be helpful to other labs (Open Source license)
-	\item avoid the pitfalls of existing tools
+	\item be useful to other labs (Open Source license)
+	\item stand as a step forward existing tools
 \end{itemize}
-\url{https://github.com/lhogie/idawi}
+Implementation: \url{https://github.com/lhogie/idawi}
 \end{frame}
 
 
@@ -53,7 +53,7 @@ This is about \idawi, a new library for parallel/distributed computing.
 \begin{description}
 	\item[BigGrph] set of modules dedicated to distributed graph computing. Supported by Inria. Now discontinued.
 	\item[JMR] disk-based distributed batch processor.
-	\item[JMaxGraph] multi-thread graph library for   processing large graphs.
+	\item[JMaxGraph] multi-thread graph library for  processing large graphs.
 	\item[MPI4Lectures]multi-thread message-passing library dedicated to teaching at University of Luxembourg
 \end{description}
 Also, \idawi learns a lot from ProActive,  a distributed implementation of the Fractal specification  developed by another team in our lab.
@@ -84,7 +84,7 @@ There is no global consensus on what a component is. In \idawi, a component is a
 \idawi components can be used to several purposes:
 \begin{itemize}
 	\item exposing computational resources in a cluster
-	\item simulating complex systems by representing domain-specific entities and their interoperations
+	\item simulating complex systems by representing domain-specific entities and their internals
 	\item providing services in a distributed application
 \end{itemize}
 \end{frame}
@@ -131,12 +131,24 @@ A service exposes to other components functionality for a particular concern.
 \begin{frame}
 \frametitle{operations are what perform user-defined computations}
 \begin{itemize}
-	\item has a name to executable code
-	\item triggered by \emph{messages} which carries parameters
-	\item by default, operations are all executed in \emph{parallel}
-	\item at runtime, they can send messages (temporary results, current state, progress information, etc) 
+	\item is a piece of sequential code
+	\item triggered by a \emph{message}
+	\item read input from a message list
 \end{itemize}
-Just like components and services, operations can be created/deleted at runtime.
+At runtime, an operation can:
+\begin{itemize}
+	\item do anything, including sending messages to any other component/service
+	\item invoke operations on any other component/service (service composition)
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Parallel execution}
+\begin{itemize}
+	\item unlike active objects, components have no threads
+	\item $#threads = f(#cores)$
+	\item lock-free by default
+\end{itemize}
 \end{frame}
 
 

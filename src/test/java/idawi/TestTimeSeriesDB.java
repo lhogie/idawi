@@ -21,14 +21,14 @@ public class TestTimeSeriesDB {
 	@Test
 	public void startService() throws Throwable {
 		Component c1 = new Component();
-		ComponentDescriptor c2 = c1.lookupService(DeployerService.class).deployLocalPeers(1, i -> "other-" + i, true, null)
-				.iterator().next().descriptor();
+		ComponentDescriptor c2 = c1.lookupService(DeployerService.class)
+				.deployInThisJVM(1, i -> "other-" + i, true, null).iterator().next().descriptor();
 
 		Service s = new Service(c1);
 
-		new ServiceManager.Stub(s, Set.of(c2)).start(TimeSeriesDB.class);
+		s.exec(new ComponentAddress(Set.of(c2)), ServiceManager.start, true, TimeSeriesDB.class).returnQ.collect();
 
-		TimeSeriesDBStub client = new TimeSeriesDBStub(s, Set.of(c2));
+		TimeSeriesDBStub client = new TimeSeriesDBStub(s, new ComponentAddress(Set.of(c2)));
 
 		client.createFigure("fig1");
 

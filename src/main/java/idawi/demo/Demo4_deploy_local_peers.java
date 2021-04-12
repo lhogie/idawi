@@ -3,11 +3,15 @@ package idawi.demo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
+import idawi.IdawiExposed;
+import idawi.MessageQueue;
 import idawi.Service;
-import idawi.To;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.service.DeployerService;
@@ -22,12 +26,31 @@ import toools.thread.Q;
  */
 
 public class Demo4_deploy_local_peers {
+	// declares a new service that does nothing else than printing the route of
+	// received messages
+	static class DummyService extends Service {
+		Q wait = new Q(1);
+
+		public DummyService(Component t) {
+			super(t);
+		}
+
+		public static OperationID op;
+
+		@IdawiExposed
+		public void op(MessageQueue q) {
+			var msg = q.get_blocking();
+			System.out.println("message route: " + msg.route);
+			wait.add_blocking("");
+		}
+	}
+
 	public static void main(String[] args) throws IOException, InterruptedException {
 
-		// creates the things in the local JVM
+		// creates 50 components in the local JVM
 		List<Component> things = new ArrayList<>();
 		Component initialThing = new Component(ComponentDescriptor.fromCDL("name=0"));
-		initialThing.lookupService(DeployerService.class).deployLocalPeers(50, i -> "c" + i, true,
+		initialThing.lookupService(DeployerService.class).deployInThisJVM(50, i -> "c" + i, true,
 				peerOk -> things.add(peerOk));
 		LMI.chain(things);
 		Component first = things.get(0);
@@ -36,27 +59,13 @@ public class Demo4_deploy_local_peers {
 		// prints neighborhoods for all things
 		things.forEach(t -> System.out.println(t + " => " + t.lookupService(NetworkingService.class).neighbors()));
 
-		Q wait = new Q(1);
-
-		// declares a new service that does nothing else than printing the route of
-		// received messages
-		class DummyService extends Service {
-			public DummyService(Component t) {
-				super(t);
-				registerOperation(null, (msg, out) -> {
-					System.out.println("message route: " + msg.route);
-					wait.add_blocking("");
-				});
-			}
-		}
-
-		// install this service on all our things in the JVM
-		new DummyService(last);
+		// install this service on the last component
+		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		To to = new To(DummyService.class, null);
-		first.lookupService(NetworkingService.class).send("hello!", to, null);
-		wait.get_blocking();
+		var to = new ComponentAddress(Set.of(last.descriptor()));
+		first.lookupService(NetworkingService.class).exec(to, DummyService.op, "hello!");
+		s.wait.get_blocking();
 		System.out.println("completed");
 		Component.stopPlatformThreads();
 	}

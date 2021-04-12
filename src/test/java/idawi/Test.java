@@ -10,8 +10,8 @@ public class Test {
 		Component b = new Component();
 		LMI.connect(a, b);
 		b.lookupService(DummyService.class).registerOperation("neverReturns", (m, r) -> Threads.sleepForever());
-		MessageList r = b.lookupService(DummyService.class).call(new To(b,  DummyService.class, "neverReturns")).collect().throwAnyError();
-		System.out.println(r.timeout);
+//		MessageList r = b.lookupService(DummyService.class).exec(new To(b,  DummyService.)).returnQ.collect().throwAnyError();
+//		System.out.println(r.timeout);
 		
 		
 		// be sure c1 got an answer

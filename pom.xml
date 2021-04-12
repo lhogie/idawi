@@ -91,9 +91,9 @@
 			<version>0.0.4</version>
 		</dependency>
 		<dependency>
-		<groupId>io.github.lhogie</groupId>
-		<artifactId>toools</artifactId>
-		<version>0.0.4</version>
+			<groupId>io.github.lhogie</groupId>
+			<artifactId>toools</artifactId>
+			<version>0.0.4</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.lhogie</groupId>
@@ -130,6 +130,11 @@
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>5.7.0</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.java-websocket</groupId>
+			<artifactId>Java-WebSocket</artifactId>
+			<version>1.5.1</version>
 		</dependency>
 	</dependencies>
 

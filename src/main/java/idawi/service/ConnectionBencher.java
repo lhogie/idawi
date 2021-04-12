@@ -2,11 +2,12 @@ package idawi.service;
 
 import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.Service;
-import idawi.To;
 import toools.util.Date;
 
 /**
@@ -17,7 +18,7 @@ import toools.util.Date;
 public class ConnectionBencher extends Service {
 	public ConnectionBencher(Component peer) {
 		super(peer);
-		registerOperation(null, (msg, out) -> {
+		registerOperation(null, in -> {
 		});
 	}
 
@@ -27,10 +28,8 @@ public class ConnectionBencher extends Service {
 	}
 
 	public double benchLinkTo2(ComponentDescriptor peer, double timeout) {
-		To to = new To();
-		to.notYetReachedExplicitRecipients = Set.of(peer);
-		to.service = id;
-		MessageList msg = send(null, to).collect();
+		var to = new ComponentAddress(Set.of(peer));
+		MessageList msg = exec(to, new OperationID(id, null), null).returnQ.collect();
 		return Date.time() - msg.last().route.last().emissionDate;
 	}
 }

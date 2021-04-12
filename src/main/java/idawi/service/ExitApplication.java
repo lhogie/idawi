@@ -8,7 +8,7 @@ import javax.swing.JPanel;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.To;
+import idawi.QueueAddress;
 import toools.gui.Swingable;
 
 public class ExitApplication extends Service implements Swingable {
@@ -26,7 +26,7 @@ public class ExitApplication extends Service implements Swingable {
 		buttons.add(shutdownButton);
 		buttons.add(restartButton);
 
-		registerOperation(null, (msg, out) -> trigger((int) msg.content));
+		registerOperation(null, in -> trigger((int) in.get_blocking().content));
 	}
 
 	private final static int SHUTDOWN = 56;
@@ -38,9 +38,9 @@ public class ExitApplication extends Service implements Swingable {
 	}
 
 	public void trigger(int exitCode) {
-		To to = new To();
+		QueueAddress to = new QueueAddress();
 		to.service = id;
-		send(exitCode, to, null);
+		send(exitCode, to);
 
 		for (Service app : component.services()) {
 			app.shutdown();

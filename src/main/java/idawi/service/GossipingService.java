@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.To;
+import idawi.QueueAddress;
 
 public class GossipingService extends Service {
 	private int nbBeaconsReceived = 0;
@@ -16,10 +16,10 @@ public class GossipingService extends Service {
 	public void schedule(int periodicityMs, Supplier sendThis, Class<? extends Service> serviceID,
 			String queueID) {
 		newThread_loop(periodicityMs, () -> {
-			To to = new To();
+			QueueAddress to = new QueueAddress();
 			to.service = serviceID;
-			to.operationOrQueue = queueID;
-			send(sendThis.get(), to, null);
+			to.queue = queueID;
+			send(sendThis.get(), to);
 		});
 	}
 	

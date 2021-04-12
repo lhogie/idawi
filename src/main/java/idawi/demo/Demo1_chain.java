@@ -7,7 +7,7 @@ import java.util.Set;
 
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.To;
+import idawi.QueueAddress;
 import idawi.net.IPDriver;
 import idawi.net.UDPDriver;
 import toools.thread.Threads;
@@ -45,8 +45,7 @@ public class Demo1_chain {
 			// every second, says hello to the next peer
 			Threads.newThread_loop_periodic(1000, () -> true, () -> {
 				Message msg = new Message();
-				msg.to = new To();
-				msg.to.notYetReachedExplicitRecipients = Set.of(next);
+				msg.to = new QueueAddress(Set.of(next), null, null);
 				msg.content = "Hello World!";
 				msg.route.add(me);
 				network.send(msg, Arrays.asList(next));

@@ -1,11 +1,9 @@
 package idawi;
 
-public abstract class Operation implements OperationStandardForm {
-	int nbCalls;
+public abstract class Operation implements OperationFunctionalInterface {
+	int nbCalls, nbFailures;
 	double totalDuration;
 	protected final OperationDescriptor descriptor;
-	protected Class<? extends Service> declaringClass;
-	public String description, name;
 
 	public Operation() {
 		this.descriptor = new OperationDescriptor();
@@ -13,21 +11,19 @@ public abstract class Operation implements OperationStandardForm {
 	}
 
 	public boolean isSystemOperation() {
-		return declaringClass != Service.class;
+		return getDeclaringService() != Service.class;
 	}
 
-	public  String getName() {
-		return name;
-	}
+	protected abstract Class<? extends Service> getDeclaringService();
+
+	public abstract String getName();
 
 	@Override
 	public String toString() {
-		return getName();
+		return getDeclaringService().getName() + "/" + getName();
 	}
 
-	public String getDescription() {
-		return description;
-	}
+	public abstract String getDescription() ;
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.map.NetworkMap;
 import toools.thread.Threads;
 
@@ -26,10 +27,14 @@ public class RegistryService extends Service {
 		super(component);
 	}
 
+	public static OperationID broadcastLocalInfo;
+
 	@IdawiExposed
 	public void broadcastLocalInfo() {
-		send(component.descriptor(), new To(RegistryService.class, "add"), null);
+		exec(ComponentAddress.BCAST_ADDRESS, RegistryService.add, false, new OperationParameterList(component.descriptor()));
 	}
+
+	public static OperationID add;
 
 	@IdawiExposed
 	public void add(ComponentDescriptor d) {
@@ -40,53 +45,71 @@ public class RegistryService extends Service {
 		}
 	}
 
+	public static OperationID addAll;
+
 	@IdawiExposed
 	public void addAll(Collection<ComponentDescriptor> s) {
 		s.forEach(i -> add(i));
 	}
+
+	public static OperationID size;
 
 	@IdawiExposed
 	public int size() {
 		return name2descriptor.size();
 	}
 
+	public static OperationID names;
+
 	@IdawiExposed
 	public Set<String> names() {
 		return name2descriptor.keySet();
 	}
 
+	public static OperationID updateAll;
+
 	@IdawiExposed
 	public void updateAll() {
-		call(new To(new HashSet<>(name2descriptor.values()), RegistryService.class, "local")).collect().resultMessages()
-				.contents().forEach(d -> add((ComponentDescriptor) d));
+		var to = new ComponentAddress(new HashSet<>(name2descriptor.values()));
+		exec(to, RegistryService.local, true, null).returnQ.collect().resultMessages().contents()
+				.forEach(d -> add((ComponentDescriptor) d));
 	}
+
+	public static OperationID lookUp;
 
 	@IdawiExposed
 	public ComponentDescriptor lookup(String name) {
 		return name2descriptor.get(name);
 	}
 
+	public static OperationID remove;
+
 	@IdawiExposed
 	public ComponentDescriptor remove(String name) {
 		return name2descriptor.remove(name);
 	}
+
+	public static OperationID clear;
 
 	@IdawiExposed
 	public void clear() {
 		name2descriptor.clear();
 	}
 
+	public static OperationID list;
+
 	@IdawiExposed
 	public Set<ComponentDescriptor> list() {
 		return new HashSet<>(name2descriptor.values());
 	}
+
+	public static OperationID local;
 
 	@IdawiExposed
 	public ComponentDescriptor local() {
 		return component.descriptor();
 	}
 
-	@IdawiExposed
 	public ComponentDescriptor pickRandomPeer() {
 		if (name2descriptor.isEmpty()) {
 			return null;
@@ -97,6 +120,7 @@ public class RegistryService extends Service {
 	}
 
 	@Override
+	@IdawiExposed
 	public String getFriendlyName() {
 		return "component registry";
 	}
@@ -112,7 +136,6 @@ public class RegistryService extends Service {
 		return info;
 	}
 
-	@IdawiExposed
 	public Set<ComponentDescriptor> lookupByRegexp(String re) {
 		var r = new HashSet<ComponentDescriptor>();
 
@@ -125,6 +148,7 @@ public class RegistryService extends Service {
 		return r;
 	}
 
+	@IdawiExposed
 	public NetworkMap map() {
 		var m = new NetworkMap();
 		Map<String, ComponentDescriptor> missing = new HashMap<>();

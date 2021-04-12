@@ -1,19 +1,18 @@
 package idawi.service;
 
+import java.io.Serializable;
 import java.util.Random;
-import java.util.function.Consumer;
+import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.EOT;
-import idawi.FrontEnd;
 import idawi.IdawiExposed;
-import idawi.Message;
 import idawi.MessageQueue;
-import idawi.Operation;
-import idawi.ParameterizedOperation;
 import idawi.ProgressRatio;
+import idawi.RunningOperation;
 import idawi.Service;
-import idawi.To;
 import idawi.net.LMI;
 import toools.math.MathsUtilities;
 import toools.thread.Threads;
@@ -25,32 +24,32 @@ public class DummyService extends Service {
 		super(component);
 	}
 
+	public static OperationID waiting;
+
 	@IdawiExposed
-	private double waiting(double maxSeconds) {
+	public double waiting(double maxSeconds) {
 		double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 		Threads.sleepMs((long) (seconds * 1000));
 		return seconds;
 	}
 
+	public static OperationID grep;
+
 	@IdawiExposed
-	public static class grep extends Operation {
-		public static String description = "unix-like grep";
+	public void grep(MessageQueue in) {
+		String re = (String) in.get_non_blocking().content;
 
-		public static void backEnd(DummyService s, MessageQueue in) {
-			String re = (String) in.get_non_blocking().content;
+		while (true) {
+			var msg = in.get_non_blocking();
 
-			while (true) {
-				var msg = in.get_non_blocking();
+			if (msg.content instanceof EOT) {
+				break;
+			}
 
-				if (msg.content instanceof EOT) {
-					break;
-				}
+			String line = (String) msg.content;
 
-				String line = (String) msg.content;
-
-				if (line.matches(re)) {
-					s.reply(msg, line);
-				}
+			if (line.matches(re)) {
+				reply(msg, line);
 			}
 		}
 	}
@@ -61,8 +60,8 @@ public class DummyService extends Service {
 		LMI.connect(a, b);
 
 		Service s = new Service(a);
-
-		OperationStub stub = new OperationStub(s, new To(b.descriptor(), DummyService.grep.class));
+		var to = new ComponentAddress(Set.of(b.descriptor()));
+		RunningOperation stub = s.exec(to, DummyService.stringLength, true, DummyService.grep);
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);
@@ -92,67 +91,62 @@ public class DummyService extends Service {
 //		}
 //	}
 
-	@IdawiExposed
-	public class stringLength extends Operation {
-		@Override
-		public void accept(MessageQueue in) {
-			var msg = in.get_non_blocking();
-			String s = (String) msg.content;
-			send(s.length(), msg.replyTo);
-		}
-	}
-
-	static interface stringLengthSIgnature {
-		int length(String s);
-	}
+	public static OperationID stringLength;
 
 	@IdawiExposed
-	public static class stringLengthParameterized extends ParameterizedOperation<DummyService>
-			implements stringLengthSIgnature {
-
-		public static class frontEnd extends FrontEnd implements stringLengthSIgnature {
-			@Override
-			public int length(String s) {
-				MessageQueue future = from.send(s, new To(target, DummyService.stringLengthParameterized.class));
-				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
-			}
-		}
-
-		@Override
-		public int length(String s) {
-			service.dummyData.hashCode();
-			return s.length();
-		}
+	public void stringLength(MessageQueue in) {
+		var msg = in.get_non_blocking();
+		String s = (String) msg.content;
+		send(s.length(), msg.requester);
 	}
 
+	public static OperationID countFrom1toN;
+
 	@IdawiExposed
-	private void countFrom1toN(Message m, Consumer<Object> r) {
+	public void countFrom1toN(MessageQueue in) {
+		var m = in.get_blocking();
+
 		for (int i = 0; i < (Integer) m.content; ++i) {
-			r.accept(i);
+			reply(m, i);
 		}
 	}
 
+	public static class Range implements Serializable {
+		public Range(int i, int j) {
+			this.a = i;
+			this.b = j;
+		}
+
+		int a, b;
+	}
+
+	public static OperationID countFromAtoB;
+
 	@IdawiExposed
-	private void countFromAtoB(int a, int b, Consumer<Object> r) {
-		for (int i = a; i < b; ++i) {
-			r.accept(i);
+	public void countFromAtoB(MessageQueue in) {
+		var m = in.get_blocking();
+		var p = (Range) m.content;
+
+		for (int i = p.a; i < p.b; ++i) {
+			reply(m, i);
 		}
 	}
 
+	public static OperationID throwError;
+
 	@IdawiExposed
-	public class throwError {
-		public void backEnd(MessageQueue in) throws Throwable {
-			throw new Error("this is a test error");
-		}
+	public void throwError(MessageQueue in) throws Throwable {
+		throw new Error("this is a test error");
 	}
 
 	@IdawiExposed
-	private void sendProgressInformation(Message m, Consumer<Object> r) {
-		int target = (Integer) m.content;
+	public void sendProgressInformation(MessageQueue in) throws Throwable {
+		var msg = in.get_blocking();
+		int target = (Integer) msg.content;
 
 		for (int i = 0; i < target; ++i) {
-			r.accept(i);
-			r.accept(new ProgressRatio(target, i));
+			reply(msg, i);
+			reply(msg, new ProgressRatio(target, i));
 		}
 	}
 

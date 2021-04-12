@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import idawi.OperationHelper;
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.IdawiExposed;
 import idawi.Service;
@@ -20,12 +20,14 @@ public class FileService extends Service {
 		super(t);
 	}
 
+	public static OperationID pathToLocalFiles;
+
 	@IdawiExposed
 	private String pathToLocalFiles() {
 		return dir.getPath();
 	}
 
-	public static OperationHelper find;
+	public static OperationID find;
 
 	@IdawiExposed
 	private Set<String> find() throws IOException {
@@ -35,17 +37,21 @@ public class FileService extends Service {
 		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 	}
 
-	public static OperationHelper download;
+	public static OperationID download;
 
 	@IdawiExposed
 	private byte[] download(String path) throws IOException {
 		return new RegularFile(dir, path).getContent();
 	}
 
+	public static OperationID upload;
+
 	@IdawiExposed
 	private void upload(String path, byte[] bytes) throws IOException {
 		new RegularFile(dir, path).setContent(bytes);
 	}
+
+	public static OperationID exists;
 
 	@IdawiExposed
 	private boolean exists(String name) {
@@ -53,11 +59,15 @@ public class FileService extends Service {
 		return new RegularFile(dir, name).exists();
 	}
 
+	public static OperationID delete;
+
 	@IdawiExposed
 	private void delete(String name) {
 		dir.ensureExists();
 		new RegularFile(dir, name).delete();
 	}
+
+	public static OperationID size;
 
 	@IdawiExposed
 	private long size(String name) {

@@ -9,8 +9,7 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public static OperationParameterList from(OperationStringParameterList l, Class<?>[] types)
-			 {
+	public static OperationParameterList from(OperationStringParameterList l, Class<?>[] types) {
 		OperationParameterList r = new OperationParameterList();
 
 		for (int i = 0; i < types.length; ++i) {
@@ -33,6 +32,17 @@ public class OperationParameterList extends ArrayList {
 			return Integer.valueOf(from);
 		} else {
 			throw new IllegalArgumentException("string cannot be converted to " + to.getClass());
+		}
+	}
+
+	public static OperationParameterList toParmsList(Object content, Class<?>[] types) {
+		if (content instanceof OperationParameterList) {
+			return (OperationParameterList) content;
+		} else if (content instanceof OperationStringParameterList) {
+			return from((OperationStringParameterList) content, types);
+		} else {
+			throw new IllegalArgumentException("a list of parammeters was expected, but we got " + content
+					+ " of class " + content.getClass().getName());
 		}
 	}
 }

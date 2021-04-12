@@ -15,12 +15,13 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Graph;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.To;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
@@ -71,24 +72,27 @@ public class DeployerService extends Service {
 		remoteClassDir += "/";
 
 		// receives deployment requests from other peers
-		registerOperation("deploy", (msg, out) -> {
+		registerOperation("deploy", in -> {
+			var msg = in.get_blocking();
 			DeploymentRequest req = (DeploymentRequest) msg.content;
 			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, req.printRsync,
-					stdout -> out.accept(stdout), peerOk -> out.accept(peerOk));
+					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
 		});
 
-		registerOperation("local_deploy", (msg, out) -> {
+		registerOperation("local_deploy", in -> {
+			var msg = in.get_blocking();
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
 			List<Component> compoennts = new ArrayList<>();
-			deployLocalPeers(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> compoennts.add(peerOk));
-			out.accept(req.n + " compoennts created");
+			deployInThisJVM(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> compoennts.add(peerOk));
+			reply(msg, req.n + " compoennts created");
 			LMI.chain(compoennts);
-			out.accept("chained");
+			reply(msg, "chained");
 		});
 
-		registerOperation("deploy_in_other_jvm", (msg, out) -> {
+		registerOperation("deploy_in_other_jvm", in -> {
+			var msg = in.get_blocking();
 			Graph deploymentPlan = (Graph) msg.content;
-			apply(deploymentPlan, 1, true, stdout -> out.accept(stdout), peerOk -> out.accept(peerOk));
+			apply(deploymentPlan, 1, true, stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
 		});
 	}
 
@@ -97,19 +101,17 @@ public class DeployerService extends Service {
 		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
-		To to = new To();
-		to.notYetReachedExplicitRecipients = toDeploy;
-		to.service = DeployerService.class;
-		to.operationOrQueue = "d3";
-		send(deploymentPlan, to).collect();
+		var to = new ComponentAddress(toDeploy);
+		exec(to, new OperationID(DeployerService.class, "d3"), true, deploymentPlan).returnQ.collect();
 	}
 
-	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie, double timeoutInSecond,
-			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk) throws IOException {
+	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
+			double timeoutInSecond, boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
+			throws IOException {
 
 		Collection<ComponentDescriptor> inThisJVM = findLocalhosts(peers);
 		List<Component> localThings = new ArrayList<>();
-		deployLocalPeers(inThisJVM, suicideWhenParentDie, okThing -> {
+		deployInThisJVM(inThisJVM, suicideWhenParentDie, okThing -> {
 			localThings.add(okThing);
 			peerOk.accept(okThing.descriptor());
 		});
@@ -129,16 +131,15 @@ public class DeployerService extends Service {
 		String classpath = System.getProperty("java.class.path");
 
 		LongProcess startingNode = new LongProcess("starting new JVM", null, -1, line -> feedback.accept(line));
-		Process p = Runtime.getRuntime()
-				.exec(new String[] { java, "-cp", classpath, DeployerService.class.getName() });
+		Process p = Runtime.getRuntime().exec(new String[] { java, "-cp", classpath, DeployerService.class.getName() });
 
 		feedback.accept("sending node startup info");
 		init(p, d, Set.of(component.descriptor()), suicideWhenParentDie, feedback);
 		startingNode.end();
 	}
 
-	private void init(Process p, ComponentDescriptor d, Set<ComponentDescriptor> peersSharingFS, boolean suicideWhenParentDie,
-			Consumer<Object> feedback) throws IOException {
+	private void init(Process p, ComponentDescriptor d, Set<ComponentDescriptor> peersSharingFS,
+			boolean suicideWhenParentDie, Consumer<Object> feedback) throws IOException {
 		OutputStream out = p.getOutputStream();
 		DeployInfo deployInfo = new DeployInfo();
 		deployInfo.id = d;
@@ -168,13 +169,13 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public Set<Component> deployLocalPeers(int n, Int2ObjectFunction<String> i2name, boolean suicideWhenParentDie,
+	public Set<Component> deployInThisJVM(int n, Int2ObjectFunction<String> i2name, boolean suicideWhenParentDie,
 			Consumer<Component> peerOk) {
 		Set<Component> s = new HashSet<>();
 
 		for (int i = 0; i < n; ++i) {
 			Component t = new Component("name=" + i2name.apply(i));
-			deployLocalPeer(t, suicideWhenParentDie);
+			deployInThisJVM(t, suicideWhenParentDie);
 
 			if (peerOk != null) {
 				peerOk.accept(t);
@@ -186,11 +187,11 @@ public class DeployerService extends Service {
 		return s;
 	}
 
-	public void deployLocalPeers(Collection<ComponentDescriptor> localPeers, boolean suicideWhenParentDie,
+	public void deployInThisJVM(Collection<ComponentDescriptor> localPeers, boolean suicideWhenParentDie,
 			Consumer<Component> peerOk) {
 		for (ComponentDescriptor d : localPeers) {
 			Component t = new Component(d);
-			deployLocalPeer(t, suicideWhenParentDie);
+			deployInThisJVM(t, suicideWhenParentDie);
 
 			if (peerOk != null) {
 				peerOk.accept(t);
@@ -198,7 +199,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	private void deployLocalPeer(Component newThing, boolean suicideWhenParentDie) {
+	private void deployInThisJVM(Component newThing, boolean suicideWhenParentDie) {
 		newThing.parent = component.descriptor();
 
 		if (suicideWhenParentDie) {
@@ -208,8 +209,9 @@ public class DeployerService extends Service {
 		LMI.connect(component, newThing);
 	}
 
-	public void deployRemote(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie, double timeoutInSecond,
-			boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk) throws IOException {
+	public void deployRemote(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
+			double timeoutInSecond, boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
+			throws IOException {
 
 		// identifies the set of peers that have filesystem in common
 		Set<Set<ComponentDescriptor>> nasGroups = groupByNAS(peers, feedback);
@@ -345,7 +347,8 @@ public class DeployerService extends Service {
 		return r;
 	}
 
-	private Collection<ComponentDescriptor> findThoseForAnotherJVMInTheSameComputer(Collection<ComponentDescriptor> peers) {
+	private Collection<ComponentDescriptor> findThoseForAnotherJVMInTheSameComputer(
+			Collection<ComponentDescriptor> peers) {
 		Collection<ComponentDescriptor> r = new HashSet<>();
 
 		for (ComponentDescriptor p : peers) {

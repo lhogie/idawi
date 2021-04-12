@@ -16,17 +16,16 @@ import java.util.function.Consumer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.Message;
 import idawi.IdawiExposed;
+import idawi.Message;
 import idawi.RegistryService;
-import idawi.RemoteException;
 import idawi.Service;
 import idawi.ServiceDescriptor;
-import idawi.To;
 import idawi.net.JacksonSerializer;
-import idawi.net.LMI;
 import idawi.service.ServiceManager;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
@@ -36,7 +35,6 @@ import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 import toools.reflect.Clazz;
 import toools.text.TextUtilities;
-import toools.thread.Threads;
 
 public class RESTService extends Service {
 	private HttpServer restServer;
@@ -78,6 +76,9 @@ public class RESTService extends Service {
 		});
 		restServer.setExecutor(Service.threadPool);
 		restServer.start();
+//		WSS webSocketServer = new WSS(8001, new GenerationData());
+//		webSocketServer.start();
+
 		return restServer;
 	}
 
@@ -114,9 +115,9 @@ public class RESTService extends Service {
 
 	private void serveIdaweb(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
 		if (path.isEmpty()) {
-			out.accept(new JavaResource(getClass(), "index.html").getByteArray());
+			out.accept(new JavaResource(getClass(), "ressources/index.html").getByteArray());
 		} else {
-			out.accept(new JavaResource(getClass(), TextUtilities.concatene(path, "/")).getByteArray());
+			out.accept(new JavaResource(getClass(), "ressources/" + TextUtilities.concatene(path, "/")).getByteArray());
 		}
 	}
 
@@ -189,8 +190,9 @@ public class RESTService extends Service {
 						var stringParms = path.size() == 3 ? new String[0] : path.get(3).split(",");
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
 								+ operation + "(" + Arrays.toString(stringParms) + ")");
-						List<Object> r = call(new To(components, serviceID, operation), stringParms).setTimeout(timeout)
-								.collect().throwAnyError().resultMessages().contents();
+						List<Object> r = exec(new ComponentAddress(components), new OperationID(serviceID, operation),
+								stringParms).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages()
+										.contents();
 
 						if (r.size() == 1) {
 							return r.get(0);
@@ -227,7 +229,7 @@ public class RESTService extends Service {
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
 
-		for (var m : call(new To(components, ServiceManager.class, "list")).setTimeout(timeout).collect()
+		for (var m : exec(new ComponentAddress(components), ServiceManager.list).returnQ.setTimeout(timeout).collect()
 				.throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
 			c.services = (Set<ServiceDescriptor>) m.content;
@@ -241,7 +243,8 @@ public class RESTService extends Service {
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
 
-		for (Message m : call(new To(components, serviceID, "descriptor")).collect().throwAnyError().resultMessages()) {
+		for (Message m : exec(new ComponentAddress(components), Service.descriptor).returnQ.collect().throwAnyError()
+				.resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
 		}
 
@@ -260,8 +263,7 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		var q = call(new To(RegistryService.class, "local"));
-		q.setTimeout(1).collect();
+		exec(new ComponentAddress(null), RegistryService.local).returnQ.setTimeout(1).collect();
 
 		w.knownComponents.addAll(lookupService(RegistryService.class).list());
 		return w;
@@ -300,17 +302,4 @@ public class RESTService extends Service {
 		startHTTPServer(port);
 	}
 
-	public static void main(String[] args) throws IOException, RemoteException {
-		List<Component> components = new ArrayList();
-
-		for (int i = 0; i < 20; ++i) {
-			components.add(new Component());
-		}
-
-		LMI.randomTree(components);
-//		LMI.chain(components);
-		components.get(0).lookupService(RESTService.class).startHTTPServer();
-
-		Threads.sleepForever();
-	}
 }

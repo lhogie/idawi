@@ -1,7 +1,10 @@
 package idawi;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -82,7 +85,7 @@ public class MessageQueue extends Q<Message> {
 	}
 
 	public Object get() throws Throwable {
-		return collectUntilFirstEOT().throwAnyError().resultMessages().first().content;
+		return collectUntilFirstEOT().throwAnyError().resultMessages(1).first().content;
 	}
 
 	/**
@@ -114,5 +117,53 @@ public class MessageQueue extends Q<Message> {
 		});
 
 		return l;
+	}
+
+	public InputStream joinAll(MessageQueue q, double timeout, BooleanSupplier keepOn) {
+		return new InputStream() {
+			byte[] buf;
+			int i = -1;
+			long nbRead = 0;
+
+			@Override
+			public int read(byte b[], int off, int len) throws IOException {
+				int n = 0;
+
+				while (len > 0) {
+					if (buf == null || i >= buf.length) {
+						fillBuffer();
+					}
+
+					int l = Math.min(buf.length, len);
+					System.arraycopy(buf, i, b, off, l);
+					len -= l;
+					off += l;
+					n += l;
+				}
+
+				return n;
+			}
+
+			private void fillBuffer() throws IOException {
+				Message msg = q.get_blocking(timeout);
+
+				if (msg == null) {
+					throw new IOException("timeout");
+				}
+
+				buf = (byte[]) msg.content;
+				i = 0;
+			}
+
+			private final byte[] singleton = new byte[0];
+			
+			public int read() throws IOException {
+				if (read(singleton, 0, 1) == 1) {
+					return singleton[0];
+				}else {
+					
+				}
+			}
+		};
 	}
 }

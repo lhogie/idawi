@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.EOT;
-import idawi.IdawiExposed;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.RemoteException;
@@ -75,12 +74,10 @@ public class NetworkingService extends Service {
 		});
 	}
 
-	@IdawiExposed
 	private Collection<ComponentDescriptor> listProtocols() {
 		return transport.neighbors();
 	}
 
-	@IdawiExposed
 	public long getNbMessagesReceived() {
 		return nbMsgReceived.get();
 	}
@@ -120,25 +117,25 @@ public class NetworkingService extends Service {
 			}
 		} else {
 			// if I'm and explicit recipient
-			if (msg.to.notYetReachedExplicitRecipients.remove(component.descriptor())) {
-				Service targetService = component.lookupService(msg.to.service);
+			if (msg.to.getNotYetReachedExplicitRecipients().remove(component.descriptor())) {
+				Service targetService = component.lookupService(msg.to.getServiceID());
 
 				if (targetService != null) {
 					targetService.considerNewMessage(msg);
-				} else if (msg.replyTo != null) {
-					send(new RemoteException("service not found: " + msg.to.service), msg.replyTo, null);
-					send(EOT.instance, msg.replyTo, null);
+				} else if (msg.requester != null) {
+					send(new RemoteException("service not found: " + msg.to.getServiceID()), msg.requester);
+					send(EOT.instance, msg.requester);
 				}
 			}
 		}
 
 		if (alreadySentMsgs.contains(msg.ID)) {
 			// already sent
-		} else if (msg.route.size() >= msg.to.coverage) {
+		} else if (msg.route.size() >= msg.to.getMaxDistance()) {
 			// went far enough
-		} else if (Math.random() > msg.to.forwardProbability) {
+		} else if (Math.random() > msg.to.getForwardProbability()) {
 			// probabilistic drop
-		} else if (!msg.to.isBroadcast() && msg.to.notYetReachedExplicitRecipients.isEmpty()) {
+		} else if (!msg.to.isBroadcast() && msg.to.getNotYetReachedExplicitRecipients().isEmpty()) {
 			// all explicit recipients have been reached
 		} else {
 			Collection<ComponentDescriptor> neighbors = neighbors();
@@ -159,8 +156,8 @@ public class NetworkingService extends Service {
 			if (firstReceptionOfMsg == null) {
 				aliveMessages.put(msg.ID, msg);
 			} else {
-				msg.to.notYetReachedExplicitRecipients
-						.retainAll(firstReceptionOfMsg.to.notYetReachedExplicitRecipients);
+				msg.to.getNotYetReachedExplicitRecipients()
+						.retainAll(firstReceptionOfMsg.to.getNotYetReachedExplicitRecipients());
 			}
 		}
 	}

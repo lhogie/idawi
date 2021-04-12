@@ -4,11 +4,12 @@ import java.io.Serializable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.Message;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
-import idawi.To;
 
 public class ExecService extends Service {
 	public static interface Request extends Serializable {
@@ -17,7 +18,10 @@ public class ExecService extends Service {
 
 	public ExecService(Component peer) {
 		super(peer);
-		registerOperation(null, (msg, results) -> ((Request) msg.content).execute(results));
+		registerOperation(null, in -> {
+			var msg = in.get_blocking();
+			((Request) msg.content).execute(r -> reply(msg, r));
+		});
 	}
 
 	@Override
@@ -25,8 +29,7 @@ public class ExecService extends Service {
 		return "remote code executing";
 	}
 
-	public void exec(To to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
-		send(r, to).forEach(returns);
+	public void exec(ComponentAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
+		exec(to, new OperationID(ExecService.class, null), true, r).returnQ.forEach(returns);
 	}
-
 }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,25 @@ import toools.io.ser.JavaSerializer;
 public class LucTests {
 
 	public static void main(String[] args) throws Throwable {
+		Cout.debugSuperVisible("Starting test");
 
+		// describes a component by its name only
+		ComponentDescriptor me = new ComponentDescriptor();
+		me.friendlyName = "c1";
+
+		// trigger the creation of a component from its description
+		Component c1 = new Component(me);
+
+		// a shortcut for creating a component from a description
+		Component c2 = new Component("name=c2");
+
+		// connect those 2 components
+		LMI.connect(c1, c2);
+
+		// ask c1 to ping c2
+		Service s = new Service(c1);
+		Message pong = PingService.ping(s, c2.descriptor(), 1);
+		System.out.println(pong);
 		Component.stopPlatformThreads();
 	}
 
@@ -44,7 +61,8 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		// ask c1 to ping c2
-		Message pong = c1.lookupService(PingService.class).ping(c2.descriptor(), 1);
+		Service s = new Service(c1);
+		Message pong = PingService.ping(s, c2.descriptor(), 1);
 
 		// be sure c1 got an answer
 		assertNotEquals(null, pong);
@@ -61,12 +79,12 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		Service client = new Service(c1);
-		assertEquals(5,
-				(Integer) client.call(new To(c2.descriptor(), DummyService.class, "stringLength"), "salut").get());
-		assertEquals(53, (Integer) client.send(100, new To(c2.descriptor(), DummyService.class, "countFrom1toN"))
-				.collect().resultMessages(100).get(53).content);
-		assertEquals(7, (Integer) client.call(new To(c2.descriptor(), DummyService.class, "countFromAtoB"), 0, 13)
-				.collect().resultMessages(13).get(7).content);
+		assertEquals(5, (Integer) client.exec(new ComponentAddress(Set.of(c2.descriptor())), DummyService.stringLength,
+				true, "salut").returnQ.get());
+		assertEquals(53, (Integer) client.exec(new ComponentAddress(Set.of(c2.descriptor())),
+				DummyService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
+		assertEquals(7, (Integer) client.exec(new ComponentAddress(Set.of(c2.descriptor())), DummyService.countFromAtoB,
+				new DummyService.Range(0, 13)).returnQ.collect().resultMessages(13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
 	}
@@ -75,15 +93,15 @@ public class LucTests {
 	public void waitingFirst() throws CDLException {
 		Cout.debugSuperVisible("Starting test");
 		Component root = new Component("name=root");
-		Set<Component> others = root.lookupService(DeployerService.class).deployLocalPeers(2, i -> "other-" + i, true,
+		Set<Component> others = root.lookupService(DeployerService.class).deployInThisJVM(2, i -> "other-" + i, true,
 				null);
 		others.forEach(c -> LMI.connect(root, c));
 
 		Service client = new Service(root);
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentDescriptor first = client.call(new To(ss, DummyService.class, "waiting"), 1).collectUntilFirstEOT()
-				.resultMessages(1).first().route.source().component;
+		ComponentDescriptor first = client.exec(new ComponentAddress(ss), DummyService.waiting, new OperationParameterList(1)).returnQ
+				.collectUntilFirstEOT().resultMessages(1).first().route.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
 		Component.componentsInThisJVM.clear();
@@ -103,7 +121,7 @@ public class LucTests {
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = master.lookupService(PingService.class).ping(other, 1);
+		Message pong = PingService.ping(new Service(master), other, 1);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
@@ -116,7 +134,7 @@ public class LucTests {
 	@Test
 	public void serializers() {
 		Message a = new Message();
-		a.to = new To();
+		a.to = new QueueAddress();
 		a.to.notYetReachedExplicitRecipients = new HashSet<>();
 		a.to.notYetReachedExplicitRecipients.add(ComponentDescriptor.fromCDL("name=Luc"));
 		a.to.service = DummyService.class;
@@ -140,7 +158,8 @@ public class LucTests {
 		Component c2 = new Component("name=c2");
 		LMI.connect(c1, c2);
 		Service client = c1.lookupService(DummyService.class);
-		MessageList returns = client.call(new To(c2, DummyService.class, "stringLength"), "hello").collect();
+		MessageList returns = client.exec(new ComponentAddress(Set.of(c2.descriptor())), DummyService.stringLength,
+				"hello").returnQ.collect();
 		System.out.println(returns);
 		int len = (Integer) returns.resultMessages(1).first().content;
 		System.out.println(len);
@@ -160,7 +179,7 @@ public class LucTests {
 		}
 
 		LMI.chain(l);
-		Message pong = l.get(0).lookupService(PingService.class).ping(l.get(l.size() - 1).descriptor(), 1);
+		Message pong = PingService.ping(new Service(l.get(0)), l.get(l.size() - 1).descriptor(), 1);
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 

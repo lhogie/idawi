@@ -11,7 +11,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Service;
-import idawi.To;
+import idawi.QueueAddress;
 
 public class PublishSubscribe extends Service {
 	public static class Publication implements Serializable {
@@ -31,7 +31,7 @@ public class PublishSubscribe extends Service {
 	}
 
 	public static class Subscription implements Serializable {
-		public To to;
+		public QueueAddress to;
 		public String topic;
 
 		@Override
@@ -82,7 +82,7 @@ public class PublishSubscribe extends Service {
 		p.topic = topic;
 		topic_history.get(topic).add(p);
 		topic_subscribers.get(topic).forEach(s -> {
-			send(p, s.to, null);
+			send(p, s.to);
 		});
 	}
 
@@ -94,11 +94,11 @@ public class PublishSubscribe extends Service {
 	}
 
 	public static void subscribe(Service localService, ComponentDescriptor newPeer, Subscription subscription) {
-		To to = new To();
+		QueueAddress to = new QueueAddress();
 		to.notYetReachedExplicitRecipients = Set.of(newPeer);
 		to.service = PublishSubscribe.class;
-		to.operationOrQueue = PublishSubscribe.subscribe;
-		localService.send(subscription, to, null);
+		to.queue = PublishSubscribe.subscribe;
+		localService.send(subscription, to);
 	}
 
 }

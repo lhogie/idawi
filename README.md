@@ -5,6 +5,7 @@ a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://
 *Idawi* is described in this [draft](http://www.i3s.unice.fr/~hogie/idawi.pdf).
 
 Its most notable features include:
+- it enables the programmer to work in a *trials and errors* mode within his favourite IDE
 - native group-based stream/object-oriented asynchronous/synchronous communication model
 - fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) P2P [service-oriented](https://en.wikipedia.org/wiki/Service-oriented_architecture) architecture
 - independance to transport network (includes support for SSH, TCP and UDP)

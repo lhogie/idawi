@@ -1,7 +1,6 @@
 package idawi.service.julien;
 
 import java.awt.Color;
-import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -13,10 +12,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.Message;
 import idawi.IdawiExposed;
+import idawi.Message;
+import idawi.MessageQueue;
 import idawi.Service;
+import idawi.Streams;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.io.file.Directory;
@@ -41,6 +43,8 @@ public class TimeSeriesDB extends Service {
 		super(node);
 	}
 
+	public static OperationID addPoint;
+
 	@IdawiExposed
 	public void addPoint(PointBuffer buf) {
 		for (Figure f : buf.values()) {
@@ -53,11 +57,15 @@ public class TimeSeriesDB extends Service {
 		}
 	}
 
+	public static OperationID store;
+
 	@IdawiExposed
 	public void store(String workbenchName) {
 		var file = new RegularFile(baseDir, workbenchName);
 		file.setContentAsJavaObject(name2figure);
 	}
+
+	public static OperationID load;
 
 	@IdawiExposed
 	public void load(String workbenchName) {
@@ -65,38 +73,52 @@ public class TimeSeriesDB extends Service {
 		name2figure = (Map<String, Figure>) file.getContentAsJavaObject();
 	}
 
+	public static OperationID removeFigure;
+
 	@IdawiExposed
 	public void removeFigure(String figName) {
 		name2figure.remove(figName);
 	}
 
+	public static OperationID getNbPoints;
+
 	@IdawiExposed
-	public int getNbPoints(Message msg, Consumer<Object> returns) {
-		return name2figure.get((String) msg.content).getNbPoints();
+	public int getNbPoints(String figName) {
+		return name2figure.get(figName).getNbPoints();
 	}
+
+	public static OperationID getFigureList;
 
 	@IdawiExposed
 	public Set<String> getFigureList() {
 		return new HashSet<>(name2figure.keySet());
 	}
 
+	public static OperationID getWorkbenchList;
+
 	@IdawiExposed
-	public void getWorkbenchList(Message msg, Consumer<Object> returns) {
-		returns.accept(baseDir.listRegularFiles().stream().map(f -> f.getName()).collect(Collectors.toSet()));
+	public Set<String> getWorkbenchList() {
+		return baseDir.listRegularFiles().stream().map(f -> f.getName()).collect(Collectors.toSet());
 	}
+
+	public static OperationID retrieveFigure;
 
 	@IdawiExposed
 	public Figure retrieveFigure(String figureName) {
 		return name2figure.get(figureName);
 	}
 
+	public static OperationID retrieveWorkbench;
+
 	@IdawiExposed
-	public InputStream retrieveWorkbench() throws Throwable {
+	public void retrieveWorkbench(MessageQueue in) throws Throwable {
 		PipedOutputStream pos = new PipedOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(pos);
 		oos.writeObject(name2figure);
-		return new PipedInputStream(pos);
+		Streams.split(new PipedInputStream(pos), 1000, b -> send(b, in.get_blocking().requester));
 	}
+
+	public static OperationID createFigure;
 
 	@IdawiExposed
 	synchronized public void createFigure(Message msg, Consumer<Object> returns) {
@@ -107,10 +129,14 @@ public class TimeSeriesDB extends Service {
 		name2figure.put(name, f);
 	}
 
+	public static OperationID setFigureColor;
+
 	@IdawiExposed
 	synchronized public void setFigureColor(String figName, Color color) {
 		name2figure.get(figName).setColor(color);
 	}
+
+	public static OperationID filter;
 
 	@IdawiExposed
 	synchronized public Set<Figure> filter(Message msg, Consumer<Object> returns) {
@@ -138,6 +164,8 @@ public class TimeSeriesDB extends Service {
 		return r;
 	}
 
+	public static OperationID getPlot;
+
 	@IdawiExposed
 	public void getPlot(Set<String> metricNames, String title, String format, Consumer<Object> returns) {
 		Plot plot = new Plot();
@@ -148,6 +176,8 @@ public class TimeSeriesDB extends Service {
 	}
 
 	private final LongSet subscriptions = new LongOpenHashSet();
+
+	public static OperationID getPlot_subscribe;
 
 	@IdawiExposed
 	public void getPlot_subscribe(Set<String> metricNames, String title, String format, Consumer<Object> returns) {
@@ -164,6 +194,8 @@ public class TimeSeriesDB extends Service {
 		});
 	}
 
+	public static OperationID getPlot_unsubscribe;
+
 	@IdawiExposed
 	private void getPlot_unsubscribe(Message msg, Consumer<Object> returns) {
 		subscriptions.remove(((Long) msg.content).longValue());
@@ -178,5 +210,4 @@ public class TimeSeriesDB extends Service {
 
 		throw new IllegalArgumentException("unknow image format: " + format);
 	}
-
 }

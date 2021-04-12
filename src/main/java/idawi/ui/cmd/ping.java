@@ -24,13 +24,12 @@ public class ping extends CommunicatingCommand {
 	}
 
 	@Override
-	protected int work(Service localService, CommandLine cmdLine, double timeout)
-			throws Throwable {
+	protected int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable {
 		int n = Integer.valueOf(getOptionValue(cmdLine, "--nbTimes"));
-		boolean printIndividualPings = ! isOptionSpecified(cmdLine, "--hide");
+		boolean printIndividualPings = !isOptionSpecified(cmdLine, "--hide");
 		boolean progress = isOptionSpecified(cmdLine, "--progress");
 		List<ComponentDescriptor> peers = ComponentDescriptor.fromPDL(cmdLine.findParameters());
-		
+
 		for (ComponentDescriptor p : peers) {
 			Cout.info("pinging: " + p.toCDL());
 		}
@@ -54,8 +53,7 @@ public class ping extends CommunicatingCommand {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = localService.component.lookupService(PingService.class).ping(p,
-						timeout);
+				Message pong = PingService.ping(localService, p, timeout);
 
 				if (pong == null) {
 					if (printIndividualPings) {
@@ -66,8 +64,7 @@ public class ping extends CommunicatingCommand {
 					continue;
 				}
 
-				double duration = pong.receptionDate
-						- ((Message) pong.content).route.last().emissionDate;
+				double duration = pong.receptionDate - ((Message) pong.content).route.last().emissionDate;
 
 				if (printIndividualPings) {
 					System.out.println("Pong after " + duration + "s");

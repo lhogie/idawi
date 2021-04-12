@@ -42,7 +42,7 @@ public class Route extends ArrayList<RouteEntry> {
 	public void add(ComponentDescriptor d) {
 		RouteEntry e = new RouteEntry();
 		e.component = d;
-		add(d);
+		add(e);
 	}
 	
 	@Override

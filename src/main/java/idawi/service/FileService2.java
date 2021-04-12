@@ -2,16 +2,20 @@ package idawi.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import idawi.ByteSource;
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiExposed;
+import idawi.MessageQueue;
+import idawi.QueueAddress;
 import idawi.Service;
-import idawi.To;
+import idawi.Streams;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
@@ -24,10 +28,14 @@ public class FileService2 extends Service {
 		super(t);
 	}
 
+	public static OperationID pathToLocalFiles;
+
 	@IdawiExposed
 	private String pathToLocalFiles() {
 		return dir.getPath();
 	}
+
+	public static OperationID listFiles;
 
 	@IdawiExposed
 	private Set<String> listFiles() throws IOException {
@@ -37,12 +45,14 @@ public class FileService2 extends Service {
 		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 	}
 
-	public final static String downloadFileAsOneSingleMessage = "downloadFileAsOneSingleMessage";
+	public static OperationID downloadFileAsOneSingleMessage;
 
 	@IdawiExposed
 	private byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
 		return new RegularFile(dir, path).getContent();
 	}
+
+	public static OperationID uploadFileAsOneSingleMessage;
 
 	@IdawiExposed
 	private void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
@@ -51,18 +61,31 @@ public class FileService2 extends Service {
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
-		call(new To(target, FileService2.class, "uploadFileAsOneSingleMessage"), pathOnTarget, localFile.getContent());
+		exec(new ComponentAddress(Set.of(target)), FileService2.uploadFileAsOneSingleMessage, true,
+				parms(pathOnTarget, localFile.getContent()));
+	}
+
+	public static OperationID downloadFile;
+
+	public static class DownloadFileParms implements Serializable {
+		String name;
+		long seek;
+		long len;
+		QueueAddress asker;
 	}
 
 	@IdawiExposed
-	private ByteSource downloadFile(String name, long seek) throws IOException {
+	private void downloadFile(MessageQueue q) throws IOException {
+		DownloadFileParms parms = (DownloadFileParms) q.get_blocking().content;
 		dir.ensureExists();
-		var f = new RegularFile(dir, name);
-		long len = f.getSize();
-		var is = f.createReadingStream();
-		is.skip(seek);
-		return new ByteSource(is, (int) (len - seek), name);
+		var f = new RegularFile(dir, parms.name);
+		long fileLength = f.getSize();
+		var inputStream = f.createReadingStream();
+		inputStream.skip(parms.seek);
+		Streams.split(inputStream, 1000, c -> send(inputStream, parms.asker));
 	}
+
+	public static OperationID upload;
 
 	@IdawiExposed
 	private void upload(String name, boolean append, InputStream in) throws IOException {
@@ -72,17 +95,23 @@ public class FileService2 extends Service {
 		fos.close();
 	}
 
+	public static OperationID exists;
+
 	@IdawiExposed
 	private boolean exists(String name) {
 		dir.ensureExists();
 		return new RegularFile(dir, name).exists();
 	}
 
+	public static OperationID delete;
+
 	@IdawiExposed
 	private void delete(String name) {
 		dir.ensureExists();
 		new RegularFile(dir, name).delete();
 	}
+
+	public static OperationID size;
 
 	@IdawiExposed
 	private long size(String name) {

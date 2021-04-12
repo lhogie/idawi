@@ -13,6 +13,7 @@ import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.svg.SVGDocument;
 
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.service.DeployerService;
@@ -31,9 +32,9 @@ public class Demo {
 				// start a new JVM to host the time series DB
 				ComponentDescriptor serverDescriptor = ComponentDescriptor
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
-				var server = new TimeSeriesDBStub(this, Set.of(serverDescriptor));
+				var server = new TimeSeriesDBStub(this, new ComponentAddress(Set.of(serverDescriptor)));
 				lookupService(DeployerService.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
-				frondEnd(ServiceManager., target)(this, Set.of(serverDescriptor)).start(TimeSeriesDB.class);
+				exec(new ComponentAddress(Set.of(serverDescriptor)), ServiceManager.start, true, TimeSeriesDB.class);
 				lookupService(RESTService.class).startHTTPServer();
 
 				// creates the figure that will be fed

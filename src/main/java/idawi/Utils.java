@@ -1,6 +1,9 @@
 package idawi;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 public class Utils {
 	// Objects.equals() does not support arrays
@@ -14,5 +17,14 @@ public class Utils {
 		} else {
 			return a.equals(b);
 		}
+	}
+
+
+	public static Throwable cause(Throwable t) {
+		while (t.getCause() != null) {
+			t = t.getCause();
+		}
+		
+		return t;
 	}
 }

@@ -35,7 +35,7 @@ public class SSH {
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = c1.lookupService(PingService.class).ping(c2, 5);
+		Message pong = PingService.ping(new Service(c1), c2, 5);
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer

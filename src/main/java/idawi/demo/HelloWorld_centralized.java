@@ -7,7 +7,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.To;
+import idawi.QueueAddress;
 
 public class HelloWorld_centralized {
 	public static void main(String[] args) throws UnknownHostException {
@@ -22,10 +22,10 @@ public class HelloWorld_centralized {
 			new Service(node) {
 				{
 					newThread_loop_periodic(1000, () -> node.lookupService(RegistryService.class).list().forEach(peer -> {
-						To to = new To();
+						QueueAddress to = new QueueAddress();
 						to.notYetReachedExplicitRecipients = Set.of(peer);
 						to.service = id;
-						send("Hello World!", to, null);
+						send("Hello World!", to);
 					}));
 
 					registerOperation(null, (msg, results) -> System.out.println(node.descriptor().friendlyName

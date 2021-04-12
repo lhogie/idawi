@@ -2,11 +2,11 @@ package idawi.ui.cmd;
 
 import java.util.Set;
 
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.ProgressMessage;
 import idawi.Service;
-import idawi.To;
 import idawi.service.PingService;
 import j4u.CommandLine;
 import toools.io.Cout;
@@ -17,7 +17,8 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	public BackendedCommand(RegularFile launcher) {
 		super(launcher);
-		addOption("--hook", "-k", ".+", null, "the PDL of an entry point to the overlay");
+		addOption("--hook", "-k", ".+", null,
+				"the CDL description of the component which wille be the entry point to the overlay");
 	}
 
 	@Override
@@ -25,22 +26,19 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		ComponentDescriptor hook = ComponentDescriptor.fromCDL(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
-		if (localService.component.lookupService(PingService.class).ping(hook, timeout) == null) {
+		if (PingService.ping(localService, hook, timeout) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
 
 		Cout.info("executing command");
-		To to = new To();
-		to.notYetReachedExplicitRecipients = Command.targetPeers(localService.component, cmdLine.findParameters().get(0),
-				msg -> Cout.warning(msg));
-		// Cout.debugSuperVisible(to.peers);
+		var to = new ComponentAddress(
+				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)));
 
-		to.service = CommandsService.class;
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 
-		if (!localService.send(backend, to).forEach2(msg -> {
+		if (!localService.exec(to, CommandsService.exec, true, backend).returnQ.forEach2(msg -> {
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {

@@ -43,7 +43,8 @@ public class Demo_deploymentPlan {
 
 		System.out.println(g.bfs(t.descriptor()));
 
-		t.lookupService(DeployerService.class).apply(g, 10, true,feedback -> System.out.println(feedback), (p) -> System.out.println(p));
+		t.lookupService(DeployerService.class).apply(g, 10, true, feedback -> System.out.println(feedback),
+				(p) -> System.out.println(p));
 
 		// describes the child peer that will be deployed to
 		ComponentDescriptor child = new ComponentDescriptor();
@@ -59,7 +60,7 @@ public class Demo_deploymentPlan {
 		// at this step the child is running on the remote host. We can interact with
 		// it.
 		long pingTime = System.currentTimeMillis();
-		Message pong = t.lookupService(PingService.class).ping(child, 1000);
+		Message pong = PingService.ping(t.lookupService(PingService.class), child, 1000);
 
 		if (pong == null) {
 			System.err.println("ping timeout");

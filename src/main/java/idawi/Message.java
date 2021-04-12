@@ -15,13 +15,22 @@ public class Message implements Externalizable {
 	public long ID = ThreadLocalRandom.current().nextLong();
 	public Route route = new Route();
 	Route suggestedRoute;
-	public To to;
-	public To replyTo;
+	public QueueAddress to;
+	public QueueAddress requester;
 	public Object content;
 	public double receptionDate;
 	public double creationDate = Date.time();
 	public boolean dropIfRecipientQueueIsFull = false;
 	public Object routingData;
+
+	public Message() {
+	}
+
+	public Message(Object content, QueueAddress to, QueueAddress replyTo) {
+		this.to = to;
+		this.requester = replyTo;
+		this.content = content;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -40,7 +49,7 @@ public class Message implements Externalizable {
 	}
 
 	public double expirationDate() {
-		return creationDate + to.validityDuration;
+		return creationDate + to.getValidityDuration();
 	}
 
 	public double remainingTime() {
@@ -55,8 +64,8 @@ public class Message implements Externalizable {
 	public String toString() {
 		String s = "msg " + ID + ", route:" + route + " to:" + to;
 
-		if (replyTo != null) {
-			s += ", return:" + replyTo;
+		if (requester != null) {
+			s += ", return:" + requester;
 		}
 
 		s += ", content: " + TextUtilities.toString(content);
@@ -69,7 +78,7 @@ public class Message implements Externalizable {
 		out.writeObject(route);
 		out.writeObject(suggestedRoute);
 		out.writeObject(to);
-		out.writeObject(replyTo);
+		out.writeObject(requester);
 		out.writeObject(content);
 		out.writeDouble(creationDate);
 		out.writeBoolean(dropIfRecipientQueueIsFull);
@@ -81,8 +90,8 @@ public class Message implements Externalizable {
 		ID = in.readLong();
 		route = (Route) in.readObject();
 		suggestedRoute = (Route) in.readObject();
-		to = (To) in.readObject();
-		replyTo = (To) in.readObject();
+		to = (QueueAddress) in.readObject();
+		requester = (QueueAddress) in.readObject();
 		content = in.readObject();
 		creationDate = in.readDouble();
 		dropIfRecipientQueueIsFull = in.readBoolean();

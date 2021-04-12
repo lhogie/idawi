@@ -54,7 +54,7 @@ public class All2all {
 			var allButMe = new HashSet<>(all);
 			allButMe.remove(c.descriptor());
 			System.out.println(c + " pings " + allButMe);
-			c.lookupService(PingService.class).pingAround().forEach2(msg -> {
+			PingService.ping(new Service()).forEach2(msg -> {
 				n.incrementAndGet();
 				System.out.println(n.get() + ": " + msg);
 				var sender = msg.route.source().component;

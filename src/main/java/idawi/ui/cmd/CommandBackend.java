@@ -9,6 +9,5 @@ import j4u.CommandLine;
 public abstract class CommandBackend implements Serializable {
 	public CommandLine cmdline;
 
-	abstract void runOnServer(Component thing, Consumer<Object> out)
-			throws Throwable;
+	abstract void runOnServer(Component thing, Consumer<Object> out) throws Throwable;
 }

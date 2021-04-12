@@ -1,5 +1,5 @@
 package idawi;
 
-public interface OperationStandardForm {
+public interface OperationFunctionalInterface {
 	void accept(MessageQueue in) throws Throwable;
 }

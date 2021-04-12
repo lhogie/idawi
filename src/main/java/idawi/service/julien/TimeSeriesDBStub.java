@@ -5,16 +5,18 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
-import idawi.ComponentDescriptor;
+import idawi.ComponentAddress;
+import idawi.OperationParameterList;
 import idawi.Service;
-import idawi.service.ServiceStub;
+import idawi.ServiceAddress;
+import idawi.ServiceStub;
 import xycharter.Figure;
 
 public class TimeSeriesDBStub extends ServiceStub {
 	private final PointBuffer buf = new PointBuffer();
 
-	public TimeSeriesDBStub(Service localService, Set<ComponentDescriptor> remoteComponents) {
-		super(localService, remoteComponents, TimeSeriesDB.class);
+	public TimeSeriesDBStub(Service localService, ComponentAddress remoteComponents) {
+		super(localService, new ServiceAddress(remoteComponents, TimeSeriesDB.class));
 	}
 
 	public void registerPoint(String metricName, double x, double y, double uploadProbability) throws Throwable {
@@ -26,7 +28,7 @@ public class TimeSeriesDBStub extends ServiceStub {
 	}
 
 	public void sendBuffer() throws Throwable {
-		localService.call(to("addPoint"), buf).collect().throwAnyError();
+		localService.exec(to, TimeSeriesDB.addPoint, buf).returnQ.collect().throwAnyError();
 		buf.clear();
 	}
 
@@ -35,35 +37,38 @@ public class TimeSeriesDBStub extends ServiceStub {
 		s.metricNames = metricNames;
 		s.id = "subscribe_" + ThreadLocalRandom.current().nextLong();
 		localService.registerOperation(s.id, (msg, returns) -> newImage.accept((byte[]) msg.content));
-		localService.send(s, to("getPlot_subscribe")).collect().throwAnyError();
+		localService.exec(to, TimeSeriesDB.getPlot_subscribe, s).returnQ.collect().throwAnyError();
 		return s.id;
 	}
 
 	public void subscribe(String id, Consumer<byte[]> newImage) throws Throwable {
-		localService.send(id, to("getPlot_unsubscribe")).collect().throwAnyError();
+		localService.exec(to, TimeSeriesDB.getPlot_unsubscribe, id).returnQ.collect().throwAnyError();
 	}
 
 	public void createFigure(String metricName) throws Throwable {
-		localService.send(metricName, to("createFigure")).collect().throwAnyError();
+		localService.exec(to, TimeSeriesDB.createFigure, metricName).returnQ.collect().throwAnyError();
 	}
 
 	public void setFigureColor(String metricName, Color c) throws Throwable {
-		localService.call(to("setFigureColor"), metricName, c).collect().throwAnyError();
+		localService.exec(to, TimeSeriesDB.setFigureColor, new OperationParameterList(metricName, c)).returnQ.collect()
+				.throwAnyError();
 	}
 
 	public byte[] getPlot(Set<String> metricNames, String title, String format) throws Throwable {
-		return (byte[]) localService.call(to("getPlot"), metricNames, title, format).get();
+		return (byte[]) localService.exec(to, TimeSeriesDB.getPlot,
+				new OperationParameterList(metricNames, title, format)).returnQ.get();
 	}
 
 	public byte[] getPlot_subscribe(Set<String> metricNames, String title, String format) throws Throwable {
-		return (byte[]) localService.call(to("getPlot"), metricNames, title, format).get();
+		return (byte[]) localService.exec(to, TimeSeriesDB.getPlot,
+				new OperationParameterList(metricNames, title, format)).returnQ.get();
 	}
 
 	public Set<String> metricNames() throws Throwable {
-		return (Set<String>) localService.call(to("getFigureList")).get();
+		return (Set<String>) localService.exec(to, TimeSeriesDB.getFigureList).returnQ.get();
 	}
 
 	public Figure download(String figureName) throws Throwable {
-		return (Figure) localService.call(to("retrieveFigure"), figureName).get();
+		return (Figure) localService.exec(to, TimeSeriesDB.retrieveFigure, figureName).returnQ.get();
 	}
 }
