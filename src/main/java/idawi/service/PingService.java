@@ -36,7 +36,7 @@ public class PingService extends Service {
 	}
 
 	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.exec(new ComponentAddress(targets), ping).returnQ;
+		return from.exec(new ComponentAddress(targets), ping, true, null).returnQ;
 	}
 
 	public static MessageQueue ping(Service from) {

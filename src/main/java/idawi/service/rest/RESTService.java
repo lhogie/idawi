@@ -22,11 +22,14 @@ import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiExposed;
 import idawi.Message;
+import idawi.OperationParameterList;
+import idawi.OperationStringParameterList;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.ServiceDescriptor;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -187,12 +190,13 @@ public class RESTService extends Service {
 					if (path.size() > 4) {
 						throw new Error("path too long! Expecting: component/service/operation");
 					} else {
-						var stringParms = path.size() == 3 ? new String[0] : path.get(3).split(",");
+						var stringParms = new OperationStringParameterList(
+								path.size() == 3 ? new String[0] : path.get(3).split(","));
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
-								+ operation + "(" + Arrays.toString(stringParms) + ")");
+								+ operation + stringParms);
 						List<Object> r = exec(new ComponentAddress(components), new OperationID(serviceID, operation),
-								stringParms).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages()
-										.contents();
+								true, stringParms).returnQ.setTimeout(timeout).collect().throwAnyError()
+										.resultMessages().contents();
 
 						if (r.size() == 1) {
 							return r.get(0);
@@ -229,8 +233,8 @@ public class RESTService extends Service {
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
 
-		for (var m : exec(new ComponentAddress(components), ServiceManager.list).returnQ.setTimeout(timeout).collect()
-				.throwAnyError().resultMessages()) {
+		for (var m : exec(new ComponentAddress(components), ServiceManager.list, true,
+				new OperationParameterList()).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
 			c.services = (Set<ServiceDescriptor>) m.content;
 			r.add(c);
@@ -243,8 +247,8 @@ public class RESTService extends Service {
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
 
-		for (Message m : exec(new ComponentAddress(components), Service.descriptor).returnQ.collect().throwAnyError()
-				.resultMessages()) {
+		for (Message m : exec(new ComponentAddress(components), Service.descriptor, true,
+				new OperationParameterList()).returnQ.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
 		}
 
@@ -263,9 +267,20 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		exec(new ComponentAddress(null), RegistryService.local).returnQ.setTimeout(1).collect();
+		exec(new ComponentAddress(null), RegistryService.local, true, new OperationParameterList()).returnQ
+				.setTimeout(1).collect();
 
 		w.knownComponents.addAll(lookupService(RegistryService.class).list());
+
+		var i = w.knownComponents.iterator();
+
+		while (i.hasNext()) {
+			var c = i.next();
+			if (Math.random() < 0.5) {
+				Cout.debug("remove " + c.friendlyName);
+				i.remove();
+			}
+		}
 		return w;
 	}
 

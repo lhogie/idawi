@@ -13,7 +13,6 @@ import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiExposed;
 import idawi.MessageQueue;
-import idawi.QueueAddress;
 import idawi.Service;
 import idawi.Streams;
 import toools.io.Utilities;
@@ -65,24 +64,42 @@ public class FileService2 extends Service {
 				parms(pathOnTarget, localFile.getContent()));
 	}
 
+	public static OperationID fileInfo;
+
+	public static class FileInfo implements Serializable {
+		public String name;
+		public long len;
+		public long age;
+	}
+
+	@IdawiExposed
+	private FileInfo fileInfo(String name) throws IOException {
+		var f = new RegularFile(dir, name);
+		var info = new FileInfo();
+		info.name = name;
+		info.len = f.getSize();
+		info.age = f.getAgeMs();
+		return info;
+	}
+
 	public static OperationID downloadFile;
 
 	public static class DownloadFileParms implements Serializable {
 		String name;
 		long seek;
 		long len;
-		QueueAddress asker;
 	}
 
 	@IdawiExposed
 	private void downloadFile(MessageQueue q) throws IOException {
-		DownloadFileParms parms = (DownloadFileParms) q.get_blocking().content;
+		var msg = q.get_blocking();
+		DownloadFileParms parms = (DownloadFileParms) msg.content;
 		dir.ensureExists();
 		var f = new RegularFile(dir, parms.name);
 		long fileLength = f.getSize();
 		var inputStream = f.createReadingStream();
 		inputStream.skip(parms.seek);
-		Streams.split(inputStream, 1000, c -> send(inputStream, parms.asker));
+		Streams.split(inputStream, 1000, c -> send(inputStream, msg.requester));
 	}
 
 	public static OperationID upload;

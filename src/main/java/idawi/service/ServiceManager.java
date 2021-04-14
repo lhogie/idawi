@@ -8,6 +8,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.IdawiExposed;
+import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
@@ -23,19 +24,19 @@ public class ServiceManager extends Service {
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.exec(to, list).returnQ.collect().contents();
+			return (List<String>) (List) localService.exec(to, list, true, new OperationParameterList()).returnQ.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.exec(to, has).returnQ.collect().contents().contains(true);
+			return localService.exec(to, has, true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.exec(to, start).returnQ.collect();
+			localService.exec(to, start, true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.exec(to, stop).returnQ.collect();
+			localService.exec(to, stop, true, s).returnQ.collect();
 		}
 	}
 

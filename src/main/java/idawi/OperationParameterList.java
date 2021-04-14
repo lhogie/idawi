@@ -2,6 +2,8 @@ package idawi;
 
 import java.util.ArrayList;
 
+import toools.text.TextUtilities;
+
 public class OperationParameterList extends ArrayList {
 	public OperationParameterList(Object... parms) {
 		for (Object o : parms) {
@@ -35,14 +37,14 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public static OperationParameterList toParmsList(Object content, Class<?>[] types) {
+	public static OperationParameterList toParmsList(Operation operation, Object content, Class<?>[] types) {
 		if (content instanceof OperationParameterList) {
 			return (OperationParameterList) content;
 		} else if (content instanceof OperationStringParameterList) {
 			return from((OperationStringParameterList) content, types);
 		} else {
-			throw new IllegalArgumentException("a list of parammeters was expected, but we got " + content
-					+ " of class " + content.getClass().getName());
+			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of " + OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)
+					+ (content == null ? "" : " of " + content.getClass()));
 		}
 	}
 }

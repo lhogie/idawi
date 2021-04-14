@@ -9,6 +9,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.IdawiExposed;
 import idawi.Service;
+import toools.io.Cout;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -31,10 +32,13 @@ public class FileService extends Service {
 
 	@IdawiExposed
 	private Set<String> find() throws IOException {
+		Cout.debug(dir);
 		dir.ensureExists();
 		List<AbstractFile> files = dir.retrieveTree();
+		Cout.debug(files);
 		files.remove(dir);
-		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
+		var r = files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
+		return r;
 	}
 
 	public static OperationID download;
@@ -50,7 +54,7 @@ public class FileService extends Service {
 	private void upload(String path, byte[] bytes) throws IOException {
 		new RegularFile(dir, path).setContent(bytes);
 	}
-
+	
 	public static OperationID exists;
 
 	@IdawiExposed

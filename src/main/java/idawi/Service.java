@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 import idawi.AsMethodOperation.OperationID;
 import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
+import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
-import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
@@ -44,7 +44,7 @@ public class Service {
 	final AtomicLong returnQueueID = new AtomicLong();
 
 	// stores the number of message received at each second
-	final Int2LongMap second2nbMessages = new Int2LongOpenHashMap();
+	final Int2LongMap second2nbMessages = new Int2LongAVLTreeMap();
 
 	private long nbMsgsReceived;
 
@@ -169,7 +169,9 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
-		second2nbMessages.put((int) Date.time(), ++nbMsgsReceived);
+		int sec = (int) Date.time();
+		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
+		++nbMsgsReceived;
 
 		if (msg instanceof ExecMessage) {
 			var operationName = ((ExecMessage) msg).operationName;
@@ -222,7 +224,7 @@ public class Service {
 			double start = Date.time();
 
 			try {
-				Cout.debug(operation);
+//				Cout.debug(operation);
 				operation.accept(inputQ_final);
 			} catch (Throwable exception) {
 				operation.nbFailures++;
@@ -416,13 +418,10 @@ public class Service {
 				inputQName, targetComponents.getMaxDistance(), targetComponents.getForwardProbability());
 		return new RunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
 	}
-
-	public RunningOperation exec(ComponentAddress targetService, OperationID operation) {
-		return exec(targetService, operation, true, null);
-	}
-
-	public RunningOperation exec(ComponentAddress targetService, OperationID operation, Object initialInputData) {
-		return exec(targetService, operation, true, initialInputData);
+	
+	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation,
+			Object initialInputData) {
+		return exec(targetComponents, operation, true, initialInputData);
 	}
 
 	public Object f(ComponentDescriptor target, OperationID operation, Object parms) {

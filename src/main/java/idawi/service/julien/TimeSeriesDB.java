@@ -76,7 +76,7 @@ public class TimeSeriesDB extends Service {
 	public static OperationID removeFigure;
 
 	@IdawiExposed
-	public void removeFigure(String figName) {
+	public void removeMetric(String figName) {
 		name2figure.remove(figName);
 	}
 
@@ -90,7 +90,7 @@ public class TimeSeriesDB extends Service {
 	public static OperationID getFigureList;
 
 	@IdawiExposed
-	public Set<String> getFigureList() {
+	public Set<String> getMetricNames() {
 		return new HashSet<>(name2figure.keySet());
 	}
 
@@ -121,8 +121,7 @@ public class TimeSeriesDB extends Service {
 	public static OperationID createFigure;
 
 	@IdawiExposed
-	synchronized public void createFigure(Message msg, Consumer<Object> returns) {
-		String name = (String) msg.content;
+	synchronized public void createFigure(String name) {
 		Figure f = new Figure();
 		f.setName(name);
 		f.addRenderer(new ConnectedLineFigureRenderer());
