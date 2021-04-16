@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
@@ -114,7 +115,11 @@ public class Component {
 	public ComponentDescriptor createDescriptor() {
 		ComponentDescriptor d = new ComponentDescriptor();
 		d.friendlyName = friendlyName;
-		services().forEach(s -> d.services.add(s.descriptor()));
+		d.load = Utils.loadRatio();
+		services().forEach(s -> d.servicesNames.add(s.getClass().getName()));
+//		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
+		lookupService(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2
+				.put(e.getKey().friendlyName, e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
 		return d;
 	}
 

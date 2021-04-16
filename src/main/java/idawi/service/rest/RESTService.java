@@ -2,6 +2,7 @@ package idawi.service.rest;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -143,11 +144,19 @@ public class RESTService extends Service {
 
 		try {
 			Object result = processRESTRequest(path, query);
+
+			if (result == null) {
+				result = new NULL();
+			}
+
 			out.accept(serializer.toBytes(result));
 		} catch (Throwable t) {
 			out.accept(serializer.toBytes(t));
 			throw t;
 		}
+	}
+
+	public static class NULL implements Serializable {
 	}
 
 	private List<String> path(String s) {
@@ -236,7 +245,7 @@ public class RESTService extends Service {
 		for (var m : exec(new ComponentAddress(components), ServiceManager.list, true,
 				new OperationParameterList()).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
-			c.services = (Set<ServiceDescriptor>) m.content;
+			c.servicesNames = (Set<String>) m.content;
 			r.add(c);
 		}
 

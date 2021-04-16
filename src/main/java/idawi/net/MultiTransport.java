@@ -124,7 +124,7 @@ public class MultiTransport extends TransportLayer {
 		return peers;
 	}
 
-	public Map<ComponentDescriptor, Set<TransportLayer>> peers2() {
+	public Map<ComponentDescriptor, Set<TransportLayer>> neighbors2() {
 		Map<ComponentDescriptor, Set<TransportLayer>> peer_protocols = new HashMap<>();
 
 		for (TransportLayer protocol : name2protocol.values()) {

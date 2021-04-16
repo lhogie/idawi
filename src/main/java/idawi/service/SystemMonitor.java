@@ -4,8 +4,11 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.IdawiExposed;
 import idawi.Service;
+import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
 import toools.extern.Proces;
 
@@ -40,8 +43,7 @@ public class SystemMonitor extends Service {
 
 		@Override
 		public String toString() {
-			return "Info [loadAvg=" + loadAvg + ", nbCores=" + nbCores
-					+ ", systemProperties=" + systemProperties + "]";
+			return "Info [loadAvg=" + loadAvg + ", nbCores=" + nbCores + ", systemProperties=" + systemProperties + "]";
 		}
 	}
 
@@ -51,8 +53,7 @@ public class SystemMonitor extends Service {
 
 		newThread_loop_periodic(20000, () -> {
 			Info i = new Info();
-			i.loadAvg = ManagementFactory.getOperatingSystemMXBean()
-					.getSystemLoadAverage();
+			i.loadAvg = ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage();
 			i.nbCores = Runtime.getRuntime().availableProcessors();
 			i.systemProperties = System.getProperties();
 
@@ -69,4 +70,12 @@ public class SystemMonitor extends Service {
 	@Override
 	public void shutdown() {
 	}
+
+	public static OperationID loadRatio;
+	
+	@IdawiExposed
+	public double loadRatio() {
+		return Utils.loadRatio();
+	}
+
 }

@@ -40,12 +40,15 @@ public class ComponentDescriptor implements Descriptor {
 	public final List<String> webServers = new ArrayList<>();
 	public WHERE where;
 //	public Set<Class<? extends Service>> services = new HashSet<>();
-	public Set<ServiceDescriptor> services = new HashSet<>();
+	public Set<String> servicesNames = new HashSet<>();
 	// private int isLocalhost;
+	public double load;
 
 	// final Map<String, Object> map = new HashMap<>();
 
 	public Map<String, Set<String>> protocol2neighbors = new HashMap<>();
+	public Set<String> neighbors = new HashSet<>();
+	public Map<String, Set<String>> neighbors2 = new HashMap<>();
 
 	@Override
 	public String toString() {

@@ -123,6 +123,16 @@ public class LMI extends TransportLayer {
 			connect(a, b);
 		}
 	}
+	
+	public static void gnp(List<Component> l, double p) {
+		for (var a : l) {
+			for (var b : l) {
+				if( a != b && ! areConnected(a, b) && Math.random() < p) {
+					connect(a, b);
+				}
+			}
+		}
+	}
 
 	public static void randomTree(List<Component> l) {
 		int n = l.size();

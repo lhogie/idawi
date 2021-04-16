@@ -7,6 +7,8 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.Service;
+import idawi.Utils;
+import idawi.net.LMI;
 import idawi.service.DeployerService;
 import idawi.service.ServiceManager;
 import idawi.service.julien.PointBuffer;
@@ -21,7 +23,9 @@ public class Rest {
 		Component a = new Component();
 		var deployer = a.lookupService(DeployerService.class);
 		var components = new ArrayList<>(deployer.deployInThisJVM(10, i -> "newc" + i, true, null));
-
+		System.out.println("connecting...");
+		LMI.gnp(components, 0.3);
+		System.out.println("ok");
 		var s = new Service(a);
 
 		System.out.println("starting timeDB service");
@@ -33,22 +37,22 @@ public class Rest {
 		var prng = new Random();
 		PointBuffer buf = new PointBuffer();
 		OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-Threads.sleepForever();
+
 		while (true) {
 			Threads.sleepMs(100);
 
 			for (var c : components) {
-				double loadAvg = os.getSystemLoadAverage();
-				double load = loadAvg / Runtime.getRuntime().availableProcessors();
 				String metricName = c.descriptor().friendlyName + " load";
 
 				if (!timeDB.getMetricNames().contains(metricName)) {
-//					timeDB.createFigure(metricName);
+					timeDB.createFigure(metricName);
 				}
 
-				buf.add(metricName, Date.time(), load);
-				timeDB.addPoint(buf);
+				buf.add(metricName, Date.time(), Utils.loadRatio());
 			}
+
+			timeDB.add(buf);
+			buf.clear();
 		}
 	}
 

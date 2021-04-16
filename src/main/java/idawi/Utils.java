@@ -1,9 +1,7 @@
 package idawi;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 public class Utils {
 	// Objects.equals() does not support arrays
@@ -19,12 +17,16 @@ public class Utils {
 		}
 	}
 
-
 	public static Throwable cause(Throwable t) {
 		while (t.getCause() != null) {
 			t = t.getCause();
 		}
-		
+
 		return t;
+	}
+
+	public static double loadRatio() {
+		return ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage()
+				/ (double) Runtime.getRuntime().availableProcessors();
 	}
 }

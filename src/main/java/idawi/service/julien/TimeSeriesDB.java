@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class TimeSeriesDB extends Service {
 	public static OperationID addPoint;
 
 	@IdawiExposed
-	public void addPoint(PointBuffer buf) {
+	public void add(PointBuffer buf) {
 		for (Figure f : buf.values()) {
 			Figure a = name2figure.get(f.name);
 
@@ -87,11 +88,37 @@ public class TimeSeriesDB extends Service {
 		return name2figure.get(figName).getNbPoints();
 	}
 
-	public static OperationID getFigureList;
+	public static OperationID getMetricNames;
 
 	@IdawiExposed
 	public Set<String> getMetricNames() {
 		return new HashSet<>(name2figure.keySet());
+	}
+
+	public static OperationID getMetricInfo;
+
+	public static class MetricInfo implements Serializable {
+		String name;
+		Unit unit;
+		int nbValues;
+		double lastX, lastY;
+	}
+
+	@IdawiExposed
+	public Set<MetricInfo> getMetricInfo() {
+		var r = new HashSet<MetricInfo>();
+
+		for (var e : name2figure.entrySet()) {
+			var i = new MetricInfo();
+			i.name = e.getKey();
+			var f = e.getValue();
+			i.nbValues = f.getNbPoints();
+			i.lastX = f.x(i.nbValues - 1);
+			i.lastY = f.y(i.nbValues - 1);
+			r.add(i);
+		}
+
+		return r;
 	}
 
 	public static OperationID getWorkbenchList;
@@ -104,8 +131,16 @@ public class TimeSeriesDB extends Service {
 	public static OperationID retrieveFigure;
 
 	@IdawiExposed
-	public Figure retrieveFigure(String figureName) {
-		return name2figure.get(figureName);
+	public Set<Figure> retrieveFigure(String re) {
+		Set<Figure> r = new HashSet<>();
+
+		for (var e : name2figure.entrySet()) {
+			if (e.getKey().matches(re)) {
+				r.add(e.getValue());
+			}
+		}
+
+		return r;
 	}
 
 	public static OperationID retrieveWorkbench;
@@ -124,7 +159,7 @@ public class TimeSeriesDB extends Service {
 	synchronized public void createFigure(String name) {
 		Figure f = new Figure();
 		f.setName(name);
-		f.addRenderer(new ConnectedLineFigureRenderer());
+		//f.addRenderer(new ConnectedLineFigureRenderer());
 		name2figure.put(name, f);
 	}
 
