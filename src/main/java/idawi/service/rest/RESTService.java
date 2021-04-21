@@ -58,8 +58,10 @@ public class RESTService extends Service {
 		super(t);
 	}
 
+	public static int DEFAULT_PORT = 8081;
+
 	public HttpServer startHTTPServer() throws IOException {
-		return startHTTPServer(8080);
+		return startHTTPServer(DEFAULT_PORT);
 	}
 
 	public HttpServer startHTTPServer(int port) throws IOException {
@@ -83,6 +85,7 @@ public class RESTService extends Service {
 //		WSS webSocketServer = new WSS(8001, new GenerationData());
 //		webSocketServer.start();
 
+		System.out.println("Web server running on port " + port);
 		return restServer;
 	}
 
@@ -92,6 +95,7 @@ public class RESTService extends Service {
 			OutputStream out = e.getResponseBody();
 
 			if (e.getRequestMethod().equals("GET")) {
+				Cout.debug("sending" +  new String( o));
 				out.write(o);
 			}
 
@@ -119,9 +123,9 @@ public class RESTService extends Service {
 
 	private void serveIdaweb(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
 		if (path.isEmpty()) {
-			out.accept(new JavaResource(getClass(), "ressources/index.html").getByteArray());
+			out.accept(new JavaResource(getClass(), "resources/index.html").getByteArray());
 		} else {
-			out.accept(new JavaResource(getClass(), "ressources/" + TextUtilities.concatene(path, "/")).getByteArray());
+			out.accept(new JavaResource(getClass(), "resources/" + TextUtilities.concatene(path, "/")).getByteArray());
 		}
 	}
 

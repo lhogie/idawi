@@ -20,3 +20,13 @@
 div.vis-network {
     background-color: #f0f0f0;
 }
+
+.initialize-plotly {
+    border: solid thin black;
+    width: 100%;
+}
+
+.initialize-plotly td {
+    min-width: 100px;
+    border: solid thin crimson;
+}
