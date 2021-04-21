@@ -1,9 +1,9 @@
 package idawi.routing;
 
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.RegistryService;
 import idawi.Route;
+import idawi.map.NetworkMap;
 
 public class One2OneRoutingTable extends RoutingTable<ComponentDescriptor> {
 
@@ -57,7 +57,7 @@ public class One2OneRoutingTable extends RoutingTable<ComponentDescriptor> {
 		var m = new NetworkMap();
 
 		for (var e : map.entrySet()) {
-			m.add(e.getKey(), e.getValue());
+//			m.add(e.getKey(), e.getValue());
 		}
 
 		return m;

@@ -23,7 +23,6 @@ import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
 import toools.thread.Threads;
@@ -418,9 +417,8 @@ public class Service {
 				inputQName, targetComponents.getMaxDistance(), targetComponents.getForwardProbability());
 		return new RunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
 	}
-	
-	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation,
-			Object initialInputData) {
+
+	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation, Object initialInputData) {
 		return exec(targetComponents, operation, true, initialInputData);
 	}
 

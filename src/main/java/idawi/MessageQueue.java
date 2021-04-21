@@ -161,7 +161,7 @@ public class MessageQueue extends Q<Message> {
 				if (read(singleton, 0, 1) == 1) {
 					return singleton[0];
 				}else {
-					
+					return -1;
 				}
 			}
 		};

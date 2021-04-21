@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.RegistryService;
 import idawi.Route;
+import idawi.map.NetworkMap;
 
 public class One2NRoutingTable extends RoutingTable<List<ComponentDescriptor>> {
 
@@ -96,6 +96,7 @@ public class One2NRoutingTable extends RoutingTable<List<ComponentDescriptor>> {
 
 	@Override
 	public NetworkMap map() {
+		return null;} /*
 		var m = new NetworkMap();
 
 		for (var e : map.entrySet()) {
@@ -105,5 +106,5 @@ public class One2NRoutingTable extends RoutingTable<List<ComponentDescriptor>> {
 		}
 
 		return m;
-	}
+	}*/
 }

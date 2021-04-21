@@ -6,10 +6,10 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.IdawiExposed;
 import idawi.RegistryService;
 import idawi.Route;
+import idawi.map.NetworkMap;
 import idawi.net.TransportLayer;
 
 /**
@@ -31,6 +31,7 @@ public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingSer
 
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+		return null; }/*
 		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
 
 		// if it's a broadcast message
@@ -65,7 +66,7 @@ public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingSer
 				return relays;
 			}
 		}
-	}
+	}*/
 
 	@Override
 	@IdawiExposed

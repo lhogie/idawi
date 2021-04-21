@@ -24,6 +24,7 @@ public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
 
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+		return null;}/*
 		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
 
 		// if it's a broadcast message
@@ -53,7 +54,7 @@ public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
 				return relays;
 			}
 		}
-	}
+	}*/
 
 	@Override
 	@IdawiExposed

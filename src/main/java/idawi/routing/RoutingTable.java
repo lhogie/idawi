@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.RegistryService;
 import idawi.Route;
+import idawi.map.NetworkMap;
 
 public abstract class RoutingTable<E> implements Serializable {
 	protected final Map<ComponentDescriptor, E> map = new HashMap<>();

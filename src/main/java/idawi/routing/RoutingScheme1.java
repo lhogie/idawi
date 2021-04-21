@@ -6,10 +6,8 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.IdawiExposed;
 import idawi.RegistryService;
-import idawi.Route;
 import idawi.net.TransportLayer;
 
 /**

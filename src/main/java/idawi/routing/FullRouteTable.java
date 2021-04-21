@@ -1,9 +1,9 @@
 package idawi.routing;
 
 import idawi.ComponentDescriptor;
-import idawi.NetworkMap;
 import idawi.RegistryService;
 import idawi.Route;
+import idawi.map.NetworkMap;
 
 public class FullRouteTable extends RoutingTable<Route> {
 
@@ -32,6 +32,9 @@ public class FullRouteTable extends RoutingTable<Route> {
 
 	@Override
 	public NetworkMap map() {
+		return null;
+	}
+	/*
 		var m = new NetworkMap();
 
 		for (var e : map.entrySet()) {
@@ -45,7 +48,7 @@ public class FullRouteTable extends RoutingTable<Route> {
 		}
 
 		return m;
-	}
+	}*/ 
 
 	@Override
 	public void feedWith(Route r, ComponentDescriptor me) {
