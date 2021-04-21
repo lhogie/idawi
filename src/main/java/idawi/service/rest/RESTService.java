@@ -77,6 +77,8 @@ public class RESTService extends Service {
 				Map<String, String> query = query(uri.getQuery());
 				processRequest(path, query, bytes -> sendBack(bytes, e));
 			} catch (Throwable err) {
+				Cout.debugSuperVisible("sending 404");
+				send404(e);
 				err.printStackTrace();
 			}
 		});
@@ -95,7 +97,7 @@ public class RESTService extends Service {
 			OutputStream out = e.getResponseBody();
 
 			if (e.getRequestMethod().equals("GET")) {
-				Cout.debug("sending" +  new String( o));
+				Cout.debug("sending" + new String(o));
 				out.write(o);
 			}
 
@@ -104,11 +106,23 @@ public class RESTService extends Service {
 			error(t);
 		}
 	}
+	
+	private void send404( HttpExchange e) {
+		try {
+			e.sendResponseHeaders(404, 0);
+			OutputStream out = e.getResponseBody();
+out.close();
+		} catch (IOException t) {
+			error(t);
+		}
+	}
 
-	private void processRequest(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
+	private synchronized void processRequest(List<String> path, Map<String, String> query, Consumer<byte[]> out)
+			throws Throwable {
 		if (path == null) {
 			out.accept(new JavaResource(getClass(), "root.html").getByteArray());
 		} else {
+			Cout.debugSuperVisible(path);
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
@@ -117,6 +131,8 @@ public class RESTService extends Service {
 				serveFiles(path, query, out);
 			} else if (context.equals("idaweb")) {
 				serveIdaweb(path, query, out);
+			} else {
+				throw new IllegalStateException();
 			}
 		}
 	}
