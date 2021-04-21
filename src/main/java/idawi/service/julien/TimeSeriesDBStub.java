@@ -65,7 +65,7 @@ public class TimeSeriesDBStub extends ServiceStub {
 	}
 
 	public Set<String> metricNames() throws Throwable {
-		return (Set<String>) localService.exec(to, TimeSeriesDB.getFigureList, true, new OperationParameterList()).returnQ.get();
+		return (Set<String>) localService.exec(to, TimeSeriesDB.getMetricNames, true, new OperationParameterList()).returnQ.get();
 	}
 
 	public Figure download(String figureName) throws Throwable {

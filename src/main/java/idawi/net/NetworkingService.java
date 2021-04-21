@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -25,6 +26,8 @@ import toools.util.Date;
 
 public class NetworkingService extends Service {
 	static {
+		AtomicBoolean nastyErrorShown = new AtomicBoolean(false);
+
 		// delete deprecated messages
 		Threads.newThread_loop(1000, () -> true, () -> {
 			try {
@@ -39,7 +42,12 @@ public class NetworkingService extends Service {
 					}
 				}
 			} catch (Throwable e) {
-				System.err.println("The bad fastutil error is back in class " + NetworkingService.class);
+				System.err.println("The bad fastutil error is back in " + NetworkingService.class);
+
+				if (!nastyErrorShown.get()) {
+					e.printStackTrace();
+					nastyErrorShown.set(true);
+				}
 			}
 		});
 	}
