@@ -18,4 +18,4 @@ Target applications for *Idawi* include distributed computing, High Performance 
 
 Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
 
-<iframe src="http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1" width="647" height="400"></iframe>
+An live chatroom dedicated to Idawi : [Chatroom](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1)
