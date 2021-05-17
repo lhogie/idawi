@@ -17,3 +17,5 @@ Its most notable features include:
 Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Fog and Edge Computing, Artificial Intelligence (IA), Research in distributed/parallel algorithms, and emulation.
 
 Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
+
+<iframe src="http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1" width="647" height="400"></iframe>
