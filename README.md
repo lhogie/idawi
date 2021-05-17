@@ -1,4 +1,4 @@
-:new: You can now [chat with other members of Idawi's community on IRC](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1) :satisfied:
+:new: **You can now [chat with other members of Idawi's community on IRC](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1)** :satisfied:
 
 
 *Idawi* is a Java decentralized middleware for distributed applications. It is developed at the
@@ -20,3 +20,6 @@ Its most notable features include:
 Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Fog and Edge Computing, Artificial Intelligence (IA), Research in distributed/parallel algorithms, and emulation.
 
 Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
+Contributors:
+- Antonin Lacomme
+- Fedi Ghalloussi
