@@ -1,3 +1,6 @@
+:new: **You can now [chat with other members of Idawi's community](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1) !** :satisfied:
+
+
 *Idawi* is a Java decentralized middleware for distributed applications. It is developed at the
 [Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
 a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
@@ -16,4 +19,8 @@ Its most notable features include:
 
 Target applications for *Idawi* include distributed computing, High Performance Computing (HPC), Internet of Things (IOT), Fog and Edge Computing, Artificial Intelligence (IA), Research in distributed/parallel algorithms, and emulation.
 
-Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
+Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
+
+Contributors:
+- Antonin Lacomme (Master degree intern)
+- Fedi Ghalloussi (Bachelor degree intern)
