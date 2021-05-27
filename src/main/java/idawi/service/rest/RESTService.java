@@ -97,7 +97,7 @@ public class RESTService extends Service {
 			OutputStream out = e.getResponseBody();
 
 			if (e.getRequestMethod().equals("GET")) {
-				Cout.debug("sending" + new String(o));
+				Cout.debug("sending " + o.length + "  bytes");
 				out.write(o);
 			}
 

@@ -156,11 +156,11 @@ public class MessageQueue extends Q<Message> {
 			}
 
 			private final byte[] singleton = new byte[0];
-			
+
 			public int read() throws IOException {
 				if (read(singleton, 0, 1) == 1) {
 					return singleton[0];
-				}else {
+				} else {
 					return -1;
 				}
 			}

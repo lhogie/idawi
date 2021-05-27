@@ -179,6 +179,7 @@ class Network {
         this.listNodes.forEach ((node) => {
             if (node.id == ID) {
                 res = node;
+                return;
             }
         })
         return res;
@@ -189,6 +190,7 @@ class Network {
         this.listNodes.forEach ((node) => {
             if (node.label == label) {
                 res = node;
+                return;
             }
         })
         return res;
@@ -199,6 +201,7 @@ class Network {
         this.listNodes.forEach ((node) => {
             if (node.label == name) {
                 res = node;
+                return;
             }
         });
         return res;
@@ -319,17 +322,18 @@ function createNetwork (container, network, options={}, width=600, height=600) {
     visnetwork.on("afterDrawing", function (ctx) {
         network.getListNodes().forEach((node) => {
             let nodePosition = visnetwork.getPositions([node.id]);
-            let c = {
+            let colorGenerator = {
                 r: parseInt(node.colorbg.substr(1,2), 16) > 120 ? "00": "ff",
                 g: parseInt(node.colorbg.substr(3, 2), 16) > 120 ? "00": "ff",
                 b: parseInt(node.colorbg.substr(5, 2), 16) > 120 ? "00": "ff",
-                getc: function () {
+                
+                compute: function () {
                     if (this.r == "00" || this.g == "00" || this.b == "00") { return "#000000"; }
                     return "#ffffff";
                 }
             }
 
-            node.drawInformation (ctx, nodePosition[node.id].x, nodePosition[node.id].y, visnetwork.getScale(), c.getc ());
+            node.drawInformation (ctx, nodePosition[node.id].x, nodePosition[node.id].y, visnetwork.getScale(), colorGenerator.compute ());
         });
     });
 

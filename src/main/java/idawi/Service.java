@@ -398,16 +398,13 @@ public class Service {
 		return new QueueAddress(c, operation);
 	}
 
-	public void send(Message msg) {
-		component.lookupService(NetworkingService.class).send(msg);
-	}
 
 	protected final OperationParameterList parms(Object... parms) {
 		return new OperationParameterList(parms);
 	}
 
 	public void send(Object o, QueueAddress to) {
-		send(new Message(o, to, null));
+		new Message(o, to, null).send(component);
 	}
 
 	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation, boolean expectReturn,

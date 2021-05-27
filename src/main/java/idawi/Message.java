@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.ThreadLocalRandom;
 
+import idawi.net.NetworkingService;
 import toools.text.TextUtilities;
 import toools.util.Date;
 
@@ -30,6 +31,10 @@ public class Message implements Externalizable {
 		this.to = to;
 		this.requester = replyTo;
 		this.content = content;
+	}
+
+	public void send(Component component) {
+		component.lookupService(NetworkingService.class).send(this);
 	}
 
 	@Override

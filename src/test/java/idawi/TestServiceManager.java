@@ -1,5 +1,7 @@
 package idawi;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,20 @@ public class TestServiceManager {
 
 	public static void main(String[] args) throws Throwable {
 		new TestServiceManager().startStop();
+	}
+
+	public static Method search(Object value, String name, Object target) {
+		for (var m : target.getClass().getMethods()) {
+			if ((m.getModifiers() & Modifier.STATIC) == 1 && m.getName().startsWith("set") && m.getParameterCount() == 1) {
+				if (value == null) {
+					return m;
+				} else if (m.getParameterTypes()[0].isAssignableFrom(value.getClass())) {
+					return m;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	@Test

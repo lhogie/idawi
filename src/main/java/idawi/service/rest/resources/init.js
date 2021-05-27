@@ -1,4 +1,7 @@
-// REQUIS: JQUERY
+$.getJSON("/api", (json) => {
+    console.log(json);
+    todoAfterReceiveJSON(json);
+});
 
 var TYPESELECTION = "simple";
 var WINDOWWIDTH = window.innerWidth * 0.65;
@@ -44,8 +47,8 @@ function todoAfterReceiveJSON (json) {
             "valeur_min": 1,
             "valeur_max": 512
         },
-        "Charge": {
-            "name": "charge",
+        "load": {
+            "name": "load ratio",
             "valeur_min": 0,
             "valeur_max": 1
         },
@@ -128,15 +131,18 @@ function todoAfterReceiveJSON (json) {
             }
         }
     };
-
+/*
     nodes.knownComponents.forEach((component) => {
         $.each(props, (key, value) => {
             component[key] = randint (value.valeur_min, value.valeur_max)
         });
     });
+  */
 
-    // objet Network simplifiant la gestion des noeuds et liaisons
+    // generate our own network object
     let network = generateNetwork (nodes);
+    
+    // that we use to create the VIS network
     let visnetwork = createNetwork (
         document.querySelector ("#reseau-machine"),
         network,
@@ -185,7 +191,3 @@ window.addEventListener("resize", () => {
     setContainerWidth();
 });
 
-$.getJSON("/data/main", (json) => {
-    console.log(json);
-    todoAfterReceiveJSON(json);
-});

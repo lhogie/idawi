@@ -21,12 +21,12 @@ public class RunningOperation {
 			this.initialMsg.requester = QueueAddress.to(Set.of(client.component.descriptor()), client.id, returnQ.name);
 		}
 
-		client.send(initialMsg);
+		initialMsg.send(client.component);
 	}
 
 	public void send(Object content) {
 		var msg = new Message(content, initialMsg.requester, initialMsg.requester);
-		clientService.send(msg);
+		msg.send(clientService.component);
 	}
 
 	public void dispose() {
