@@ -207,7 +207,7 @@ public class RESTService extends Service {
 						var stringParms = new OperationStringParameterList(
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
-								+ operation + stringParms);
+								+ operation + " with parameters: " + stringParms);
 						List<Object> r = exec(new ComponentAddress(components), new OperationID(serviceID, operation),
 								true, stringParms).returnQ.setTimeout(timeout).collect().throwAnyError()
 										.resultMessages().contents();
