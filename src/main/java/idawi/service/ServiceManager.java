@@ -7,7 +7,7 @@ import java.util.Set;
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.ServiceAddress;
@@ -46,7 +46,7 @@ public class ServiceManager extends Service {
 
 	public static OperationID start;
 
-	@IdawiExposed
+	@IdawiOperation
 	public ServiceDescriptor start(Class<? extends Service> serviceID) {
 		if (lookupService(serviceID) != null) {
 			throw new IllegalArgumentException("service already running");
@@ -65,7 +65,7 @@ public class ServiceManager extends Service {
 
 	public static OperationID stop;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void stop(Class<? extends Service> serviceID) {
 		Service s = component.lookupService(serviceID);
 		component.removeService(s);
@@ -73,7 +73,7 @@ public class ServiceManager extends Service {
 
 	public static OperationID list;
 
-	@IdawiExposed
+	@IdawiOperation
 	public Set<String> list() {
 		Set<String> r = new HashSet<>();
 		component.services().forEach(s -> r.add(s.id.getName()));
@@ -82,14 +82,14 @@ public class ServiceManager extends Service {
 
 	public static OperationID has;
 
-	@IdawiExposed
+	@IdawiOperation
 	public boolean has(Class serviceID) {
 		return lookupService(serviceID) != null;
 	}
 
 	public static OperationID ensureStarted;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void ensureStarted(Class serviceID) {
 		if (!has(serviceID)) {
 			start(serviceID);

@@ -10,7 +10,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.InInnerClassOperation;
 import idawi.InInnerClassTypedOperation;
 import idawi.MessageQueue;
@@ -39,7 +39,7 @@ public class ExternalCommandsService extends Service {
 
 	public static OperationID commands;
 
-	@IdawiExposed
+	@IdawiOperation
 	public class commands extends InInnerClassTypedOperation {
 		private Set<String> f() {
 			return commandName2executableFile.keySet();
@@ -47,7 +47,7 @@ public class ExternalCommandsService extends Service {
 	}
 
 	public static OperationID exec;
-	@IdawiExposed
+	@IdawiOperation
 	public void exec(MessageQueue in) throws IOException {
 			var parmMsg = in.get_blocking();
 			List<String> cmdLine = (List<String>) parmMsg.content;

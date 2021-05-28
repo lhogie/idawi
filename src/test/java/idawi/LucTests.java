@@ -84,7 +84,7 @@ public class LucTests {
 		assertEquals(53, (Integer) client.exec(new ComponentAddress(Set.of(c2.descriptor())),
 				DummyService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
 		assertEquals(7, (Integer) client.exec(new ComponentAddress(Set.of(c2.descriptor())), DummyService.countFromAtoB,
-				new DummyService.Range(0, 13)).returnQ.collect().resultMessages(13).get(7).content);
+				true, new DummyService.Range(0, 13)).returnQ.collect().resultMessages(13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
 	}
@@ -100,8 +100,9 @@ public class LucTests {
 		Service client = new Service(root);
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentDescriptor first = client.exec(new ComponentAddress(ss), DummyService.waiting, new OperationParameterList(1)).returnQ
-				.collectUntilFirstEOT().resultMessages(1).first().route.source().component;
+		ComponentDescriptor first = client.exec(new ComponentAddress(ss), DummyService.waiting, true,
+				new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
+						.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
 		Component.componentsInThisJVM.clear();
@@ -159,7 +160,7 @@ public class LucTests {
 		LMI.connect(c1, c2);
 		Service client = c1.lookupService(DummyService.class);
 		MessageList returns = client.exec(new ComponentAddress(Set.of(c2.descriptor())), DummyService.stringLength,
-				"hello").returnQ.collect();
+				true, "hello").returnQ.collect();
 		System.out.println(returns);
 		int len = (Integer) returns.resultMessages(1).first().content;
 		System.out.println(len);

@@ -29,14 +29,14 @@ public class RegistryService extends Service {
 
 	public static OperationID broadcastLocalInfo;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void broadcastLocalInfo() {
 		exec(ComponentAddress.BCAST_ADDRESS, RegistryService.add, false, new OperationParameterList(component.descriptor()));
 	}
 
 	public static OperationID add;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void add(ComponentDescriptor d) {
 		var alreadyHere = name2descriptor.get(d.friendlyName);
 
@@ -47,28 +47,28 @@ public class RegistryService extends Service {
 
 	public static OperationID addAll;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void addAll(Collection<ComponentDescriptor> s) {
 		s.forEach(i -> add(i));
 	}
 
 	public static OperationID size;
 
-	@IdawiExposed
+	@IdawiOperation
 	public int size() {
 		return name2descriptor.size();
 	}
 
 	public static OperationID names;
 
-	@IdawiExposed
+	@IdawiOperation
 	public Set<String> names() {
 		return name2descriptor.keySet();
 	}
 
 	public static OperationID updateAll;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void updateAll() {
 		var to = new ComponentAddress(new HashSet<>(name2descriptor.values()));
 		exec(to, RegistryService.local, true, null).returnQ.collect().resultMessages().contents()
@@ -77,35 +77,35 @@ public class RegistryService extends Service {
 
 	public static OperationID lookUp;
 
-	@IdawiExposed
+	@IdawiOperation
 	public ComponentDescriptor lookup(String name) {
 		return name2descriptor.get(name);
 	}
 
 	public static OperationID remove;
 
-	@IdawiExposed
+	@IdawiOperation
 	public ComponentDescriptor remove(String name) {
 		return name2descriptor.remove(name);
 	}
 
 	public static OperationID clear;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void clear() {
 		name2descriptor.clear();
 	}
 
 	public static OperationID list;
 
-	@IdawiExposed
+	@IdawiOperation
 	public Set<ComponentDescriptor> list() {
 		return new HashSet<>(name2descriptor.values());
 	}
 
 	public static OperationID local;
 
-	@IdawiExposed
+	@IdawiOperation
 	public ComponentDescriptor local() {
 		return component.descriptor();
 	}
@@ -120,7 +120,7 @@ public class RegistryService extends Service {
 	}
 
 	@Override
-	@IdawiExposed
+	@IdawiOperation
 	public String getFriendlyName() {
 		return "component registry";
 	}
@@ -148,7 +148,7 @@ public class RegistryService extends Service {
 		return r;
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public NetworkMap map() {
 		var m = new NetworkMap();
 		Map<String, ComponentDescriptor> missing = new HashMap<>();

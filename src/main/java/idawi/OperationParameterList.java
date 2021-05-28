@@ -38,13 +38,16 @@ public class OperationParameterList extends ArrayList {
 	}
 
 	public static OperationParameterList toParmsList(Operation operation, Object content, Class<?>[] types) {
-		if (content instanceof OperationParameterList) {
+		if (content == null) {
+			return new OperationParameterList();
+		} else if (content instanceof OperationParameterList) {
 			return (OperationParameterList) content;
 		} else if (content instanceof OperationStringParameterList) {
 			return from((OperationStringParameterList) content, types);
 		} else {
-			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of " + OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)
-					+ (content == null ? "" : " of " + content.getClass()));
+			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "
+					+ OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)
+					+ " of " + content.getClass());
 		}
 	}
 }

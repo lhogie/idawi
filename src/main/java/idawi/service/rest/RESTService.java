@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -21,7 +20,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.OperationStringParameterList;
@@ -71,14 +70,15 @@ public class RESTService extends Service {
 
 		restServer = HttpServer.create(new InetSocketAddress("localhost", port), 0);
 		restServer.createContext("/", e -> {
+			URI uri = e.getRequestURI();
+			List<String> path = path(uri.getPath());
 			try {
-				URI uri = e.getRequestURI();
-				List<String> path = path(uri.getPath());
 				Map<String, String> query = query(uri.getQuery());
-				processRequest(path, query, bytes -> sendBack(bytes, e));
+				var response = processRequest(path, query);
+				sendBack(200, response, e);
 			} catch (Throwable err) {
-				Cout.debugSuperVisible("sending 404");
-				send404(e);
+				Cout.debugSuperVisible(path + "   sending 404");
+				sendBack(404, TextUtilities.exception2string(err).getBytes(), e);
 				err.printStackTrace();
 			}
 		});
@@ -91,9 +91,9 @@ public class RESTService extends Service {
 		return restServer;
 	}
 
-	private void sendBack(byte[] o, HttpExchange e) {
+	private void sendBack(int returnCode, byte[] o, HttpExchange e) {
 		try {
-			e.sendResponseHeaders(200, o.length);
+			e.sendResponseHeaders(returnCode, o.length);
 			OutputStream out = e.getResponseBody();
 
 			if (e.getRequestMethod().equals("GET")) {
@@ -106,50 +106,41 @@ public class RESTService extends Service {
 			error(t);
 		}
 	}
-	
-	private void send404( HttpExchange e) {
-		try {
-			e.sendResponseHeaders(404, 0);
-			OutputStream out = e.getResponseBody();
-out.close();
-		} catch (IOException t) {
-			error(t);
-		}
-	}
 
-	private synchronized void processRequest(List<String> path, Map<String, String> query, Consumer<byte[]> out)
-			throws Throwable {
+	private synchronized byte[] processRequest(List<String> path, Map<String, String> query) throws Throwable {
 		if (path == null) {
-			out.accept(new JavaResource(getClass(), "root.html").getByteArray());
+			return new JavaResource(getClass(), "root.html").getByteArray();
 		} else {
-			Cout.debugSuperVisible(path);
+			Cout.debugSuperVisible("path: " + path);
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
-				processAPI(path, query, out);
+				return serveAPI(path, query);
 			} else if (context.equals("file")) {
-				serveFiles(path, query, out);
+				return serveFiles(path, query);
 			} else if (context.equals("idaweb")) {
-				serveIdaweb(path, query, out);
+				return serveIdaweb(path, query);
+			} else if (context.equals("favicon.ico")) {
+				return new JavaResource(RESTService.class, "flavicon.ico").getByteArray();
 			} else {
-				throw new IllegalStateException();
+				throw new IllegalStateException("unknown context: " + context);
 			}
 		}
 	}
 
-	private void serveIdaweb(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
+	private byte[] serveIdaweb(List<String> path, Map<String, String> query) throws Throwable {
 		if (path.isEmpty()) {
-			out.accept(new JavaResource(getClass(), "resources/index.html").getByteArray());
+			return new JavaResource(getClass(), "resources/index.html").getByteArray();
 		} else {
-			out.accept(new JavaResource(getClass(), "resources/" + TextUtilities.concatene(path, "/")).getByteArray());
+			return new JavaResource(getClass(), "resources/" + TextUtilities.concatene(path, "/")).getByteArray();
 		}
 	}
 
-	private void serveFiles(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
-		out.accept(new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent());
+	private byte[] serveFiles(List<String> path, Map<String, String> query) throws Throwable {
+		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
 	}
 
-	private void processAPI(List<String> path, Map<String, String> query, Consumer<byte[]> out) throws Throwable {
+	private byte[] serveAPI(List<String> path, Map<String, String> query) throws Throwable {
 		Serializer serializer = new GSONSerializer<>();
 
 		if (query.containsKey("format")) {
@@ -157,23 +148,17 @@ out.close();
 			serializer = name2serializer.get(format);
 
 			if (serializer == null) {
-				out.accept(("unknow format: " + format + ". Available format are: " + name2serializer.keySet())
-						.getBytes());
+				return ("unknow format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
 			}
 		}
 
-		try {
-			Object result = processRESTRequest(path, query);
+		Object result = processRESTRequest(path, query);
 
-			if (result == null) {
-				result = new NULL();
-			}
-
-			out.accept(serializer.toBytes(result));
-		} catch (Throwable t) {
-			out.accept(serializer.toBytes(t));
-			throw t;
+		if (result == null) {
+			result = new NULL();
 		}
+
+		return serializer.toBytes(result);
 	}
 
 	public static class NULL implements Serializable {
@@ -261,9 +246,10 @@ out.close();
 	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
+		var to = new ComponentAddress(components);
+		var res = exec(to, ServiceManager.list, true, null).returnQ;
 
-		for (var m : exec(new ComponentAddress(components), ServiceManager.list, true,
-				new OperationParameterList()).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
+		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
 			c.servicesNames = (Set<String>) m.content;
 			r.add(c);
@@ -275,9 +261,10 @@ out.close();
 	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
+		var to = new ComponentAddress(components);
+		var res = exec(to, Service.descriptor, true, null).returnQ;
 
-		for (Message m : exec(new ComponentAddress(components), Service.descriptor, true,
-				new OperationParameterList()).returnQ.collect().throwAnyError().resultMessages()) {
+		for (Message m : res.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
 		}
 
@@ -331,7 +318,7 @@ out.close();
 		return query;
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public void stopHTTPServer() throws IOException {
 		if (restServer == null) {
 			throw new IOException("REST server is not running");
@@ -341,7 +328,7 @@ out.close();
 		restServer = null;
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	private void startHTTPServerOperation(int port) throws IOException {
 		startHTTPServer(port);
 	}

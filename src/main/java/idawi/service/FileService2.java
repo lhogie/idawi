@@ -11,7 +11,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Streams;
@@ -29,14 +29,14 @@ public class FileService2 extends Service {
 
 	public static OperationID pathToLocalFiles;
 
-	@IdawiExposed
+	@IdawiOperation
 	private String pathToLocalFiles() {
 		return dir.getPath();
 	}
 
 	public static OperationID listFiles;
 
-	@IdawiExposed
+	@IdawiOperation
 	private Set<String> listFiles() throws IOException {
 		dir.ensureExists();
 		List<AbstractFile> files = dir.retrieveTree();
@@ -46,14 +46,14 @@ public class FileService2 extends Service {
 
 	public static OperationID downloadFileAsOneSingleMessage;
 
-	@IdawiExposed
+	@IdawiOperation
 	private byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
 		return new RegularFile(dir, path).getContent();
 	}
 
 	public static OperationID uploadFileAsOneSingleMessage;
 
-	@IdawiExposed
+	@IdawiOperation
 	private void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
 		new RegularFile(dir, path).setContent(bytes);
 	}
@@ -72,7 +72,7 @@ public class FileService2 extends Service {
 		public long age;
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	private FileInfo fileInfo(String name) throws IOException {
 		var f = new RegularFile(dir, name);
 		var info = new FileInfo();
@@ -90,7 +90,7 @@ public class FileService2 extends Service {
 		long len;
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	private void downloadFile(MessageQueue q) throws IOException {
 		var msg = q.get_blocking();
 		DownloadFileParms parms = (DownloadFileParms) msg.content;
@@ -104,7 +104,7 @@ public class FileService2 extends Service {
 
 	public static OperationID upload;
 
-	@IdawiExposed
+	@IdawiOperation
 	private void upload(String name, boolean append, InputStream in) throws IOException {
 		dir.ensureExists();
 		var fos = new RegularFile(dir, name).createWritingStream(append);
@@ -114,7 +114,7 @@ public class FileService2 extends Service {
 
 	public static OperationID exists;
 
-	@IdawiExposed
+	@IdawiOperation
 	private boolean exists(String name) {
 		dir.ensureExists();
 		return new RegularFile(dir, name).exists();
@@ -122,7 +122,7 @@ public class FileService2 extends Service {
 
 	public static OperationID delete;
 
-	@IdawiExposed
+	@IdawiOperation
 	private void delete(String name) {
 		dir.ensureExists();
 		new RegularFile(dir, name).delete();
@@ -130,7 +130,7 @@ public class FileService2 extends Service {
 
 	public static OperationID size;
 
-	@IdawiExposed
+	@IdawiOperation
 	private long size(String name) {
 		dir.ensureExists();
 		return new RegularFile(name).getSize();

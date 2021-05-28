@@ -2,7 +2,7 @@ package idawi.ui.cmd;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.Message;
 import idawi.MessageQueue;
 import idawi.Service;
@@ -15,7 +15,7 @@ public class CommandsService extends Service {
 
 	public static OperationID exec;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void exec(MessageQueue q) throws Throwable {
 		while (true) {
 			Message m = q.get_blocking();

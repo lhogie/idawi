@@ -10,7 +10,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
@@ -31,7 +31,7 @@ public class PingService extends Service {
 
 	public static OperationID ping;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void ping(MessageQueue in) {
 	}
 
@@ -65,7 +65,7 @@ public class PingService extends Service {
 
 	public static OperationID traceroute;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void traceroute(MessageQueue in) {
 			var msg = in.get_blocking();
 			send(msg.route, msg.requester);

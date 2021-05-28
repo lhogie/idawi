@@ -6,7 +6,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.RegistryService;
 import idawi.net.TransportLayer;
 
@@ -61,7 +61,7 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 	}
 
 	@Override
-	@IdawiExposed
+	@IdawiOperation
 	public String getAlgoName() {
 		return "default";
 	}

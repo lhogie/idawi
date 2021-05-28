@@ -8,7 +8,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.EOT;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.ProgressRatio;
 import idawi.RunningOperation;
@@ -26,7 +26,7 @@ public class DummyService extends Service {
 
 	public static OperationID waiting;
 
-	@IdawiExposed
+	@IdawiOperation
 	public double waiting(double maxSeconds) {
 		double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 		Threads.sleepMs((long) (seconds * 1000));
@@ -35,7 +35,7 @@ public class DummyService extends Service {
 
 	public static OperationID grep;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void grep(MessageQueue in) {
 		String re = (String) in.get_non_blocking().content;
 
@@ -93,7 +93,7 @@ public class DummyService extends Service {
 
 	public static OperationID stringLength;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void stringLength(MessageQueue in) {
 		var msg = in.get_non_blocking();
 		String s = (String) msg.content;
@@ -102,7 +102,7 @@ public class DummyService extends Service {
 
 	public static OperationID countFrom1toN;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void countFrom1toN(MessageQueue in) {
 		var m = in.get_blocking();
 
@@ -122,7 +122,7 @@ public class DummyService extends Service {
 
 	public static OperationID countFromAtoB;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void countFromAtoB(MessageQueue in) {
 		var m = in.get_blocking();
 		var p = (Range) m.content;
@@ -134,12 +134,12 @@ public class DummyService extends Service {
 
 	public static OperationID throwError;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void throwError(MessageQueue in) throws Throwable {
 		throw new Error("this is a test error");
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public void sendProgressInformation(MessageQueue in) throws Throwable {
 		var msg = in.get_blocking();
 		int target = (Integer) msg.content;

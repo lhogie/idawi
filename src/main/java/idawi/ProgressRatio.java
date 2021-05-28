@@ -3,7 +3,7 @@ package idawi;
 public class ProgressRatio extends ProgressInformation {
 	long target, progress;
 
-	public ProgressRatio(int target, int progress) {
+	public ProgressRatio(long target, long progress) {
 		this.target = target;
 		this.progress = progress;
 	}

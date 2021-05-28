@@ -2,7 +2,7 @@ package idawi.service.time;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 
@@ -16,7 +16,7 @@ public class TimeService extends Service {
 
 	public static OperationID getTime;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void getTime(MessageQueue in) {
 		var trigger = in.get_blocking();
 		send(tm.getTime(), trigger.requester);
@@ -24,13 +24,13 @@ public class TimeService extends Service {
 
 	public static OperationID getModel;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void getModel(MessageQueue in) {
 		var trigger = in.get_blocking();
 		send(tm, trigger.requester);
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public void setTime(MessageQueue in) {
 		var trigger = in.get_blocking();
 		double newTime = (double) trigger.content;

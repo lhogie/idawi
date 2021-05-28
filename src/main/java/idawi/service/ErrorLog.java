@@ -6,7 +6,7 @@ import java.util.List;
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.InInnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
@@ -21,7 +21,7 @@ public class ErrorLog extends Service {
 
 	public static OperationID registerError;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void registerError(MessageQueue in) {
 		errors.add((Throwable) in.get_blocking().content);
 	}
@@ -30,14 +30,14 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		exec(new ComponentAddress(), registerError, error);
+		exec(new ComponentAddress(), registerError, false, error);
 	}
 
 	public void report(String msg) {
 		report(new Error(msg));
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public class list extends InInnerClassTypedOperation {
 		public List<Throwable> f() {
 			return errors;

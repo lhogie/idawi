@@ -64,7 +64,7 @@ public class Service {
 
 	public static OperationID sec2nbMessages;
 
-	@IdawiExposed
+	@IdawiOperation
 	public Int2LongMap sec2nbMessages() {
 		return second2nbMessages;
 	}
@@ -76,13 +76,15 @@ public class Service {
 	private void registerInMethodOperations() {
 		for (Class c : Clazz.bfs(getClass())) {
 			for (Method m : c.getDeclaredMethods()) {
-				if (m.isAnnotationPresent(IdawiExposed.class)) {
-					try {
+				if (m.isAnnotationPresent(IdawiOperation.class)) {
+					var o = new AsMethodOperation(m, this);
+					registerOperation(o);
 
+					try {
+						// search for a field with the same name
 						Field f = c.getDeclaredField(m.getName());
 
 						if (f != null && f.getType() == OperationID.class) {
-							var o = new AsMethodOperation(m, this);
 
 							if (f.getType() != AsMethodOperation.OperationID.class) {
 								throw new IllegalStateException("field " + c.getName() + "." + f.getName()
@@ -108,7 +110,6 @@ public class Service {
 									m.getName());
 							f.setAccessible(true);
 							f.set(this, id);
-							registerOperation(o);
 						}
 					} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
 						throw new RuntimeException(e);
@@ -145,7 +146,7 @@ public class Service {
 
 	public static OperationID nbMessagesReceived;
 
-	@IdawiExposed
+	@IdawiOperation
 	public long nbMessagesReceived() {
 		return nbMsgsReceived;
 	}
@@ -156,7 +157,7 @@ public class Service {
 		return new HashSet<String>(name2operation.keySet());
 	}
 
-	@IdawiExposed
+	@IdawiOperation
 	public class listNativeOperations extends InInnerClassTypedOperation {
 		Set<OperationDescriptor> f() {
 			return getOperations().stream().map(o -> o.descriptor()).collect(Collectors.toSet());
@@ -360,7 +361,7 @@ public class Service {
 
 	public static OperationID shutdown;
 
-	@IdawiExposed
+	@IdawiOperation
 	public void shutdown() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
@@ -415,9 +416,6 @@ public class Service {
 		return new RunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
 	}
 
-	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation, Object initialInputData) {
-		return exec(targetComponents, operation, true, initialInputData);
-	}
 
 	public Object f(ComponentDescriptor target, OperationID operation, Object parms) {
 		return exec(new ComponentAddress(Set.of(target)), operation, true, parms).returnQ.collect()
@@ -428,7 +426,7 @@ public class Service {
 
 	public static OperationID descriptor;
 
-	@IdawiExposed
+	@IdawiOperation
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();

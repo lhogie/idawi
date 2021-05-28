@@ -6,7 +6,7 @@ import java.util.Properties;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.Service;
 import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
@@ -73,7 +73,7 @@ public class SystemMonitor extends Service {
 
 	public static OperationID loadRatio;
 	
-	@IdawiExposed
+	@IdawiOperation
 	public double loadRatio() {
 		return Utils.loadRatio();
 	}

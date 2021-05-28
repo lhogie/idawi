@@ -23,6 +23,7 @@ import idawi.service.PingService;
 import idawi.service.ServiceManager;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
+import toools.util.Date;
 
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());

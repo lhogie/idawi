@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.Service;
 import toools.io.Cout;
 import toools.io.file.AbstractFile;
@@ -23,14 +23,14 @@ public class FileService extends Service {
 
 	public static OperationID pathToLocalFiles;
 
-	@IdawiExposed
+	@IdawiOperation
 	private String pathToLocalFiles() {
 		return dir.getPath();
 	}
 
 	public static OperationID find;
 
-	@IdawiExposed
+	@IdawiOperation
 	private Set<String> find() throws IOException {
 		Cout.debug(dir);
 		dir.ensureExists();
@@ -43,21 +43,21 @@ public class FileService extends Service {
 
 	public static OperationID download;
 
-	@IdawiExposed
+	@IdawiOperation
 	private byte[] download(String path) throws IOException {
 		return new RegularFile(dir, path).getContent();
 	}
 
 	public static OperationID upload;
 
-	@IdawiExposed
+	@IdawiOperation
 	private void upload(String path, byte[] bytes) throws IOException {
 		new RegularFile(dir, path).setContent(bytes);
 	}
 	
 	public static OperationID exists;
 
-	@IdawiExposed
+	@IdawiOperation
 	private boolean exists(String name) {
 		dir.ensureExists();
 		return new RegularFile(dir, name).exists();
@@ -65,7 +65,7 @@ public class FileService extends Service {
 
 	public static OperationID delete;
 
-	@IdawiExposed
+	@IdawiOperation
 	private void delete(String name) {
 		dir.ensureExists();
 		new RegularFile(dir, name).delete();
@@ -73,7 +73,7 @@ public class FileService extends Service {
 
 	public static OperationID size;
 
-	@IdawiExposed
+	@IdawiOperation
 	private long size(String name) {
 		dir.ensureExists();
 		return new RegularFile(name).getSize();

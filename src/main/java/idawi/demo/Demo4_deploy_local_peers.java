@@ -9,7 +9,7 @@ import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiExposed;
+import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.net.LMI;
@@ -37,7 +37,7 @@ public class Demo4_deploy_local_peers {
 
 		public static OperationID op;
 
-		@IdawiExposed
+		@IdawiOperation
 		public void op(MessageQueue q) {
 			var msg = q.get_blocking();
 			System.out.println("message route: " + msg.route);
@@ -64,7 +64,7 @@ public class Demo4_deploy_local_peers {
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
 		var to = new ComponentAddress(Set.of(last.descriptor()));
-		first.lookupService(NetworkingService.class).exec(to, DummyService.op, "hello!");
+		first.lookupService(NetworkingService.class).exec(to, DummyService.op, true, "hello!");
 		s.wait.get_blocking();
 		System.out.println("completed");
 		Component.stopPlatformThreads();
