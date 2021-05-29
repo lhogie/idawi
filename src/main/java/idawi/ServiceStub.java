@@ -19,7 +19,7 @@ public class ServiceStub {
 	 * new To(remoteComponents, operation); }
 	 */
 	protected QueueAddress to(OperationID operation) {
-		return new QueueAddress(to.getNotYetReachedExplicitRecipients(), operation.service,
+		return new QueueAddress(to.getNotYetReachedExplicitRecipients(), operation.declaringService,
 				operation.operationName);
 	}
 

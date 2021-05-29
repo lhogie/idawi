@@ -7,11 +7,11 @@ import java.util.Set;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.service.DeployerService;
@@ -63,7 +63,7 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		var to = new ComponentAddress(Set.of(last.descriptor()));
+		var to = new ServiceAddress(Set.of(last.descriptor()), DummyService.class, Integer.MAX_VALUE, 1d);
 		first.lookupService(NetworkingService.class).exec(to, DummyService.op, true, "hello!");
 		s.wait.get_blocking();
 		System.out.println("completed");

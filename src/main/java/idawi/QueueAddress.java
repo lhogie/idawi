@@ -27,7 +27,7 @@ public class QueueAddress extends ServiceAddress {
 
 	public QueueAddress(Set<ComponentDescriptor> peers, OperationID operation, int maxDistance,
 			double forwardProbability) {
-		this(peers, operation.service, operation.operationName + "@" + Date.time(), maxDistance, forwardProbability);
+		this(peers, operation.declaringService, operation.operationName + "@" + Date.time(), maxDistance, forwardProbability);
 	}
 
 	public QueueAddress(Set<ComponentDescriptor> peers, Class<? extends Service> sid, String qid) {
@@ -58,11 +58,11 @@ public class QueueAddress extends ServiceAddress {
 	 * innerClassName(c)); }
 	 */
 	public QueueAddress(Set<ComponentDescriptor> r, OperationID c) {
-		this(r, c.service, c.operationName);
+		this(r, c.declaringService, c.operationName);
 	}
 
 	public QueueAddress(OperationID c) {
-		this((Set) null, c.service, c.operationName);
+		this((Set) null, c.declaringService, c.operationName);
 	}
 
 	public QueueAddress(ComponentDescriptor t, OperationID c) {

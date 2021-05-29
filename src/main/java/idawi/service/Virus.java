@@ -8,11 +8,11 @@ import java.util.function.Consumer;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.RegistryService;
 import idawi.Service;
+import idawi.ServiceAddress;
 
 public class Virus extends Service {
 
@@ -31,7 +31,7 @@ public class Virus extends Service {
 
 			if (component.lookupService(RegistryService.class).list().size() > 0) {
 				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
-				var to = new ComponentAddress(Set.of(c));
+				var to = new ServiceAddress(Set.of(c), Virus.class);
 				MessageList response = exec(to, new OperationID(id, null), true, null).returnQ.collect();
 
 				// the node doesn't respond

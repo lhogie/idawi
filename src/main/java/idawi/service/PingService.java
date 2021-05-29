@@ -15,9 +15,9 @@ import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.MessageQueue.SUFFICIENCY;
-import idawi.QueueAddress;
 import idawi.Route;
 import idawi.Service;
+import idawi.ServiceAddress;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -36,7 +36,7 @@ public class PingService extends Service {
 	}
 
 	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.exec(new ComponentAddress(targets), ping, true, null).returnQ;
+		return from.exec(new ServiceAddress(targets, PingService.class), ping, true, null).returnQ;
 	}
 
 	public static MessageQueue ping(Service from) {
@@ -73,7 +73,7 @@ public class PingService extends Service {
 
 	public static List<Route> traceroute(Service from, Set<ComponentDescriptor> targets, double timeout)
 			throws Throwable {
-		return (List<Route>) (List<?>) from.exec(new ComponentAddress(targets), traceroute, true, null).returnQ
+		return (List<Route>) (List<?>) from.exec(new ServiceAddress(targets, PingService.class), traceroute, true, null).returnQ
 				.setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream()
 				.collect(Collectors.toList());
 	}

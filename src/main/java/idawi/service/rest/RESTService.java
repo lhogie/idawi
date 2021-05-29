@@ -18,7 +18,6 @@ import com.sun.net.httpserver.HttpServer;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
 import idawi.Message;
@@ -26,6 +25,7 @@ import idawi.OperationParameterList;
 import idawi.OperationStringParameterList;
 import idawi.RegistryService;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
@@ -208,9 +208,9 @@ public class RESTService extends Service {
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
 								+ operation + " with parameters: " + stringParms);
-						List<Object> r = exec(new ComponentAddress(components), new OperationID(serviceID, operation),
-								true, stringParms).returnQ.setTimeout(timeout).collect().throwAnyError()
-										.resultMessages().contents();
+						List<Object> r = exec(new ServiceAddress(components, serviceID),
+								new OperationID(serviceID, operation), true, stringParms).returnQ.setTimeout(timeout)
+										.collect().throwAnyError().resultMessages().contents();
 
 						if (r.size() == 1) {
 							return r.get(0);
@@ -246,7 +246,7 @@ public class RESTService extends Service {
 	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
-		var to = new ComponentAddress(components);
+		var to = new ServiceAddress(components, ServiceManager.class);
 		var res = exec(to, ServiceManager.list, true, null).returnQ;
 
 		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
@@ -261,7 +261,7 @@ public class RESTService extends Service {
 	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
-		var to = new ComponentAddress(components);
+		var to = new ServiceAddress(components, serviceID);
 		var res = exec(to, Service.descriptor, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
@@ -283,8 +283,8 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		exec(new ComponentAddress(null), RegistryService.local, true, new OperationParameterList()).returnQ
-				.setTimeout(1).collect();
+		exec(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
+				new OperationParameterList()).returnQ.setTimeout(1).collect();
 
 		w.knownComponents.addAll(lookupService(RegistryService.class).list());
 

@@ -6,10 +6,10 @@ import java.util.function.Function;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.Message;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
+import idawi.ServiceAddress;
 
 public class ExecService extends Service {
 	public static interface Request extends Serializable {
@@ -29,7 +29,7 @@ public class ExecService extends Service {
 		return "remote code executing";
 	}
 
-	public void exec(ComponentAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
+	public void exec(ServiceAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
 		exec(to, new OperationID(ExecService.class, null), true, r).returnQ.forEach(returns);
 	}
 }

@@ -2,13 +2,13 @@ package idawi;
 
 import java.util.Set;
 
-public class RunningOperation {
+public class RemotelyRunningOperation {
 
 	public final ExecMessage initialMsg = new ExecMessage();
 	public MessageQueue returnQ;
 	public final Service clientService;
 
-	public RunningOperation(Service client, QueueAddress to, String operationName, boolean expectReturn,
+	public RemotelyRunningOperation(Service client, QueueAddress to, String operationName, boolean expectReturn,
 			Object initialInputData) {
 		this.clientService = client;
 		this.initialMsg.operationName = operationName;

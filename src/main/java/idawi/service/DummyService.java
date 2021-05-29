@@ -6,13 +6,13 @@ import java.util.Set;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.EOT;
 import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.ProgressRatio;
-import idawi.RunningOperation;
+import idawi.RemotelyRunningOperation;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.net.LMI;
 import toools.math.MathsUtilities;
 import toools.thread.Threads;
@@ -60,8 +60,8 @@ public class DummyService extends Service {
 		LMI.connect(a, b);
 
 		Service s = new Service(a);
-		var to = new ComponentAddress(Set.of(b.descriptor()));
-		RunningOperation stub = s.exec(to, DummyService.stringLength, true, DummyService.grep);
+		var to = new ServiceAddress(Set.of(b.descriptor()), DummyService.class);
+		RemotelyRunningOperation stub = s.exec(to, DummyService.stringLength, true, DummyService.grep);
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);

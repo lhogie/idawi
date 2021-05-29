@@ -1,11 +1,11 @@
 package idawi;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ServiceDescriptor implements Descriptor {
 	public String name;
-	public Set<OperationDescriptor> operationDescriptors = new HashSet<>();
+	public Set<OperationDescriptor> operationDescriptors = new TreeSet<>();
 	public long nbMessagesReceived = 0;
 
 	@Override

@@ -8,12 +8,12 @@ import toools.io.Cout;
 
 public class AsMethodOperation extends Operation {
 	public static class OperationID {
-		public OperationID(Class<? extends Service> service, String operationName) {
-			this.service = service;
+		public OperationID(Class<? extends Service> declaringService, String operationName) {
+			this.declaringService = declaringService;
 			this.operationName = operationName;
 		}
 
-		Class<? extends Service> service;
+		Class<? extends Service> declaringService;
 		String operationName;
 	}
 

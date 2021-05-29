@@ -27,7 +27,7 @@ public class ServiceAddress extends ComponentAddress {
 		this(components.notYetReachedExplicitRecipients, sid, components.coverage, components.forwardProbability);
 	}
 
-	private ServiceAddress(Set<ComponentDescriptor> peers, Class<? extends Service> sid) {
+	public ServiceAddress(Set<ComponentDescriptor> peers, Class<? extends Service> sid) {
 		this(peers, sid, Integer.MAX_VALUE, 1);
 	}
 

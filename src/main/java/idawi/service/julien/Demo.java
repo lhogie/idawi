@@ -16,6 +16,7 @@ import org.w3c.dom.svg.SVGDocument;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.service.DeployerService;
 import idawi.service.ServiceManager;
 import idawi.service.rest.RESTService;
@@ -34,7 +35,8 @@ public class Demo {
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, new ComponentAddress(Set.of(serverDescriptor)));
 				lookupService(DeployerService.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
-				exec(new ComponentAddress(Set.of(serverDescriptor)), ServiceManager.start, true, TimeSeriesDB.class);
+				exec(new ServiceAddress(Set.of(serverDescriptor), ServiceManager.class), ServiceManager.start, true,
+						TimeSeriesDB.class);
 				lookupService(RESTService.class).startHTTPServer();
 
 				// creates the figure that will be fed

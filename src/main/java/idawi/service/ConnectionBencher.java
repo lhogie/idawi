@@ -4,10 +4,10 @@ import java.util.Set;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.Service;
+import idawi.ServiceAddress;
 import toools.util.Date;
 
 /**
@@ -28,7 +28,7 @@ public class ConnectionBencher extends Service {
 	}
 
 	public double benchLinkTo2(ComponentDescriptor peer, double timeout) {
-		var to = new ComponentAddress(Set.of(peer));
+		var to = new ServiceAddress(Set.of(peer), Bencher.class);
 		MessageList msg = exec(to, new OperationID(id, null), true, null).returnQ.collect();
 		return Date.time() - msg.last().route.last().emissionDate;
 	}

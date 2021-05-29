@@ -408,17 +408,18 @@ public class Service {
 		new Message(o, to, null).send(component);
 	}
 
-	public RunningOperation exec(ComponentAddress targetComponents, OperationID operation, boolean expectReturn,
+	public RemotelyRunningOperation exec(ServiceAddress target, OperationID operation, boolean expectReturn,
 			Object initialInputData) {
 		String inputQName = operation.operationName + "@" + Date.timeNs();
-		var inputQaddress = new QueueAddress(targetComponents.getNotYetReachedExplicitRecipients(), operation.service,
-				inputQName, targetComponents.getMaxDistance(), targetComponents.getForwardProbability());
-		return new RunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
+		var inputQaddress = new QueueAddress(target.getNotYetReachedExplicitRecipients(), target.service,
+				inputQName, target.getMaxDistance(), target.getForwardProbability());
+		return new RemotelyRunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
 	}
 
 
-	public Object f(ComponentDescriptor target, OperationID operation, Object parms) {
-		return exec(new ComponentAddress(Set.of(target)), operation, true, parms).returnQ.collect()
+	public Object f(ComponentDescriptor target, Class<Service> targetService, OperationID operation, Object parms) {
+		var to = new ServiceAddress(Set.of(target), targetService, Integer.MAX_VALUE, 1d);
+		return exec(to, operation, true, parms).returnQ.collect()
 				.throwAnyError_Runtime().resultMessages(1).get(0).content;
 	}
 

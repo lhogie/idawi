@@ -5,11 +5,11 @@ import java.util.List;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.IdawiOperation;
 import idawi.InInnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.Utils;
 
 public class ErrorLog extends Service {
@@ -30,7 +30,7 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		exec(new ComponentAddress(), registerError, false, error);
+		exec(new ServiceAddress(), registerError, false, error);
 	}
 
 	public void report(String msg) {

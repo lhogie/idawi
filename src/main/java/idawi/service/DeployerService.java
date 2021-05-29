@@ -17,11 +17,11 @@ import java.util.function.Consumer;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Graph;
 import idawi.RegistryService;
 import idawi.Service;
+import idawi.ServiceAddress;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
@@ -101,7 +101,7 @@ public class DeployerService extends Service {
 		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
-		var to = new ComponentAddress(toDeploy);
+		var to = new ServiceAddress(toDeploy, DeployerService.class);
 		exec(to, new OperationID(DeployerService.class, "d3"), true, deploymentPlan).returnQ.collect();
 	}
 

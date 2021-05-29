@@ -12,10 +12,11 @@ import java.util.function.Consumer;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
+import idawi.ServiceAddress;
+import idawi.service.Bencher.Results;
 import toools.thread.Q;
 
 /**
@@ -61,7 +62,7 @@ public class Bencher extends Service {
 			BiConsumer<ComponentDescriptor, String> msg) {
 		Arguments parms = new Arguments();
 		parms.size = size;
-		var to = new ComponentAddress(peers);
+		var to = new ServiceAddress(peers, Bencher.class);
 		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
 		exec(to, new OperationID(id, null), true, parms).returnQ.forEach(r -> {
