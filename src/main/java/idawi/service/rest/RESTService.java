@@ -1,8 +1,10 @@
 package idawi.service.rest;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -70,15 +73,20 @@ public class RESTService extends Service {
 
 		restServer = HttpServer.create(new InetSocketAddress("localhost", port), 0);
 		restServer.createContext("/", e -> {
+				InputStream is = e.getRequestBody();
+				byte[] data = is.readAllBytes();
+				is.close();
+				System.out.println(data.length);
+
 			URI uri = e.getRequestURI();
 			List<String> path = path(uri.getPath());
 			try {
 				Map<String, String> query = query(uri.getQuery());
 				var response = processRequest(path, query);
-				sendBack(200, response, e);
+				sendBack(HttpURLConnection.HTTP_OK, response, e);
 			} catch (Throwable err) {
 				Cout.debugSuperVisible(path + "   sending 404");
-				sendBack(404, TextUtilities.exception2string(err).getBytes(), e);
+				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
 				err.printStackTrace();
 			}
 		});
