@@ -26,7 +26,8 @@ public class TestTimeSeriesDB {
 
 		Service s = new Service(c1);
 
-		s.trigger(new ComponentAddress(Set.of(c2)), ServiceManager.start, true, TimeSeriesDB.class).returnQ.collect();
+		s.trigger(new ServiceAddress(Set.of(c2), ServiceManager.class), ServiceManager.start, true,
+				TimeSeriesDB.class).returnQ.collect();
 
 		TimeSeriesDBStub client = new TimeSeriesDBStub(s, new ComponentAddress(Set.of(c2)));
 
