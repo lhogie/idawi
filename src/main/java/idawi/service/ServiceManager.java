@@ -13,6 +13,7 @@ import idawi.Service;
 import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
 import idawi.ServiceStub;
+import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
@@ -24,19 +25,19 @@ public class ServiceManager extends Service {
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.exec(to, list, true, new OperationParameterList()).returnQ.collect().contents();
+			return (List<String>) (List) localService.trigger(to, list, true, new OperationParameterList()).returnQ.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.exec(to, has, true, s).returnQ.collect().contents().contains(true);
+			return localService.trigger(to, has, true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.exec(to, start, true, s).returnQ.collect();
+			localService.trigger(to, start, true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.exec(to, stop, true, s).returnQ.collect();
+			localService.trigger(to, stop, true, s).returnQ.collect();
 		}
 	}
 
@@ -75,6 +76,7 @@ public class ServiceManager extends Service {
 
 	@IdawiOperation
 	public Set<String> list() {
+		Cout.debugSuperVisible("LIIIIST");
 		Set<String> r = new HashSet<>();
 		component.services().forEach(s -> r.add(s.id.getName()));
 		return r;

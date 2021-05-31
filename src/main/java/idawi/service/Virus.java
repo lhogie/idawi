@@ -32,7 +32,7 @@ public class Virus extends Service {
 			if (component.lookupService(RegistryService.class).list().size() > 0) {
 				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
 				var to = new ServiceAddress(Set.of(c), Virus.class);
-				MessageList response = exec(to, new OperationID(id, null), true, null).returnQ.collect();
+				MessageList response = trigger(to, new OperationID(id, null), true, null).returnQ.collect();
 
 				// the node doesn't respond
 				if (response.isEmpty()) {

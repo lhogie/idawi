@@ -30,6 +30,6 @@ public class ExecService extends Service {
 	}
 
 	public void exec(ServiceAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
-		exec(to, new OperationID(ExecService.class, null), true, r).returnQ.forEach(returns);
+		trigger(to, new OperationID(ExecService.class, null), true, r).returnQ.forEach(returns);
 	}
 }

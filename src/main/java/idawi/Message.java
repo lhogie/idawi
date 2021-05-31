@@ -33,8 +33,13 @@ public class Message implements Externalizable {
 		this.content = content;
 	}
 
-	public void send(Component component) {
-		component.lookupService(NetworkingService.class).send(this);
+	public void send(Component fromComponent) {
+//		if (to.notYetReachedExplicitRecipients != null && to.notYetReachedExplicitRecipients.contains(fromComponent.descriptor())) {
+//			route.add(fromComponent.descriptor());
+//			fromComponent.lookupService(NetworkingService.class).messagesFromNetwork.accept(this);
+//		}
+		
+		fromComponent.lookupService(NetworkingService.class).send(this);
 	}
 
 	@Override

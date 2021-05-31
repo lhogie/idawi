@@ -29,7 +29,7 @@ public class ConnectionBencher extends Service {
 
 	public double benchLinkTo2(ComponentDescriptor peer, double timeout) {
 		var to = new ServiceAddress(Set.of(peer), Bencher.class);
-		MessageList msg = exec(to, new OperationID(id, null), true, null).returnQ.collect();
+		MessageList msg = trigger(to, new OperationID(id, null), true, null).returnQ.collect();
 		return Date.time() - msg.last().route.last().emissionDate;
 	}
 }

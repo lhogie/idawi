@@ -216,7 +216,7 @@ public class RESTService extends Service {
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
 								+ operation + " with parameters: " + stringParms);
-						List<Object> r = exec(new ServiceAddress(components, serviceID),
+						List<Object> r = trigger(new ServiceAddress(components, serviceID),
 								new OperationID(serviceID, operation), true, stringParms).returnQ.setTimeout(timeout)
 										.collect().throwAnyError().resultMessages().contents();
 
@@ -255,7 +255,7 @@ public class RESTService extends Service {
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
 		var to = new ServiceAddress(components, ServiceManager.class);
-		var res = exec(to, ServiceManager.list, true, null).returnQ;
+		var res = trigger(to, ServiceManager.list, true, null).returnQ;
 
 		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
@@ -270,7 +270,7 @@ public class RESTService extends Service {
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
 		var to = new ServiceAddress(components, serviceID);
-		var res = exec(to, Service.descriptor, true, null).returnQ;
+		var res = trigger(to, Service.descriptor, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
@@ -291,7 +291,7 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		exec(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
+		trigger(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
 				new OperationParameterList()).returnQ.setTimeout(1).collect();
 
 		w.knownComponents.addAll(lookupService(RegistryService.class).list());

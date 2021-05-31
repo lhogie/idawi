@@ -31,7 +31,7 @@ public class RegistryService extends Service {
 
 	@IdawiOperation
 	public void broadcastLocalInfo() {
-		exec(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.add, false,
+		trigger(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.add, false,
 				new OperationParameterList(component.descriptor()));
 	}
 
@@ -72,7 +72,7 @@ public class RegistryService extends Service {
 	@IdawiOperation
 	public void updateAll() {
 		var to = new ServiceAddress(new HashSet<>(name2descriptor.values()), RegistryService.class);
-		exec(to, RegistryService.local, true, null).returnQ.collect().resultMessages().contents()
+		trigger(to, RegistryService.local, true, null).returnQ.collect().resultMessages().contents()
 				.forEach(d -> add((ComponentDescriptor) d));
 	}
 

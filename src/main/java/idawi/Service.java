@@ -173,14 +173,14 @@ public class Service {
 		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
 
-		if (msg instanceof ExecMessage) {
-			var operationName = ((ExecMessage) msg).operationName;
+		if (msg instanceof TriggerMessage) {
+			var operationName = ((TriggerMessage) msg).operationName;
 			Operation operation = getOperation(operationName);
 
 			if (operation == null) {
 				err(msg, getClass() + ": can't find operation: " + operationName);
 			} else {
-				trigger((ExecMessage) msg, operation);
+				trigger((TriggerMessage) msg, operation);
 			}
 		} else {
 			MessageQueue q = getQueue(msg.to.queue);
@@ -206,7 +206,7 @@ public class Service {
 		}
 	}
 
-	private synchronized void trigger(ExecMessage msg, Operation operation) {
+	private synchronized void trigger(TriggerMessage msg, Operation operation) {
 		var sender = msg.route.get(0).component;
 		var inputQ = getQueue(msg.to.queue);
 
@@ -408,7 +408,7 @@ public class Service {
 		new Message(o, to, null).send(component);
 	}
 
-	public RemotelyRunningOperation exec(ServiceAddress target, OperationID operation, boolean expectReturn,
+	public RemotelyRunningOperation trigger(ServiceAddress target, OperationID operation, boolean expectReturn,
 			Object initialInputData) {
 		String inputQName = operation.operationName + "@" + Date.timeNs();
 		var inputQaddress = new QueueAddress(target.getNotYetReachedExplicitRecipients(), target.service,
@@ -419,7 +419,7 @@ public class Service {
 
 	public Object f(ComponentDescriptor target, Class<Service> targetService, OperationID operation, Object parms) {
 		var to = new ServiceAddress(Set.of(target), targetService, Integer.MAX_VALUE, 1d);
-		return exec(to, operation, true, parms).returnQ.collect()
+		return trigger(to, operation, true, parms).returnQ.collect()
 				.throwAnyError_Runtime().resultMessages(1).get(0).content;
 	}
 

@@ -38,7 +38,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 
-		if (!localService.exec(to, CommandsService.exec, true, backend).returnQ.forEach2(msg -> {
+		if (!localService.trigger(to, CommandsService.exec, true, backend).returnQ.forEach2(msg -> {
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {

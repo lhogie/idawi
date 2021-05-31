@@ -18,6 +18,7 @@ import idawi.RouteEntry;
 import idawi.Service;
 import idawi.map.MapService;
 import idawi.routing.RoutingService;
+import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.io.Cout;
@@ -64,7 +65,9 @@ public class NetworkingService extends Service {
 		transport = new MultiTransport();
 		transport.update(t.descriptor());
 		transport.setNewMessageConsumer(messagesFromNetwork);
-		transport.addProtocol(new LMI());
+		var lmi = new LMI();
+		lmi.peer_lmi.put(component.descriptor(), lmi);
+		transport.addProtocol(lmi);
 
 		transport.listeners.add(new NeighborhoodListener() {
 			@Override
@@ -181,7 +184,8 @@ public class NetworkingService extends Service {
 			if (s instanceof RoutingService) {
 				RoutingService router = (RoutingService) s;
 				relays.addAll(router.findRelaysToReach(protocol, msg.to.notYetReachedExplicitRecipients));
-				// Cout.debug("ROUTING: " + msg.to.peers + " -> " + relays);
+				// Cout.debug("ROUTING: " + msg.to.notYetReachedExplicitRecipients + " -> " +
+				// relays);
 			}
 		}
 

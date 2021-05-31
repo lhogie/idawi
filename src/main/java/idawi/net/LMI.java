@@ -14,6 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.service.ServiceManager;
+import toools.io.Cout;
 
 public class LMI extends TransportLayer {
 	public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -22,12 +24,12 @@ public class LMI extends TransportLayer {
 	private boolean run;
 
 	@Override
-	synchronized public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
+	synchronized public void send(Message msg, Collection<ComponentDescriptor> neighborRelays) {
 		if (!run) {
 			return;
 		}
 
-		for (ComponentDescriptor n : neighbors) {
+		for (ComponentDescriptor n : neighborRelays) {
 			LMI lmi = peer_lmi.get(n);
 
 			if (lmi != null && lmi.run) {

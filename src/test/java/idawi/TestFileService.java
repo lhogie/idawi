@@ -19,18 +19,18 @@ public class TestFileService {
 				p -> System.out.println("ok"));
 		var client = new Service(c1);
 
-		System.out.println(client.exec(new ComponentAddress(Set.of(c2)), FileService.find, true, null).returnQ.collect()
+		System.out.println(client.trigger(new ComponentAddress(Set.of(c2)), FileService.find, true, null).returnQ.collect()
 				.throwAnyError().resultMessages().contents());
 
-		client.exec(new ComponentAddress(Set.of(c2)), FileService.upload, true,
+		client.trigger(new ComponentAddress(Set.of(c2)), FileService.upload, true,
 				new OperationParameterList("test", new RegularFile("LICENSE").getContent())).returnQ.collect()
 						.throwAnyError();
 
-		System.out.println(client.exec(new ComponentAddress(Set.of(c2)), FileService.find, true,
+		System.out.println(client.trigger(new ComponentAddress(Set.of(c2)), FileService.find, true,
 				new OperationParameterList()).returnQ.collect().throwAnyError().resultMessages().contents());
 
 		System.out.println(new String(
-				(byte[]) client.exec(new ComponentAddress(Set.of(c2)), FileService.download, true, "test").returnQ
+				(byte[]) client.trigger(new ComponentAddress(Set.of(c2)), FileService.download, true, "test").returnQ
 						.collect().throwAnyError().resultMessages().first().content));
 
 		// assertNotEquals(null, pong);

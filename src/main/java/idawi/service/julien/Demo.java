@@ -35,7 +35,7 @@ public class Demo {
 						.fromCDL("name=db / udp_port=56933 / ssh=musclotte.inria.fr");
 				var server = new TimeSeriesDBStub(this, new ComponentAddress(Set.of(serverDescriptor)));
 				lookupService(DeployerService.class).deploy(Set.of(serverDescriptor), true, 15, false, null, null);
-				exec(new ServiceAddress(Set.of(serverDescriptor), ServiceManager.class), ServiceManager.start, true,
+				trigger(new ServiceAddress(Set.of(serverDescriptor), ServiceManager.class), ServiceManager.start, true,
 						TimeSeriesDB.class);
 				lookupService(RESTService.class).startHTTPServer();
 

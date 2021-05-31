@@ -4,7 +4,7 @@ import java.util.Set;
 
 public class RemotelyRunningOperation {
 
-	public final ExecMessage initialMsg = new ExecMessage();
+	public final TriggerMessage initialMsg = new TriggerMessage();
 	public MessageQueue returnQ;
 	public final Service clientService;
 
