@@ -73,13 +73,14 @@ public class RESTService extends Service {
 		restServer.createContext("/", e -> {
 			URI uri = e.getRequestURI();
 			InputStream is = e.getRequestBody();
+			var data = is.readAllBytes();
+			is.close();
 			List<String> path = path(uri.getPath());
 
 			try {
 				Map<String, String> query = query(uri.getQuery());
-				var response = processRequest(path, query, is);
+				var response = processRequest(path, query, data);
 				sendBack(HttpURLConnection.HTTP_OK, response, e);
-				is.close();
 			} catch (Throwable err) {
 //				Cout.debugSuperVisible(path + "   sending 404");
 				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
@@ -107,16 +108,16 @@ public class RESTService extends Service {
 		}
 	}
 
-	private synchronized byte[] processRequest(List<String> path, Map<String, String> query, InputStream is)
+	private synchronized byte[] processRequest(List<String> path, Map<String, String> query, byte[] data)
 			throws Throwable {
 		if (path == null) {
 			return new JavaResource(getClass(), "root.html").getByteArray();
 		} else {
-			Cout.debugSuperVisible("path: " + path);
+//			Cout.debugSuperVisible("path: " + path);
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
-				return serveAPI(path, query, is);
+				return serveAPI(path, query, data);
 			} else if (context.equals("file")) {
 				return serveFiles(path, query);
 			} else if (context.equals("favicon.ico")) {
@@ -142,7 +143,7 @@ public class RESTService extends Service {
 		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
 	}
 
-	private byte[] serveAPI(List<String> path, Map<String, String> query, InputStream is) throws Throwable {
+	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
 		Serializer serializer = new GSONSerializer<>();
 
 		if (query.containsKey("format")) {
@@ -150,11 +151,11 @@ public class RESTService extends Service {
 			serializer = name2serializer.get(format);
 
 			if (serializer == null) {
-				return ("unknow format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
+				return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
 			}
 		}
 
-		Object result = processRESTRequest(path, query, is);
+		Object result = processRESTRequest(path, query, data);
 
 		if (result == null) {
 			result = new NULL();
@@ -182,7 +183,7 @@ public class RESTService extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private Object processRESTRequest(List<String> path, Map<String, String> query, InputStream is) throws Throwable {
+	private Object processRESTRequest(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
@@ -209,8 +210,9 @@ public class RESTService extends Service {
 						var parms = new OperationParameterList(
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
 
+						if (data != null && data.length > 0)
 						// POST data is always passed as the last parameter
-						parms.add(is);
+						parms.add(data);
 
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
 								+ operation + " with parameters: " + parms);
