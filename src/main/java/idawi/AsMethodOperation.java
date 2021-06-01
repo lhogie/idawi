@@ -44,7 +44,7 @@ public class AsMethodOperation extends Operation {
 		} else {
 			Message parmMsg = in.get_blocking();
 //			Cout.debug(parmMsg.content);
-			OperationParameterList parms = OperationParameterList.toParmsList(this, parmMsg.content,
+			OperationParameterList parms = OperationParameterList.from(this, parmMsg.content,
 					method.getParameterTypes());
 //			Cout.debug(parms);
 			Object r = method.invoke(service, parms.toArray());

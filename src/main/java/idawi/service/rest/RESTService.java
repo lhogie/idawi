@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -25,7 +24,6 @@ import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
-import idawi.OperationStringParameterList;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.ServiceAddress;
@@ -73,19 +71,17 @@ public class RESTService extends Service {
 
 		restServer = HttpServer.create(new InetSocketAddress("localhost", port), 0);
 		restServer.createContext("/", e -> {
-				InputStream is = e.getRequestBody();
-				byte[] data = is.readAllBytes();
-				is.close();
-				System.out.println(data.length);
-
 			URI uri = e.getRequestURI();
+			InputStream is = e.getRequestBody();
 			List<String> path = path(uri.getPath());
+
 			try {
 				Map<String, String> query = query(uri.getQuery());
-				var response = processRequest(path, query);
+				var response = processRequest(path, query, is);
 				sendBack(HttpURLConnection.HTTP_OK, response, e);
+				is.close();
 			} catch (Throwable err) {
-				Cout.debugSuperVisible(path + "   sending 404");
+//				Cout.debugSuperVisible(path + "   sending 404");
 				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
 				err.printStackTrace();
 			}
@@ -103,19 +99,16 @@ public class RESTService extends Service {
 		try {
 			e.sendResponseHeaders(returnCode, o.length);
 			OutputStream out = e.getResponseBody();
-
-			if (e.getRequestMethod().equals("GET")) {
-				Cout.debug("sending " + o.length + "  bytes");
-				out.write(o);
-			}
-
+			Cout.debug("sending " + o.length + "  bytes");
+			out.write(o);
 			out.close();
 		} catch (IOException t) {
 			error(t);
 		}
 	}
 
-	private synchronized byte[] processRequest(List<String> path, Map<String, String> query) throws Throwable {
+	private synchronized byte[] processRequest(List<String> path, Map<String, String> query, InputStream is)
+			throws Throwable {
 		if (path == null) {
 			return new JavaResource(getClass(), "root.html").getByteArray();
 		} else {
@@ -123,24 +116,25 @@ public class RESTService extends Service {
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
-				return serveAPI(path, query);
+				return serveAPI(path, query, is);
 			} else if (context.equals("file")) {
 				return serveFiles(path, query);
-			} else if (context.equals("idaweb")) {
-				return serveIdaweb(path, query);
 			} else if (context.equals("favicon.ico")) {
 				return new JavaResource(RESTService.class, "flavicon.ico").getByteArray();
-			} else {
-				throw new IllegalStateException("unknown context: " + context);
-			}
+			} else if (context.equals("web")) {
+				return serveWeb(path, query);
+			} else
+				throw new IllegalArgumentException("unknown context: " + context);
 		}
 	}
 
-	private byte[] serveIdaweb(List<String> path, Map<String, String> query) throws Throwable {
+	private byte[] serveWeb(List<String> path, Map<String, String> query) throws Throwable {
 		if (path.isEmpty()) {
-			return new JavaResource(getClass(), "resources/index.html").getByteArray();
+			return new JavaResource(getClass(), "web/index.html").getByteArray();
 		} else {
-			return new JavaResource(getClass(), "resources/" + TextUtilities.concatene(path, "/")).getByteArray();
+			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
+			Cout.debugSuperVisible("sending " + res.getName());
+			return res.getByteArray();
 		}
 	}
 
@@ -148,7 +142,7 @@ public class RESTService extends Service {
 		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
 	}
 
-	private byte[] serveAPI(List<String> path, Map<String, String> query) throws Throwable {
+	private byte[] serveAPI(List<String> path, Map<String, String> query, InputStream is) throws Throwable {
 		Serializer serializer = new GSONSerializer<>();
 
 		if (query.containsKey("format")) {
@@ -160,7 +154,7 @@ public class RESTService extends Service {
 			}
 		}
 
-		Object result = processRESTRequest(path, query);
+		Object result = processRESTRequest(path, query, is);
 
 		if (result == null) {
 			result = new NULL();
@@ -188,7 +182,7 @@ public class RESTService extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private Object processRESTRequest(List<String> path, Map<String, String> query) throws Throwable {
+	private Object processRESTRequest(List<String> path, Map<String, String> query, InputStream is) throws Throwable {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
@@ -212,12 +206,16 @@ public class RESTService extends Service {
 					if (path.size() > 4) {
 						throw new Error("path too long! Expecting: component/service/operation");
 					} else {
-						var stringParms = new OperationStringParameterList(
+						var parms = new OperationParameterList(
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
+
+						// POST data is always passed as the last parameter
+						parms.add(is);
+
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
-								+ operation + " with parameters: " + stringParms);
+								+ operation + " with parameters: " + parms);
 						List<Object> r = trigger(new ServiceAddress(components, serviceID),
-								new OperationID(serviceID, operation), true, stringParms).returnQ.setTimeout(timeout)
+								new OperationID(serviceID, operation), true, parms).returnQ.setTimeout(timeout)
 										.collect().throwAnyError().resultMessages().contents();
 
 						if (r.size() == 1) {

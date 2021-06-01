@@ -49,7 +49,7 @@ public abstract class InInnerClassTypedOperation extends InInnerClassOperation {
 	public final void accept(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Message msg = in.get_blocking();
-		OperationParameterList parmsList = OperationParameterList.toParmsList(this, msg.content, method.getParameterTypes());
+		OperationParameterList parmsList = OperationParameterList.from(this, msg.content, method.getParameterTypes());
 		Object r = method.invoke(null, parmsList.toArray());
 
 		if (method.getReturnType() != void.class) {

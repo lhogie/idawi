@@ -76,7 +76,6 @@ public class ServiceManager extends Service {
 
 	@IdawiOperation
 	public Set<String> list() {
-		Cout.debugSuperVisible("LIIIIST");
 		Set<String> r = new HashSet<>();
 		component.services().forEach(s -> r.add(s.id.getName()));
 		return r;

@@ -11,39 +11,38 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public static OperationParameterList from(OperationStringParameterList l, Class<?>[] types) {
-		OperationParameterList r = new OperationParameterList();
-
+	private static void from(OperationParameterList l, Class<?>[] types) {
 		for (int i = 0; i < types.length; ++i) {
-			r.add(fromString(l.get(i), types[i]));
-		}
+			var from = l.get(i);
+			var to = types[i];
 
-		return r;
+			if (!to.isAssignableFrom(from.getClass())) {
+				l.set(i, convert(from, to));
+			}
+		}
 	}
 
-	private static Object fromString(String from, Class<?> to) throws IllegalArgumentException {
-		if (to == String.class) {
-			return from;
-		} else if (to == double.class || to == Double.class) {
-			return Double.valueOf(from);
+	private static Object convert(Object from, Class<?> to) throws IllegalArgumentException {
+		if (to == double.class || to == Double.class) {
+			return Double.valueOf(from.toString());
 		} else if (to == int.class || to == Integer.class) {
-			return Long.valueOf(from);
+			return Long.valueOf(from.toString());
 		} else if (to == long.class || to == Long.class) {
-			return Long.valueOf(from);
+			return Long.valueOf(from.toString());
 		} else if (to == int.class || to == Integer.class) {
-			return Integer.valueOf(from);
+			return Integer.valueOf(from.toString());
 		} else {
-			throw new IllegalArgumentException("string cannot be converted to " + to.getClass());
+			throw new IllegalArgumentException(from.getClass() + " cannot be converted to " + to);
 		}
 	}
 
-	public static OperationParameterList toParmsList(Operation operation, Object content, Class<?>[] types) {
+	public static OperationParameterList from(Operation operation, Object content, Class<?>[] types) {
 		if (content == null) {
 			return new OperationParameterList();
 		} else if (content instanceof OperationParameterList) {
-			return (OperationParameterList) content;
-		} else if (content instanceof OperationStringParameterList) {
-			return from((OperationStringParameterList) content, types);
+			var l = (OperationParameterList) content;
+			from(l, types);
+			return l;
 		} else {
 			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "
 					+ OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)
