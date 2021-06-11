@@ -23,6 +23,7 @@ import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
 import toools.thread.Threads;
@@ -429,6 +430,7 @@ public class Service {
 
 	@IdawiOperation
 	public ServiceDescriptor descriptor() {
+		Cout.debugSuperVisible(":) :)  :):)");
 		var d = new ServiceDescriptor();
 		d.name = id.getName();
 		getOperations().forEach(o -> d.operationDescriptors.add(o.descriptor()));

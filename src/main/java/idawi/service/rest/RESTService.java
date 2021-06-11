@@ -75,6 +75,7 @@ public class RESTService extends Service {
 			InputStream is = e.getRequestBody();
 			var data = is.readAllBytes();
 			is.close();
+			//Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
 
 			try {
@@ -100,7 +101,7 @@ public class RESTService extends Service {
 		try {
 			e.sendResponseHeaders(returnCode, o.length);
 			OutputStream out = e.getResponseBody();
-			Cout.debug("sending " + o.length + "  bytes");
+			//Cout.debug("sending " + o.length + "  bytes");
 			out.write(o);
 			out.close();
 		} catch (IOException t) {
@@ -124,8 +125,9 @@ public class RESTService extends Service {
 				return new JavaResource(RESTService.class, "flavicon.ico").getByteArray();
 			} else if (context.equals("web")) {
 				return serveWeb(path, query);
-			} else
+			} else {
 				throw new IllegalArgumentException("unknown context: " + context);
+			}
 		}
 	}
 
@@ -134,7 +136,7 @@ public class RESTService extends Service {
 			return new JavaResource(getClass(), "web/index.html").getByteArray();
 		} else {
 			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
-			Cout.debugSuperVisible("sending " + res.getName());
+			//Cout.debugSuperVisible("sending " + res.getName());
 			return res.getByteArray();
 		}
 	}
@@ -211,8 +213,8 @@ public class RESTService extends Service {
 								path.size() == 3 ? new String[0] : path.get(3).split(","));
 
 						if (data != null && data.length > 0)
-						// POST data is always passed as the last parameter
-						parms.add(data);
+							// POST data is always passed as the last parameter
+							parms.add(data);
 
 						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
 								+ operation + " with parameters: " + parms);
