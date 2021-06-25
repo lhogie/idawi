@@ -1,4 +1,6 @@
 package idawi;
+import java.awt.Color;
+
 import idawi.net.LMI;
 import idawi.service.DummyService;
 import toools.thread.Threads;
@@ -6,19 +8,8 @@ import toools.thread.Threads;
 public class Test {
 
 	public static void main(String[] args) throws Throwable {
-		Component a = new Component();
-		Component b = new Component();
-		LMI.connect(a, b);
-		b.lookupService(DummyService.class).registerOperation("neverReturns", (m, r) -> Threads.sleepForever());
-//		MessageList r = b.lookupService(DummyService.class).exec(new To(b,  DummyService.)).returnQ.collect().throwAnyError();
-//		System.out.println(r.timeout);
-		
-		
-		// be sure c1 got an answer
-//		assertNotEquals(null, pong);
-
-		// clean
-		Component.componentsInThisJVM.clear();
+var c = Color.decode("#bb45ac");
+System.out.println(c);
 	}
 
 }

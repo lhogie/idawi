@@ -430,7 +430,6 @@ public class Service {
 
 	@IdawiOperation
 	public ServiceDescriptor descriptor() {
-		Cout.debugSuperVisible(":) :)  :):)");
 		var d = new ServiceDescriptor();
 		d.name = id.getName();
 		getOperations().forEach(o -> d.operationDescriptors.add(o.descriptor()));

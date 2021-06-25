@@ -52,6 +52,7 @@ public class RESTService extends Service {
 		name2serializer.put("xml", new XMLSerializer<>());
 		name2serializer.put("toString", new ToStringSerializer<>());
 		name2serializer.put("error", new StrackTraceSerializer<>());
+		name2serializer.put("bytes", new ToBytesSerializer());
 	}
 
 	public RESTService(Component t) {
@@ -75,7 +76,7 @@ public class RESTService extends Service {
 			InputStream is = e.getRequestBody();
 			var data = is.readAllBytes();
 			is.close();
-			//Cout.debugSuperVisible(data.length);
+			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
 
 			try {
@@ -101,7 +102,7 @@ public class RESTService extends Service {
 		try {
 			e.sendResponseHeaders(returnCode, o.length);
 			OutputStream out = e.getResponseBody();
-			//Cout.debug("sending " + o.length + "  bytes");
+			// Cout.debug("sending " + o.length + " bytes");
 			out.write(o);
 			out.close();
 		} catch (IOException t) {
@@ -136,7 +137,7 @@ public class RESTService extends Service {
 			return new JavaResource(getClass(), "web/index.html").getByteArray();
 		} else {
 			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
-			//Cout.debugSuperVisible("sending " + res.getName());
+			// Cout.debugSuperVisible("sending " + res.getName());
 			return res.getByteArray();
 		}
 	}
@@ -148,15 +149,19 @@ public class RESTService extends Service {
 	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
 		Serializer serializer = new GSONSerializer<>();
 
-		if (query.containsKey("format")) {
-			String format = query.get("format");
-			serializer = name2serializer.get(format);
+		String format = query.remove("format");
 
-			if (serializer == null) {
-				return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
-			}
+		if (format != null) {
+			serializer = name2serializer.get(format);
 		}
 
+		if (serializer == null) {
+			return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
+		}
+
+		if (!query.isEmpty()) {
+			return ("invalid parameters: " + query.keySet()).getBytes();
+		}
 		Object result = processRESTRequest(path, query, data);
 
 		if (result == null) {

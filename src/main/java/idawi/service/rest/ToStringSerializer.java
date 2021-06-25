@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import toools.io.ser.Serializer;
+import toools.text.TextUtilities;
 
 public class ToStringSerializer<E> extends Serializer<E> {
 	@Override
@@ -18,7 +19,7 @@ public class ToStringSerializer<E> extends Serializer<E> {
 		if (o instanceof Throwable) {
 			((Throwable) o).printStackTrace(new PrintStream(out));
 		} else {
-			out.write(o.toString().getBytes());
+			out.write(TextUtilities.toString(o).getBytes());
 		}
 	}
 
