@@ -19,6 +19,7 @@ import toools.text.TextUtilities;
 public class GSONSerializer<E> extends Serializer<E> {
 	public static final GSONSerializer instance = new GSONSerializer();
 	public String msg;
+	public boolean useHolder = false;
 
 	static class ClassAdapter extends TypeAdapter<Class> {
 		@Override
@@ -57,10 +58,19 @@ public class GSONSerializer<E> extends Serializer<E> {
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
-		Holder<E> holder = new Holder<>();
-		holder.value = o;
-		holder.type = TextUtilities.getNiceClassName(o.getClass());
-		String json = gson.toJson(holder);
+
+		Object oo;
+
+		if (useHolder) {
+			Holder<E> holder = new Holder<>();
+			holder.value = o;
+			holder.type = TextUtilities.getNiceClassName(o.getClass());
+			oo = holder;
+		} else {
+			oo = o;
+		}
+
+		String json = gson.toJson(oo);
 		os.write(json.getBytes());
 	}
 
