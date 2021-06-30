@@ -85,7 +85,7 @@ public class RESTService extends Service {
 				sendBack(HttpURLConnection.HTTP_OK, response, e);
 			} catch (Throwable err) {
 //				Cout.debugSuperVisible(path + "   sending 404");
-				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
+//				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
 				err.printStackTrace();
 			}
 		});
@@ -146,29 +146,54 @@ public class RESTService extends Service {
 		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
 	}
 
+	public static class Response{
+		List<APIError> errors = new ArrayList<>();
+		List<Object> results = new ArrayList<>();
+	}
+	
 	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
+		Response r = new Response();
 		Serializer serializer = new GSONSerializer<>();
+		try {
 
-		String format = query.remove("format");
+			String format = query.remove("format");
 
-		if (format != null) {
-			serializer = name2serializer.get(format);
+			if (format != null) {
+				serializer = name2serializer.get(format);
+			}
+
+			if (serializer == null) {
+				return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
+			}
+
+			if (!query.isEmpty()) {
+				return ("invalid parameters: " + query.keySet()).getBytes();
+			}
+			
+			Object result = processRESTRequest(path, query, data);
+
+			if (result == null) {
+				result = new NULL();
+			}
+			
+			r.results.add(result);
+		}
+		catch (Throwable e) {
+			
+			APIError err = new APIError();
+			err.msg = e.getMessage();
+			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
+			err.javaStackTrace = TextUtilities.exception2string(e);
+			 r.errors.add(err);
 		}
 
-		if (serializer == null) {
-			return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
-		}
-
-		if (!query.isEmpty()) {
-			return ("invalid parameters: " + query.keySet()).getBytes();
-		}
-		Object result = processRESTRequest(path, query, data);
-
-		if (result == null) {
-			result = new NULL();
-		}
-
-		return serializer.toBytes(result);
+		return serializer.toBytes(r);
+	}
+	
+	public static class APIError implements Serializable{
+		String msg;
+		String type;
+		String javaStackTrace;
 	}
 
 	public static class NULL implements Serializable {
@@ -196,43 +221,40 @@ public class RESTService extends Service {
 		if (path == null || path.isEmpty()) {
 			return welcomePage();
 		} else {
-			Set<ComponentDescriptor> components = componentsFromURL(path.get(0));
+			Set<ComponentDescriptor> components = componentsFromURL(path.remove(0));
 
-			if (path.size() == 1) {
+			// there's nothing more
+			if (path.isEmpty()) {
 				return describeComponent(components, timeout).toArray(new ComponentDescriptor[0]);
 			} else {
-				String serviceName = path.get(1);
+				String serviceName = path.remove(0);
 				Class<? extends Service> serviceID = Clazz.findClass(serviceName);
 
 				if (serviceID == null) {
 					throw new Error("service " + serviceName + " is not known");
-				} else if (path.size() == 2) {
+				} else if (path.isEmpty()) {
 					return decribeService(components, serviceID);
 				} else {
-					String operation = path.get(2);
+					String operation = path.remove(0);
+					var parms = new OperationParameterList(path.toArray());
 
-					if (path.size() > 4) {
-						throw new Error("path too long! Expecting: component/service/operation");
-					} else {
-						var parms = new OperationParameterList(
-								path.size() == 3 ? new String[0] : path.get(3).split(","));
-
-						if (data != null && data.length > 0)
-							// POST data is always passed as the last parameter
-							parms.add(data);
-
-						System.out.println("calling operation " + components + "/" + serviceID.toString() + "/"
-								+ operation + " with parameters: " + parms);
-						List<Object> r = trigger(new ServiceAddress(components, serviceID),
-								new OperationID(serviceID, operation), true, parms).returnQ.setTimeout(timeout)
-										.collect().throwAnyError().resultMessages().contents();
-
-						if (r.size() == 1) {
-							return r.get(0);
-						} else {
-							return r;
-						}
+					if (data != null && data.length > 0) {
+						// POST data is always passed as the last parameter
+						parms.add(data);
 					}
+
+					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
+							+ " with parameters: " + parms);
+					List<Object> r = trigger(new ServiceAddress(components, serviceID),
+							new OperationID(serviceID, operation), true, parms).returnQ.setTimeout(timeout).collect()
+									.throwAnyError().resultMessages().contents();
+
+					if (r.size() == 1) {
+						return r.get(0);
+					} else {
+						return r;
+					}
+
 				}
 			}
 		}
