@@ -18,8 +18,8 @@ public class OperationParameterList extends ArrayList {
 
 	public void reassignParameters(Class<?>[] types) {
 		if (types.length != size())
-			throw new IllegalArgumentException("size mismatch: " + size() + " != " + types.length);
-		
+			throw new IllegalArgumentException("expecting " + types.length + " parameters but got " + size());
+
 		for (int i = 0; i < types.length; ++i) {
 			var from = get(i);
 			var to = types[i];
@@ -57,6 +57,10 @@ public class OperationParameterList extends ArrayList {
 	}
 
 	public static OperationParameterList from(Operation operation, Object content, Class<?>[] types) {
+		if (content == null && types.length == 0) {
+			return new OperationParameterList();
+		}
+		
 		if (content instanceof OperationParameterList) {
 			var l = (OperationParameterList) content;
 			l.reassignParameters(types);

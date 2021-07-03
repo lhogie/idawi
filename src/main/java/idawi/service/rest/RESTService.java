@@ -70,7 +70,7 @@ public class RESTService extends Service {
 			throw new IOException("REST server is already running");
 		}
 
-		restServer = HttpServer.create(new InetSocketAddress("localhost", port), 0);
+		restServer = HttpServer.create(new InetSocketAddress(port), 0);
 		restServer.createContext("/", e -> {
 			URI uri = e.getRequestURI();
 			InputStream is = e.getRequestBody();
