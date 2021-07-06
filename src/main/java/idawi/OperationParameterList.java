@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
 import toools.text.TextUtilities;
 
 public class OperationParameterList extends ArrayList {
@@ -23,8 +24,9 @@ public class OperationParameterList extends ArrayList {
 		for (int i = 0; i < types.length; ++i) {
 			var from = get(i);
 			var to = types[i];
-
+Cout.debug(from.getClass() +  " -> " + to);
 			if (!to.isAssignableFrom(from.getClass())) {
+				Cout.debug("convert");
 				set(i, convert(from, to));
 			}
 		}
@@ -34,11 +36,11 @@ public class OperationParameterList extends ArrayList {
 		if (to == double.class || to == Double.class) {
 			return Double.valueOf(from.toString());
 		} else if (to == int.class || to == Integer.class) {
-			return Long.valueOf(from.toString());
+			return Integer.valueOf(from.toString());
 		} else if (to == long.class || to == Long.class) {
 			return Long.valueOf(from.toString());
 		} else if (to == int.class || to == Integer.class) {
-			return Integer.valueOf(from.toString());
+			return Long.valueOf(from.toString());
 		} else if (LongSet.class.isAssignableFrom(to) && from instanceof String) {
 			return fill(new LongOpenHashSet(), (String) from);
 		} else if (LongList.class.isAssignableFrom(to) && from instanceof String) {

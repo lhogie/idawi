@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+import toools.io.Cout;
+
 public class AsMethodOperation extends Operation {
 	public static class OperationID {
 		public OperationID(Class<? extends Service> declaringService, String operationName) {
@@ -45,6 +47,10 @@ public class AsMethodOperation extends Operation {
 			OperationParameterList parms = OperationParameterList.from(this, parmMsg.content,
 					method.getParameterTypes());
 //			Cout.debug(parms);
+			
+			for (var e : parms) {
+				Cout.debug(e.getClass());
+			}
 			Object r = method.invoke(service, parms.toArray());
 
 			if (method.getReturnType() != void.class) {
