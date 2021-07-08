@@ -147,7 +147,7 @@ public class RESTService extends Service {
 	}
 
 	public static class Response {
-		List<APIError> errors = new ArrayList<>();
+		List<RESTError> errors = new ArrayList<>();
 		List<String> warnings = new ArrayList<>();
 		List<Object> results = new ArrayList<>();
 
@@ -163,7 +163,10 @@ public class RESTService extends Service {
 
 	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
 		Response r = new Response();
+		String only;
 		Serializer serializer = new GSONSerializer<>();
+		System.out.println("query: " +query);
+
 		try {
 
 			String format = query.remove("format");
@@ -173,7 +176,8 @@ public class RESTService extends Service {
 			}
 
 			if (serializer == null) {
-				return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
+				throw new IllegalArgumentException(
+						"unknown format: " + format + ". Available format are: " + name2serializer.keySet());
 			}
 
 			Object result = processRESTRequest(path, query, data);
@@ -183,38 +187,38 @@ public class RESTService extends Service {
 			}
 
 			r.results.add(result);
+			only = query.remove("only");
+			query.keySet().forEach(k -> r.warnings.add("unused parameter: " + k));
+
+			if (only == null) {
+				return serializer.toBytes(r);
+			} else if (only.equals("errors")) {
+				return serializer.toBytes(r.errors);
+			} else if (only.equals("warnings")) {
+				return serializer.toBytes(r.warnings);
+			} else if (only.equals("results")) {
+				return serializer.toBytes(r.results.get(0));
+			} else {
+				throw new IllegalArgumentException("unknown value for 'only': " + only
+						+ ". Available format are 'errors', 'warnings' or 'results'");
+			}
 		} catch (Throwable e) {
 
-			APIError err = new APIError();
+			RESTError err = new RESTError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
 			err.javaStackTrace = TextUtilities.exception2string(e);
 			r.errors.add(err);
-		}
-
-		String only = query.remove("only");
-		query.keySet().forEach(k -> r.warnings.add("unused parameter: " + k));
-
-		System.out.println(only);
-		if (only == null) {
 			return serializer.toBytes(r);
-		} else if (only.equals("errors")) {
-			return serializer.toBytes(r.errors);
-		} else if (only.equals("warnings")) {
-			return serializer.toBytes(r.warnings);
-		} else if (only.equals("results")) {
-			return serializer.toBytes(r.results);
-		} else {
-			throw new IllegalArgumentException(
-					"unknown value for 'only': " + only + ". Available format are 'errors', 'warnings' or 'results'");
 		}
 
 	}
 
-	public static class APIError implements Serializable {
+	public static class RESTError implements Serializable {
 		String msg;
 		String type;
 		String javaStackTrace;
+
 	}
 
 	public static class NULL implements Serializable {
