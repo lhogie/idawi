@@ -5,17 +5,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import toools.io.ser.Serializer;
+import toools.util.Conversion;
 
-public class ToBytesSerializer extends Serializer<byte[]> {
+public class ToBytesSerializer<E> extends Serializer<E> {
 
 	@Override
-	public byte[] read(InputStream is) throws IOException {
-		return is.readAllBytes();
+	public E read(InputStream is) throws IOException {
+		return (E) is.readAllBytes();
 	}
 
 	@Override
-	public void write(byte[] o, OutputStream os) throws IOException {
-		os.write(o);
+	public void write(E o, OutputStream os) throws IOException {
+		os.write((byte[]) Conversion.convert(o, byte[].class));
 	}
 
 	@Override

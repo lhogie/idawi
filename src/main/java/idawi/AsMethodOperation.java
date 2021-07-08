@@ -48,9 +48,6 @@ public class AsMethodOperation extends Operation {
 					method.getParameterTypes());
 //			Cout.debug(parms);
 			
-			for (var e : parms) {
-				Cout.debug(e.getClass());
-			}
 			Object r = method.invoke(service, parms.toArray());
 
 			if (method.getReturnType() != void.class) {

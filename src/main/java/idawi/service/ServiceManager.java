@@ -101,4 +101,6 @@ public class ServiceManager extends Service {
 	public String getFriendlyName() {
 		return "start/stop services";
 	}
+
+	
 }

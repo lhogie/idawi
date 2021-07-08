@@ -2,12 +2,9 @@ package idawi;
 
 import java.util.ArrayList;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.text.TextUtilities;
+import toools.util.Conversion;
 
 public class OperationParameterList extends ArrayList {
 	public OperationParameterList(Object... parms) {
@@ -25,34 +22,13 @@ public class OperationParameterList extends ArrayList {
 			var to = types[i];
 
 			if (!to.isAssignableFrom(from.getClass())) {
-				set(i, convert(from, to));
+				set(i, Conversion.convert(from, to));
 			}
 		}
 	}
 
-	private static Object convert(Object from, Class<?> to) throws IllegalArgumentException {
-		if (to == double.class || to == Double.class) {
-			return Double.valueOf(from.toString());
-		} else if (to == int.class || to == Integer.class) {
-			return Integer.parseInt(from.toString());
-		} else if (to == long.class || to == Long.class) {
-			return Long.parseLong(from.toString());
-		} else if (LongSet.class.isAssignableFrom(to) && from instanceof String) {
-			return fill(new LongOpenHashSet(), (String) from);
-		} else if (LongList.class.isAssignableFrom(to) && from instanceof String) {
-			return fill(new LongArrayList(), (String) from);
-		} else {
-			throw new IllegalArgumentException(from.getClass() + " cannot be converted to " + to);
-		}
-	}
 
-	private static LongCollection fill(LongCollection c, String from) {
-		for (var i : ((String) from).split(",")) {
-			c.add(Long.parseLong(i));
-		}
 
-		return c;
-	}
 
 	public static OperationParameterList from(Operation operation, Object content, Class<?>[] types) {
 		if (content == null && types.length == 0) {

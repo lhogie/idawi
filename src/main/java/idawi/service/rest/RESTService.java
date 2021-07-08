@@ -146,11 +146,21 @@ public class RESTService extends Service {
 		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
 	}
 
-	public static class Response{
+	public static class Response {
 		List<APIError> errors = new ArrayList<>();
+		List<String> warnings = new ArrayList<>();
 		List<Object> results = new ArrayList<>();
+
+		@Override
+		public String toString() {
+			Map<String, List> m = new HashMap<>();
+			m.put("errors", errors);
+			m.put("warnings", warnings);
+			m.put("results", results);
+			return m.toString();
+		}
 	}
-	
+
 	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
 		Response r = new Response();
 		Serializer serializer = new GSONSerializer<>();
@@ -166,31 +176,42 @@ public class RESTService extends Service {
 				return ("unknown format: " + format + ". Available format are: " + name2serializer.keySet()).getBytes();
 			}
 
-			if (!query.isEmpty()) {
-				return ("invalid parameters: " + query.keySet()).getBytes();
-			}
-			
 			Object result = processRESTRequest(path, query, data);
 
 			if (result == null) {
 				result = new NULL();
 			}
-			
+
 			r.results.add(result);
-		}
-		catch (Throwable e) {
-			
+		} catch (Throwable e) {
+
 			APIError err = new APIError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
 			err.javaStackTrace = TextUtilities.exception2string(e);
-			 r.errors.add(err);
+			r.errors.add(err);
 		}
 
-		return serializer.toBytes(r);
+		String only = query.remove("only");
+		query.keySet().forEach(k -> r.warnings.add("unused parameter: " + k));
+
+		System.out.println(only);
+		if (only == null) {
+			return serializer.toBytes(r);
+		} else if (only.equals("errors")) {
+			return serializer.toBytes(r.errors);
+		} else if (only.equals("warnings")) {
+			return serializer.toBytes(r.warnings);
+		} else if (only.equals("results")) {
+			return serializer.toBytes(r.results);
+		} else {
+			throw new IllegalArgumentException(
+					"unknown value for 'only': " + only + ". Available format are 'errors', 'warnings' or 'results'");
+		}
+
 	}
-	
-	public static class APIError implements Serializable{
+
+	public static class APIError implements Serializable {
 		String msg;
 		String type;
 		String javaStackTrace;
