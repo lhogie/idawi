@@ -66,6 +66,7 @@ public class RESTService extends Service {
 	}
 
 	public HttpServer startHTTPServer(int port) throws IOException {
+		Cout.debugSuperVisible("NEW VERSION");
 		if (restServer != null) {
 			throw new IOException("REST server is already running");
 		}
@@ -165,7 +166,6 @@ public class RESTService extends Service {
 		Response r = new Response();
 		String only;
 		Serializer serializer = new GSONSerializer<>();
-		System.out.println("query: " +query);
 
 		try {
 
@@ -215,10 +215,9 @@ public class RESTService extends Service {
 	}
 
 	public static class RESTError implements Serializable {
-		String msg;
-		String type;
-		String javaStackTrace;
-
+		public String msg;
+		public String type;
+		public String javaStackTrace;
 	}
 
 	public static class NULL implements Serializable {
