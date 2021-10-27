@@ -66,7 +66,7 @@ public class RESTService extends Service {
 	}
 
 	public HttpServer startHTTPServer(int port) throws IOException {
-		Cout.debugSuperVisible("NEW VERSION");
+
 		if (restServer != null) {
 			throw new IOException("REST server is already running");
 		}
@@ -269,9 +269,8 @@ public class RESTService extends Service {
 
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
-					List<Object> r = trigger(new ServiceAddress(components, serviceID),
-							new OperationID(serviceID, operation), true, parms).returnQ.setTimeout(timeout).collect()
-									.throwAnyError().resultMessages().contents();
+					List<Object> r = exec(new ServiceAddress(components, serviceID),
+							new OperationID(serviceID, operation), timeout, Integer.MAX_VALUE, parms);
 
 					if (r.size() == 1) {
 						return r.get(0);
@@ -308,7 +307,7 @@ public class RESTService extends Service {
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
 		var to = new ServiceAddress(components, ServiceManager.class);
-		var res = trigger(to, ServiceManager.list, true, null).returnQ;
+		var res = start(to, ServiceManager.list, true, null).returnQ;
 
 		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
@@ -323,7 +322,7 @@ public class RESTService extends Service {
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
 		var to = new ServiceAddress(components, serviceID);
-		var res = trigger(to, Service.descriptor, true, null).returnQ;
+		var res = start(to, Service.descriptor, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
@@ -344,7 +343,7 @@ public class RESTService extends Service {
 		// asks all components to send their descriptor, which will be catched by the
 		// networking service
 		// that will pass it to the registry
-		trigger(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
+		start(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
 				new OperationParameterList()).returnQ.setTimeout(1).collect();
 
 		w.knownComponents.addAll(lookupService(RegistryService.class).list());

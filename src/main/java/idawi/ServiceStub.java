@@ -24,19 +24,19 @@ public class ServiceStub {
 	}
 
 	public ServiceDescriptor descriptor() throws Throwable {
-		return (ServiceDescriptor) localService.trigger(to, Service.descriptor, true, null).returnQ.get();
+		return (ServiceDescriptor) localService.start(to, Service.descriptor, true, null).returnQ.get();
 	}
 
 	public long nbMessagesReceived() throws Throwable {
-		return (Long) localService.trigger(to, Service.nbMessagesReceived, true, null).returnQ.get();
+		return (Long) localService.start(to, Service.nbMessagesReceived, true, null).returnQ.get();
 	}
 
 	public Int2LongMap second2nbMessages() throws Throwable {
-		return (Int2LongMap) localService.trigger(to, Service.sec2nbMessages, true, null).returnQ.get();
+		return (Int2LongMap) localService.start(to, Service.sec2nbMessages, true, null).returnQ.get();
 
 	}
 
 	public Set<String> listOperationNames() throws Throwable {
-		return (Set<String>) localService.trigger(to, Service.listOperationNames, true, null).returnQ.get();
+		return (Set<String>) localService.start(to, Service.listOperationNames, true, null).returnQ.get();
 	}
 }

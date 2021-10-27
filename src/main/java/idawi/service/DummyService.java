@@ -61,7 +61,7 @@ public class DummyService extends Service {
 
 		Service s = new Service(a);
 		var to = new ServiceAddress(Set.of(b.descriptor()), DummyService.class);
-		RemotelyRunningOperation stub = s.trigger(to, DummyService.stringLength, true, DummyService.grep);
+		RemotelyRunningOperation stub = s.start(to, DummyService.stringLength, true, DummyService.grep);
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);

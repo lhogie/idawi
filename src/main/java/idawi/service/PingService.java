@@ -36,7 +36,7 @@ public class PingService extends Service {
 	}
 
 	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.trigger(new ServiceAddress(targets, PingService.class), ping, true, null).returnQ;
+		return from.start(new ServiceAddress(targets, PingService.class), ping, true, null).returnQ;
 	}
 
 	public static MessageQueue ping(Service from) {
@@ -73,7 +73,7 @@ public class PingService extends Service {
 
 	public static List<Route> traceroute(Service from, Set<ComponentDescriptor> targets, double timeout)
 			throws Throwable {
-		return (List<Route>) (List<?>) from.trigger(new ServiceAddress(targets, PingService.class), traceroute, true, null).returnQ
+		return (List<Route>) (List<?>) from.start(new ServiceAddress(targets, PingService.class), traceroute, true, null).returnQ
 				.setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream()
 				.collect(Collectors.toList());
 	}

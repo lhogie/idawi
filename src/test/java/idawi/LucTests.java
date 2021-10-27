@@ -79,12 +79,12 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		Service client = new Service(c1);
-		assertEquals(5, (Integer) client.trigger(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
+		assertEquals(5, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
 				DummyService.stringLength, true, "salut").returnQ.get());
-		assertEquals(53, (Integer) client.trigger(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
+		assertEquals(53, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
 				DummyService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
 		assertEquals(7,
-				(Integer) client.trigger(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
+				(Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
 						DummyService.countFromAtoB, true, new DummyService.Range(0, 13)).returnQ.collect()
 								.resultMessages(13).get(7).content);
 
@@ -102,7 +102,7 @@ public class LucTests {
 		Service client = new Service(root);
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentDescriptor first = client.trigger(new ServiceAddress(ss, DummyService.class), DummyService.waiting,
+		ComponentDescriptor first = client.start(new ServiceAddress(ss, DummyService.class), DummyService.waiting,
 				true, new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
 						.source().component;
 		System.out.println(first);
@@ -161,7 +161,7 @@ public class LucTests {
 		Component c2 = new Component("name=c2");
 		LMI.connect(c1, c2);
 		Service client = c1.lookupService(DummyService.class);
-		MessageList returns = client.trigger(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
+		MessageList returns = client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
 				DummyService.stringLength, true, "hello").returnQ.collect();
 		System.out.println(returns);
 		int len = (Integer) returns.resultMessages(1).first().content;

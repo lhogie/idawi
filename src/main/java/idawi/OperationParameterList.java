@@ -2,7 +2,6 @@ package idawi;
 
 import java.util.ArrayList;
 
-import it.unimi.dsi.fastutil.longs.LongCollection;
 import toools.text.TextUtilities;
 import toools.util.Conversion;
 
@@ -13,9 +12,9 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public void reassignParameters(Class<?>[] types) {
+	public void convertTo(Class<?>[] types) {
 		if (types.length != size())
-			throw new IllegalArgumentException("expecting " + types.length + " parameters but got " + size());
+			throw new IllegalArgumentException("expecting types " + TextUtilities.toString(types) + " parameters but got " + TextUtilities.toString(this));
 
 		for (int i = 0; i < types.length; ++i) {
 			var from = get(i);
@@ -27,9 +26,6 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-
-
-
 	public static OperationParameterList from(Operation operation, Object content, Class<?>[] types) {
 		if (content == null && types.length == 0) {
 			return new OperationParameterList();
@@ -37,7 +33,7 @@ public class OperationParameterList extends ArrayList {
 
 		if (content instanceof OperationParameterList) {
 			var l = (OperationParameterList) content;
-			l.reassignParameters(types);
+			l.convertTo(types);
 			return l;
 		} else {
 			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "
@@ -45,4 +41,5 @@ public class OperationParameterList extends ArrayList {
 					+ " of " + content.getClass());
 		}
 	}
+
 }

@@ -102,7 +102,7 @@ public class DeployerService extends Service {
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
 		var to = new ServiceAddress(toDeploy, DeployerService.class);
-		trigger(to, new OperationID(DeployerService.class, "d3"), true, deploymentPlan).returnQ.collect();
+		start(to, new OperationID(DeployerService.class, "d3"), true, deploymentPlan).returnQ.collect();
 	}
 
 	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
@@ -113,7 +113,10 @@ public class DeployerService extends Service {
 		List<Component> localThings = new ArrayList<>();
 		deployInThisJVM(inThisJVM, suicideWhenParentDie, okThing -> {
 			localThings.add(okThing);
-			peerOk.accept(okThing.descriptor());
+
+			if (peerOk != null) {
+				peerOk.accept(okThing.descriptor());
+			}
 		});
 
 		Set<ComponentDescriptor> remotePeers = toools.collections.Collections.difference(peers, inThisJVM);

@@ -65,7 +65,7 @@ public class Bencher extends Service {
 		var to = new ServiceAddress(peers, Bencher.class);
 		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
-		trigger(to, new OperationID(id, null), true, parms).returnQ.forEach(r -> {
+		start(to, new OperationID(id, null), true, parms).returnQ.forEach(r -> {
 			if (r.content instanceof String) {
 				msg.accept(r.route.source().component, (String) r.content);
 			} else if (r.content instanceof Results) {

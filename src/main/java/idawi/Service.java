@@ -19,11 +19,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import idawi.AsMethodOperation.OperationID;
-import idawi.net.NetworkingService;
 import idawi.service.ErrorLog;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.reflect.Clazz;
 import toools.thread.Threads;
@@ -400,7 +398,6 @@ public class Service {
 		return new QueueAddress(c, operation);
 	}
 
-
 	protected final OperationParameterList parms(Object... parms) {
 		return new OperationParameterList(parms);
 	}
@@ -409,19 +406,21 @@ public class Service {
 		new Message(o, to, null).send(component);
 	}
 
-	public RemotelyRunningOperation trigger(ServiceAddress target, OperationID operation, boolean expectReturn,
+	public RemotelyRunningOperation start(ServiceAddress target, OperationID operation, boolean expectReturn,
 			Object initialInputData) {
 		String inputQName = operation.operationName + "@" + Date.timeNs();
-		var inputQaddress = new QueueAddress(target.getNotYetReachedExplicitRecipients(), target.service,
-				inputQName, target.getMaxDistance(), target.getForwardProbability());
-		return new RemotelyRunningOperation(this, inputQaddress, operation.operationName, expectReturn, initialInputData);
+		var inputQaddress = new QueueAddress(target.getNotYetReachedExplicitRecipients(), target.service, inputQName,
+				target.getMaxDistance(), target.getForwardProbability());
+		return new RemotelyRunningOperation(this, inputQaddress, operation.operationName, expectReturn,
+				initialInputData);
 	}
 
 
-	public Object f(ComponentDescriptor target, Class<Service> targetService, OperationID operation, Object parms) {
-		var to = new ServiceAddress(Set.of(target), targetService, Integer.MAX_VALUE, 1d);
-		return trigger(to, operation, true, parms).returnQ.collect()
-				.throwAnyError_Runtime().resultMessages(1).get(0).content;
+
+	public List<Object> exec(ServiceAddress target, OperationID operation, double timeout, int nbResults,
+			Object... parms) {
+		return start(target, operation, true, new OperationParameterList(parms)).returnQ.setTimeout(timeout).collect().throwAnyError_Runtime()
+				.resultMessages(nbResults).contents();
 	}
 
 	public static OperationID broadcast;

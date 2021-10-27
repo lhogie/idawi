@@ -13,7 +13,6 @@ import idawi.Service;
 import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
 import idawi.ServiceStub;
-import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
@@ -25,19 +24,20 @@ public class ServiceManager extends Service {
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.trigger(to, list, true, new OperationParameterList()).returnQ.collect().contents();
+			return (List<String>) (List) localService.start(to, list, true, new OperationParameterList()).returnQ
+					.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.trigger(to, has, true, s).returnQ.collect().contents().contains(true);
+			return localService.start(to, has, true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.trigger(to, start, true, s).returnQ.collect();
+			localService.start(to, start, true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.trigger(to, stop, true, s).returnQ.collect();
+			localService.start(to, stop, true, s).returnQ.collect();
 		}
 	}
 
@@ -55,12 +55,11 @@ public class ServiceManager extends Service {
 
 		var constructor = Clazz.getConstructor(serviceID, Component.class);
 
-		if (constructor == null) {
+		if (constructor == null)
 			throw new IllegalStateException(
 					serviceID + " does not have constructor (" + Component.class.getName() + ")");
-		}
 
-		Service s = Clazz.makeInstance(constructor, component);
+		Service s = Clazz.makeInstance(constructor, this.component);
 		return s.descriptor();
 	}
 
@@ -102,5 +101,4 @@ public class ServiceManager extends Service {
 		return "start/stop services";
 	}
 
-	
 }

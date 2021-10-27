@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 
 import toools.io.Cout;
+import toools.text.TextUtilities;
 
 public class AsMethodOperation extends Operation {
 	public static class OperationID {
@@ -55,6 +56,10 @@ public class AsMethodOperation extends Operation {
 			}
 		}
 	}
+	
+
+
+
 
 	public boolean isStandardForm() {
 		var parms = method.getParameterTypes();

@@ -106,7 +106,7 @@ public class ExternalCommandsService extends Service {
 
 	public static void exec(Service service, ComponentDescriptor b, InputStream in, OutputStream out, String... cmdLine)
 			throws IOException {
-		RemotelyRunningOperation s = service.trigger(new ServiceAddress(Set.of(b), ExternalCommandsService.class),
+		RemotelyRunningOperation s = service.start(new ServiceAddress(Set.of(b), ExternalCommandsService.class),
 				ExternalCommandsService.exec, true, cmdLine);
 		boolean eofIN = false;
 

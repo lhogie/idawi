@@ -60,7 +60,7 @@ public class FileService2 extends Service {
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
-		trigger(new ServiceAddress(Set.of(target), FileService2.class), FileService2.uploadFileAsOneSingleMessage, true,
+		start(new ServiceAddress(Set.of(target), FileService2.class), FileService2.uploadFileAsOneSingleMessage, true,
 				parms(pathOnTarget, localFile.getContent()));
 	}
 

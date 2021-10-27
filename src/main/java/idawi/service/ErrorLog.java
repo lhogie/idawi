@@ -30,7 +30,7 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		trigger(new ServiceAddress(), registerError, false, error);
+		start(new ServiceAddress(), registerError, false, error);
 	}
 
 	public void report(String msg) {

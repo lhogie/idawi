@@ -64,7 +64,7 @@ public class Demo4_deploy_local_peers {
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
 		var to = new ServiceAddress(Set.of(last.descriptor()), DummyService.class, Integer.MAX_VALUE, 1d);
-		first.lookupService(NetworkingService.class).trigger(to, DummyService.op, true, "hello!");
+		first.lookupService(NetworkingService.class).start(to, DummyService.op, true, "hello!");
 		s.wait.get_blocking();
 		System.out.println("completed");
 		Component.stopPlatformThreads();
