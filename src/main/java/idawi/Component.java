@@ -137,4 +137,8 @@ public class Component {
 		s.shutdown();
 		services.remove(s.id);
 	}
+
+	public ComponentAddress getAddress() {
+		return new ComponentAddress(Set.of(descriptor));
+	}
 }

@@ -100,6 +100,13 @@ public class DummyService extends Service {
 		send(s.length(), msg.requester);
 	}
 
+	public static OperationID stringLength_parameterized;
+
+	@IdawiOperation
+	public int stringLength_parameterized(String s) {
+		return s.length();
+	}
+
 	public static OperationID countFrom1toN;
 
 	@IdawiOperation
@@ -148,6 +155,10 @@ public class DummyService extends Service {
 			reply(msg, i);
 			reply(msg, new ProgressRatio(target, i));
 		}
+	}
+
+	public ServiceAddress getAddress() {
+		return new ServiceAddress(component.getAddress(), id);
 	}
 
 }
