@@ -23,7 +23,7 @@ Target applications for *Idawi* include distributed computing, High Performance 
 Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
 
 Here is an example code of two components interacting:
-```java=
+```java
 // creates two components
 var c1 = new Component();
 var c2 = new Component();
