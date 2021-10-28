@@ -22,36 +22,29 @@ Target applications for *Idawi* include distributed computing, High Performance 
 
 Contact: [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
 
+Here is an example code of two components interacting:
 ```java=
-// prints out the Java version
-System.out.println("You are using JDK " + System.getProperty("java.version"));
+// creates two components
+var c1 = new Component();
+var c2 = new Component();
 
-// creates a *local* peer that will drive the deployment
-Component t = new Component(ComponentDescriptor.fromCDL("name=parent"));
+// prints the list of builtin services in c2
+c1.services().forEach(s -> System.out.println(s));
 
-// describes the child peer that will be deployed to
-ComponentDescriptor child = new ComponentDescriptor();
-InetAddress childHost = InetAddress.getByName(args[0]);
-child.inetAddresses.add(childHost);
-child.friendlyName = childHost.getHostName();
-child.sshParameters.hostname = childHost.getHostName();
+// among them, picks up the dummy service, which is there only for demo and test purposes
+var dummyService = c2.lookupService(DummyService.class);
 
-// deploy
-t.lookupService(DeployerService.class).deploy(Set.of(child), true, 10000, true,
-		feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+// and print the operations exposed by it
+System.out.println(dummyService.listOperationNames());
 
-// at this step the child is running on the remote host. We can interact with
-// it.
-long pingTime = System.currentTimeMillis();
-Message pong = PingService.ping(t.lookupService(PingService.class), child, 1000);
-
-if (pong == null) {
-	System.err.println("ping timeout");
-} else {
-	long pongDuration = System.currentTimeMillis() - pingTime;
-	System.out.println("pong received after " + pongDuration + "ms");
-}
-
+// creates a new service in c1 that asks c2 to compute something
+new Service(c1) {
+	public void run() {
+		// executes an operation (exposed by DummyService) which computes the length of a given string
+		var l = exec(dummyService.getAddress(), DummyService.stringLength_parameterized, 1, 1, "Hello Idawi!");
+		System.out.println(l);
+	}
+}.run();
 ```
 
 
