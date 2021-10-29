@@ -68,7 +68,7 @@ public class MessageQueue extends Q<Message> {
 
 	// sends a message and waits for returns, until EOT or the returnsHandler asks
 	// to stop waiting
-	// incoming messages are demultiplxed according to their role
+	// incoming messages are demultiplexed according to their role
 	public boolean forEach(Function<Message, SUFFICIENCY> resultHandler, Function<Message, SUFFICIENCY> errorHandler,
 			Function<Message, SUFFICIENCY> progressHandler, Function<Message, SUFFICIENCY> completionHandler) {
 		return forEach(r -> {

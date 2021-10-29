@@ -100,10 +100,10 @@ public class DummyService extends Service {
 		send(s.length(), msg.requester);
 	}
 
-	public static OperationID stringLength_parameterized;
+	public static OperationID stringLength2;
 
 	@IdawiOperation
-	public int stringLength_parameterized(String s) {
+	public int stringLength2(String s) {
 		return s.length();
 	}
 

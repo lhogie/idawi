@@ -43,7 +43,7 @@ import toools.thread.Threads;
 public class DeployerService extends Service {
 	List<ComponentDescriptor> failed = new ArrayList<>();
 
-	String remoteClassDir = Service.class.getPackageName() + ".classpath";
+	static String remoteClassDir = Service.class.getPackageName() + ".classpath";
 
 	public static class DeploymentRequest implements Serializable {
 		public Collection<ComponentDescriptor> peers;
@@ -420,7 +420,7 @@ public class DeployerService extends Service {
 		return null;
 	}
 
-	public Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes, Consumer<Object> feedback) {
+	public static Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes, Consumer<Object> feedback) {
 
 		if (nodes.size() == 1) {
 			Set<Set<ComponentDescriptor>> r = new HashSet<>();

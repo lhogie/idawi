@@ -260,7 +260,7 @@ public class RESTService extends Service {
 					return decribeService(components, serviceID);
 				} else {
 					String operation = path.remove(0);
-					var parms = new OperationParameterList(path.toArray());
+					var parms = new OperationParameterList();
 
 					if (data != null && data.length > 0) {
 						// POST data is always passed as the last parameter
@@ -269,8 +269,10 @@ public class RESTService extends Service {
 
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
-					List<Object> r = exec(new ServiceAddress(components, serviceID),
-							new OperationID(serviceID, operation), timeout, Integer.MAX_VALUE, parms);
+					var to = new ServiceAddress(components, serviceID);
+					var op = new OperationID(serviceID, operation);
+					List<Object> r = start(to, op, 
+							true, parms).returnQ.collect().throwAnyError_Runtime().contents();
 
 					if (r.size() == 1) {
 						return r.get(0);
