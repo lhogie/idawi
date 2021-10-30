@@ -1,4 +1,4 @@
-*Idawi* is a Java middleware for research in distributing computing, algorithimcs, HPC, IOT, fog/edge computing, IA, etc. It is developed at the
+*Idawi* is a Java middleware for Research in distributing computing, and it application fields (HPC, IOT, fog/edge computing, IA, etc). It is developed at the
 [Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
 a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
 
