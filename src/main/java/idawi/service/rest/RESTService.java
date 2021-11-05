@@ -243,7 +243,7 @@ public class RESTService extends Service {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
-			return welcomePage();
+			return component.descriptor();
 		} else {
 			Set<ComponentDescriptor> components = componentsFromURL(path.remove(0));
 
@@ -333,34 +333,8 @@ public class RESTService extends Service {
 		return descriptors;
 	}
 
-	public static class Welcome {
-		String localComponent;
-		Set<ComponentDescriptor> knownComponents = new HashSet<>();
-	}
 
-	private Welcome welcomePage() throws Throwable {
-		Welcome w = new Welcome();
-		w.localComponent = component.friendlyName;
 
-		// asks all components to send their descriptor, which will be catched by the
-		// networking service
-		// that will pass it to the registry
-		start(new ServiceAddress((Set<ComponentDescriptor>) null, RegistryService.class), RegistryService.local, true,
-				new OperationParameterList()).returnQ.setTimeout(1).collect();
-
-		w.knownComponents.addAll(lookupService(RegistryService.class).list());
-
-		var i = w.knownComponents.iterator();
-
-		while (i.hasNext()) {
-			var c = i.next();
-			if (Math.random() < 0.5) {
-				Cout.debug("remove " + c.friendlyName);
-				i.remove();
-			}
-		}
-		return w;
-	}
 
 	private Map<String, String> query(String s) {
 		Map<String, String> query = new HashMap<>();
@@ -379,6 +353,8 @@ public class RESTService extends Service {
 
 		return query;
 	}
+
+	public static OperationID stopHTTPServer;
 
 	@IdawiOperation
 	public void stopHTTPServer() throws IOException {

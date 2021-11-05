@@ -5,6 +5,7 @@ import java.util.TreeSet;
 
 public class ServiceDescriptor implements Descriptor {
 	public String name;
+	public String description;
 	public Set<OperationDescriptor> operationDescriptors = new TreeSet<>();
 	public long nbMessagesReceived = 0;
 

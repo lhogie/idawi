@@ -68,6 +68,10 @@ public class Service {
 		return second2nbMessages;
 	}
 
+	public String getDescription() {
+		return null;
+	}
+	
 	public void reply(Message msg, Object r) {
 		send(r, msg.requester);
 	}
@@ -431,6 +435,7 @@ public class Service {
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();
+		d.description = getDescription();
 		getOperations().forEach(o -> d.operationDescriptors.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;
 		return d;

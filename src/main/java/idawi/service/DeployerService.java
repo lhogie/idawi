@@ -43,7 +43,7 @@ import toools.thread.Threads;
 public class DeployerService extends Service {
 	List<ComponentDescriptor> failed = new ArrayList<>();
 
-	static String remoteClassDir = Service.class.getPackageName() + ".classpath";
+	private static String remoteClassDir = Service.class.getPackageName() + ".classpath/";
 
 	public static class DeploymentRequest implements Serializable {
 		public Collection<ComponentDescriptor> peers;
@@ -65,11 +65,8 @@ public class DeployerService extends Service {
 	public DeployerService(Component peer) {
 		super(peer);
 
-		if (remoteClassDir.contains("/")) {
-			throw new IllegalStateException();
-		}
-
-		remoteClassDir += "/";
+ 		if (!remoteClassDir.endsWith("/")) 
+			throw new IllegalStateException("class dir should end with a '/': " + remoteClassDir);
 
 		// receives deployment requests from other peers
 		registerOperation("deploy", in -> {
