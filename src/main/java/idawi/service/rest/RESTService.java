@@ -203,7 +203,6 @@ public class RESTService extends Service {
 						+ ". Available format are 'errors', 'warnings' or 'results'");
 			}
 		} catch (Throwable e) {
-
 			RESTError err = new RESTError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
@@ -261,6 +260,7 @@ public class RESTService extends Service {
 				} else {
 					String operation = path.remove(0);
 					var parms = new OperationParameterList();
+					parms.addAll(path);
 
 					if (data != null && data.length > 0) {
 						// POST data is always passed as the last parameter
