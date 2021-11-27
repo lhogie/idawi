@@ -1,40 +1,41 @@
 package idawi;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import toools.reflect.Clazz;
 
-public class ServiceAddress extends ComponentAddress {
+public class ServiceAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
-
+	public ComponentAddress componentAddress;
 	public Class<? extends Service> service;
 
 	public ServiceAddress() {
 
 	}
 
-	public ServiceAddress(Set<ComponentDescriptor> peers, Class<? extends Service> sid, int maxDistance,
-			double forwardProbability) {
-		super(peers, maxDistance, forwardProbability);
+	public ServiceAddress(ComponentAddress ca, Class<? extends Service> sid) {
+		this.componentAddress = ca;
 		this.service = sid;
 	}
 
-	public ServiceAddress(ComponentAddress components, Class<? extends Service> sid) {
-		this(components.notYetReachedExplicitRecipients, sid, components.coverage, components.forwardProbability);
+	public QueueAddress q(String name) {
+		return new QueueAddress(this, name);
+	}
+	
+	public OperationAddress o(String name) {
+		return new OperationAddress(this, name);
 	}
 
-	public ServiceAddress(Set<ComponentDescriptor> peers, Class<? extends Service> sid) {
-		this(peers, sid, Integer.MAX_VALUE, 1);
+	public OperationAddress o(OperationID o) {
+		return o(o.operationName);
 	}
 
-	public static ServiceAddress to(Set<ComponentDescriptor> peers, Class<? extends Service> sid) {
-		return new ServiceAddress(peers, sid);
-	}
-
+	
 	@Override
 	public String toString() {
 		return super.toString() + "->" + Clazz.classNameWithoutPackage(service.getName());
@@ -56,13 +57,13 @@ public class ServiceAddress extends ComponentAddress {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		out.writeObject(componentAddress);
 		out.writeObject(service);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
+		componentAddress = (ComponentAddress) in.readObject();
 		service = (Class) in.readObject();
 	}
 

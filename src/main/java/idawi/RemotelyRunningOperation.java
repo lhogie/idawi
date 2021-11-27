@@ -1,31 +1,30 @@
 package idawi;
 
-import java.util.Set;
-
 public class RemotelyRunningOperation {
 
 	public final TriggerMessage initialMsg = new TriggerMessage();
 	public MessageQueue returnQ;
 	public final Service clientService;
 
-	public RemotelyRunningOperation(Service client, QueueAddress to, String operationName, boolean expectReturn,
+	public RemotelyRunningOperation(Service clientService, QueueAddress to, String operationName, boolean expectReturn,
 			Object initialInputData) {
-		this.clientService = client;
+		this.clientService = clientService;
 		this.initialMsg.operationName = operationName;
 		this.initialMsg.to = to;
 		this.initialMsg.content = initialInputData;
 
 		if (expectReturn) {
-			this.returnQ = client.createQueue("q" + client.returnQueueID.getAndIncrement(),
-					initialMsg.to.getNotYetReachedExplicitRecipients());
-			this.initialMsg.requester = QueueAddress.to(Set.of(client.component.descriptor()), client.id, returnQ.name);
+			this.returnQ = clientService.createQueue("returnQ-" + clientService.returnQueueID.getAndIncrement(),
+					initialMsg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients());
+			this.initialMsg.replyTo = new ComponentAddress(clientService.component.descriptor()).s(clientService.id)
+					.q(returnQ.name);
 		}
 
-		initialMsg.send(client.component);
+		initialMsg.send(clientService.component);
 	}
 
 	public void send(Object content) {
-		var msg = new Message(content, initialMsg.requester, initialMsg.requester);
+		var msg = new Message(content, initialMsg.replyTo, initialMsg.replyTo);
 		msg.send(clientService.component);
 	}
 

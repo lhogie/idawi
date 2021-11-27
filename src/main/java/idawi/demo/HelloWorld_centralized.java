@@ -1,13 +1,12 @@
 package idawi.demo;
 
 import java.net.UnknownHostException;
-import java.util.Set;
 
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.QueueAddress;
 
 public class HelloWorld_centralized {
 	public static void main(String[] args) throws UnknownHostException {
@@ -21,12 +20,11 @@ public class HelloWorld_centralized {
 
 			new Service(node) {
 				{
-					newThread_loop_periodic(1000, () -> node.lookupService(RegistryService.class).list().forEach(peer -> {
-						QueueAddress to = new QueueAddress();
-						to.notYetReachedExplicitRecipients = Set.of(peer);
-						to.service = id;
-						send("Hello World!", to);
-					}));
+					newThread_loop_periodic(1000,
+							() -> node.lookupService(RegistryService.class).list().forEach(peer -> {
+								var to = new ComponentAddress(peer).s(id).q(getFriendlyName());
+								send("Hello World!", to);
+							}));
 
 					registerOperation(null, (msg, results) -> System.out.println(node.descriptor().friendlyName
 							+ " just received : " + msg.content + " from " + msg.route.source()));

@@ -17,7 +17,7 @@ public class Message implements Externalizable {
 	public Route route = new Route();
 	Route suggestedRoute;
 	public QueueAddress to;
-	public QueueAddress requester;
+	public QueueAddress replyTo;
 	public Object content;
 	public double receptionDate;
 	public double creationDate = Date.time();
@@ -29,7 +29,7 @@ public class Message implements Externalizable {
 
 	public Message(Object content, QueueAddress to, QueueAddress replyTo) {
 		this.to = to;
-		this.requester = replyTo;
+		this.replyTo = replyTo;
 		this.content = content;
 	}
 
@@ -59,7 +59,7 @@ public class Message implements Externalizable {
 	}
 
 	public double expirationDate() {
-		return creationDate + to.getValidityDuration();
+		return creationDate + to.serviceAddress.componentAddress.getValidityDuration();
 	}
 
 	public double remainingTime() {
@@ -74,8 +74,8 @@ public class Message implements Externalizable {
 	public String toString() {
 		String s = "msg " + ID + ", route:" + route + " to:" + to;
 
-		if (requester != null) {
-			s += ", return:" + requester;
+		if (replyTo != null) {
+			s += ", return:" + replyTo;
 		}
 
 		s += ", content: " + TextUtilities.toString(content);
@@ -88,7 +88,7 @@ public class Message implements Externalizable {
 		out.writeObject(route);
 		out.writeObject(suggestedRoute);
 		out.writeObject(to);
-		out.writeObject(requester);
+		out.writeObject(replyTo);
 		out.writeObject(content);
 		out.writeDouble(creationDate);
 		out.writeBoolean(dropIfRecipientQueueIsFull);
@@ -101,7 +101,7 @@ public class Message implements Externalizable {
 		route = (Route) in.readObject();
 		suggestedRoute = (Route) in.readObject();
 		to = (QueueAddress) in.readObject();
-		requester = (QueueAddress) in.readObject();
+		replyTo = (QueueAddress) in.readObject();
 		content = in.readObject();
 		creationDate = in.readDouble();
 		dropIfRecipientQueueIsFull = in.readBoolean();

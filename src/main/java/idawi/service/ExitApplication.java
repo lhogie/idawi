@@ -7,8 +7,9 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import idawi.Component;
-import idawi.Service;
+import idawi.ComponentAddress;
 import idawi.QueueAddress;
+import idawi.Service;
 import toools.gui.Swingable;
 
 public class ExitApplication extends Service implements Swingable {
@@ -38,8 +39,7 @@ public class ExitApplication extends Service implements Swingable {
 	}
 
 	public void trigger(int exitCode) {
-		QueueAddress to = new QueueAddress();
-		to.service = id;
+		QueueAddress to = new ComponentAddress().s(id).q(null);
 		send(exitCode, to);
 
 		for (Service app : component.services()) {

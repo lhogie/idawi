@@ -6,13 +6,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.ServiceAddress;
 
 public class Virus extends Service {
 
@@ -23,7 +22,7 @@ public class Virus extends Service {
 
 	public Virus(Component peer) {
 		super(peer);
-		registerOperation(null, (msg, out) -> activate(out));
+		registerOperation("default", (msg, out) -> activate(out));
 	}
 
 	public void activate(Consumer<Object> feedback) {
@@ -31,8 +30,8 @@ public class Virus extends Service {
 
 			if (component.lookupService(RegistryService.class).list().size() > 0) {
 				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
-				var to = new ServiceAddress(Set.of(c), Virus.class);
-				MessageList response = start(to, new OperationID(id, null), true, null).returnQ.collect();
+				var to = new ComponentAddress(Set.of(c)).s(Virus.class).o("default");
+				MessageList response = start(to, true, null).returnQ.collect();
 
 				// the node doesn't respond
 				if (response.isEmpty()) {

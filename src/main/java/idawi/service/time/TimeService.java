@@ -19,7 +19,7 @@ public class TimeService extends Service {
 	@IdawiOperation
 	public void getTime(MessageQueue in) {
 		var trigger = in.get_blocking();
-		send(tm.getTime(), trigger.requester);
+		send(tm.getTime(), trigger.replyTo);
 	}
 
 	public static OperationID getModel;
@@ -27,7 +27,7 @@ public class TimeService extends Service {
 	@IdawiOperation
 	public void getModel(MessageQueue in) {
 		var trigger = in.get_blocking();
-		send(tm, trigger.requester);
+		send(tm, trigger.replyTo);
 	}
 
 	@IdawiOperation

@@ -7,6 +7,9 @@ import java.io.ObjectOutput;
 public class TriggerMessage extends Message {
 	public String operationName;
 	public boolean premptive = false;
+	
+	// just an idea
+	public int repeat = 1;
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {

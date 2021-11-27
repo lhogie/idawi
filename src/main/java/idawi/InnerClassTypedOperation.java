@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class InInnerClassTypedOperation extends InInnerClassOperation {
+public abstract class InnerClassTypedOperation extends InnerClassOperation {
 
 	private final Method method;
 	Service service;
 
-	public InInnerClassTypedOperation() {
+	public InnerClassTypedOperation() {
 		this.method = findMain();
 	}
 
@@ -46,14 +46,14 @@ public abstract class InInnerClassTypedOperation extends InInnerClassOperation {
 	}
 
 	@Override
-	public final void accept(MessageQueue in)
+	public final void exec(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Message msg = in.get_blocking();
 		OperationParameterList parmsList = OperationParameterList.from(this, msg.content, method.getParameterTypes());
 		Object r = method.invoke(null, parmsList.toArray());
 
 		if (method.getReturnType() != void.class) {
-			service.send(r, msg.requester);
+			service.send(r, msg.replyTo);
 		}
 	}
 

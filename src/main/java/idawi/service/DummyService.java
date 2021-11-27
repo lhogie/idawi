@@ -6,6 +6,7 @@ import java.util.Set;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.EOT;
 import idawi.IdawiOperation;
 import idawi.MessageQueue;
@@ -60,8 +61,8 @@ public class DummyService extends Service {
 		LMI.connect(a, b);
 
 		Service s = new Service(a);
-		var to = new ServiceAddress(Set.of(b.descriptor()), DummyService.class);
-		RemotelyRunningOperation stub = s.start(to, DummyService.stringLength, true, DummyService.grep);
+		var to = new ComponentAddress(Set.of(b.descriptor())).o(DummyService.stringLength);
+		RemotelyRunningOperation stub = s.start(to, true, DummyService.grep);
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);
@@ -97,7 +98,7 @@ public class DummyService extends Service {
 	public void stringLength(MessageQueue in) {
 		var msg = in.get_non_blocking();
 		String s = (String) msg.content;
-		send(s.length(), msg.requester);
+		send(s.length(), msg.replyTo);
 	}
 
 	public static OperationID stringLength2;

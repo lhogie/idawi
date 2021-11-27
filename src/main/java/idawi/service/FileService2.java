@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
 import idawi.MessageQueue;
 import idawi.Service;
-import idawi.ServiceAddress;
 import idawi.Streams;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
@@ -60,7 +60,7 @@ public class FileService2 extends Service {
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
-		start(new ServiceAddress(Set.of(target), FileService2.class), FileService2.uploadFileAsOneSingleMessage, true,
+		start(new ComponentAddress(Set.of(target)).o( FileService2.uploadFileAsOneSingleMessage), true,
 				parms(pathOnTarget, localFile.getContent()));
 	}
 
@@ -99,7 +99,7 @@ public class FileService2 extends Service {
 		long fileLength = f.getSize();
 		var inputStream = f.createReadingStream();
 		inputStream.skip(parms.seek);
-		Streams.split(inputStream, 1000, c -> send(inputStream, msg.requester));
+		Streams.split(inputStream, 1000, c -> send(inputStream, msg.replyTo));
 	}
 
 	public static OperationID upload;

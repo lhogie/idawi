@@ -140,7 +140,7 @@ public class LucTests {
 		a.to = new QueueAddress();
 		a.to.notYetReachedExplicitRecipients = new HashSet<>();
 		a.to.notYetReachedExplicitRecipients.add(ComponentDescriptor.fromCDL("name=Luc"));
-		a.to.service = DummyService.class;
+		a.to.serviceAddress = DummyService.class;
 		RouteEntry re = new RouteEntry();
 		re.component = ComponentDescriptor.fromCDL("name=test");
 		re.protocolName = "tcp";

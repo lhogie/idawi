@@ -10,13 +10,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
-import idawi.ServiceAddress;
-import idawi.service.Bencher.Results;
 import toools.thread.Q;
 
 /**
@@ -45,7 +43,7 @@ public class Bencher extends Service {
 
 	public Bencher(Component node) {
 		super(node);
-		registerOperation(null, in -> {
+		registerOperation("default", in -> {
 			var msg = in.get_blocking();
 			Arguments parms = (Arguments) msg.content;
 			localBench(parms.size, r -> reply(msg, r));
@@ -62,10 +60,10 @@ public class Bencher extends Service {
 			BiConsumer<ComponentDescriptor, String> msg) {
 		Arguments parms = new Arguments();
 		parms.size = size;
-		var to = new ServiceAddress(peers, Bencher.class);
+		var to = new ComponentAddress(peers).s(Bencher.class).o("default");
 		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
-		start(to, new OperationID(id, null), true, parms).returnQ.forEach(r -> {
+		start(to, true, parms).returnQ.forEach(r -> {
 			if (r.content instanceof String) {
 				msg.accept(r.route.source().component, (String) r.content);
 			} else if (r.content instanceof Results) {

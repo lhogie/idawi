@@ -3,11 +3,10 @@ package idawi.demo;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Set;
 
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.QueueAddress;
 import idawi.net.IPDriver;
 import idawi.net.UDPDriver;
 import toools.thread.Threads;
@@ -45,7 +44,7 @@ public class Demo1_chain {
 			// every second, says hello to the next peer
 			Threads.newThread_loop_periodic(1000, () -> true, () -> {
 				Message msg = new Message();
-				msg.to = new QueueAddress(Set.of(next), null, null);
+				msg.to = new ComponentAddress(next).s(null).q(null);
 				msg.content = "Hello World!";
 				msg.route.add(me);
 				network.send(msg, Arrays.asList(next));

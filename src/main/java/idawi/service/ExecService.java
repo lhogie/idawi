@@ -4,12 +4,13 @@ import java.io.Serializable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
+import idawi.InnerClassOperation;
 import idawi.Message;
+import idawi.MessageQueue;
 import idawi.MessageQueue.SUFFICIENCY;
 import idawi.Service;
-import idawi.ServiceAddress;
 
 public class ExecService extends Service {
 	public static interface Request extends Serializable {
@@ -18,7 +19,7 @@ public class ExecService extends Service {
 
 	public ExecService(Component peer) {
 		super(peer);
-		registerOperation(null, in -> {
+		registerOperation("exec", in -> {
 			var msg = in.get_blocking();
 			((Request) msg.content).execute(r -> reply(msg, r));
 		});
@@ -29,7 +30,21 @@ public class ExecService extends Service {
 		return "remote code executing";
 	}
 
-	public void exec(ServiceAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
-		start(to, new OperationID(ExecService.class, null), true, r).returnQ.forEach(returns);
+	public class Exec extends InnerClassOperation {
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			var msg = in.get_blocking();
+			((Request) msg.content).execute(r -> reply(msg, r));
+		}
+
+		@Override
+		public String getDescription() {
+			return "execute the given requests";
+		}
+	}
+
+	public void exec(ComponentAddress to, double timeout, Request r, Function<Message, SUFFICIENCY> returns) {
+		start(to.s(ExecService.class).o("exec"), true, r).returnQ.forEach(returns);
 	}
 }

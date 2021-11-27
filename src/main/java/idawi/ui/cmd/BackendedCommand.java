@@ -2,11 +2,11 @@ package idawi.ui.cmd;
 
 import java.util.Set;
 
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.ProgressMessage;
 import idawi.Service;
-import idawi.ServiceAddress;
 import idawi.service.PingService;
 import j4u.CommandLine;
 import toools.io.Cout;
@@ -32,14 +32,14 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		}
 
 		Cout.info("executing command");
-		var to = new ServiceAddress(
-				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)),
-				CommandsService.class);
+		var to = new ComponentAddress(
+				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)))
+						.o(CommandsService.exec);
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 
-		if (!localService.start(to, CommandsService.exec, true, backend).returnQ.forEach2(msg -> {
+		if (!localService.start(to, true, backend).returnQ.forEach2(msg -> {
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {

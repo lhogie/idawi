@@ -20,17 +20,16 @@ import com.sun.net.httpserver.HttpServer;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
-import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -41,6 +40,8 @@ import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
 public class RESTService extends Service {
+	public static int DEFAULT_PORT = 8081;
+
 	private HttpServer restServer;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 
@@ -58,8 +59,6 @@ public class RESTService extends Service {
 	public RESTService(Component t) {
 		super(t);
 	}
-
-	public static int DEFAULT_PORT = 8081;
 
 	public HttpServer startHTTPServer() throws IOException {
 		return startHTTPServer(DEFAULT_PORT);
@@ -101,6 +100,7 @@ public class RESTService extends Service {
 
 	private void sendBack(int returnCode, byte[] o, HttpExchange e) {
 		try {
+			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
 			e.sendResponseHeaders(returnCode, o.length);
 			OutputStream out = e.getResponseBody();
 			// Cout.debug("sending " + o.length + " bytes");
@@ -269,10 +269,8 @@ public class RESTService extends Service {
 
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
-					var to = new ServiceAddress(components, serviceID);
-					var op = new OperationID(serviceID, operation);
-					List<Object> r = start(to, op, 
-							true, parms).returnQ.collect().throwAnyError_Runtime().contents();
+					var to = new ComponentAddress(components).s(serviceID).o(operation);
+					List<Object> r = start(to, true, parms).returnQ.collect().throwAnyError_Runtime().contents();
 
 					if (r.size() == 1) {
 						return r.get(0);
@@ -308,8 +306,8 @@ public class RESTService extends Service {
 	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
-		var to = new ServiceAddress(components, ServiceManager.class);
-		var res = start(to, ServiceManager.list, true, null).returnQ;
+		var to = new ComponentAddress(components).o(ServiceManager.list);
+		var res = start(to, true, null).returnQ;
 
 		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
@@ -323,8 +321,8 @@ public class RESTService extends Service {
 	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
-		var to = new ServiceAddress(components, serviceID);
-		var res = start(to, Service.descriptor, true, null).returnQ;
+		var to = new ComponentAddress(components).s(serviceID).o(Service.DescriptorOperation);
+		var res = start(to, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
@@ -332,9 +330,6 @@ public class RESTService extends Service {
 
 		return descriptors;
 	}
-
-
-
 
 	private Map<String, String> query(String s) {
 		Map<String, String> query = new HashMap<>();

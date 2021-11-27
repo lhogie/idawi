@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Service;
-import idawi.ServiceAddress;
 import idawi.service.DeployerService;
 import idawi.service.DummyService;
 
@@ -36,8 +36,7 @@ public class BasicExample {
 			public void run() {
 				// executes an operation (exposed by DummyService) which computes the length of
 				// a given string
-				var l = exec(new ServiceAddress(Set.of(c2d), DummyService.class), DummyService.stringLength2, 1, 1,
-						"Hello Idawi!");
+				var l = exec(new ComponentAddress(Set.of(c2d)).o(DummyService.stringLength2), 1, 1, "Hello Idawi!");
 				System.out.println(l);
 			}
 		}.run();

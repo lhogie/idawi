@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.Service;
 import idawi.QueueAddress;
+import idawi.Service;
 
 public class PublishSubscribe extends Service {
 	public static class Publication implements Serializable {
@@ -36,16 +38,17 @@ public class PublishSubscribe extends Service {
 
 		@Override
 		public String toString() {
-			return "subscription for " + to.notYetReachedExplicitRecipients + " on topic " + topic;
+			return "subscription for " + to.serviceAddress.componentAddress.notYetReachedExplicitRecipients
+					+ " on topic " + topic;
 		}
 	}
 
-	public static final String subscribe = "subscribe";
-	public static final String unsubscribe = "unsubscribe";
-	public static final String ls_topics = "ls_topics";
-	public static final String ls_history = "ls_history";
-	public static final String ls_subscribers = "ls_subscribers";
-	public static final String publish = "publish";
+	public static OperationID subscribe = null;
+	public static OperationID unsubscribe = null;
+	public static OperationID ls_topics = null;
+	public static OperationID ls_history = null;
+	public static OperationID ls_subscribers = null;
+	public static OperationID publish = null;
 
 	private final Map<String, Set<Subscription>> topic_subscribers = new HashMap<>();
 	public final Map<String, List<Publication>> topic_history = new HashMap<>();
@@ -54,22 +57,22 @@ public class PublishSubscribe extends Service {
 		super(peer);
 
 		// some node wants to subscribe
-		registerOperation(subscribe, (msg, returns) -> {
+		registerOperation("subscribe", (msg, returns) -> {
 			Subscription s = (Subscription) msg.content;
 			ensureTopicExists(s.topic);
 			topic_subscribers.get(s.topic).add(s);
 		});
 
-		registerOperation(unsubscribe,
+		registerOperation("unsubscribe",
 				(msg, returns) -> topic_subscribers.get((String) msg.content).remove(msg.route.source()));
 
-		registerOperation(ls_topics, (msg, out) -> topic_subscribers.keySet());
+		registerOperation("ls_topics", (msg, out) -> topic_subscribers.keySet());
 
-		registerOperation(ls_history, (msg, out) -> topic_history.get((String) msg.content));
+		registerOperation("ls_history", (msg, out) -> topic_history.get((String) msg.content));
 
-		registerOperation(ls_subscribers, (msg, out) -> topic_subscribers.get((String) msg.content));
+		registerOperation("ls_subscribers", (msg, out) -> topic_subscribers.get((String) msg.content));
 
-		registerOperation(publish, (msg, returns) -> {
+		registerOperation("publish", (msg, returns) -> {
 			Publication p = (Publication) msg.content;
 			publish(p.content, p.topic);
 		});
@@ -81,9 +84,7 @@ public class PublishSubscribe extends Service {
 		p.content = o;
 		p.topic = topic;
 		topic_history.get(topic).add(p);
-		topic_subscribers.get(topic).forEach(s -> {
-			send(p, s.to);
-		});
+		topic_subscribers.get(topic).forEach(s -> send(p, s.to));
 	}
 
 	private void ensureTopicExists(String topic) {
@@ -94,11 +95,8 @@ public class PublishSubscribe extends Service {
 	}
 
 	public static void subscribe(Service localService, ComponentDescriptor newPeer, Subscription subscription) {
-		QueueAddress to = new QueueAddress();
-		to.notYetReachedExplicitRecipients = Set.of(newPeer);
-		to.service = PublishSubscribe.class;
-		to.queue = PublishSubscribe.subscribe;
-		localService.send(subscription, to);
+		var to = new ComponentAddress(newPeer).o(PublishSubscribe.subscribe);
+		localService.exec(to, 1, 1, subscription);
 	}
 
 }

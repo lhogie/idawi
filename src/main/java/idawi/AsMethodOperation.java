@@ -8,7 +8,7 @@ import toools.io.Cout;
 import toools.text.TextUtilities;
 
 public class AsMethodOperation extends Operation {
-	public static class OperationID {
+	public static class OprationID {
 		public OperationID(Class<? extends Service> declaringService, String operationName) {
 			this.declaringService = declaringService;
 			this.operationName = operationName;
@@ -38,7 +38,7 @@ public class AsMethodOperation extends Operation {
 	}
 
 	@Override
-	public void accept(MessageQueue in)
+	public void exec(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		if (isStandardForm()) {
 			method.invoke(service, in);
@@ -52,7 +52,7 @@ public class AsMethodOperation extends Operation {
 			Object r = method.invoke(service, parms.toArray());
 
 			if (method.getReturnType() != void.class) {
-				service.send(r, parmMsg.requester);
+				service.send(r, parmMsg.replyTo);
 			}
 		}
 	}

@@ -18,7 +18,6 @@ import idawi.RouteEntry;
 import idawi.Service;
 import idawi.map.MapService;
 import idawi.routing.RoutingService;
-import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.io.Cout;
@@ -120,33 +119,36 @@ public class NetworkingService extends Service {
 	};
 
 	private void notYetReceivedMsg(Message msg) {
-		if (msg.to.isBroadcast()) {
-			Service targetService = component.lookupService(msg.to.service);
+		if (msg.to.serviceAddress.componentAddress.isBroadcast()) {
+			Service targetService = component.lookupService(msg.to.serviceAddress.service);
 
 			if (targetService != null) {
 				targetService.considerNewMessage(msg);
 			}
 		} else {
 			// if I'm and explicit recipient
-			if (msg.to.getNotYetReachedExplicitRecipients().remove(component.descriptor())) {
-				Service targetService = component.lookupService(msg.to.getServiceID());
+			if (msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients()
+					.remove(component.descriptor())) {
+				Service targetService = component.lookupService(msg.to.serviceAddress.getServiceID());
 
 				if (targetService != null) {
 					targetService.considerNewMessage(msg);
-				} else if (msg.requester != null) {
-					send(new RemoteException("service not found: " + msg.to.getServiceID()), msg.requester);
-					send(EOT.instance, msg.requester);
+				} else if (msg.replyTo != null) {
+					send(new RemoteException("service not found: " + msg.to.serviceAddress.getServiceID()),
+							msg.replyTo);
+					send(EOT.instance, msg.replyTo);
 				}
 			}
 		}
 
 		if (alreadySentMsgs.contains(msg.ID)) {
 			// already sent
-		} else if (msg.route.size() >= msg.to.getMaxDistance()) {
+		} else if (msg.route.size() >= msg.to.serviceAddress.componentAddress.getMaxDistance()) {
 			// went far enough
-		} else if (Math.random() > msg.to.getForwardProbability()) {
+		} else if (Math.random() > msg.to.serviceAddress.componentAddress.getForwardProbability()) {
 			// probabilistic drop
-		} else if (!msg.to.isBroadcast() && msg.to.getNotYetReachedExplicitRecipients().isEmpty()) {
+		} else if (!msg.to.serviceAddress.componentAddress.isBroadcast()
+				&& msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients().isEmpty()) {
 			// all explicit recipients have been reached
 		} else {
 			Collection<ComponentDescriptor> neighbors = neighbors();
@@ -161,14 +163,14 @@ public class NetworkingService extends Service {
 	}
 
 	private void alreadyReceivedMsg(Message msg) {
-		if (!msg.to.isBroadcast()) {
+		if (!msg.to.serviceAddress.componentAddress.isBroadcast()) {
 			Message firstReceptionOfMsg = aliveMessages.get(msg.ID);
 
 			if (firstReceptionOfMsg == null) {
 				aliveMessages.put(msg.ID, msg);
 			} else {
-				msg.to.getNotYetReachedExplicitRecipients()
-						.retainAll(firstReceptionOfMsg.to.getNotYetReachedExplicitRecipients());
+				msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients().retainAll(
+						firstReceptionOfMsg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients());
 			}
 		}
 	}
@@ -183,7 +185,8 @@ public class NetworkingService extends Service {
 		for (var s : component.services()) {
 			if (s instanceof RoutingService) {
 				RoutingService router = (RoutingService) s;
-				relays.addAll(router.findRelaysToReach(protocol, msg.to.notYetReachedExplicitRecipients));
+				relays.addAll(router.findRelaysToReach(protocol,
+						msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients));
 				// Cout.debug("ROUTING: " + msg.to.notYetReachedExplicitRecipients + " -> " +
 				// relays);
 			}
@@ -205,9 +208,9 @@ public class NetworkingService extends Service {
 		alreadySentMsgs.add(msg.ID);
 
 		// in order to avoid modifying the immutable set created by Set.of()
-		if (msg.to.notYetReachedExplicitRecipients != null) {
-			msg.to.notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(
-					msg.to.notYetReachedExplicitRecipients);
+		if (msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients != null) {
+			msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(
+					msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients);
 		}
 
 		aliveMessages.put(msg.ID, msg);

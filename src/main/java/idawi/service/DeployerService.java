@@ -15,13 +15,12 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Graph;
+import idawi.OperationAddress;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.ServiceAddress;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
@@ -98,8 +97,8 @@ public class DeployerService extends Service {
 		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
-		var to = new ServiceAddress(toDeploy, DeployerService.class);
-		start(to, new OperationID(DeployerService.class, "d3"), true, deploymentPlan).returnQ.collect();
+	//	var to = new OperationAddress(toDeploy, DeployerService.d3);
+	//	start(to, true, deploymentPlan).returnQ.collect();
 	}
 
 	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,

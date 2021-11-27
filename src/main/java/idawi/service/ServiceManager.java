@@ -24,20 +24,20 @@ public class ServiceManager extends Service {
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.start(to, list, true, new OperationParameterList()).returnQ
+			return (List<String>) (List) localService.start(toO(list), true, new OperationParameterList()).returnQ
 					.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.start(to, has, true, s).returnQ.collect().contents().contains(true);
+			return localService.start(toO(has), true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.start(to, start, true, s).returnQ.collect();
+			localService.start(toO(start), true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.start(to, stop, true, s).returnQ.collect();
+			localService.start(toO(stop), true, s).returnQ.collect();
 		}
 	}
 

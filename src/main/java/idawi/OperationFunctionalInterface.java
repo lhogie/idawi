@@ -1,5 +1,5 @@
 package idawi;
 
 public interface OperationFunctionalInterface {
-	void accept(MessageQueue in) throws Throwable;
+	void exec(MessageQueue in) throws Throwable;
 }

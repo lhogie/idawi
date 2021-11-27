@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import idawi.AsMethodOperation.OperationID;
+
 public class ComponentAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
@@ -28,6 +30,9 @@ public class ComponentAddress implements Externalizable {
 		this.forwardProbability = forwardProbability;
 	}
 
+	public ComponentAddress(ComponentDescriptor p) {
+		this(Set.of(p));
+	}
 	public ComponentAddress(Set<ComponentDescriptor> peers) {
 		this(peers, Integer.MAX_VALUE, 1);
 	}
@@ -39,6 +44,16 @@ public class ComponentAddress implements Externalizable {
 	public static ComponentAddress to(Set<ComponentDescriptor> peers) {
 		return new ComponentAddress(peers);
 	}
+
+	public ServiceAddress s(Class<? extends Service> sid) {
+		return new ServiceAddress(this, sid);
+	}
+
+	public OperationAddress o(OperationID o) {
+		return new OperationAddress(this, o);
+	}
+
+
 
 	/*
 	 * public To(ComponentDescriptor t, Class<? extends Service> sid, String qid) {

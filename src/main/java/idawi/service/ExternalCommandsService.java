@@ -9,13 +9,13 @@ import java.util.Set;
 
 import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.IdawiOperation;
-import idawi.InInnerClassTypedOperation;
+import idawi.InnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.ServiceAddress;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
 
@@ -38,7 +38,7 @@ public class ExternalCommandsService extends Service {
 	public static OperationID commands;
 
 	@IdawiOperation
-	public class commands extends InInnerClassTypedOperation {
+	public class commands extends InnerClassTypedOperation {
 		private Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
@@ -106,8 +106,8 @@ public class ExternalCommandsService extends Service {
 
 	public static void exec(Service service, ComponentDescriptor b, InputStream in, OutputStream out, String... cmdLine)
 			throws IOException {
-		RemotelyRunningOperation s = service.start(new ServiceAddress(Set.of(b), ExternalCommandsService.class),
-				ExternalCommandsService.exec, true, cmdLine);
+		var to = new ComponentAddress(Set.of(b)).o(ExternalCommandsService.exec);
+		RemotelyRunningOperation s = service.start(to, true, cmdLine);
 		boolean eofIN = false;
 
 		while (true) {
