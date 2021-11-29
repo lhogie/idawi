@@ -4,10 +4,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
-import idawi.IdawiOperation;
+import idawi.InnerClassTypedOperation;
 import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.ServiceAddress;
@@ -24,75 +23,105 @@ public class ServiceManager extends Service {
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.start(toO(list), true, new OperationParameterList()).returnQ
-					.collect().contents();
+			return (List<String>) (List) localService.start(to.o(list.class), true,
+					new OperationParameterList()).returnQ.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.start(toO(has), true, s).returnQ.collect().contents().contains(true);
+			return localService.start(to.o(has.class), true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.start(toO(start), true, s).returnQ.collect();
+			localService.start(to.o(start.class), true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.start(toO(stop), true, s).returnQ.collect();
+			localService.start(to.o(stop.class), true, s).returnQ.collect();
 		}
 	}
+
+	public final start start = new start();
+	public final has has = new has();
+	public final list list = new list();
+	public final ensureStarted ensureStarted = new ensureStarted();
+	public final stop stop = new stop();
 
 	public ServiceManager(Component peer) {
 		super(peer);
 	}
 
-	public static OperationID start;
+	public class start extends InnerClassTypedOperation {
+		public ServiceDescriptor start(Class<? extends Service> serviceID) {
+			if (lookupService(serviceID) != null) {
+				throw new IllegalArgumentException("service already running");
+			}
 
-	@IdawiOperation
-	public ServiceDescriptor start(Class<? extends Service> serviceID) {
-		if (lookupService(serviceID) != null) {
-			throw new IllegalArgumentException("service already running");
+			var constructor = Clazz.getConstructor(serviceID, Component.class);
+
+			if (constructor == null)
+				throw new IllegalStateException(
+						serviceID + " does not have constructor (" + Component.class.getName() + ")");
+
+			Service s = Clazz.makeInstance(constructor, component);
+			return s.descriptor();
 		}
 
-		var constructor = Clazz.getConstructor(serviceID, Component.class);
-
-		if (constructor == null)
-			throw new IllegalStateException(
-					serviceID + " does not have constructor (" + Component.class.getName() + ")");
-
-		Service s = Clazz.makeInstance(constructor, this.component);
-		return s.descriptor();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID stop;
+	public class stop extends InnerClassTypedOperation {
+		public void stop(Class<? extends Service> serviceID) {
+			Service s = component.lookupService(serviceID);
+			component.removeService(s);
+		}
 
-	@IdawiOperation
-	public void stop(Class<? extends Service> serviceID) {
-		Service s = component.lookupService(serviceID);
-		component.removeService(s);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID list;
+	public class list extends InnerClassTypedOperation {
+		public Set<String> list() {
+			Set<String> r = new HashSet<>();
+			component.services().forEach(s -> r.add(s.id.getName()));
+			return r;
+		}
 
-	@IdawiOperation
-	public Set<String> list() {
-		Set<String> r = new HashSet<>();
-		component.services().forEach(s -> r.add(s.id.getName()));
-		return r;
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID has;
+	public class has extends InnerClassTypedOperation {
+		public boolean has(Class serviceID) {
+			return lookupService(serviceID) != null;
+		}
 
-	@IdawiOperation
-	public boolean has(Class serviceID) {
-		return lookupService(serviceID) != null;
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID ensureStarted;
+	public class ensureStarted extends InnerClassTypedOperation {
+		public void f(Class serviceID) {
+			if (!lookupOperation(has.class).has(serviceID)) {
+				start.start(serviceID);
+			}
+		}
 
-	@IdawiOperation
-	public void ensureStarted(Class serviceID) {
-		if (!has(serviceID)) {
-			start(serviceID);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 

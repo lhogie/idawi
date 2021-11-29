@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
+import idawi.InnerClassOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.net.LMI;
@@ -34,14 +33,21 @@ public class Demo4_deploy_local_peers {
 			super(t);
 		}
 
-		public static OperationID op;
+		public class  op extends InnerClassOperation{
+			@Override
+			public void exec(MessageQueue in) throws Throwable {
+				var msg = in.get_blocking();
+				System.out.println("message route: " + msg.route);
+				wait.add_blocking("");
+			}
 
-		@IdawiOperation
-		public void op(MessageQueue q) {
-			var msg = q.get_blocking();
-			System.out.println("message route: " + msg.route);
-			wait.add_blocking("");
+			@Override
+			public String getDescription() {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		}
+
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -62,7 +68,7 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		var to = new ComponentAddress(last.descriptor()).o(DummyService.op);
+		var to = new ComponentAddress(last.descriptor()).o(DummyService.op.class);
 		first.lookupService(NetworkingService.class).start(to, true, "hello!");
 		s.wait.get_blocking();
 		System.out.println("completed");

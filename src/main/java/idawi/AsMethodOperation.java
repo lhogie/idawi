@@ -8,15 +8,6 @@ import toools.io.Cout;
 import toools.text.TextUtilities;
 
 public class AsMethodOperation extends Operation {
-	public static class OprationID {
-		public OperationID(Class<? extends Service> declaringService, String operationName) {
-			this.declaringService = declaringService;
-			this.operationName = operationName;
-		}
-
-		Class<? extends Service> declaringService;
-		String operationName;
-	}
 
 	private final Method method;
 	protected Service service;

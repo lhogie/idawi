@@ -18,7 +18,6 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Graph;
-import idawi.OperationAddress;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.net.LMI;
@@ -64,7 +63,7 @@ public class DeployerService extends Service {
 	public DeployerService(Component peer) {
 		super(peer);
 
- 		if (!remoteClassDir.endsWith("/")) 
+		if (!remoteClassDir.endsWith("/"))
 			throw new IllegalStateException("class dir should end with a '/': " + remoteClassDir);
 
 		// receives deployment requests from other peers
@@ -97,8 +96,8 @@ public class DeployerService extends Service {
 		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
 		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
 
-	//	var to = new OperationAddress(toDeploy, DeployerService.d3);
-	//	start(to, true, deploymentPlan).returnQ.collect();
+		// var to = new OperationAddress(toDeploy, DeployerService.d3);
+		// start(to, true, deploymentPlan).returnQ.collect();
 	}
 
 	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
@@ -124,6 +123,34 @@ public class DeployerService extends Service {
 		return localThings;
 	}
 
+	public void deployOtherJVM(String... names) throws IOException {
+		var threads = new ArrayList<Thread>();
+
+		for (var childName : names) {
+			threads.add(new Thread(() -> {
+				var d = new ComponentDescriptor();
+				d.friendlyName = childName;
+				try {
+					deployOtherJVM(d, true, fdbck -> {
+					}, ok -> { System.out.println(ok + " OKKK");
+					});
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}));
+		}
+
+		threads.forEach(t -> t.start());
+		threads.forEach(t -> {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		});
+	}
+
 	public void deployOtherJVM(ComponentDescriptor d, boolean suicideWhenParentDie, Consumer<Object> feedback,
 			Consumer<ComponentDescriptor> peerOk) throws IOException {
 		String java = System.getProperty("java.home") + "/bin/java";
@@ -137,24 +164,24 @@ public class DeployerService extends Service {
 		startingNode.end();
 	}
 
-	private void init(Process p, ComponentDescriptor d, Set<ComponentDescriptor> peersSharingFS,
+	private void init(Process proc, ComponentDescriptor childDescriptor, Set<ComponentDescriptor> peersSharingFS,
 			boolean suicideWhenParentDie, Consumer<Object> feedback) throws IOException {
-		OutputStream out = p.getOutputStream();
+		OutputStream out = proc.getOutputStream();
 		DeployInfo deployInfo = new DeployInfo();
-		deployInfo.id = d;
+		deployInfo.id = childDescriptor;
 		deployInfo.suicideWhenParentDies = suicideWhenParentDie;
 		deployInfo.parent = component.descriptor();
 		deployInfo.peersSharingFileSystem = peersSharingFS;
 		TransportLayer.serializer.write(deployInfo, out);
 		out.flush();
 
-		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(d, p);
+		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(childDescriptor, proc);
 		childPipe.setNewMessageConsumer(component.lookupService(NetworkingService.class).messagesFromNetwork);
 		NetworkingService network = component.lookupService(NetworkingService.class);
 		network.transport.addProtocol(childPipe);
-		network.transport.peer2protocol.put(d, childPipe);
+		network.transport.peer2protocol.put(childDescriptor, childPipe);
 
-		feedback.accept("waiting for " + d + " to be ready");
+		feedback.accept("waiting for " + childDescriptor + " to be ready");
 		String response = (String) childPipe.waitForChild.get_blocking(10000);
 
 		if (response == null) {
@@ -162,7 +189,7 @@ public class DeployerService extends Service {
 		} else if (response.equals(PipeFromToChildProcess.started)) {
 			return;
 		} else if (response.equals(PipeFromToChildProcess.failed)) {
-			throw new IllegalStateException(d + " failed");
+			throw new IllegalStateException(childDescriptor + " failed");
 		} else {
 			throw new IllegalStateException();
 		}
@@ -385,7 +412,7 @@ public class DeployerService extends Service {
 					deployInfo.id);
 			t.parent = deployInfo.parent;
 
-			t.lookupService(RegistryService.class).add(deployInfo.parent);
+			t.lookupOperation(RegistryService.add.class).f(deployInfo.parent);
 			t.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
 			t.lookupService(NetworkingService.class).transport
@@ -416,7 +443,8 @@ public class DeployerService extends Service {
 		return null;
 	}
 
-	public static Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes, Consumer<Object> feedback) {
+	public static Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes,
+			Consumer<Object> feedback) {
 
 		if (nodes.size() == 1) {
 			Set<Set<ComponentDescriptor>> r = new HashSet<>();

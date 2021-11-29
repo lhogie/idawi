@@ -28,7 +28,7 @@ public class Virus extends Service {
 	public void activate(Consumer<Object> feedback) {
 		newThread_loop_periodic(1000, () -> {
 
-			if (component.lookupService(RegistryService.class).list().size() > 0) {
+			if (!component.lookupOperation(RegistryService.list.class).list().isEmpty()) {
 				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
 				var to = new ComponentAddress(Set.of(c)).s(Virus.class).o("default");
 				MessageList response = start(to, true, null).returnQ.collect();

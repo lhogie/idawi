@@ -6,7 +6,6 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
 import idawi.RegistryService;
 import idawi.net.TransportLayer;
 
@@ -21,7 +20,6 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 		super(node);
 	}
 
-
 	@Override
 	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
 		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
@@ -30,7 +28,7 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 		if (to == null) {
 			// but the node is disconnected
 			if (neighbors.isEmpty()) {
-				return lookupService(RegistryService.class).list();
+				return lookupOperation(RegistryService.list.class).list();
 			} else {
 				return neighbors;
 			}
@@ -61,7 +59,6 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 	}
 
 	@Override
-	@IdawiOperation
 	public String getAlgoName() {
 		return "default";
 	}

@@ -2,7 +2,7 @@ package idawi;
 import java.awt.Color;
 
 import idawi.net.LMI;
-import idawi.service.DummyService;
+import idawi.service.DemoService;
 import toools.thread.Threads;
 
 public class Test {

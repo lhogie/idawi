@@ -16,12 +16,12 @@ public class HelloWorld_centralized {
 			Component node = new Component(ComponentDescriptor.fromCDL("name=" + i));
 			ComponentDescriptor next = new ComponentDescriptor();
 			next.friendlyName = "" + ((i + 1) % nbNodes);
-			node.lookupService(RegistryService.class).add(next);
+			var rs = node.lookupOperation(RegistryService.add.class);
 
 			new Service(node) {
 				{
 					newThread_loop_periodic(1000,
-							() -> node.lookupService(RegistryService.class).list().forEach(peer -> {
+							() -> node.lookupOperation(RegistryService.list.class).list().forEach(peer -> {
 								var to = new ComponentAddress(peer).s(id).q(getFriendlyName());
 								send("Hello World!", to);
 							}));

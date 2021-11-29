@@ -1,9 +1,7 @@
 package idawi.service.time;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiOperation;
-import idawi.MessageQueue;
+import idawi.InnerClassTypedOperation;
 import idawi.Service;
 
 public class TimeService extends Service {
@@ -14,26 +12,40 @@ public class TimeService extends Service {
 		super(peer);
 	}
 
-	public static OperationID getTime;
+	public class getTime extends InnerClassTypedOperation {
+		public double f() {
+			return tm.getTime();
+		}
 
-	@IdawiOperation
-	public void getTime(MessageQueue in) {
-		var trigger = in.get_blocking();
-		send(tm.getTime(), trigger.replyTo);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID getModel;
+	public class setTime extends InnerClassTypedOperation {
+		public void f(double newTime) {
+			((SettableTimeModel) tm).time = newTime;
+		}
 
-	@IdawiOperation
-	public void getModel(MessageQueue in) {
-		var trigger = in.get_blocking();
-		send(tm, trigger.replyTo);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	@IdawiOperation
-	public void setTime(MessageQueue in) {
-		var trigger = in.get_blocking();
-		double newTime = (double) trigger.content;
-		((ControlledTimeModel) tm).time = newTime;
+	public class getModel extends InnerClassTypedOperation {
+		public TimeModel f() {
+			return tm;
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
+
 }

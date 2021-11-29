@@ -1,13 +1,10 @@
 package idawi.routing;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
-import idawi.Route;
 import idawi.net.TransportLayer;
 
 /**
@@ -57,7 +54,6 @@ public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
 	}*/
 
 	@Override
-	@IdawiOperation
 	public String getAlgoName() {
 		return "default";
 	}

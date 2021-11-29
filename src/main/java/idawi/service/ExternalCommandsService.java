@@ -7,11 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
+import idawi.InnerClassOperation;
 import idawi.InnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.RemotelyRunningOperation;
@@ -35,54 +34,63 @@ public class ExternalCommandsService extends Service {
 		});
 	}
 
-	public static OperationID commands;
-
-	@IdawiOperation
 	public class commands extends InnerClassTypedOperation {
 		private Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
-	}
 
-	public static OperationID exec;
-
-	@IdawiOperation
-	public void exec(MessageQueue in) throws IOException {
-		var parmMsg = in.get_blocking();
-		List<String> cmdLine = (List<String>) parmMsg.content;
-		Process p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-		var stdout = p.getInputStream();
-		var stdin = p.getOutputStream();
-
-		newThread(() -> {
-			while (true) {
-				try {
-					byte[] b = stdout.readNBytes(1000);
-
-					if (b.length == 0) {
-						break;
-					} else {
-						reply(parmMsg, b);
-					}
-				} catch (IOException e) {
-					reply(parmMsg, e);
-					break;
-				}
-			}
-		});
-
-		while (true) {
-			var msg = in.get_blocking();
-
-			if (msg.isEOT()) {
-				break;
-			}
-
-			if (msg.content instanceof byte[]) {
-				stdin.write((byte[]) msg.content);
-			}
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
+
+	public class exec extends InnerClassOperation{
+		public void exec(MessageQueue in) throws IOException {
+			var parmMsg = in.get_blocking();
+			List<String> cmdLine = (List<String>) parmMsg.content;
+			Process p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
+			var stdout = p.getInputStream();
+			var stdin = p.getOutputStream();
+
+			newThread(() -> {
+				while (true) {
+					try {
+						byte[] b = stdout.readNBytes(1000);
+
+						if (b.length == 0) {
+							break;
+						} else {
+							reply(parmMsg, b);
+						}
+					} catch (IOException e) {
+						reply(parmMsg, e);
+						break;
+					}
+				}
+			});
+
+			while (true) {
+				var msg = in.get_blocking();
+
+				if (msg.isEOT()) {
+					break;
+				}
+
+				if (msg.content instanceof byte[]) {
+					stdin.write((byte[]) msg.content);
+				}
+			}
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}		
+	}
+
 
 	private RegularFile get(String cmdName) {
 		if (cmdName.contains("/")) {
@@ -106,7 +114,7 @@ public class ExternalCommandsService extends Service {
 
 	public static void exec(Service service, ComponentDescriptor b, InputStream in, OutputStream out, String... cmdLine)
 			throws IOException {
-		var to = new ComponentAddress(Set.of(b)).o(ExternalCommandsService.exec);
+		var to = new ComponentAddress(Set.of(b)).o(ExternalCommandsService.exec.class);
 		RemotelyRunningOperation s = service.start(to, true, cmdLine);
 		boolean eofIN = false;
 

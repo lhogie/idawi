@@ -34,7 +34,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		Cout.info("executing command");
 		var to = new ComponentAddress(
 				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)))
-						.o(CommandsService.exec);
+						.o(CommandsService.exec.class);
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;

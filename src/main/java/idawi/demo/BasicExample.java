@@ -7,8 +7,8 @@ import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Service;
+import idawi.service.DemoService;
 import idawi.service.DeployerService;
-import idawi.service.DummyService;
 
 public class BasicExample {
 	public static void main(String[] args) throws IOException {
@@ -22,7 +22,7 @@ public class BasicExample {
 		var deployer = c1.lookupService(DeployerService.class);
 
 // and prints the operations exposed by it
-		System.out.println(deployer.listOperationNames());
+		System.out.println(deployer.lookupOperation(Service.listOperationNames.class).f());
 
 // we'll put another component in a different JVM
 		var c2d = new ComponentDescriptor();
@@ -36,7 +36,7 @@ public class BasicExample {
 			public void run() {
 				// executes an operation (exposed by DummyService) which computes the length of
 				// a given string
-				var l = exec(new ComponentAddress(Set.of(c2d)).o(DummyService.stringLength2), 1, 1, "Hello Idawi!");
+				var l = exec(new ComponentAddress(Set.of(c2d)).o(DemoService.stringLength.class), 1, 1, "Hello Idawi!");
 				System.out.println(l);
 			}
 		}.run();

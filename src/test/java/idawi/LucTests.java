@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
 import idawi.service.DeployerService;
-import idawi.service.DummyService;
+import idawi.service.DemoService;
 import idawi.service.PingService;
 import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
@@ -79,13 +79,13 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		Service client = new Service(c1);
-		assertEquals(5, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
-				DummyService.stringLength, true, "salut").returnQ.get());
-		assertEquals(53, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
-				DummyService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
+		assertEquals(5, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
+				DemoService.stringLength, true, "salut").returnQ.get());
+		assertEquals(53, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
+				DemoService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
 		assertEquals(7,
-				(Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
-						DummyService.countFromAtoB, true, new DummyService.Range(0, 13)).returnQ.collect()
+				(Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
+						DemoService.countFromAtoB, true, new DemoService.Range(0, 13)).returnQ.collect()
 								.resultMessages(13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
@@ -102,7 +102,7 @@ public class LucTests {
 		Service client = new Service(root);
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentDescriptor first = client.start(new ServiceAddress(ss, DummyService.class), DummyService.waiting,
+		ComponentDescriptor first = client.start(new ServiceAddress(ss, DemoService.class), DemoService.waiting,
 				true, new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
 						.source().component;
 		System.out.println(first);
@@ -139,8 +139,8 @@ public class LucTests {
 		Message a = new Message();
 		a.to = new QueueAddress();
 		a.to.notYetReachedExplicitRecipients = new HashSet<>();
-		a.to.notYetReachedExplicitRecipients.add(ComponentDescriptor.fromCDL("name=Luc"));
-		a.to.serviceAddress = DummyService.class;
+		a.to.notYetReachedExplicitRecipients.f(ComponentDescriptor.fromCDL("name=Luc"));
+		a.to.serviceAddress = DemoService.class;
 		RouteEntry re = new RouteEntry();
 		re.component = ComponentDescriptor.fromCDL("name=test");
 		re.protocolName = "tcp";
@@ -160,9 +160,9 @@ public class LucTests {
 		Component c1 = new Component(me);
 		Component c2 = new Component("name=c2");
 		LMI.connect(c1, c2);
-		Service client = c1.lookupService(DummyService.class);
-		MessageList returns = client.start(new ServiceAddress(Set.of(c2.descriptor()), DummyService.class),
-				DummyService.stringLength, true, "hello").returnQ.collect();
+		Service client = c1.lookupService(DemoService.class);
+		MessageList returns = client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
+				DemoService.stringLength, true, "hello").returnQ.collect();
 		System.out.println(returns);
 		int len = (Integer) returns.resultMessages(1).first().content;
 		System.out.println(len);

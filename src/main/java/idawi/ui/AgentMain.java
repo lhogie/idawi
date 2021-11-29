@@ -44,7 +44,7 @@ public class AgentMain extends JThingLineCmd {
 		for (Component p : peers) {
 			for (Component p2 : peers) {
 				if (p != p2) {
-					p.lookupService(RegistryService.class).add(p2.descriptor());
+					p.lookupOperation(RegistryService.add.class).f(p2.descriptor());
 				}
 			}
 		}

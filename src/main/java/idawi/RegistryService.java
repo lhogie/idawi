@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.map.NetworkMap;
 import toools.thread.Threads;
 
@@ -17,98 +16,169 @@ public class RegistryService extends Service {
 	static {
 		Threads.newThread_loop(1000, () -> true, () -> {
 			Component.componentsInThisJVM.values()
-					.forEach(c -> c.lookupService(RegistryService.class).broadcastLocalInfo());
+					.forEach(c -> c.lookupService(RegistryService.class).lookupOperation(broadcastLocalInfo.class).f());
 		});
 	}
 
 	private final Map<String, ComponentDescriptor> name2descriptor = new HashMap<>();
 
+	@IdawiOperation
+	public  add add = new add();
+	@IdawiOperation
+	public  addAll addAll = new addAll();
+	@IdawiOperation
+	public  broadcastLocalInfo broadcastLocalInfo = new broadcastLocalInfo();
+	@IdawiOperation
+	public  clear clear = new clear();
+	@IdawiOperation
+	public  list list = new list();
+	@IdawiOperation
+	public  local local = new local();
+	@IdawiOperation
+	public  lookUp lookUp = new lookUp();
+	@IdawiOperation
+	public  names names = new names();
+	@IdawiOperation
+	public  remove remove = new remove();
+	@IdawiOperation
+	public  size size = new size();
+	@IdawiOperation
+	public  updateAll updateAll = new updateAll();
+
 	public RegistryService(Component component) {
 		super(component);
 	}
 
-	public static OperationID broadcastLocalInfo;
+	public class broadcastLocalInfo extends InnerClassTypedOperation {
 
-	@IdawiOperation
-	public void broadcastLocalInfo() {
-		start(new ComponentAddress((Set<ComponentDescriptor>) null).o(RegistryService.add), false,
-				new OperationParameterList(component.descriptor()));
-	}
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 
-	public static OperationID add;
-
-	@IdawiOperation
-	public void add(ComponentDescriptor d) {
-		var alreadyHere = name2descriptor.get(d.friendlyName);
-
-		if (alreadyHere == null || d.isNewerThan(alreadyHere)) {
-			name2descriptor.put(d.friendlyName, d);
+		public void f() {
+			start(new ComponentAddress((Set<ComponentDescriptor>) null).o(RegistryService.add.class), false,
+					new OperationParameterList(component.descriptor()));
 		}
 	}
 
-	public static OperationID addAll;
+	public class add extends InnerClassTypedOperation {
 
-	@IdawiOperation
-	public void addAll(Collection<ComponentDescriptor> s) {
-		s.forEach(i -> add(i));
+		@Override
+		public String getDescription() {
+			return null;
+		}
+
+		public void f(ComponentDescriptor d) {
+			var alreadyHere = name2descriptor.get(d.friendlyName);
+
+			if (alreadyHere == null || d.isNewerThan(alreadyHere)) {
+				name2descriptor.put(d.friendlyName, d);
+			}
+		}
 	}
 
-	public static OperationID size;
+	public class addAll extends InnerClassTypedOperation {
+		@Override
+		public String getDescription() {
+			return null;
+		}
 
-	@IdawiOperation
-	public int size() {
-		return name2descriptor.size();
+		public void addAll(Collection<ComponentDescriptor> s) {
+			s.forEach(i -> lookupOperation(add.class).f(i));
+		}
 	}
 
-	public static OperationID names;
+	public class size extends InnerClassTypedOperation {
+		public int size() {
+			return name2descriptor.size();
+		}
 
-	@IdawiOperation
-	public Set<String> names() {
-		return name2descriptor.keySet();
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID updateAll;
+	public class names extends InnerClassTypedOperation {
+		public Set<String> names() {
+			return name2descriptor.keySet();
+		}
 
-	@IdawiOperation
-	public void updateAll() {
-		var to = new OperationAddress(new ComponentAddress(new HashSet<>(name2descriptor.values())),
-				RegistryService.local);
-		start(to, true, null).returnQ.collect().resultMessages().contents().forEach(d -> add((ComponentDescriptor) d));
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID lookUp;
+	public class updateAll extends InnerClassTypedOperation {
+		public void updateAll() {
+			var to = new OperationAddress(new ComponentAddress(new HashSet<>(name2descriptor.values())),
+					RegistryService.local.class);
+			start(to, true, null).returnQ.collect().resultMessages().contents()
+					.forEach(d -> lookupOperation(add.class).f((ComponentDescriptor) d));
+		}
 
-	@IdawiOperation
-	public ComponentDescriptor lookup(String name) {
-		return name2descriptor.get(name);
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID remove;
+	public class lookUp extends InnerClassTypedOperation {
+		public ComponentDescriptor lookup(String name) {
+			return name2descriptor.get(name);
+		}
 
-	@IdawiOperation
-	public ComponentDescriptor remove(String name) {
-		return name2descriptor.remove(name);
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID clear;
+	public class remove extends InnerClassTypedOperation {
+		public ComponentDescriptor remove(String name) {
+			return name2descriptor.remove(name);
+		}
 
-	@IdawiOperation
-	public void clear() {
-		name2descriptor.clear();
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID list;
+	public class clear extends InnerClassTypedOperation {
+		public void clear() {
+			name2descriptor.clear();
+		}
 
-	@IdawiOperation
-	public Set<ComponentDescriptor> list() {
-		return new HashSet<>(name2descriptor.values());
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
-	public static OperationID local;
+	public class list extends InnerClassTypedOperation {
+		public Set<ComponentDescriptor> list() {
+			return new HashSet<>(name2descriptor.values());
+		}
 
-	@IdawiOperation
-	public ComponentDescriptor local() {
-		return component.descriptor();
+		@Override
+		public String getDescription() {
+			return null;
+		}
+	}
+
+	public class local extends InnerClassTypedOperation {
+		public ComponentDescriptor local() {
+			return component.descriptor();
+		}
+
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
 	public ComponentDescriptor pickRandomPeer() {
@@ -121,7 +191,6 @@ public class RegistryService extends Service {
 	}
 
 	@Override
-	@IdawiOperation
 	public String getFriendlyName() {
 		return "component registry";
 	}
@@ -149,7 +218,6 @@ public class RegistryService extends Service {
 		return r;
 	}
 
-	@IdawiOperation
 	public NetworkMap map() {
 		var m = new NetworkMap();
 		Map<String, ComponentDescriptor> missing = new HashMap<>();

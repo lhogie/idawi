@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
+import idawi.InnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Streams;
+import idawi.service.DemoService.OperationID;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
@@ -27,40 +27,60 @@ public class FileService2 extends Service {
 		super(t);
 	}
 
-	public static OperationID pathToLocalFiles;
+	public class pathToLocalFiles extends InnerClassTypedOperation {
+		public String pathToLocalFiles() {
+			return dir.getPath();
+		}
 
-	@IdawiOperation
-	private String pathToLocalFiles() {
-		return dir.getPath();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID listFiles;
+	public class listFiles extends InnerClassTypedOperation {
+		public Set<String> listFiles() throws IOException {
+			dir.ensureExists();
+			List<AbstractFile> files = dir.retrieveTree();
+			files.remove(dir);
+			return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
+		}
 
-	@IdawiOperation
-	private Set<String> listFiles() throws IOException {
-		dir.ensureExists();
-		List<AbstractFile> files = dir.retrieveTree();
-		files.remove(dir);
-		return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID downloadFileAsOneSingleMessage;
+	public class downloadFileAsOneSingleMessage extends InnerClassTypedOperation {
+		public byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
+			return new RegularFile(dir, path).getContent();
+		}
 
-	@IdawiOperation
-	private byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
-		return new RegularFile(dir, path).getContent();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID uploadFileAsOneSingleMessage;
+	public class uploadFileAsOneSingleMessage extends InnerClassTypedOperation {
+		public void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
+			new RegularFile(dir, path).setContent(bytes);
+		}
 
-	@IdawiOperation
-	private void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
-		new RegularFile(dir, path).setContent(bytes);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
-		start(new ComponentAddress(Set.of(target)).o( FileService2.uploadFileAsOneSingleMessage), true,
+		start(new ComponentAddress(Set.of(target)).o(FileService2.uploadFileAsOneSingleMessage.class), true,
 				parms(pathOnTarget, localFile.getContent()));
 	}
 
@@ -72,7 +92,6 @@ public class FileService2 extends Service {
 		public long age;
 	}
 
-	@IdawiOperation
 	private FileInfo fileInfo(String name) throws IOException {
 		var f = new RegularFile(dir, name);
 		var info = new FileInfo();
@@ -82,58 +101,83 @@ public class FileService2 extends Service {
 		return info;
 	}
 
-	public static OperationID downloadFile;
-
 	public static class DownloadFileParms implements Serializable {
 		String name;
 		long seek;
 		long len;
 	}
 
-	@IdawiOperation
-	private void downloadFile(MessageQueue q) throws IOException {
-		var msg = q.get_blocking();
-		DownloadFileParms parms = (DownloadFileParms) msg.content;
-		dir.ensureExists();
-		var f = new RegularFile(dir, parms.name);
-		long fileLength = f.getSize();
-		var inputStream = f.createReadingStream();
-		inputStream.skip(parms.seek);
-		Streams.split(inputStream, 1000, c -> send(inputStream, msg.replyTo));
+	public class downloadFile extends InnerClassTypedOperation {
+		public void downloadFile(MessageQueue q) throws IOException {
+			var msg = q.get_blocking();
+			DownloadFileParms parms = (DownloadFileParms) msg.content;
+			dir.ensureExists();
+			var f = new RegularFile(dir, parms.name);
+			long fileLength = f.getSize();
+			var inputStream = f.createReadingStream();
+			inputStream.skip(parms.seek);
+			Streams.split(inputStream, 1000, c -> send(inputStream, msg.replyTo));
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID upload;
+	public class upload extends InnerClassTypedOperation {
+		public void upload(String name, boolean append, InputStream in) throws IOException {
+			dir.ensureExists();
+			var fos = new RegularFile(dir, name).createWritingStream(append);
+			Utilities.copy(in, fos);
+			fos.close();
+		}
 
-	@IdawiOperation
-	private void upload(String name, boolean append, InputStream in) throws IOException {
-		dir.ensureExists();
-		var fos = new RegularFile(dir, name).createWritingStream(append);
-		Utilities.copy(in, fos);
-		fos.close();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID exists;
+	public class exists extends InnerClassTypedOperation {
+		public boolean exists(String name) {
+			dir.ensureExists();
+			return new RegularFile(dir, name).exists();
+		}
 
-	@IdawiOperation
-	private boolean exists(String name) {
-		dir.ensureExists();
-		return new RegularFile(dir, name).exists();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID delete;
+	public class delete extends InnerClassTypedOperation {
+		public void delete(String name) {
+			dir.ensureExists();
+			new RegularFile(dir, name).delete();
+		}
 
-	@IdawiOperation
-	private void delete(String name) {
-		dir.ensureExists();
-		new RegularFile(dir, name).delete();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	public static OperationID size;
+	public class size extends InnerClassTypedOperation {
+		public long size(String name) {
+			dir.ensureExists();
+			return new RegularFile(name).getSize();
+		}
 
-	@IdawiOperation
-	private long size(String name) {
-		dir.ensureExists();
-		return new RegularFile(name).getSize();
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 }

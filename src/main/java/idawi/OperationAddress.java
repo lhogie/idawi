@@ -6,11 +6,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
-import idawi.AsMethodOperation.OperationID;
-
 public class OperationAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
-	public ServiceAddress service;
+	public ServiceAddress sa;
 	public String opid;
 
 	public OperationAddress() {
@@ -18,15 +16,14 @@ public class OperationAddress implements Externalizable {
 	}
 
 	public OperationAddress(ServiceAddress sa, String opid) {
-		this.service = sa;
+		this.sa = sa;
 		this.opid = opid;
 	}
 
-	public OperationAddress(ComponentAddress sa, OperationID opid) {
-		this.service = new ServiceAddress(sa, opid.declaringService);
-		this.opid = opid.operationName;
+	public OperationAddress(ComponentAddress ca, Class<? extends InnerClassOperation> opid) {
+		this(new ServiceAddress(ca, (Class<? extends Service>) opid.getEnclosingClass()),
+				InnerClassOperation.name(opid));
 	}
-
 
 	public OperationAddress o(ServiceAddress s) {
 		return new OperationAddress(s, opid);
@@ -34,7 +31,7 @@ public class OperationAddress implements Externalizable {
 
 	@Override
 	public String toString() {
-		return service.toString() + "->" + opid;
+		return sa.toString() + "->" + opid;
 	}
 
 	@Override
@@ -48,18 +45,18 @@ public class OperationAddress implements Externalizable {
 			return false;
 
 		OperationAddress t = (OperationAddress) o;
-		return super.equals(o) && Objects.equals(service, t.service);
+		return super.equals(o) && Objects.equals(sa, t.sa);
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(service);
+		out.writeObject(sa);
 		out.writeObject(opid);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		service = (ServiceAddress) in.readObject();
+		sa = (ServiceAddress) in.readObject();
 		opid = (String) in.readObject();
 	}
 }

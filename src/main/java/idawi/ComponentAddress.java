@@ -8,12 +8,10 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import idawi.AsMethodOperation.OperationID;
-
 public class ComponentAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	public Set<ComponentDescriptor> notYetReachedExplicitRecipients;
+	public Set<String> notYetReachedExplicitRecipients;
 	public int coverage;
 	public double forwardProbability;
 	public double validityDuration = 10;// Double.MAX_VALUE;
@@ -24,7 +22,7 @@ public class ComponentAddress implements Externalizable {
 		this(null, Integer.MAX_VALUE, 1);
 	}
 
-	public ComponentAddress(Set<ComponentDescriptor> peers, int maxDistance, double forwardProbability) {
+	public ComponentAddress(Set<String> peers, int maxDistance, double forwardProbability) {
 		this.notYetReachedExplicitRecipients = peers;
 		this.coverage = maxDistance;
 		this.forwardProbability = forwardProbability;
@@ -33,7 +31,7 @@ public class ComponentAddress implements Externalizable {
 	public ComponentAddress(ComponentDescriptor p) {
 		this(Set.of(p));
 	}
-	public ComponentAddress(Set<ComponentDescriptor> peers) {
+	public ComponentAddress(Set<String> peers) {
 		this(peers, Integer.MAX_VALUE, 1);
 	}
 
@@ -41,7 +39,7 @@ public class ComponentAddress implements Externalizable {
 		this(null, maxDistance, 1);
 	}
 
-	public static ComponentAddress to(Set<ComponentDescriptor> peers) {
+	public static ComponentAddress to(Set<String> peers) {
 		return new ComponentAddress(peers);
 	}
 
@@ -49,7 +47,7 @@ public class ComponentAddress implements Externalizable {
 		return new ServiceAddress(this, sid);
 	}
 
-	public OperationAddress o(OperationID o) {
+	public OperationAddress o(Class<? extends InnerClassOperation> o) {
 		return new OperationAddress(this, o);
 	}
 

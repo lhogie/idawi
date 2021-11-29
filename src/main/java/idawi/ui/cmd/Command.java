@@ -54,7 +54,7 @@ public abstract class Command extends CommandLineApplication {
 			if (p.equals("_")) {
 				peers.add(n.descriptor());
 			} else {
-				var pp = n.lookupService(RegistryService.class).lookup(p);
+				var pp = n.lookupOperation(RegistryService.lookUp.class).lookup(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

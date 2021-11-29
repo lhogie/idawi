@@ -18,11 +18,10 @@ import java.util.Set;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
+import idawi.InnerClassTypedOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
@@ -291,7 +290,7 @@ public class RESTService extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = lookupService(RegistryService.class).lookup(name);
+			var found = lookupOperation(RegistryService.lookUp.class).lookup(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));
@@ -306,7 +305,7 @@ public class RESTService extends Service {
 	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
-		var to = new ComponentAddress(components).o(ServiceManager.list);
+		var to = new ComponentAddress(components).o(ServiceManager.list.class);
 		var res = start(to, true, null).returnQ;
 
 		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
@@ -321,7 +320,7 @@ public class RESTService extends Service {
 	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
-		var to = new ComponentAddress(components).s(serviceID).o(Service.DescriptorOperation);
+		var to = new ComponentAddress(components).s(serviceID).o(Service.DescriptorOperation.class);
 		var res = start(to, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
@@ -349,21 +348,33 @@ public class RESTService extends Service {
 		return query;
 	}
 
-	public static OperationID stopHTTPServer;
+	public class stopHTTPServer extends InnerClassTypedOperation{
+		public void f() throws IOException {
+			if (restServer == null) {
+				throw new IOException("REST server is not running");
+			}
 
-	@IdawiOperation
-	public void stopHTTPServer() throws IOException {
-		if (restServer == null) {
-			throw new IOException("REST server is not running");
+			restServer.stop(0);
+			restServer = null;
 		}
 
-		restServer.stop(0);
-		restServer = null;
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
-	@IdawiOperation
-	private void startHTTPServerOperation(int port) throws IOException {
-		startHTTPServer(port);
+	public class startHTTPServerOperation extends InnerClassTypedOperation{
+		public void f(int port) throws IOException {
+			startHTTPServer(port);
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 }

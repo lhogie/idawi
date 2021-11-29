@@ -4,9 +4,8 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.IdawiOperation;
+import idawi.InnerClassTypedOperation;
 import idawi.Service;
 import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
@@ -71,11 +70,15 @@ public class SystemMonitor extends Service {
 	public void shutdown() {
 	}
 
-	public static OperationID loadRatio;
-	
-	@IdawiOperation
-	public double loadRatio() {
-		return Utils.loadRatio();
+	public class loadRatio extends InnerClassTypedOperation {
+		public double f() {
+			return Utils.loadRatio();
+		}
+
+		@Override
+		public String getDescription() {
+			return "gets the load ratio of the host of this component. The ratio is between 0 and 1.";
+		}
 	}
 
 }

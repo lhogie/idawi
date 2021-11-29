@@ -7,7 +7,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
-import idawi.service.DummyService;
+import idawi.service.DemoService;
 import idawi.service.ServiceManager;
 import toools.io.Cout;
 
@@ -45,17 +45,17 @@ public class TestServiceManager {
 
 		stub.list().forEach(operationName -> System.out.println(operationName));
 
-		if (!stub.has(DummyService.class)) {
-			System.out.println("starting service " + DummyService.class);
-			stub.start(DummyService.class);
+		if (!stub.has(DemoService.class)) {
+			System.out.println("starting service " + DemoService.class);
+			stub.start(DemoService.class);
 		}
 
 		stub.list().forEach(operationName -> System.out.println(operationName));
-		System.out.println("stopping service " + DummyService.class);
-		stub.stop(DummyService.class);
+		System.out.println("stopping service " + DemoService.class);
+		stub.stop(DemoService.class);
 		stub.list().forEach(operationName -> System.out.println(operationName));
-		System.out.println("starting service " + DummyService.class);
-		stub.start(DummyService.class);
+		System.out.println("starting service " + DemoService.class);
+		stub.start(DemoService.class);
 		stub.list().forEach(operationName -> System.out.println(operationName));
 		// assertEquals(sms.list().contains(DummyService.class), false);
 

@@ -1,6 +1,6 @@
 package idawi.service.time;
 
-public class ControlledTimeModel implements TimeModel {
+public class SettableTimeModel implements TimeModel {
 	double time = 0;
 
 	@Override

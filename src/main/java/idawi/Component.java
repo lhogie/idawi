@@ -14,8 +14,8 @@ import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
+import idawi.service.DemoService;
 import idawi.service.DeployerService;
-import idawi.service.DummyService;
 import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
@@ -62,7 +62,7 @@ public class Component {
 //		new RoutingScheme1(this);
 		new RoutingScheme_bcast(this);
 		new ErrorLog(this);
-		new DummyService(this);
+		new DemoService(this);
 		new RESTService(this);
 		new ExternalCommandsService(this);
 		new FileService(this);
@@ -83,7 +83,7 @@ public class Component {
 		return services.values();
 	}
 
-	public <S> S lookupService(Class<S> id) {
+	public <S extends Service> S lookupService(Class<S> id) {
 		return (S) services.get(id);
 	}
 
@@ -97,6 +97,13 @@ public class Component {
 
 	public <S extends Service> void lookupServices(Class<S> c, Consumer<S> h) {
 		lookupServices(s -> c.isInstance(s), s -> h.accept((S) s));
+	}
+
+	public <S extends InnerClassOperation> S lookupOperation(Class<? extends S> c) {
+		var sc = (Class<? extends Service>) c.getDeclaringClass();
+		var s = lookupService(sc);
+		var o = s.lookupOperation(c);
+		return o;
 	}
 
 	public Service newService() {
@@ -141,4 +148,5 @@ public class Component {
 	public ComponentAddress getAddress() {
 		return new ComponentAddress(Set.of(descriptor));
 	}
+
 }

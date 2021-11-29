@@ -3,10 +3,8 @@ package idawi.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
-import idawi.ComponentAddress;
-import idawi.IdawiOperation;
+import idawi.InnerClassOperation;
 import idawi.InnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
@@ -19,30 +17,38 @@ public class ErrorLog extends Service {
 		super(peer);
 	}
 
-	public static OperationID registerError;
+	public class registerError extends InnerClassOperation {
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			errors.add((Throwable) in.get_blocking().content);
+		}
 
-	@IdawiOperation
-	public void registerError(MessageQueue in) {
-		errors.add((Throwable) in.get_blocking().content);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 	public void report(Throwable error) {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		start(ca().o(registerError), false, error);
+		start(ca().o(registerError.class), false, error);
 	}
-
-	
 
 	public void report(String msg) {
 		report(new Error(msg));
 	}
 
-	@IdawiOperation
 	public class list extends InnerClassTypedOperation {
 		public List<Throwable> f() {
 			return errors;
+		}
+
+		@Override
+		public String getDescription() {
+			return "retrieve all the errors know by this component";
 		}
 	}
 }

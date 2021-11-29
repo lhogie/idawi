@@ -1,23 +1,35 @@
 package idawi.map;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
+import idawi.InnerClassTypedOperation;
 import idawi.Route;
 import idawi.RouteEntry;
 import idawi.Service;
+import toools.thread.Threads;
 
 public class MapService extends Service {
-
+	static {
+		Threads.newThread_loop(1000, () -> true, () -> {
+			Component.componentsInThisJVM.values().forEach(c -> c.lookupService(MapService.class).map.removeOutdated());
+		});
+	}
+	
 	private final NetworkMap map = new NetworkMap();
 
 	public MapService(Component component) {
 		super(component);
 	}
 
-	public static OperationID get;
+	public class get extends InnerClassTypedOperation {
+		public NetworkMap get() {
+			return map;
+		}
 
-	public NetworkMap get() {
-		return map;
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 	@Override

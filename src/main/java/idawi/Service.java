@@ -1,6 +1,5 @@
 package idawi;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,11 +14,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.service.ErrorLog;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.io.file.Directory;
+import toools.reflect.Clazz;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -53,8 +52,7 @@ public class Service {
 		this.component = component;
 		component.services.put(getClass(), this);
 		this.id = getClass();
-//		registerInMethodOperations();
-//		registerInInnerClassOperations();
+		registerFieldsOperations();
 		registerOperation(new DescriptorOperation());
 	}
 
@@ -62,9 +60,30 @@ public class Service {
 		return new ComponentAddress(component.descriptor());
 	}
 
-	public static OperationID sec2nbMessages;
+	public class getFriendlyName extends InnerClassTypedOperation {
+		public String f() {
+			return getFriendlyName();
+		}
 
-	@IdawiOperation
+		@Override
+		public String getDescription() {
+			return null;
+		}
+	}
+
+	public class sec2nbMessages extends InnerClassTypedOperation {
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Int2LongMap f() {
+			return sec2nbMessages();
+		}
+	}
+
 	public Int2LongMap sec2nbMessages() {
 		return second2nbMessages;
 	}
@@ -77,49 +96,24 @@ public class Service {
 		send(r, msg.replyTo);
 	}
 
-	/*
-	 * private void registerInMethodOperations() { for (Class c :
-	 * Clazz.bfs(getClass())) { for (Method m : c.getDeclaredMethods()) { if
-	 * (m.isAnnotationPresent(IdawiOperation.class)) { var o = new
-	 * AsMethodOperation(m, this); registerOperation(o);
-	 * 
-	 * try { // search for a field with the same name Field f =
-	 * c.getDeclaredField(m.getName());
-	 * 
-	 * if (f != null && f.getType() == OperationID.class) {
-	 * 
-	 * if (f.getType() != AsMethodOperation.OperationID.class) { throw new
-	 * IllegalStateException("field " + c.getName() + "." + f.getName() +
-	 * " should be of type " + AsMethodOperation.OperationID.class); }
-	 * 
-	 * if ((f.getModifiers() & Modifier.STATIC) == 0) { throw new
-	 * IllegalStateException( "field " + c.getName() + "." + f.getName() +
-	 * " should be static"); }
-	 * 
-	 * if ((f.getModifiers() & Modifier.PUBLIC) == 0) { throw new
-	 * IllegalStateException( "field " + c.getName() + "." + f.getName() +
-	 * " should be public"); }
-	 * 
-	 * if ((f.getModifiers() & Modifier.FINAL) != 0) { throw new
-	 * IllegalStateException( "field " + c.getName() + "." + f.getName() +
-	 * " cannot not be declared final"); }
-	 * 
-	 * AsMethodOperation.OperationID id = new
-	 * AsMethodOperation.OperationID(getClass(), m.getName());
-	 * f.setAccessible(true); f.set(this, id); } } catch (SecurityException |
-	 * IllegalArgumentException | IllegalAccessException e) { throw new
-	 * RuntimeException(e); } catch (NoSuchFieldException e) { // this method is not
-	 * an operation, no pb } } } } }
-	 */
-	private static Field findField(Class c, String name) {
-		try {
-			return c.getDeclaredField(name);
-		} catch (NoSuchFieldException | SecurityException e) {
-			return null;
+	private void registerFieldsOperations() {
+		for (Class c : Clazz.bfs(getClass())) {
+			for (var f : c.getDeclaredFields()) {
+				if (Operation.class.isAssignableFrom(f.getType()) && f.isAnnotationPresent(IdawiOperation.class)) {
+					try {
+						var constructor = f.getType().getConstructor(c);
+						var operation = (Operation) constructor.newInstance(this);
+						f.set(this, operation);
+						operations.add(operation);
+					} catch (Throwable e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
 		}
 	}
 
-	protected <S> S lookupService(Class<? extends S> serviceID) {
+	protected <S extends Service> S lookupService(Class<? extends S> serviceID) {
 		return component.lookupService(serviceID);
 	}
 
@@ -134,11 +128,15 @@ public class Service {
 		return this.directory;
 	}
 
-	public static OperationID nbMessagesReceived;
+	public class nbMessagesReceived extends InnerClassTypedOperation {
+		public long f() {
+			return nbMsgsReceived;
+		}
 
-	@IdawiOperation
-	public long nbMessagesReceived() {
-		return nbMsgsReceived;
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
 	public class listOperationNames extends InnerClassTypedOperation {
@@ -152,7 +150,6 @@ public class Service {
 		}
 	}
 
-	@IdawiOperation
 	public class listNativeOperations extends InnerClassTypedOperation {
 		Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
@@ -266,10 +263,10 @@ public class Service {
 		return null;
 	}
 
-	public Operation lookupOperation(Class<? extends Operation> c) {
+	public <O> O lookupOperation(Class<O> c) {
 		for (var o : operations) {
 			if (o.getClass() == c) {
-				return o;
+				return (O) o;
 			}
 		}
 
@@ -375,9 +372,17 @@ public class Service {
 		return askToRun;
 	}
 
-	public static OperationID shutdown;
+	public class shutdown extends InnerClassTypedOperation {
+		public void f() {
+			shutdown();
+		}
 
-	@IdawiOperation
+		@Override
+		public String getDescription() {
+			return null;
+		}
+	}
+
 	public void shutdown() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
@@ -411,10 +416,6 @@ public class Service {
 		q.cancelEventisation();
 	}
 
-	public QueueAddress to(ComponentDescriptor c, OperationID operation) {
-		return new ComponentAddress(c).s(operation.declaringService).q(operation.operationName);
-	}
-
 	protected final OperationParameterList parms(Object... parms) {
 		return new OperationParameterList(parms);
 	}
@@ -425,7 +426,7 @@ public class Service {
 
 	public RemotelyRunningOperation start(OperationAddress target, boolean expectReturn, Object initialInputData) {
 		String inputQName = target.opid + "@" + Date.timeNs();
-		var inputQaddress = new QueueAddress(target.service, inputQName);
+		var inputQaddress = new QueueAddress(target.sa, inputQName);
 		return new RemotelyRunningOperation(this, inputQaddress, target.opid, expectReturn, initialInputData);
 	}
 
@@ -434,21 +435,23 @@ public class Service {
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
-	public static OperationID broadcast;
-
 	public class DescriptorOperation extends InnerClassTypedOperation {
 		public ServiceDescriptor f() {
-			var d = new ServiceDescriptor();
-			d.name = id.getName();
-			d.description = getDescription();
-			operations.forEach(o -> d.operationDescriptors.add(o.descriptor()));
-			d.nbMessagesReceived = nbMsgsReceived;
-			return d;
+			return Service.this.descriptor();
 		}
 
 		@Override
 		public String getDescription() {
 			return null;
 		}
+	}
+
+	public ServiceDescriptor descriptor() {
+		var d = new ServiceDescriptor();
+		d.name = id.getName();
+		d.description = getDescription();
+		operations.forEach(o -> d.operationDescriptors.add(o.descriptor()));
+		d.nbMessagesReceived = nbMsgsReceived;
+		return d;
 	}
 }

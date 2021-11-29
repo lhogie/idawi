@@ -16,11 +16,7 @@ import toools.thread.Threads;
 import toools.util.Date;
 
 public class NetworkMap {
-	static {
-		Threads.newThread_loop(1000, () -> true, () -> {
-			Component.componentsInThisJVM.values().forEach(c -> c.lookupService(NetworkMap.class).removeOutdated());
-		});
-	}
+
 
 	public static class Edge {
 		public String protocolName;
@@ -51,7 +47,7 @@ public class NetworkMap {
 		return m.get(p);
 	}
 
-	private void removeOutdated() {
+	public void removeOutdated() {
 		m.values().forEach(s -> s.removeIf(e -> e.expired()));
 	}
 

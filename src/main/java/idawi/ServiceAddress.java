@@ -6,7 +6,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
-import idawi.AsMethodOperation.OperationID;
 import toools.reflect.Clazz;
 
 public class ServiceAddress implements Externalizable {
@@ -26,16 +25,15 @@ public class ServiceAddress implements Externalizable {
 	public QueueAddress q(String name) {
 		return new QueueAddress(this, name);
 	}
-	
+
 	public OperationAddress o(String name) {
 		return new OperationAddress(this, name);
 	}
 
-	public OperationAddress o(OperationID o) {
-		return o(o.operationName);
+	public OperationAddress o(Class<? extends Operation> o) {
+		return o(o.getName());
 	}
 
-	
 	@Override
 	public String toString() {
 		return super.toString() + "->" + Clazz.classNameWithoutPackage(service.getName());

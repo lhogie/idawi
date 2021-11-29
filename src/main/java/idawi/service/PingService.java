@@ -6,11 +6,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import idawi.AsMethodOperation.OperationID;
 import idawi.Component;
 import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.IdawiOperation;
+import idawi.InnerClassOperation;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
@@ -28,14 +27,20 @@ public class PingService extends Service {
 		super(node);
 	}
 
-	public static OperationID ping;
+	public class ping extends InnerClassOperation{
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+		}
 
-	@IdawiOperation
-	public void ping(MessageQueue in) {
+		@Override
+		public String getDescription() {
+			return "simply replies to the requester";
+		}
 	}
 
+
 	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.start(new ComponentAddress(targets).o(PingService.ping), true, null).returnQ;
+		return from.start(new ComponentAddress(targets).o(PingService.ping.class), true, null).returnQ;
 	}
 
 	public static MessageQueue ping(Service from) {
@@ -62,17 +67,24 @@ public class PingService extends Service {
 		});
 	}
 
-	public static OperationID traceroute;
+	public class traceroute extends InnerClassOperation{
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			var msg = in.get_blocking();
+			send(msg.route, msg.replyTo);
+		}
 
-	@IdawiOperation
-	public void traceroute(MessageQueue in) {
-		var msg = in.get_blocking();
-		send(msg.route, msg.replyTo);
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
+
 
 	public static List<Route> traceroute(Service from, Set<ComponentDescriptor> targets, double timeout)
 			throws Throwable {
-		return (List<Route>) (List<?>) from.start(new ComponentAddress(targets).o(PingService.traceroute), true,
+		return (List<Route>) (List<?>) from.start(new ComponentAddress(targets).o(PingService.traceroute.class), true,
 				null).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream()
 						.collect(Collectors.toList());
 	}
