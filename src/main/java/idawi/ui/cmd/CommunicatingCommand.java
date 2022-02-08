@@ -79,7 +79,7 @@ public abstract class CommunicatingCommand extends Command {
 
 	@Override
 	public String getApplicationName() {
-		return "jThing";
+		return "Idawi";
 	}
 
 	@Override

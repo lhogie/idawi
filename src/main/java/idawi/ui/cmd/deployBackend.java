@@ -25,7 +25,7 @@ public class deployBackend extends CommandBackend {
 
 		boolean suicideWhenParentDie = ! cmdline.isOptionSpecified("--autonomous");
 		boolean printRsync = ! cmdline.isOptionSpecified("--rsync");
-		n.lookupService(DeployerService.class).deploy(peers, suicideWhenParentDie, 2000,
+		n.lookup(DeployerService.class).deploy(peers, suicideWhenParentDie, 2000,
 				printRsync, out, peerOk -> out.accept(peerOk + " is ready"));
 	}
 }

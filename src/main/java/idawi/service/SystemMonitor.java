@@ -1,32 +1,18 @@
 package idawi.service;
 
 import java.io.Serializable;
-import java.lang.management.ManagementFactory;
 import java.util.Properties;
 
 import idawi.Component;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.Service;
 import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
-import toools.extern.Proces;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 
 public class SystemMonitor extends Service {
-	public static class Uptime implements Serializable {
-		Uptime(String s) {
-			this.stdout = s;
-		}
-
-		public String stdout;
-	}
-
-	public static class cpuinfo implements Serializable {
-		cpuinfo(String s) {
-			this.stdout = s;
-		}
-
-		public String stdout;
-	}
+	private Info lastInfo;
 
 	@Override
 	public String getFriendlyName() {
@@ -34,10 +20,8 @@ public class SystemMonitor extends Service {
 	}
 
 	public static class Info implements Serializable {
-		public double loadAvg;
+		public DoubleList loadAvg = new DoubleArrayList();
 		public int nbCores;
-		public Uptime uptime;
-		public cpuinfo cpuinfo;
 		public Properties systemProperties;// = System.getProperties();
 
 		@Override
@@ -48,37 +32,37 @@ public class SystemMonitor extends Service {
 
 	public SystemMonitor(Component peer) {
 		super(peer);
-		PublishSubscribe ps = component.lookupService(PublishSubscribe.class);
+		registerOperation(new get());
 
 		newThread_loop_periodic(20000, () -> {
 			Info i = new Info();
-			i.loadAvg = ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage();
-			i.nbCores = Runtime.getRuntime().availableProcessors();
-			i.systemProperties = System.getProperties();
+			i.loadAvg.add(Utils.loadRatio());
 
-			if (Proces.commandIsAvailable("uptime")) {
-				i.uptime = new Uptime(new String(Proces.exec("uptime")));
+			if (i.loadAvg.size() > 100) {
+				i.loadAvg.removeElements(0, 1);
 			}
 
-			ps.publish(i, "system monitor");
+			i.nbCores = Runtime.getRuntime().availableProcessors();
+			i.systemProperties = System.getProperties();
+			this.lastInfo = i;
+
+			var ps = component.lookup(PublishSubscribe.class);
+
+			if (ps != null) {
+				ps.publish(i, "system monitor");
+			}
 		});
-
-		System.out.println("*** starting service " + getClass());
 	}
 
-	@Override
-	public void shutdown() {
-	}
-
-	public class loadRatio extends InnerClassTypedOperation {
-		public double f() {
-			return Utils.loadRatio();
-		}
+	public class get extends TypedOperation {
 
 		@Override
 		public String getDescription() {
-			return "gets the load ratio of the host of this component. The ratio is between 0 and 1.";
+			return "gets the lastest proble";
+		}
+
+		public Info f() {
+			return lastInfo;
 		}
 	}
-
 }

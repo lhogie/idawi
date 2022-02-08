@@ -7,7 +7,7 @@ import java.io.ObjectOutput;
 public class TriggerMessage extends Message {
 	public String operationName;
 	public boolean premptive = false;
-	
+
 	// just an idea
 	public int repeat = 1;
 
@@ -21,5 +21,10 @@ public class TriggerMessage extends Message {
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		this.operationName = in.readUTF();
+	}
+
+	@Override
+	public String toString() {
+		return "trigger " + super.toString();
 	}
 }

@@ -5,42 +5,48 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import toools.io.Cout;
+import toools.io.file.RegularFile;
+import toools.text.TextUtilities;
 import toools.thread.Threads;
 
 public class PipeFromToParentProcess extends TransportLayer {
 	private boolean run = false;
-	private final boolean suicideWhenParentDies;
-	private final ComponentDescriptor parent;
+	private final boolean suicideIfLooseParent;
+//	private final ComponentDescriptor parent;
+	private final Set<ComponentDescriptor> neighbors;
 
-	public PipeFromToParentProcess(ComponentDescriptor parent, boolean suicideWhenParentDies) {
-		this.suicideWhenParentDies = suicideWhenParentDies;
-		this.parent = parent;
+	public PipeFromToParentProcess(Component c, ComponentDescriptor parent, boolean suicideWhenParentDies) {
+		super(c);
+		this.suicideIfLooseParent = suicideWhenParentDies;
+//		this.parent = parent;
+		this.neighbors = Collections.singleton(parent);
 	}
 
 	@Override
 	public Set<ComponentDescriptor> neighbors() {
-		return Collections.singleton(parent);
+		return neighbors;
 	}
 
 	@Override
 	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
-		if ( ! run)
+		if (!run)
 			return;
 
-		if (neighbors.size() != 1 || ! neighbors.iterator().next().equals(parent))
+		if (!neighbors.equals(neighbors))
 			throw new IllegalStateException();
 
 		try {
-			synchronized (Cout.raw_stdout) {
+//			synchronized (Cout.raw_stdout) {
 				Cout.raw_stdout.println(PipeFromToChildProcess.msgMark);
 				serializer.write(msg, Cout.raw_stdout);
-			}
-		}
-		catch (IOException e) {
-			if (suicideWhenParentDies) {
+//			}
+		} catch (IOException e) {
+			//new RegularFile("$HOME/err.txt").setContentAsASCII(TextUtilities.exception2string(e));
+			if (suicideIfLooseParent) {
 				System.exit(0);
 			}
 		}
@@ -48,17 +54,19 @@ public class PipeFromToParentProcess extends TransportLayer {
 
 	@Override
 	public String getName() {
-		return "SSParent";
+		return "sdtin/stdout";
 	}
 
 	@Override
 	public boolean canContact(ComponentDescriptor c) {
-		return c.equals(parent);
+		return neighbors.contains(c);
 	}
 
 	@Override
 	public void injectLocalInfoTo(ComponentDescriptor c) {
 	}
+
+	static int nbR = 0;
 
 	@Override
 	public void start() {
@@ -66,11 +74,15 @@ public class PipeFromToParentProcess extends TransportLayer {
 
 		Threads.newThread_loop(() -> run, () -> {
 			try {
+//				System.out.println("reading stdin        " + nbR);
+//				System.out.println(System.in.available() + " bytes available");
 				Message msg = (Message) serializer.read(System.in);
+//				System.out.println("reading ok " + nbR);
+				nbR++;
 				processIncomingMessage(msg);
-			}
-			catch (IOException e) {
-				if (suicideWhenParentDies) {
+			} catch (Exception e) {
+				new RegularFile("$HOME/err.txt").setContentAsASCII(TextUtilities.exception2string(e));
+				if (suicideIfLooseParent) {
 					System.exit(0);
 				}
 			}

@@ -21,14 +21,14 @@ public class RoutingScheme1 extends RoutingTableBasedRouting<One2OneRoutingTable
 	}
 
 	@Override
-	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+	public Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol) {
 		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
 
 		// if it's a broadcast message
 		if (to == null) {
 			// but the node is disconnected
 			if (neighbors.isEmpty()) {
-				return lookupOperation(RegistryService.list.class).list();
+				return lookup(RegistryService.list.class).list();
 			} else {
 				return neighbors;
 			}

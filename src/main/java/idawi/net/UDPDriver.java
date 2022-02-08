@@ -5,16 +5,17 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Collection;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 
 public class UDPDriver extends IPDriver {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
-	private final MessageBuiltNeighborhood neighbors;
+	private final MessageBuiltNeighborhood neighbors = new MessageBuiltNeighborhood(this);
 	private DatagramSocket socket;
 
-	public UDPDriver() {
-		neighbors = new MessageBuiltNeighborhood(this);
+	public UDPDriver(Component c) {
+		super(c);
 	}
 
 	@Override

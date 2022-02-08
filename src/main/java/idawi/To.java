@@ -8,50 +8,57 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class ComponentAddress implements Externalizable {
+public class To implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	public Set<String> notYetReachedExplicitRecipients;
+	public Set<ComponentDescriptor> componentIDs;
 	public int coverage;
 	public double forwardProbability;
 	public double validityDuration = 10;// Double.MAX_VALUE;
 
-	public static final ComponentAddress BCAST_ADDRESS = new ComponentAddress();
+	public static final To BCAST_ADDRESS = new To();
 
-	public ComponentAddress() {
+	public To() {
 		this(null, Integer.MAX_VALUE, 1);
 	}
 
-	public ComponentAddress(Set<String> peers, int maxDistance, double forwardProbability) {
-		this.notYetReachedExplicitRecipients = peers;
+	public To(Set<ComponentDescriptor> peers, int maxDistance, double forwardProbability) {
+		this.componentIDs = peers;
 		this.coverage = maxDistance;
 		this.forwardProbability = forwardProbability;
 	}
 
-	public ComponentAddress(ComponentDescriptor p) {
+	public To(Component p) {
+		this(p.descriptor());
+	}
+
+	public To(ComponentDescriptor p) {
 		this(Set.of(p));
 	}
-	public ComponentAddress(Set<String> peers) {
+
+	public To(Set<ComponentDescriptor> peers) {
 		this(peers, Integer.MAX_VALUE, 1);
 	}
 
-	public ComponentAddress(int maxDistance) {
+	public To(int maxDistance) {
 		this(null, maxDistance, 1);
 	}
 
-	public static ComponentAddress to(Set<String> peers) {
-		return new ComponentAddress(peers);
+	public static To to(Set<ComponentDescriptor> peers) {
+		return new To(peers);
 	}
 
 	public ServiceAddress s(Class<? extends Service> sid) {
 		return new ServiceAddress(this, sid);
 	}
 
-	public OperationAddress o(Class<? extends InnerClassOperation> o) {
+	public <O extends InnerOperation> OperationAddress o(Class<O> o) {
 		return new OperationAddress(this, o);
 	}
 
-
+	public <O extends InnerOperation> OperationAddress o(Class<? extends Service> sid, String operationName) {
+		return s(sid).o(operationName);
+	}
 
 	/*
 	 * public To(ComponentDescriptor t, Class<? extends Service> sid, String qid) {
@@ -75,7 +82,7 @@ public class ComponentAddress implements Externalizable {
 
 	@Override
 	public String toString() {
-		return notYetReachedExplicitRecipients == null ? "*" : notYetReachedExplicitRecipients.toString();
+		return componentIDs == null ? "*" : componentIDs.toString();
 	}
 
 	@Override
@@ -85,23 +92,22 @@ public class ComponentAddress implements Externalizable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof ComponentAddress))
+		if (!(o instanceof To))
 			return false;
 
-		ComponentAddress t = (ComponentAddress) o;
-		return Objects.equals(notYetReachedExplicitRecipients, t.notYetReachedExplicitRecipients)
-				&& coverage == t.coverage;
+		To t = (To) o;
+		return Objects.equals(componentIDs, t.componentIDs) && coverage == t.coverage;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 
-		if (notYetReachedExplicitRecipients == null) {
+		if (componentIDs == null) {
 			out.writeInt(-1);
 		} else {
-			out.writeInt(notYetReachedExplicitRecipients.size());
+			out.writeInt(componentIDs.size());
 
-			for (ComponentDescriptor p : notYetReachedExplicitRecipients) {
+			for (ComponentDescriptor p : componentIDs) {
 				out.writeObject(p);
 			}
 		}
@@ -116,10 +122,10 @@ public class ComponentAddress implements Externalizable {
 		int toLen = in.readInt();
 
 		if (toLen != -1) {
-			notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(toLen);
+			componentIDs = new HashSet<ComponentDescriptor>(toLen);
 
 			for (int i = 0; i < toLen; ++i) {
-				notYetReachedExplicitRecipients.add((ComponentDescriptor) in.readObject());
+				componentIDs.add((ComponentDescriptor) in.readObject());
 			}
 		}
 
@@ -129,15 +135,15 @@ public class ComponentAddress implements Externalizable {
 	}
 
 	public boolean isBroadcast() {
-		return notYetReachedExplicitRecipients == null;
+		return componentIDs == null;
 	}
 
 	public boolean isUnicast() {
-		return notYetReachedExplicitRecipients != null && notYetReachedExplicitRecipients.size() == 1;
+		return componentIDs != null && componentIDs.size() == 1;
 	}
 
 	public boolean isMulticast() {
-		return notYetReachedExplicitRecipients != null && notYetReachedExplicitRecipients.size() > 1;
+		return componentIDs != null && componentIDs.size() > 1;
 	}
 
 	public double getValidityDuration() {
@@ -145,7 +151,7 @@ public class ComponentAddress implements Externalizable {
 	}
 
 	public Set<ComponentDescriptor> getNotYetReachedExplicitRecipients() {
-		return notYetReachedExplicitRecipients;
+		return componentIDs;
 	}
 
 	public int getMaxDistance() {

@@ -7,15 +7,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.InnerClassOperation;
+import idawi.InnerOperation;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
-import idawi.MessageQueue.SUFFICIENCY;
+import idawi.MessageQueue.Enough;
 import idawi.Route;
 import idawi.Service;
+import idawi.To;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -25,22 +25,23 @@ import idawi.Service;
 public class PingService extends Service {
 	public PingService(Component node) {
 		super(node);
+		registerOperation(new ping());
 	}
 
-	public class ping extends InnerClassOperation{
+	public class ping extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
+			// do nothing, the EOT message will go automatically
 		}
 
 		@Override
 		public String getDescription() {
-			return "simply replies to the requester";
+			return "simply replies to the requester (which stands as the pong)";
 		}
 	}
 
-
 	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.start(new ComponentAddress(targets).o(PingService.ping.class), true, null).returnQ;
+		return from.exec(new To(targets).o(PingService.ping.class), true, null).returnQ;
 	}
 
 	public static MessageQueue ping(Service from) {
@@ -48,26 +49,26 @@ public class PingService extends Service {
 	}
 
 	public static Message ping(Service from, ComponentDescriptor target, double timeout) {
-		return ping(from, Set.of(target)).setTimeout(timeout).collect().getOrNull(0);
+		return ping(from, Set.of(target)).setMaxWaitTimeS(timeout).collect().getOrNull(0);
 	}
 
 	public static void ping(Service from, Set<ComponentDescriptor> targets, double timeout,
-			Function<ComponentDescriptor, SUFFICIENCY> pong) {
+			Function<ComponentDescriptor, Enough> pong) {
 		ping(from, targets).forEach(msg -> pong.apply(msg.route.source().component));
 	}
 
 	public static MessageList ping(Service from, Set<ComponentDescriptor> targets, double timeout) {
-		return ping(from, targets).setTimeout(timeout).collect();
+		return ping(from, targets).setMaxWaitTimeS(timeout).collect();
 	}
 
 	public static void ping(Service from, double timeout, Consumer<Message> found) {
-		ping(from, null).setTimeout(timeout).forEach(newMsg -> {
+		ping(from, null).setMaxWaitTimeS(timeout).forEach(newMsg -> {
 			found.accept(newMsg);
-			return SUFFICIENCY.NOT_ENOUGH;
+			return Enough.no;
 		});
 	}
 
-	public class traceroute extends InnerClassOperation{
+	public class traceroute extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.get_blocking();
@@ -81,12 +82,11 @@ public class PingService extends Service {
 		}
 	}
 
-
 	public static List<Route> traceroute(Service from, Set<ComponentDescriptor> targets, double timeout)
 			throws Throwable {
-		return (List<Route>) (List<?>) from.start(new ComponentAddress(targets).o(PingService.traceroute.class), true,
-				null).returnQ.setTimeout(timeout).collect().throwAnyError().resultMessages().contents().stream()
-						.collect(Collectors.toList());
+		return (List<Route>) (List<?>) from.exec(new To(targets).o(PingService.traceroute.class), true, null).returnQ
+				.setMaxWaitTimeS(timeout).collect().throwAnyError().resultMessages().contents().stream()
+				.collect(Collectors.toList());
 	}
 
 	@Override

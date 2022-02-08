@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import toools.io.Cout;
@@ -16,7 +17,8 @@ public class FileSystemProtocolDriver extends TransportLayer {
 	private final Directory inboxDirectory;
 	private final MessageBuiltNeighborhood peers;
 
-	public FileSystemProtocolDriver(String peerName, Directory baseDirectory) {
+	public FileSystemProtocolDriver(Component c, String peerName, Directory baseDirectory) {
+		super(c);
 
 		this.baseDirectory = baseDirectory;
 		this.inboxDirectory = new Directory(baseDirectory, peerName);
@@ -54,7 +56,7 @@ public class FileSystemProtocolDriver extends TransportLayer {
 
 	@Override
 	public boolean canContact(ComponentDescriptor c) {
-		return c.friendlyName != null;
+		return c.name != null;
 	}
 
 	@Override

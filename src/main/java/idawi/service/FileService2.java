@@ -8,13 +8,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Streams;
-import idawi.service.DemoService.OperationID;
+import idawi.To;
+import idawi.service.DemoService.waiting;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
@@ -25,9 +25,17 @@ public class FileService2 extends Service {
 
 	public FileService2(Component t) {
 		super(t);
+		registerOperation(new delete());
+		registerOperation(new downloadFile());
+		registerOperation(new downloadFileAsOneSingleMessage());
+		registerOperation(new listFiles());
+		registerOperation(new exists());
+		registerOperation(new pathToLocalFiles());
+		registerOperation(new size());
+		registerOperation(new upload());
 	}
 
-	public class pathToLocalFiles extends InnerClassTypedOperation {
+	public class pathToLocalFiles extends TypedOperation {
 		public String pathToLocalFiles() {
 			return dir.getPath();
 		}
@@ -39,7 +47,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class listFiles extends InnerClassTypedOperation {
+	public class listFiles extends TypedOperation {
 		public Set<String> listFiles() throws IOException {
 			dir.ensureExists();
 			List<AbstractFile> files = dir.retrieveTree();
@@ -54,7 +62,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class downloadFileAsOneSingleMessage extends InnerClassTypedOperation {
+	public class downloadFileAsOneSingleMessage extends TypedOperation {
 		public byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
 			return new RegularFile(dir, path).getContent();
 		}
@@ -66,7 +74,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class uploadFileAsOneSingleMessage extends InnerClassTypedOperation {
+	public class uploadFileAsOneSingleMessage extends TypedOperation {
 		public void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
 			new RegularFile(dir, path).setContent(bytes);
 		}
@@ -80,11 +88,11 @@ public class FileService2 extends Service {
 
 	public void uploadFileAsOneSingleMessage(RegularFile localFile, ComponentDescriptor target, String pathOnTarget)
 			throws IOException {
-		start(new ComponentAddress(Set.of(target)).o(FileService2.uploadFileAsOneSingleMessage.class), true,
+		exec(new To(Set.of(target)).o(FileService2.uploadFileAsOneSingleMessage.class), true,
 				parms(pathOnTarget, localFile.getContent()));
 	}
 
-	public static OperationID fileInfo;
+	public static waiting fileInfo;
 
 	public static class FileInfo implements Serializable {
 		public String name;
@@ -107,7 +115,7 @@ public class FileService2 extends Service {
 		long len;
 	}
 
-	public class downloadFile extends InnerClassTypedOperation {
+	public class downloadFile extends TypedOperation {
 		public void downloadFile(MessageQueue q) throws IOException {
 			var msg = q.get_blocking();
 			DownloadFileParms parms = (DownloadFileParms) msg.content;
@@ -126,7 +134,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class upload extends InnerClassTypedOperation {
+	public class upload extends TypedOperation {
 		public void upload(String name, boolean append, InputStream in) throws IOException {
 			dir.ensureExists();
 			var fos = new RegularFile(dir, name).createWritingStream(append);
@@ -141,7 +149,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class exists extends InnerClassTypedOperation {
+	public class exists extends TypedOperation {
 		public boolean exists(String name) {
 			dir.ensureExists();
 			return new RegularFile(dir, name).exists();
@@ -154,7 +162,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class delete extends InnerClassTypedOperation {
+	public class delete extends TypedOperation {
 		public void delete(String name) {
 			dir.ensureExists();
 			new RegularFile(dir, name).delete();
@@ -167,7 +175,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class size extends InnerClassTypedOperation {
+	public class size extends TypedOperation {
 		public long size(String name) {
 			dir.ensureExists();
 			return new RegularFile(name).getSize();

@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentAddress;
+import idawi.To;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
 import idawi.RegistryService;
@@ -29,9 +29,9 @@ public class Virus extends Service {
 		newThread_loop_periodic(1000, () -> {
 
 			if (!component.lookupOperation(RegistryService.list.class).list().isEmpty()) {
-				ComponentDescriptor c = component.lookupService(RegistryService.class).pickRandomPeer();
-				var to = new ComponentAddress(Set.of(c)).s(Virus.class).o("default");
-				MessageList response = start(to, true, null).returnQ.collect();
+				ComponentDescriptor c = component.lookup(RegistryService.class).pickRandomPeer();
+				var to = new To(Set.of(c)).s(Virus.class).o("default");
+				MessageList response = exec(to, true, null).returnQ.collect();
 
 				// the node doesn't respond
 				if (response.isEmpty()) {
@@ -41,7 +41,7 @@ public class Virus extends Service {
 
 							if (ip.isReachable(timeoutS * 1000)) {
 								try {
-									component.lookupService(DeployerService.class).deploy(Collections.singleton(c),
+									component.lookup(DeployerService.class).deploy(Collections.singleton(c),
 											true, timeoutS, false, feedback, p -> {
 											});
 									break;

@@ -15,11 +15,11 @@ public class tracerouteBackend extends CommandBackend {
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 		var parms = cmdline.findParameters();
-		Set<ComponentDescriptor> to = n.lookupService(RegistryService.class).lookupByRegexp(parms.get(0));
+		Set<ComponentDescriptor> to = n.lookup(RegistryService.class).lookupByRegexp(parms.get(0));
 
 		for (ComponentDescriptor t : to) {
 			out.accept("ping " + t);
-			Message pong = PingService.ping(new Service(), t, 1000);
+			Message pong = PingService.ping(new Service(new Component()), t, 1000);
 
 			if (pong == null) {
 				out.accept("No pong received. :(");

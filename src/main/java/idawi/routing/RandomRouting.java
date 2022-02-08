@@ -21,7 +21,7 @@ public class RandomRouting extends RoutingService {
 	}
 
 	@Override
-	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+	public Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol) {
 		return Set.of(Collections.pickRandomObject(protocol.neighbors(), r));
 	}
 
@@ -38,7 +38,7 @@ public class RandomRouting extends RoutingService {
 	public NetworkMap map() {
 		var m = new NetworkMap();
 		m.add(component.descriptor());
-		component.lookupService(NetworkingService.class).neighbors().forEach(n -> m.add(n));
+		component.lookup(NetworkingService.class).neighbors().forEach(n -> m.add(n));
 		return m;
 	}
 

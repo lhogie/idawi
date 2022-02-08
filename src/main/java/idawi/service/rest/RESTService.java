@@ -19,9 +19,9 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.ComponentAddress;
+import idawi.To;
 import idawi.ComponentDescriptor;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
@@ -106,7 +106,7 @@ public class RESTService extends Service {
 			out.write(o);
 			out.close();
 		} catch (IOException t) {
-			error(t);
+			logError(t);
 		}
 	}
 
@@ -268,8 +268,8 @@ public class RESTService extends Service {
 
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
-					var to = new ComponentAddress(components).s(serviceID).o(operation);
-					List<Object> r = start(to, true, parms).returnQ.collect().throwAnyError_Runtime().contents();
+					var to = new To(components).s(serviceID).o(operation);
+					List<Object> r = exec(to, true, parms).returnQ.collect().throwAnyError_Runtime().contents();
 
 					if (r.size() == 1) {
 						return r.get(0);
@@ -290,7 +290,7 @@ public class RESTService extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = lookupOperation(RegistryService.lookUp.class).lookup(name);
+			var found = lookup(RegistryService.lookUp.class).lookup(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));
@@ -305,10 +305,10 @@ public class RESTService extends Service {
 	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
 			throws Throwable {
 		Set<ComponentDescriptor> r = new HashSet<>();
-		var to = new ComponentAddress(components).o(ServiceManager.list.class);
-		var res = start(to, true, null).returnQ;
+		var to = new To(components).o(ServiceManager.list.class);
+		var res = exec(to, true, null).returnQ;
 
-		for (var m : res.setTimeout(timeout).collect().throwAnyError().resultMessages()) {
+		for (var m : res.setMaxWaitTimeS(timeout).collect().throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
 			c.servicesNames = (Set<String>) m.content;
 			r.add(c);
@@ -320,8 +320,8 @@ public class RESTService extends Service {
 	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
 			Class<? extends Service> serviceID) throws Throwable {
 		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
-		var to = new ComponentAddress(components).s(serviceID).o(Service.DescriptorOperation.class);
-		var res = start(to, true, null).returnQ;
+		var to = new To(components).s(serviceID).o(Service.DescriptorOperation.class);
+		var res = exec(to, true, null).returnQ;
 
 		for (Message m : res.collect().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
@@ -348,7 +348,7 @@ public class RESTService extends Service {
 		return query;
 	}
 
-	public class stopHTTPServer extends InnerClassTypedOperation{
+	public class stopHTTPServer extends TypedOperation{
 		public void f() throws IOException {
 			if (restServer == null) {
 				throw new IOException("REST server is not running");
@@ -365,7 +365,7 @@ public class RESTService extends Service {
 		}
 	}
 
-	public class startHTTPServerOperation extends InnerClassTypedOperation{
+	public class startHTTPServerOperation extends TypedOperation{
 		public void f(int port) throws IOException {
 			startHTTPServer(port);
 		}

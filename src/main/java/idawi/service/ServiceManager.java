@@ -5,53 +5,52 @@ import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentAddress;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.ServiceAddress;
 import idawi.ServiceDescriptor;
 import idawi.ServiceStub;
+import idawi.To;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
 
 	public static class Stub extends ServiceStub {
 
-		public Stub(Service localService, ComponentAddress remoteComponents) {
+		public Stub(Service localService, To remoteComponents) {
 			super(localService, new ServiceAddress(remoteComponents, ServiceManager.class));
 		}
 
 		public List<String> list() {
-			return (List<String>) (List) localService.start(to.o(list.class), true,
+			return (List<String>) (List) localService.exec(to.o(list.class), true,
 					new OperationParameterList()).returnQ.collect().contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.start(to.o(has.class), true, s).returnQ.collect().contents().contains(true);
+			return localService.exec(to.o(has.class), true, s).returnQ.collect().contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {
-			localService.start(to.o(start.class), true, s).returnQ.collect();
+			localService.exec(to.o(start.class), true, s).returnQ.collect();
 		}
 
 		public void stop(Class<? extends Service> s) {
-			localService.start(to.o(stop.class), true, s).returnQ.collect();
+			localService.exec(to.o(stop.class), true, s).returnQ.collect();
 		}
 	}
 
-	public final start start = new start();
-	public final has has = new has();
-	public final list list = new list();
-	public final ensureStarted ensureStarted = new ensureStarted();
-	public final stop stop = new stop();
-
 	public ServiceManager(Component peer) {
 		super(peer);
+		registerOperation(new ensureStarted());
+		registerOperation(new has());
+		registerOperation(new list());
+		registerOperation(new start());
+		registerOperation(new stop());
 	}
 
-	public class start extends InnerClassTypedOperation {
-		public ServiceDescriptor start(Class<? extends Service> serviceID) {
+	public class start extends TypedOperation {
+		public ServiceDescriptor f(Class<? extends Service> serviceID) {
 			if (lookupService(serviceID) != null) {
 				throw new IllegalArgumentException("service already running");
 			}
@@ -73,9 +72,9 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class stop extends InnerClassTypedOperation {
+	public class stop extends TypedOperation {
 		public void stop(Class<? extends Service> serviceID) {
-			Service s = component.lookupService(serviceID);
+			Service s = component.lookup(serviceID);
 			component.removeService(s);
 		}
 
@@ -86,10 +85,10 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class list extends InnerClassTypedOperation {
+	public class list extends TypedOperation {
 		public Set<String> list() {
 			Set<String> r = new HashSet<>();
-			component.services().forEach(s -> r.add(s.id.getName()));
+			component.forEachService(s -> r.add(s.id.getName()));
 			return r;
 		}
 
@@ -100,7 +99,7 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class has extends InnerClassTypedOperation {
+	public class has extends TypedOperation {
 		public boolean has(Class serviceID) {
 			return lookupService(serviceID) != null;
 		}
@@ -111,10 +110,15 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class ensureStarted extends InnerClassTypedOperation {
+	public void ensureStarted(Class serviceID) {
+		lookup(ensureStarted.class).f(serviceID);
+	}
+
+	public class ensureStarted extends TypedOperation {
 		public void f(Class serviceID) {
-			if (!lookupOperation(has.class).has(serviceID)) {
-				start.start(serviceID);
+//			Cout.debugSuperVisible("ensure started " + serviceID);
+			if (!lookup(has.class).has(serviceID)) {
+				lookup(start.class).f(serviceID);
 			}
 		}
 

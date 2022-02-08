@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import toools.thread.Threads;
@@ -30,6 +31,10 @@ public class TCPDriver extends IPDriver {
 
 	private final Map<ComponentDescriptor, Entry> peer_socket = new HashMap<>();
 	private ServerSocket ss;
+
+	public TCPDriver(Component c) {
+		super(c);
+	}
 
 	@Override
 	public String getProtocolName() {
@@ -106,7 +111,7 @@ public class TCPDriver extends IPDriver {
 				if (e.getValue().socket == s) {
 					i.remove();
 					ComponentDescriptor peer = e.getKey();
-					listeners.forEach(l -> l.peerLeft(peer, this));
+					listeners.forEach(l -> l.neighborLeft(peer, this));
 				}
 			}
 		}

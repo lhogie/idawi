@@ -1,7 +1,7 @@
 package idawi.ui.cmd;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerOperation;
 import idawi.Message;
 import idawi.MessageQueue;
 import idawi.Service;
@@ -10,9 +10,10 @@ public class CommandsService extends Service {
 
 	public CommandsService(Component peer) {
 		super(peer);
+		registerOperation(new exec());
 	}
 
-	public class exec extends InnerClassOperation {
+	public class exec extends InnerOperation {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
@@ -29,8 +30,7 @@ public class CommandsService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "exec commands";
 		}
 
 	}

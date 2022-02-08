@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,26 +12,32 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
-import idawi.service.DeployerService;
 import idawi.service.DemoService;
+import idawi.service.DeployerService;
 import idawi.service.PingService;
 import toools.io.Cout;
-import toools.io.ser.JavaSerializer;
 
 public class LucTests {
 
-	public static void main(String[] args) throws Throwable {
+	public static void main(String[] args) {
+		var a = new StringBuilder("toto");
+		var b = new StringBuilder("toto");
+		System.out.println(a.equals(b));
+		System.out.println(a.hashCode());
+	}
+	
+	public static void main2(String[] args) throws Throwable {
 		Cout.debugSuperVisible("Starting test");
 
 		// describes a component by its name only
 		ComponentDescriptor me = new ComponentDescriptor();
-		me.friendlyName = "c1";
+		me.name = "c1";
 
 		// trigger the creation of a component from its description
 		Component c1 = new Component(me);
 
 		// a shortcut for creating a component from a description
-		Component c2 = new Component("name=c2");
+		Component c2 = new Component("c2");
 
 		// connect those 2 components
 		LMI.connect(c1, c2);
@@ -49,13 +54,13 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test");
 		// describes a component by its name only
 		ComponentDescriptor me = new ComponentDescriptor();
-		me.friendlyName = "c1";
+		me.name = "c1";
 
 		// trigger the creation of a component from its description
 		Component c1 = new Component(me);
 
 		// a shortcut for creating a component from a description
-		Component c2 = new Component("name=c2");
+		Component c2 = new Component("c2");
 
 		// connect those 2 components
 		LMI.connect(c1, c2);
@@ -74,19 +79,17 @@ public class LucTests {
 	@Test
 	public void operationSignatures() throws Throwable {
 		Cout.debugSuperVisible("Starting test");
-		Component c1 = new Component("name=c1");
-		Component c2 = new Component("name=c2");
+		Component c1 = new Component("c1");
+		Component c2 = new Component("c2");
 		LMI.connect(c1, c2);
 
 		Service client = new Service(c1);
-		assertEquals(5, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
-				DemoService.stringLength, true, "salut").returnQ.get());
-		assertEquals(53, (Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
-				DemoService.countFrom1toN, true, 100).returnQ.collect().resultMessages(100).get(53).content);
-		assertEquals(7,
-				(Integer) client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
-						DemoService.countFromAtoB, true, new DemoService.Range(0, 13)).returnQ.collect()
-								.resultMessages(13).get(7).content);
+		assertEquals(5,
+				(Integer) client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "salut").get(0));
+		assertEquals(53, (Integer) client.exec(new To(c2).o(DemoService.countFrom1toN.class), true, 100).returnQ
+				.collect().resultMessages(100).get(53).content);
+		assertEquals(7, (Integer) client.exec(new To(c2).o(DemoService.countFromAtoB.class), true,
+				new DemoService.Range(0, 13)).returnQ.collect().resultMessages(13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
 	}
@@ -94,16 +97,15 @@ public class LucTests {
 	@Test
 	public void waitingFirst() throws CDLException {
 		Cout.debugSuperVisible("Starting test");
-		Component root = new Component("name=root");
-		Set<Component> others = root.lookupService(DeployerService.class).deployInThisJVM(2, i -> "other-" + i, true,
-				null);
+		Component root = new Component("root");
+		Set<Component> others = root.lookup(DeployerService.class).deployInThisJVM(2, i -> "other-" + i, true, null);
 		others.forEach(c -> LMI.connect(root, c));
 
 		Service client = new Service(root);
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
-		ComponentDescriptor first = client.start(new ServiceAddress(ss, DemoService.class), DemoService.waiting,
-				true, new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
+		ComponentDescriptor first = client.exec(new To(ss).o(DemoService.waiting.class), true,
+				new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
 						.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
@@ -115,12 +117,13 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test");
 
 		// creates a component in this JVM
-		Component master = new Component("name=master /  tcp_port=56756");
+		Component master = new Component("master");
+		master.descriptor().tcpPort = 56756;
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
 		ComponentDescriptor other = ComponentDescriptor.fromCDL("name=other_peer /  tcp_port=56757");
-		master.lookupService(DeployerService.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
+		master.lookup(DeployerService.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
@@ -135,36 +138,16 @@ public class LucTests {
 	}
 
 	@Test
-	public void serializers() {
-		Message a = new Message();
-		a.to = new QueueAddress();
-		a.to.notYetReachedExplicitRecipients = new HashSet<>();
-		a.to.notYetReachedExplicitRecipients.f(ComponentDescriptor.fromCDL("name=Luc"));
-		a.to.serviceAddress = DemoService.class;
-		RouteEntry re = new RouteEntry();
-		re.component = ComponentDescriptor.fromCDL("name=test");
-		re.protocolName = "tcp";
-		a.route.add(re);
-		a.content = new Object[] { 4, true, new String[] { "1st element" } };
-		Message clone = (Message) new JavaSerializer<>().clone(a);
-		System.out.println("orig:  " + a);
-		System.out.println("clone: " + clone);
-		assertEquals(a, clone);
-	}
-
-	@Test
 	public void signature() {
 		Cout.debugSuperVisible("Starting test");
 		ComponentDescriptor me = new ComponentDescriptor();
-		me.friendlyName = "c1";
+		me.name = "c1";
 		Component c1 = new Component(me);
-		Component c2 = new Component("name=c2");
+		Component c2 = new Component("c2");
 		LMI.connect(c1, c2);
-		Service client = c1.lookupService(DemoService.class);
-		MessageList returns = client.start(new ServiceAddress(Set.of(c2.descriptor()), DemoService.class),
-				DemoService.stringLength, true, "hello").returnQ.collect();
-		System.out.println(returns);
-		int len = (Integer) returns.resultMessages(1).first().content;
+		Service client = c1.lookup(DemoService.class);
+		var len = client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "hello");
+		System.out.println(len);
 		System.out.println(len);
 		assertEquals(len, 5);
 

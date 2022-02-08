@@ -18,6 +18,8 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Graph;
+import idawi.InnerOperation;
+import idawi.MessageQueue;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.net.LMI;
@@ -66,15 +68,31 @@ public class DeployerService extends Service {
 		if (!remoteClassDir.endsWith("/"))
 			throw new IllegalStateException("class dir should end with a '/': " + remoteClassDir);
 
-		// receives deployment requests from other peers
-		registerOperation("deploy", in -> {
+		registerOperation(new deploy());
+		registerOperation(new local_deploy());
+		registerOperation(new deploy_in_other_jvm());
+	}
+
+	public class deploy extends InnerOperation {
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.get_blocking();
 			DeploymentRequest req = (DeploymentRequest) msg.content;
 			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, req.printRsync,
 					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
-		});
+		}
 
-		registerOperation("local_deploy", in -> {
+		@Override
+		public String getDescription() {
+			return "deploy";
+		}
+	}
+
+	public class local_deploy extends InnerOperation {
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.get_blocking();
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
 			List<Component> compoennts = new ArrayList<>();
@@ -82,13 +100,27 @@ public class DeployerService extends Service {
 			reply(msg, req.n + " compoennts created");
 			LMI.chain(compoennts);
 			reply(msg, "chained");
-		});
+		}
 
-		registerOperation("deploy_in_other_jvm", in -> {
+		@Override
+		public String getDescription() {
+			return "deploy";
+		}
+	}
+
+	public class deploy_in_other_jvm extends InnerOperation {
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.get_blocking();
 			Graph deploymentPlan = (Graph) msg.content;
 			apply(deploymentPlan, 1, true, stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
-		});
+		}
+
+		@Override
+		public String getDescription() {
+			return "deploy";
+		}
 	}
 
 	public void apply(Graph deploymentPlan, double timeoutInSecond, boolean printRsync, Consumer<Object> feedback,
@@ -123,19 +155,17 @@ public class DeployerService extends Service {
 		return localThings;
 	}
 
-	public void deployOtherJVM(String... names) throws IOException {
+	public void deployInNewJVMs(Collection<ComponentDescriptor> dd) throws IOException {
 		var threads = new ArrayList<Thread>();
 
-		for (var childName : names) {
+		for (var d : dd) {
 			threads.add(new Thread(() -> {
-				var d = new ComponentDescriptor();
-				d.friendlyName = childName;
 				try {
 					deployOtherJVM(d, true, fdbck -> {
-					}, ok -> { System.out.println(ok + " OKKK");
+					}, ok -> {
+						System.out.println(ok + " successfully deployed in its own JVM");
 					});
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}));
@@ -157,29 +187,32 @@ public class DeployerService extends Service {
 		String classpath = System.getProperty("java.class.path");
 
 		LongProcess startingNode = new LongProcess("starting new JVM", null, -1, line -> feedback.accept(line));
+
 		Process p = Runtime.getRuntime().exec(new String[] { java, "-cp", classpath, DeployerService.class.getName() });
 
 		feedback.accept("sending node startup info");
-		init(p, d, Set.of(component.descriptor()), suicideWhenParentDie, feedback);
+		initChildProcess(p, d, Set.of(component.descriptor()), suicideWhenParentDie, feedback);
+		peerOk.accept(d);
 		startingNode.end();
 	}
 
-	private void init(Process proc, ComponentDescriptor childDescriptor, Set<ComponentDescriptor> peersSharingFS,
-			boolean suicideWhenParentDie, Consumer<Object> feedback) throws IOException {
-		OutputStream out = proc.getOutputStream();
+	private void initChildProcess(Process proc, ComponentDescriptor childDescriptor,
+			Set<ComponentDescriptor> peersSharingFS, boolean suicideWhenParentDie, Consumer<Object> feedback)
+			throws IOException {
 		DeployInfo deployInfo = new DeployInfo();
 		deployInfo.id = childDescriptor;
 		deployInfo.suicideWhenParentDies = suicideWhenParentDie;
 		deployInfo.parent = component.descriptor();
 		deployInfo.peersSharingFileSystem = peersSharingFS;
+
+		OutputStream out = proc.getOutputStream();
 		TransportLayer.serializer.write(deployInfo, out);
 		out.flush();
 
-		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(childDescriptor, proc);
-		childPipe.setNewMessageConsumer(component.lookupService(NetworkingService.class).messagesFromNetwork);
-		NetworkingService network = component.lookupService(NetworkingService.class);
-		network.transport.addProtocol(childPipe);
-		network.transport.peer2protocol.put(childDescriptor, childPipe);
+		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(component, childDescriptor, proc);
+		var network = component.lookup(NetworkingService.class);
+		network.transport.addTransport(childPipe);
+		network.transport.add(childDescriptor, childPipe);
 
 		feedback.accept("waiting for " + childDescriptor + " to be ready");
 		String response = (String) childPipe.waitForChild.get_blocking(10000);
@@ -200,7 +233,7 @@ public class DeployerService extends Service {
 		Set<Component> s = new HashSet<>();
 
 		for (int i = 0; i < n; ++i) {
-			Component t = new Component("name=" + i2name.apply(i));
+			Component t = new Component(i2name.apply(i));
 			deployInThisJVM(t, suicideWhenParentDie);
 
 			if (peerOk != null) {
@@ -350,7 +383,7 @@ public class DeployerService extends Service {
 
 							feedback.accept("sending node startup info to " + peer);
 
-							init(p, peer, nasGroup, suicideWhenParentDie, feedback);
+							initChildProcess(p, peer, nasGroup, suicideWhenParentDie, feedback);
 							startingNode.end();
 						} catch (Exception e) {
 							feedback.accept(e);
@@ -405,18 +438,20 @@ public class DeployerService extends Service {
 			}
 
 			// Cout.raw_stdout.println("deployment info: " + o);
-			DeployInfo deployInfo = (DeployInfo) o;
+			var deployInfo = (DeployInfo) o;
 
 			Cout.raw_stdout.println("instantiating component");
-			Component t = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentDescriptor.class),
+			var child = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentDescriptor.class),
 					deployInfo.id);
-			t.parent = deployInfo.parent;
+			child.parent = deployInfo.parent;
 
-			t.lookupOperation(RegistryService.add.class).f(deployInfo.parent);
-			t.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
+			child.lookupOperation(RegistryService.add.class).f(child.parent);
+			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
-			t.lookupService(NetworkingService.class).transport
-					.addProtocol(new PipeFromToParentProcess(deployInfo.parent, deployInfo.suicideWhenParentDies));
+			var network = child.lookup(NetworkingService.class);
+			var pipe = new PipeFromToParentProcess(child, child.parent, deployInfo.suicideWhenParentDies);
+			network.transport.addTransport(pipe);
+			network.transport.add(child.parent, pipe);
 
 			// tell the parent process that this node is ready for connections
 			Cout.raw_stdout.println("ready, notifying parent");
@@ -470,7 +505,7 @@ public class DeployerService extends Service {
 
 			@Override
 			protected void process(ComponentDescriptor peer) {
-				String filename = dir + peer.friendlyName;
+				String filename = dir + peer.name;
 
 				try {
 					SSHUtils.execShAndWait(peer.sshParameters, "mkdir -p " + filename);
@@ -502,7 +537,7 @@ public class DeployerService extends Service {
 
 			private ComponentDescriptor findByName(String name, Iterable<ComponentDescriptor> nodes) {
 				for (ComponentDescriptor p : nodes) {
-					if (p.friendlyName.equals(name)) {
+					if (p.name.equals(name)) {
 						return p;
 					}
 				}

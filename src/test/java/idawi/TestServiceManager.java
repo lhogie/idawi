@@ -41,7 +41,7 @@ public class TestServiceManager {
 
 		var bd = b.descriptor();
 
-		var stub = new ServiceManager.Stub(new Service(a), new ComponentAddress(Set.of(bd)));
+		var stub = new ServiceManager.Stub(new Service(a), new To(Set.of(bd)));
 
 		stub.list().forEach(operationName -> System.out.println(operationName));
 

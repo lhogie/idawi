@@ -7,47 +7,44 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.NeighborhoodListener;
-import toools.io.Cout;
 
 public class MultiTransport extends TransportLayer {
-	private final Map<String, TransportLayer> name2protocol = new HashMap<>();
-	public final Map<ComponentDescriptor, TransportLayer> peer2protocol = new HashMap<>();
+
+	private final Set<TransportLayer> transports = new HashSet<>();
+	public final Map<ComponentDescriptor, Set<TransportLayer>> peer2transports = new HashMap<>();
 	private boolean run = false;
 
-	public void addProtocol(TransportLayer p) {
-		name2protocol.put(p.getName(), p);
+	public MultiTransport(Component c) {
+		super(c);
+	}
 
-		synchronized (name2protocol) {
-			name2protocol.put(p.getName(), p);
+	public void addTransport(TransportLayer transport) {
+		synchronized (transports) {
+			transports.add(transport);
 		}
 
-		p.setNewMessageConsumer(msg -> {
+		transport.setNewMessageConsumer(msg -> {
 			if (!run) {
 				return;
 			}
 
-			if (!peer2protocol.containsKey(msg.route.last().component)) {
-				TransportLayer pp = name2protocol.get(msg.route.last().protocolName);
-				if (pp != null) {
-					peer2protocol.put(msg.route.last().component, pp);
-				}
-			}
-
-			processIncomingMessage(msg);
+			add(msg.route.last().component, transport);
+			deliverToConsumer(msg);
 		});
 
-		p.listeners.add(new NeighborhoodListener() {
+		transport.listeners.add(new NeighborhoodListener() {
 			@Override
-			public void peerLeft(ComponentDescriptor peer, TransportLayer protocol) {
-				listeners.forEach(p -> p.peerLeft(peer, protocol));
+			public void neighborLeft(ComponentDescriptor peer, TransportLayer protocol) {
+				listeners.forEach(p -> p.neighborLeft(peer, protocol));
 			}
 
 			@Override
-			public void peerJoined(ComponentDescriptor peer, TransportLayer protocol) {
-				listeners.forEach(p -> p.peerJoined(peer, protocol));
+			public void newNeighbor(ComponentDescriptor peer, TransportLayer protocol) {
+				listeners.forEach(p -> p.newNeighbor(peer, protocol));
 			}
 		});
 	}
@@ -61,16 +58,19 @@ public class MultiTransport extends TransportLayer {
 		}
 
 		for (ComponentDescriptor relay : relays) {
-			// if a working protocol has been identified, use it
-			TransportLayer p = peer2protocol.get(relay);
+			// use a random identified working protocol
+			var identifiedTransports = peer2transports.get(relay);
 
-			if (p != null) {
-//				Cout.debug("using " + p);
+			if (identifiedTransports != null && !identifiedTransports.isEmpty()) {
+				var p = peer2transports.get(relay).iterator().next();
 				msg.route.last().protocolName = p.getName();
+//				System.out.println("***" + p.getClass());
+
 				p.send(msg, Arrays.asList(relay));
+
 			} else {
 				// send through all protocols
-				for (TransportLayer protocol : name2protocol.values()) {
+				for (TransportLayer protocol : transports) {
 					if (protocol.canContact(relay)) {
 //						Cout.debug(":) ): : :) " + protocol.getName());
 						msg.route.last().protocolName = protocol.getName();
@@ -85,13 +85,13 @@ public class MultiTransport extends TransportLayer {
 	public String getName() {
 		StringBuilder b = new StringBuilder();
 		b.append("multiprotocol/");
-		name2protocol.values().forEach(p -> b.append(p.getName() + "/"));
+		transports.forEach(p -> b.append(p.getName() + "/"));
 		return b.substring(0, b.length() - 1);
 	}
 
 	@Override
 	public boolean canContact(ComponentDescriptor c) {
-		for (TransportLayer p : name2protocol.values()) {
+		for (TransportLayer p : transports) {
 			if (p.canContact(c)) {
 				return true;
 			}
@@ -102,8 +102,8 @@ public class MultiTransport extends TransportLayer {
 
 	@Override
 	public void injectLocalInfoTo(ComponentDescriptor c) {
-		synchronized (name2protocol) {
-			name2protocol.values().forEach(p -> p.injectLocalInfoTo(c));
+		synchronized (transports) {
+			transports.forEach(p -> p.injectLocalInfoTo(c));
 		}
 	}
 
@@ -120,14 +120,17 @@ public class MultiTransport extends TransportLayer {
 	@Override
 	public Collection<ComponentDescriptor> neighbors() {
 		Collection<ComponentDescriptor> peers = new HashSet<>();
-		name2protocol.values().forEach(p -> peers.addAll(p.neighbors()));
+		transports.forEach(p -> {
+//			Cout.debug(p + " => " + p.neighbors());
+			peers.addAll(p.neighbors());
+		});
 		return peers;
 	}
 
 	public Map<ComponentDescriptor, Set<TransportLayer>> neighbors2() {
 		Map<ComponentDescriptor, Set<TransportLayer>> peer_protocols = new HashMap<>();
 
-		for (TransportLayer protocol : name2protocol.values()) {
+		for (TransportLayer protocol : transports) {
 			for (ComponentDescriptor peer : protocol.neighbors()) {
 				Set<TransportLayer> s = peer_protocols.get(peer);
 
@@ -143,21 +146,37 @@ public class MultiTransport extends TransportLayer {
 	}
 
 	public LMI lmi() {
-		return (LMI) name2protocol.get("LMI");
+		for (var t : transports) {
+			if (t instanceof LMI) {
+				return (LMI) t;
+			}
+		}
+
+		return null;
 	}
 
-	public void update(ComponentDescriptor descriptor) {
+	public void update(Component c, ComponentDescriptor descriptor) {
 		if (descriptor.udpPort != null) {
-			UDPDriver udp = new UDPDriver();
+			UDPDriver udp = new UDPDriver(c);
 			udp.setPort(descriptor.udpPort);
-			addProtocol(udp);
+			addTransport(udp);
 		}
 
 		if (descriptor.tcpPort != null) {
-			TCPDriver tcp = new TCPDriver();
+			TCPDriver tcp = new TCPDriver(c);
 			tcp.setPort(descriptor.tcpPort);
-			addProtocol(tcp);
+			addTransport(tcp);
 		}
+	}
+
+	public void add(ComponentDescriptor c, TransportLayer t) {
+		var usedTransports = peer2transports.get(c);
+
+		if (usedTransports == null) {
+			peer2transports.put(c, usedTransports = new HashSet<>());
+		}
+
+		usedTransports.add(t);
 	}
 
 }

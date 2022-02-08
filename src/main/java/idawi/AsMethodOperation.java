@@ -62,7 +62,7 @@ public class AsMethodOperation extends Operation {
 	}
 
 	@Override
-	protected Class<? extends Service> getDeclaringService() {
+	protected Class<? extends Service> getDeclaringServiceClass() {
 		return (Class<? extends Service>) method.getDeclaringClass();
 	}
 

@@ -27,7 +27,7 @@ public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingSer
 	}
 
 	@Override
-	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+	public Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol) {
 		return null;
 	}/*
 		 * Collection<ComponentDescriptor> neighbors = protocol.neighbors();

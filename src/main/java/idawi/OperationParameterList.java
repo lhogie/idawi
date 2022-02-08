@@ -12,9 +12,9 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public void convertTo(Class<?>[] types) {
+	public void convertTo(Operation operation, Class<?>[] types) {
 		if (types.length != size())
-			throw new IllegalArgumentException("expecting types " + TextUtilities.toString(types) + " parameters but got " + TextUtilities.toString(this));
+			throw new IllegalArgumentException("operation " + operation + ": expecting types " + TextUtilities.toString(types) + " parameters but got " + TextUtilities.toString(this));
 
 		for (int i = 0; i < types.length; ++i) {
 			var from = get(i);
@@ -33,7 +33,7 @@ public class OperationParameterList extends ArrayList {
 
 		if (content instanceof OperationParameterList) {
 			var l = (OperationParameterList) content;
-			l.convertTo(types);
+			l.convertTo(operation, types);
 			return l;
 		} else {
 			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "

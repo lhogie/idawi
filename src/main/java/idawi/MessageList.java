@@ -8,12 +8,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import idawi.MessageQueue.Enough;
 import toools.exceptions.CodeShouldNotHaveBeenReachedException;
+import toools.io.Cout;
 
 public class MessageList extends ArrayList<Message> {
-
 	private static final long serialVersionUID = 1L;
-	public boolean timeout;
+	public Enough enough;
 
 	public MessageList filter(Predicate<Message> p) {
 		MessageList l = new MessageList();
@@ -28,7 +29,7 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList retainFirstCompleted() {
-		ComponentDescriptor firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
+		var firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
 		MessageList l = new MessageList();
 
 		for (Message m : this) {
@@ -118,13 +119,9 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList throwAnyError() throws Throwable {
-		if (timeout) {
-			throw new RemoteException("timeout");
-		}
-
 		for (var m : this) {
 			if (m.isError()) {
-				Throwable e = (Throwable) m.content;
+				Throwable e = (RemoteException) m.content;
 
 				while (e.getCause() != null) {
 					e = e.getCause();

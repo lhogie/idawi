@@ -31,7 +31,7 @@ public class SSH {
 		// they will communicate through standard streams
 		ComponentDescriptor c2 = ComponentDescriptor.fromCDL("name=c2 / ssh=" + ssh);
 
-		c1.lookupService(DeployerService.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
+		c1.lookup(DeployerService.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component

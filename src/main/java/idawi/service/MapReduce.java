@@ -4,94 +4,278 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.function.Function;
+import java.util.Random;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import idawi.Component;
-import idawi.ComponentAddress;
-import idawi.InnerClassTypedOperation;
-import idawi.QueueAddress;
-import idawi.RemotelyRunningOperation;
+import idawi.ComponentDescriptor;
+import idawi.InnerOperation;
+import idawi.Message;
+import idawi.MessageQueue;
+import idawi.MessageQueue.Enough;
+import idawi.OperationParameterList;
+import idawi.ProgressMessage;
 import idawi.Service;
+import idawi.To;
+import toools.thread.AtomicDouble;
+import toools.util.Date;
 
 public class MapReduce extends Service {
+	public static abstract class Task<R> implements Serializable {
+		// valid at a given round only
+		private int id;
+		private transient MapReduce mr;
+		private transient To to;
 
-	public static abstract class Task<R> implements Callable<R>, Serializable {
-		public int id;
-		public QueueAddress returnAddress;
+		public abstract R compute(Consumer output) throws Throwable;
 	}
 
 	public static class Result<R> implements Serializable {
 		public int taskID;
 		public R value;
+		public double receptionDate;
+		public double completionDate;
+		public ComponentDescriptor worker;
 	}
 
-	public class Process extends InnerClassTypedOperation {
+	static interface H<R> {
+		void newResult(Result<R> newResult);
+
+		void newProgressMessage(String msg);
+
+		void newProgressRatio(double r);
+
+		void newMessage(Message a);
+	}
+
+	public MapReduce(Component component) {
+		super(component);
+		operations.add(new Process());
+	}
+
+	// the backend op
+	public class Process extends InnerOperation {
 
 		@Override
 		public String getDescription() {
-			return "compute the tasks assigned to it and return the result to the mapper";
+			return "computes a given task assigned to it and return the result to the mapper";
 		}
 
-		public <R> void f(Task<R> t) throws Exception {
-			Result<R> r = new Result<>();
-			r.taskID = t.id;
-			r.value = t.call();
-			send(r, t.returnAddress);
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			while (true) {
+				var msg = in.get_blocking();
+				var t = (Task) msg.content;
+				reply(msg, new ProgressMessage("processing task " + t.id));
+				t.mr = MapReduce.this;
+				Result r = new Result<>();
+				r.receptionDate = Date.time();
+				r.taskID = t.id;
+				r.value = t.compute(something -> reply(msg, something));
+				r.completionDate = Date.time();
+				reply(msg, new ProgressMessage("sending result " + t.id));
+				reply(msg, r);
+			}
 		}
 	}
 
-	Process process = new Process();
+	public static interface Allocator<R> {
+		void assign(List<Task<R>> tasks, List<ComponentDescriptor> workers);
+	}
 
-	public <R> R map(List<Task<R>> tasks, Collection<String> hosts, Function<List<Object>, R> f) {
-		var hh = hosts.iterator();
-		var r = new ArrayList<RemotelyRunningOperation>();
-		var returnQueue = createQueue("" + Math.random(), null);
-		var resultAddress = component.getAddress().s(MapReduce.class).q(returnQueue.name);
+	public static class RoundRobinAllocator<R> implements Allocator<R> {
+		@Override
+		public void assign(List<Task<R>> tasks, List<ComponentDescriptor> workers) {
+			tasks.forEach(t -> t.to = new To(Set.of(workers.get(t.id % workers.size()))));
+		}
+	}
 
-		for (int i = 0; i < tasks.size(); ++i) {
-			var t = tasks.get(i);
-			t.id = i;
-			t.returnAddress = resultAddress;
+	public static class All2AllAllocator<R> implements Allocator<R> {
+		@Override
+		public void assign(List<Task<R>> tasks, List<ComponentDescriptor> workers) {
+			tasks.forEach(t -> t.to = new To(new HashSet<>(workers)));
+		}
+	}
 
-			if (!hh.hasNext()) {
-				hh = hosts.iterator();
-			}
+	public static class RandomAllocator<R> implements Allocator<R> {
+		@Override
+		public void assign(List<Task<R>> tasks, List<ComponentDescriptor> workers) {
+			var r = new Random();
+			tasks.forEach(t -> t.to = new To(Set.of(workers.get(r.nextInt(workers.size())))));
+		}
+	}
 
-			var h = hh.next();
-
-			r.add(start(new ComponentAddress(h), true, 1));
+	private <R> R map(List<Task<R>> tasks, List<ComponentDescriptor> workers, BiFunction<R, R, R> f) {
+		class ResultHolder {
+			R result;
 		}
 
-		return f.apply(returnQueue.collect().contents());
+		var h = new ResultHolder();
+
+		map(tasks, workers, new RoundRobinAllocator<R>(),
+				r -> h.result = h.result == null ? r.value : f.apply(h.result, r.value), progressMessages -> {
+				}, progressRatio -> {
+				}, anyOtherMessage -> {
+				});
+
+		return h.result;
+	}
+
+	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentDescriptor> workers, Allocator<R> assigner,
+			Consumer<Result<R>> newResult, Consumer<String> progressMessages, Consumer<Double> progressRatio,
+			Consumer<Message> otherMessages) {
+		return map(tasks, workers, assigner, new H<R>() {
+
+			@Override
+			public void newResult(Result<R> nr) {
+				newResult.accept(nr);
+			}
+
+			@Override
+			public void newProgressMessage(String msg) {
+				progressMessages.accept(msg);
+			}
+
+			@Override
+			public void newProgressRatio(double r) {
+				progressRatio.accept(r);
+			}
+
+			@Override
+			public void newMessage(Message a) {
+				otherMessages.accept(a);
+			}
+		});
+	}
+
+	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentDescriptor> workers, Allocator<R> allocator,
+			H<R> h) {
+		var unprocessedTasks = new ArrayList<>(tasks);
+
+		// all results will end here
+		var q = createQueue();
+
+		// assign IDs
+		IntStream.range(0, unprocessedTasks.size()).forEach(taskID -> unprocessedTasks.get(taskID).id = taskID);
+
+		for (int round = 0; !unprocessedTasks.isEmpty(); ++round) {
+			h.newProgressMessage("starting round" + round);
+
+			if (allocator != null) {
+				allocator.assign(unprocessedTasks, workers);
+			}
+
+			for (var task : tasks) {
+				if (task.to != null) {
+					h.newProgressMessage("sending task " + task.id + " to " + task.to);
+					exec(task.to.o(Process.class), q, task);
+				}
+			}
+
+			h.newProgressMessage("waiting for results");
+			q.setMaxWaitTimeS(60).forEach(msg -> {
+				if (msg.content instanceof Result) {
+					var workerResponse = (Result<R>) msg.content;
+					workerResponse.worker = msg.route.source().component;
+					unprocessedTasks.removeIf(t -> t.id == workerResponse.taskID);
+					h.newResult(workerResponse);
+					h.newProgressRatio(100 * (tasks.size() - unprocessedTasks.size()) / (double) tasks.size());
+				} else if (msg.content instanceof ProgressMessage) {
+					h.newProgressMessage(msg.route.source().componentID + ": " + msg.content);
+				} else {
+					h.newMessage(msg);
+				}
+
+				return unprocessedTasks.isEmpty() ? Enough.yes : Enough.no;
+			});
+		}
+
+		deleteQueue(q);
+		return unprocessedTasks;
+	}
+
+	// that's the task we'll send to workers
+	static class MyTask extends Task<Integer> {
+		double minDuration = 0, maxDuration = 0;
+
+		@Override
+		public Integer compute(Consumer output) {
+			// 0.1 chances that this task fails
+			if (Math.random() < 0) {
+				output.accept("I'm feeling bad");
+				throw new Error();
+			}
+
+			// Threads.sleep((maxDuration - minDuration) * Math.random() + minDuration);
+			return 1;
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
-		Component a = new Component();
-		String[] children = new String[] { "b", "c", "d", "e" };
-		a.lookupService(DeployerService.class).deployOtherJVM(children);
+		Component mapper = new Component("mapper");
+		var clientService = new Service(mapper);
 
-		List<Task<Double>> tasks = new ArrayList<>();
+		// create workers
+		var workers = new HashSet<ComponentDescriptor>();
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.descriptor("w" + i, true)));
 
-		for (int i = 0; i < 100; ++i) {
-			var t = new Task<Double>() {
+		// deploy JVMs
+		mapper.lookup(DeployerService.class).deployInNewJVMs(workers);
 
-				@Override
-				public Double call() throws Exception {
-					return Math.random();
-				}
-			};
-		}
+		// start Map/Reduce workers in them
+		System.out.println("starting map/reduce service on " + workers);
+		var ro = clientService.exec(new To(workers).o(ServiceManager.ensureStarted.class), true,
+				new OperationParameterList(MapReduce.class));
+		ro.returnQ.setMaxWaitTimeS(60).collectUntilNEOT(workers.size());
 
-		a.lookupService(MapReduce.class).map(tasks, children, r -> {
-			double sum = 0;
+		// create tasks
+		List<Task<Integer>> tasks = new ArrayList<>();
+		IntStream.range(0, 10).forEach(i -> tasks.add(new MyTask()));
 
-			for (double d : r) {
-				sum += d;
+		final AtomicDouble finalResult = new AtomicDouble();
+		var workerList = new ArrayList<>(workers);
+
+		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), // assign tasks to workers
+				newResult -> finalResult.set(finalResult.get() + newResult.value), // reduce
+				progress -> System.out.println(progress), // print progress information
+				progressRatio -> System.out.println("progress: " + progressRatio + "%"), // print progress information
+				msg -> System.out.println("---" + msg)); // other messages are just printed out
+
+		new MapReduce(mapper).map(tasks, workerList, (a, b) -> a + b);
+
+		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new H<Integer>() {
+
+			@Override
+			public void newResult(Result<Integer> newResult) {
+				double previousResult = finalResult.get();
+				double sum = previousResult + newResult.value;
+				finalResult.set(sum);
 			}
 
-			return sum / r.size();
+			@Override
+			public void newProgressMessage(String msg) {
+				System.out.println("progress: " + msg);
+			}
+
+			@Override
+			public void newProgressRatio(double r) {
+				System.out.println("progress ratio: " + r + "%");
+			}
+
+			@Override
+			public void newMessage(Message a) {
+				System.out.println("---" + a.content);
+			}
 		});
+
+		System.out.println("result= " + finalResult.get());
+
+		Component.stopPlatformThreads();
 	}
+
 }

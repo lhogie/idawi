@@ -33,10 +33,10 @@ public class PingPong {
 			Component t = things.get(i - 1);
 
 			ComponentDescriptor newPeer = new ComponentDescriptor();
-			newPeer.friendlyName = "t" + i;
+			newPeer.name = "t" + i;
 
 			// gets the deployment service
-			DeployerService deployer = t.lookupService(DeployerService.class);
+			DeployerService deployer = t.lookup(DeployerService.class);
 
 			// and asks it to deploy a new thing within the JVM
 			List<Component> newThings = deployer.deploy(Set.of(newPeer), true, 1d, true, msg -> System.out.println(msg),
@@ -54,7 +54,7 @@ public class PingPong {
 
 		Message pong = PingService.ping(new Service(first), last.descriptor(), 10);
 
-		assert pong.route.source().component.friendlyName.equals(last.friendlyName);
+		assert pong.route.source().component.name.equals(last.name);
 		System.out.println("***  " + pong.route);
 
 	}

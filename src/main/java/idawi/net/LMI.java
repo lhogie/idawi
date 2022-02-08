@@ -18,10 +18,15 @@ import idawi.service.ServiceManager;
 import toools.io.Cout;
 
 public class LMI extends TransportLayer {
+
 	public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
-	public final Map<ComponentDescriptor, LMI> peer_lmi = new HashMap<>();
+	public final Map<ComponentDescriptor, LMI> peer2lmi = new HashMap<>();
 
 	private boolean run;
+
+	public LMI(Component c) {
+		super(c);
+	}
 
 	@Override
 	synchronized public void send(Message msg, Collection<ComponentDescriptor> neighborRelays) {
@@ -30,9 +35,10 @@ public class LMI extends TransportLayer {
 		}
 
 		for (ComponentDescriptor n : neighborRelays) {
-			LMI lmi = peer_lmi.get(n);
+			LMI lmi = peer2lmi.get(n);
 
 			if (lmi != null && lmi.run) {
+				// simulate transport over the network
 				Message clone = (Message) serializer.clone(msg);
 
 				if (false) {
@@ -60,7 +66,7 @@ public class LMI extends TransportLayer {
 
 	@Override
 	public boolean canContact(ComponentDescriptor c) {
-		return c.friendlyName != null;
+		return c.name != null;
 	}
 
 	@Override
@@ -79,18 +85,18 @@ public class LMI extends TransportLayer {
 
 	@Override
 	public Collection<ComponentDescriptor> neighbors() {
-		return peer_lmi.keySet();
+		return peer2lmi.keySet();
 	}
 
 	public static void connect(Component a, Component b) {
-		LMI almi = a.lookupService(NetworkingService.class).transport.lmi();
-		LMI blmi = b.lookupService(NetworkingService.class).transport.lmi();
-		almi.peer_lmi.put(b.descriptor(), blmi);
-		blmi.peer_lmi.put(a.descriptor(), almi);
+		LMI almi = a.lookup(NetworkingService.class).transport.lmi();
+		LMI blmi = b.lookup(NetworkingService.class).transport.lmi();
+		blmi.peer2lmi.put(a.descriptor(), almi);
+		almi.peer2lmi.put(b.descriptor(), blmi);
 	}
 
 	public static boolean areConnected(Component src, Component dest) {
-		return src.lookupService(NetworkingService.class).transport.lmi().peer_lmi.containsKey(dest.descriptor());
+		return src.lookup(NetworkingService.class).transport.lmi().peer2lmi.containsKey(dest.descriptor());
 	}
 
 	public static void chain(List<Component> l) {

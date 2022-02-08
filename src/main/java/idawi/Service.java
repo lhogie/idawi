@@ -14,11 +14,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import idawi.MessageQueue.Enough;
 import idawi.service.ErrorLog;
+import idawi.service.PredicateRunner;
+import idawi.service.PredicateRunner.SerializablePredicate;
+import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.io.file.Directory;
-import toools.reflect.Clazz;
 import toools.thread.Threads;
 import toools.util.Date;
 
@@ -32,7 +35,7 @@ public class Service {
 	public final Component component;
 	private boolean askToRun = true;
 	protected final List<Thread> threads = new ArrayList<>();
-	private final Set<Operation> operations = new HashSet<>();
+	protected final Set<Operation> operations = new HashSet<>();
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	final AtomicLong returnQueueID = new AtomicLong();
 
@@ -43,24 +46,25 @@ public class Service {
 
 	private Directory directory;
 
-	public Service() {
-		this(new Component());
-		// run();
-	}
-
 	public Service(Component component) {
 		this.component = component;
 		component.services.put(getClass(), this);
 		this.id = getClass();
-		registerFieldsOperations();
 		registerOperation(new DescriptorOperation());
+		registerOperation(new listNativeOperations());
+		registerOperation(new listOperationNames());
+		registerOperation(new nbMessagesReceived());
+		registerOperation(new sec2nbMessages());
+		registerOperation(new shutdown());
+		registerOperation("friendlyName", m -> getFriendlyName());
 	}
 
-	protected ComponentAddress ca() {
-		return new ComponentAddress(component.descriptor());
+	protected To ca() {
+		return new To(component.descriptor());
 	}
 
-	public class getFriendlyName extends InnerClassTypedOperation {
+	public class getFriendlyName extends TypedOperation {
+
 		public String f() {
 			return getFriendlyName();
 		}
@@ -69,10 +73,10 @@ public class Service {
 		public String getDescription() {
 			return null;
 		}
+
 	}
 
-	public class sec2nbMessages extends InnerClassTypedOperation {
-
+	public class sec2nbMessages extends TypedOperation {
 		@Override
 		public String getDescription() {
 			// TODO Auto-generated method stub
@@ -96,25 +100,8 @@ public class Service {
 		send(r, msg.replyTo);
 	}
 
-	private void registerFieldsOperations() {
-		for (Class c : Clazz.bfs(getClass())) {
-			for (var f : c.getDeclaredFields()) {
-				if (Operation.class.isAssignableFrom(f.getType()) && f.isAnnotationPresent(IdawiOperation.class)) {
-					try {
-						var constructor = f.getType().getConstructor(c);
-						var operation = (Operation) constructor.newInstance(this);
-						f.set(this, operation);
-						operations.add(operation);
-					} catch (Throwable e) {
-						throw new RuntimeException(e);
-					}
-				}
-			}
-		}
-	}
-
 	protected <S extends Service> S lookupService(Class<? extends S> serviceID) {
-		return component.lookupService(serviceID);
+		return component.lookup(serviceID);
 	}
 
 	public void run() throws Throwable {
@@ -128,7 +115,7 @@ public class Service {
 		return this.directory;
 	}
 
-	public class nbMessagesReceived extends InnerClassTypedOperation {
+	public class nbMessagesReceived extends TypedOperation {
 		public long f() {
 			return nbMsgsReceived;
 		}
@@ -139,7 +126,7 @@ public class Service {
 		}
 	}
 
-	public class listOperationNames extends InnerClassTypedOperation {
+	public class listOperationNames extends TypedOperation {
 		@Override
 		public String getDescription() {
 			return "returns the name of available operations";
@@ -150,8 +137,8 @@ public class Service {
 		}
 	}
 
-	public class listNativeOperations extends InnerClassTypedOperation {
-		Set<OperationDescriptor> f() {
+	public class listNativeOperations extends TypedOperation {
+		public Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
 		}
 
@@ -175,42 +162,43 @@ public class Service {
 			Operation operation = lookupOperation(operationName);
 
 			if (operation == null) {
-				err(msg, getClass() + ": can't find operation: " + operationName);
+				triggerErrorHappened(msg,
+						new IllegalArgumentException(getClass() + ": can't find operation: " + operationName));
 			} else {
 				trigger((TriggerMessage) msg, operation);
 			}
 		} else {
-			MessageQueue q = getQueue(msg.to.queue);
+			MessageQueue q = getQueue(msg.to.queueName);
 
 			if (q == null) {
 //				System.out.println(msg);
-				err(msg, getClass() + ": can't find queue: " + msg.to.queue);
+				triggerErrorHappened(msg,
+						new IllegalArgumentException(getClass() + ": can't find queue: " + msg.to.queueName));
 			} else {
 				q.add_blocking(msg);
 			}
 		}
 	}
 
-	private void err(Message msg, String s) {
-		System.out.println(msg);
+	private void triggerErrorHappened(Message triggerMsg, Throwable s) {
+//		System.out.println(msg);
 		RemoteException err = new RemoteException(s);
-		error(err);
+		logError(err);
 
 		// report the error to the guy who asked
-		if (msg.replyTo != null) {
-			send(err, msg.replyTo);
-			send(EOT.instance, msg.replyTo);
+		if (triggerMsg.replyTo != null) {
+			send(err, triggerMsg.replyTo);
+			send(EOT.instance, triggerMsg.replyTo);
 		}
 	}
 
 	private synchronized void trigger(TriggerMessage msg, Operation operation) {
-		var sender = msg.route.get(0).component;
-		var inputQ = getQueue(msg.to.queue);
+		var inputQ = getQueue(msg.to.queueName);
 
 		// most of the time the queue will not exist, unless the user wants to use the
 		// input queue of another running operation
 		if (inputQ == null) {
-			inputQ = createQueue(msg.to.queue, Set.of(sender));
+			inputQ = createQueue(msg.to.queueName);
 		}
 
 		inputQ.add_blocking(msg);
@@ -225,13 +213,7 @@ public class Service {
 				operation.exec(inputQ_final);
 			} catch (Throwable exception) {
 				operation.nbFailures++;
-				RemoteException err = new RemoteException(exception);
-
-				if (msg.replyTo != null) {
-					send(err, msg.replyTo);
-				}
-
-				error(err);
+				triggerErrorHappened(msg, exception);
 			} finally {
 				operation.totalDuration += Date.time() - start;
 			}
@@ -246,10 +228,8 @@ public class Service {
 
 		if (msg.premptive) {
 			r.run();
-		} else {
-			if (!threadPool.isShutdown()) {
-				threadPool.submit(r);
-			}
+		} else if (!threadPool.isShutdown()) {
+			threadPool.submit(r);
 		}
 	}
 
@@ -263,7 +243,7 @@ public class Service {
 		return null;
 	}
 
-	public <O> O lookupOperation(Class<O> c) {
+	public <O> O lookup(Class<O> c) {
 		for (var o : operations) {
 			if (o.getClass() == c) {
 				return (O) o;
@@ -296,7 +276,7 @@ public class Service {
 			}
 
 			@Override
-			protected Class<? extends Service> getDeclaringService() {
+			protected Class<? extends Service> getDeclaringServiceClass() {
 				return Service.this.getClass();
 			}
 		});
@@ -314,7 +294,7 @@ public class Service {
 
 			@Override
 			public String getDescription() {
-				return "operation " + name + " has been added programmatically (it can hence be removed)";
+				return null;
 			}
 
 			@Override
@@ -324,7 +304,7 @@ public class Service {
 			}
 
 			@Override
-			protected Class<? extends Service> getDeclaringService() {
+			protected Class<? extends Service> getDeclaringServiceClass() {
 				return Service.this.getClass();
 			}
 		});
@@ -333,7 +313,11 @@ public class Service {
 	public void registerOperation(Operation o) {
 		if (lookupOperation(o.getName()) != null) {
 			throw new IllegalStateException(
-					"in class: " + o.getDeclaringService() + ", operation name is already in use: " + o);
+					"in class: " + o.getDeclaringServiceClass() + ", operation name is already in use: " + o);
+		}
+
+		if (o instanceof TypedOperation) {
+			((TypedOperation) o).service = this;
 		}
 
 		operations.add(o);
@@ -358,21 +342,21 @@ public class Service {
 		return t;
 	}
 
-	protected void error(String msg) {
+	protected void logError(String msg) {
 		// System.err.println(component + "/" + id + " error: " + msg);
-		component.lookupServices(ErrorLog.class, s -> s.report(msg));
+		component.forEachServiceOfClass(ErrorLog.class, s -> s.report(msg));
 	}
 
-	protected void error(Throwable err) {
+	protected void logError(Throwable err) {
 		// err.printStackTrace();
-		component.lookupServices(ErrorLog.class, s -> s.report(err));
+		component.forEachServiceOfClass(ErrorLog.class, errorLog -> errorLog.report(err));
 	}
 
 	public boolean isAskedToRun() {
 		return askToRun;
 	}
 
-	public class shutdown extends InnerClassTypedOperation {
+	public class shutdown extends TypedOperation {
 		public void f() {
 			shutdown();
 		}
@@ -391,20 +375,25 @@ public class Service {
 			try {
 				t.join();
 			} catch (InterruptedException e) {
-				error(e);
+				logError(e);
 			}
 		});
 	}
 
 	@Override
 	public String toString() {
-		return component.friendlyName + "/" + id;
+		return component.name + "/" + id;
 	}
 
-	protected MessageQueue createQueue(String qid, Set<ComponentDescriptor> expectedSenders) {
-		MessageQueue q = new MessageQueue(qid, expectedSenders, 10, wannaDie -> deleteQueue(wannaDie));
+	protected MessageQueue createQueue(String qid) {
+		MessageQueue q = new MessageQueue(this, qid, 10);
 		name2queue.put(qid, q);
 		return q;
+	}
+
+	protected MessageQueue createQueue() {
+		String qid = "q" + returnQueueID.getAndIncrement();
+		return createQueue(qid);
 	}
 
 	protected MessageQueue getQueue(String qid) {
@@ -424,25 +413,29 @@ public class Service {
 		new Message(o, to, null).send(component);
 	}
 
-	public RemotelyRunningOperation start(OperationAddress target, boolean expectReturn, Object initialInputData) {
-		String inputQName = target.opid + "@" + Date.timeNs();
-		var inputQaddress = new QueueAddress(target.sa, inputQName);
-		return new RemotelyRunningOperation(this, inputQaddress, target.opid, expectReturn, initialInputData);
+	public RemotelyRunningOperation exec(OperationAddress target, MessageQueue rq, Object initialInputData) {
+		String remoteQid = target.opid + "@" + Long.toHexString(Date.timeNs());
+		var remoteInputQaddr = new QueueAddress(target.sa, remoteQid);
+		return new RemotelyRunningOperation(remoteInputQaddr, target.opid, rq, initialInputData);
 	}
 
-	public List<Object> exec(OperationAddress target, double timeout, int nbResults, Object... parms) {
-		return start(target, true, new OperationParameterList(parms)).returnQ.setTimeout(timeout).collect()
+	public RemotelyRunningOperation exec(OperationAddress target, boolean createQueue, Object initialInputData) {
+		return exec(target, createQueue ? createQueue() : null, initialInputData);
+	}
+
+	public List<Object> execf(OperationAddress target, double timeout, int nbResults, Object... parms) {
+		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.setMaxWaitTimeS(timeout).collect()
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
-	public class DescriptorOperation extends InnerClassTypedOperation {
+	public class DescriptorOperation extends TypedOperation {
 		public ServiceDescriptor f() {
 			return Service.this.descriptor();
 		}
 
 		@Override
 		public String getDescription() {
-			return null;
+			return "gives a descriptor on this service";
 		}
 	}
 
@@ -454,4 +447,52 @@ public class Service {
 		d.nbMessagesReceived = nbMsgsReceived;
 		return d;
 	}
+
+	public Set<ComponentDescriptor> whoHasService(To to, Class<? extends Service> serviceID) {
+		// we'll store herein the components that expose the given service
+		Set<ComponentDescriptor> r = new HashSet<>();
+
+		// asks the ServiceManager on all components in "to" if they they have that
+		// service
+		exec(to.o(ServiceManager.has.class), createQueue(), serviceID).returnQ.forEach(msg -> {
+			// if this component claims he has
+			if ((boolean) msg.content) {
+				r.add(msg.route.source().component);
+			}
+
+			// don't quit not, other components may reply
+			return Enough.no;
+		});
+
+		return r;
+	}
+
+	public <O extends InnerOperation> Set<ComponentDescriptor> test(To to, Class<O> predicate, Object... parms) {
+		Set<ComponentDescriptor> r = new HashSet<>();
+
+		exec(to.o(predicate), createQueue(), new OperationParameterList(parms)).returnQ.forEach(msg -> {
+			if ((boolean) msg.content) {
+				r.add(msg.route.source().component);
+			}
+
+			return Enough.no;
+		});
+
+		return r;
+	}
+
+	public Set<ComponentDescriptor> test(To to, SerializablePredicate p) {
+		Set<ComponentDescriptor> r = new HashSet<>();
+
+		exec(to.o(PredicateRunner.Test.class), createQueue(), p).returnQ.forEach(msg -> {
+			if ((boolean) msg.content) {
+				r.add(msg.route.source().component);
+			}
+
+			return Enough.no;
+		});
+
+		return r;
+	}
+
 }

@@ -2,29 +2,34 @@ package idawi;
 
 public class RemotelyRunningOperation {
 
-	public final TriggerMessage initialMsg = new TriggerMessage();
+	public final TriggerMessage triggerMsg = new TriggerMessage();
 	public MessageQueue returnQ;
 	public final Service clientService;
 
-	public RemotelyRunningOperation(Service clientService, QueueAddress to, String operationName, boolean expectReturn,
+	public RemotelyRunningOperation(QueueAddress to, String operationName, MessageQueue returnQ,
+			Object initialInputData) {
+		this(returnQ.service, to, operationName, returnQ == null ? null : returnQ.addr(), initialInputData);
+		this.returnQ = returnQ;
+	}
+
+	public RemotelyRunningOperation(Service clientService, QueueAddress to, String operationName, QueueAddress returnQaddr,
 			Object initialInputData) {
 		this.clientService = clientService;
-		this.initialMsg.operationName = operationName;
-		this.initialMsg.to = to;
-		this.initialMsg.content = initialInputData;
+		this.triggerMsg.operationName = operationName;
+		this.triggerMsg.to = to;
+		this.triggerMsg.content = initialInputData;
 
-		if (expectReturn) {
-			this.returnQ = clientService.createQueue("returnQ-" + clientService.returnQueueID.getAndIncrement(),
-					initialMsg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients());
-			this.initialMsg.replyTo = new ComponentAddress(clientService.component.descriptor()).s(clientService.id)
-					.q(returnQ.name);
+		if (returnQaddr != null) {
+			this.triggerMsg.replyTo = returnQaddr;
 		}
 
-		initialMsg.send(clientService.component);
+//		System.out.println(to + "   4" + initialInputData);
+
+		triggerMsg.send(clientService.component);
 	}
 
 	public void send(Object content) {
-		var msg = new Message(content, initialMsg.replyTo, initialMsg.replyTo);
+		var msg = new Message(content, triggerMsg.replyTo, triggerMsg.replyTo);
 		msg.send(clientService.component);
 	}
 
@@ -33,6 +38,6 @@ public class RemotelyRunningOperation {
 	}
 
 	public String getOperationInputQueueName() {
-		return initialMsg.to.queue;
+		return triggerMsg.to.queueName;
 	}
 }

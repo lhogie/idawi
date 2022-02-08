@@ -28,10 +28,10 @@ public class SystemMonitor extends Service implements Swingable {
 	private synchronized void update() {
 		String s = "<html>";
 		s += "<br>" + nbMsgs + " messages";
-		s += "<br>" + component.lookupService(NetworkingService.class).neighbors().size() + " peers";
+		s += "<br>" + component.lookup(NetworkingService.class).neighbors().size() + " peers";
 		s += "<ul>";
 
-		for (Object n : component.lookupService(NetworkingService.class).neighbors()) {
+		for (Object n : component.lookup(NetworkingService.class).neighbors()) {
 			s += "<li>" + n;
 		}
 

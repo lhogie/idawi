@@ -3,7 +3,7 @@ package idawi.service;
 import java.util.function.Supplier;
 
 import idawi.Component;
-import idawi.ComponentAddress;
+import idawi.To;
 import idawi.Service;
 
 public class GossipingService extends Service {
@@ -14,7 +14,7 @@ public class GossipingService extends Service {
 	}
 
 	public void schedule(int periodicityMs, Supplier sendThis, Class<? extends Service> serviceID, String queueID) {
-		var to = new ComponentAddress().s(serviceID).q(queueID);
+		var to = new To().s(serviceID).q(queueID);
 		newThread_loop(periodicityMs, () -> send(sendThis.get(), to));
 	}
 

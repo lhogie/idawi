@@ -20,9 +20,9 @@ public class OperationAddress implements Externalizable {
 		this.opid = opid;
 	}
 
-	public OperationAddress(ComponentAddress ca, Class<? extends InnerClassOperation> opid) {
+	public OperationAddress(To ca, Class<? extends InnerOperation> opid) {
 		this(new ServiceAddress(ca, (Class<? extends Service>) opid.getEnclosingClass()),
-				InnerClassOperation.name(opid));
+				InnerOperation.name(opid));
 	}
 
 	public OperationAddress o(ServiceAddress s) {

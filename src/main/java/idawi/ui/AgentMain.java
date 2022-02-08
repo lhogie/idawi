@@ -37,7 +37,7 @@ public class AgentMain extends JThingLineCmd {
 			String name = parms.get(i);
 			Component c = new Component(ComponentDescriptor.fromCDL("name=" + name));
 			ComponentDescriptor d = new ComponentDescriptor();
-			d.friendlyName = name;
+			d.name = name;
 			peers.add(c);
 		}
 

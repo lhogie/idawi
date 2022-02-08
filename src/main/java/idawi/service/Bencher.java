@@ -11,10 +11,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.MessageQueue.SUFFICIENCY;
+import idawi.InnerOperation;
+import idawi.TypedOperation;
+import idawi.MessageQueue;
+import idawi.MessageQueue.Enough;
 import idawi.Service;
+import idawi.To;
 import toools.thread.Q;
 
 /**
@@ -43,11 +46,7 @@ public class Bencher extends Service {
 
 	public Bencher(Component node) {
 		super(node);
-		registerOperation("default", in -> {
-			var msg = in.get_blocking();
-			Arguments parms = (Arguments) msg.content;
-			localBench(parms.size, r -> reply(msg, r));
-		});
+		registerOperation(new localBench());
 	}
 
 	@Override
@@ -60,34 +59,57 @@ public class Bencher extends Service {
 			BiConsumer<ComponentDescriptor, String> msg) {
 		Arguments parms = new Arguments();
 		parms.size = size;
-		var to = new ComponentAddress(peers).s(Bencher.class).o("default");
+		var to = new To(peers).s(Bencher.class).o("default");
 		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
-		start(to, true, parms).returnQ.forEach(r -> {
+		exec(to, createQueue(), parms).returnQ.forEach(r -> {
 			if (r.content instanceof String) {
 				msg.accept(r.route.source().component, (String) r.content);
 			} else if (r.content instanceof Results) {
 				map.put(r.route.source().component, (Results) r.content);
 			}
 
-			return SUFFICIENCY.NOT_ENOUGH;
+			return Enough.no;
 		});
 
 		return map;
 	}
 
-	public static Results localBench(int size) {
-		Results r = new Results();
-		Q<Object> q = new Q<>(4);
-		localBench(size, out -> {
-			q.add_blocking(out);
-		});
+	public class localBench extends TypedOperation {
+		public Results f(int size) {
+			Results r = new Results();
+			Q<Object> q = new Q<>(4);
+			localBench(size, out -> {
+				q.add_blocking(out);
+			});
 
-		q.get_blocking();
-		r.monothread = (Long) q.get_blocking();
-		q.get_blocking();
-		r.multithread = (Long) q.get_blocking();
-		return r;
+			q.get_blocking();
+			r.monothread = (Long) q.get_blocking();
+			q.get_blocking();
+			r.multithread = (Long) q.get_blocking();
+			return r;
+		}
+
+		@Override
+		public String getDescription() {
+			return null;
+		}
+
+	}
+
+	public class localBench2 extends InnerOperation {
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			var m = in.get_blocking();
+			int size = (int) m.content;
+			localBench(size, r -> reply(m, r));
+		}
+
+		@Override
+		public String getDescription() {
+			return null;
+		}
 	}
 
 	public static void localBench(int size, Consumer<Object> out) {

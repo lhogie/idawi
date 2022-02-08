@@ -15,41 +15,30 @@ public class RegistryService extends Service {
 
 	static {
 		Threads.newThread_loop(1000, () -> true, () -> {
-			Component.componentsInThisJVM.values()
-					.forEach(c -> c.lookupService(RegistryService.class).lookupOperation(broadcastLocalInfo.class).f());
+			// Component.componentsInThisJVM.values()
+			// .forEach(c ->
+			// c.lookup(RegistryService.class).lookupOperation(broadcastLocalInfo.class).f());
 		});
 	}
 
 	private final Map<String, ComponentDescriptor> name2descriptor = new HashMap<>();
 
-	@IdawiOperation
-	public  add add = new add();
-	@IdawiOperation
-	public  addAll addAll = new addAll();
-	@IdawiOperation
-	public  broadcastLocalInfo broadcastLocalInfo = new broadcastLocalInfo();
-	@IdawiOperation
-	public  clear clear = new clear();
-	@IdawiOperation
-	public  list list = new list();
-	@IdawiOperation
-	public  local local = new local();
-	@IdawiOperation
-	public  lookUp lookUp = new lookUp();
-	@IdawiOperation
-	public  names names = new names();
-	@IdawiOperation
-	public  remove remove = new remove();
-	@IdawiOperation
-	public  size size = new size();
-	@IdawiOperation
-	public  updateAll updateAll = new updateAll();
-
 	public RegistryService(Component component) {
 		super(component);
+		registerOperation(new add());
+		registerOperation(new addAll());
+		registerOperation(new broadcastLocalInfo());
+		registerOperation(new clear());
+		registerOperation(new list());
+		registerOperation(new local());
+		registerOperation(new lookUp());
+		registerOperation(new names());
+		registerOperation(new remove());
+		registerOperation(new size());
+		registerOperation(new updateAll());
 	}
 
-	public class broadcastLocalInfo extends InnerClassTypedOperation {
+	public class broadcastLocalInfo extends TypedOperation {
 
 		@Override
 		public String getDescription() {
@@ -58,12 +47,12 @@ public class RegistryService extends Service {
 		}
 
 		public void f() {
-			start(new ComponentAddress((Set<ComponentDescriptor>) null).o(RegistryService.add.class), false,
+			exec(new To((Set<ComponentDescriptor>) null).o(RegistryService.add.class), null,
 					new OperationParameterList(component.descriptor()));
 		}
 	}
 
-	public class add extends InnerClassTypedOperation {
+	public class add extends TypedOperation {
 
 		@Override
 		public String getDescription() {
@@ -71,26 +60,26 @@ public class RegistryService extends Service {
 		}
 
 		public void f(ComponentDescriptor d) {
-			var alreadyHere = name2descriptor.get(d.friendlyName);
+			var alreadyHere = name2descriptor.get(d.name);
 
 			if (alreadyHere == null || d.isNewerThan(alreadyHere)) {
-				name2descriptor.put(d.friendlyName, d);
+				name2descriptor.put(d.name, d);
 			}
 		}
 	}
 
-	public class addAll extends InnerClassTypedOperation {
+	public class addAll extends TypedOperation {
 		@Override
 		public String getDescription() {
 			return null;
 		}
 
 		public void addAll(Collection<ComponentDescriptor> s) {
-			s.forEach(i -> lookupOperation(add.class).f(i));
+			s.forEach(i -> lookup(add.class).f(i));
 		}
 	}
 
-	public class size extends InnerClassTypedOperation {
+	public class size extends TypedOperation {
 		public int size() {
 			return name2descriptor.size();
 		}
@@ -101,7 +90,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class names extends InnerClassTypedOperation {
+	public class names extends TypedOperation {
 		public Set<String> names() {
 			return name2descriptor.keySet();
 		}
@@ -112,12 +101,11 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class updateAll extends InnerClassTypedOperation {
+	public class updateAll extends TypedOperation {
 		public void updateAll() {
-			var to = new OperationAddress(new ComponentAddress(new HashSet<>(name2descriptor.values())),
-					RegistryService.local.class);
-			start(to, true, null).returnQ.collect().resultMessages().contents()
-					.forEach(d -> lookupOperation(add.class).f((ComponentDescriptor) d));
+			var to = new OperationAddress(new To(new HashSet<>(name2descriptor.values())), RegistryService.local.class);
+			exec(to, createQueue(), null).returnQ.collect().resultMessages().contents()
+					.forEach(d -> lookup(add.class).f((ComponentDescriptor) d));
 		}
 
 		@Override
@@ -126,9 +114,10 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class lookUp extends InnerClassTypedOperation {
+	public class lookUp extends TypedOperation {
 		public ComponentDescriptor lookup(String name) {
-			return name2descriptor.get(name);
+			var d = name2descriptor.get(name);
+			return d;
 		}
 
 		@Override
@@ -137,7 +126,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class remove extends InnerClassTypedOperation {
+	public class remove extends TypedOperation {
 		public ComponentDescriptor remove(String name) {
 			return name2descriptor.remove(name);
 		}
@@ -148,7 +137,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class clear extends InnerClassTypedOperation {
+	public class clear extends TypedOperation {
 		public void clear() {
 			name2descriptor.clear();
 		}
@@ -159,7 +148,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class list extends InnerClassTypedOperation {
+	public class list extends TypedOperation {
 		public Set<ComponentDescriptor> list() {
 			return new HashSet<>(name2descriptor.values());
 		}
@@ -170,7 +159,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class local extends InnerClassTypedOperation {
+	public class local extends TypedOperation {
 		public ComponentDescriptor local() {
 			return component.descriptor();
 		}
@@ -200,7 +189,7 @@ public class RegistryService extends Service {
 
 		if (info == null) {
 			name2descriptor.put(name, info = new ComponentDescriptor());
-			info.friendlyName = name;
+			info.name = name;
 		}
 
 		return info;
@@ -210,7 +199,7 @@ public class RegistryService extends Service {
 		var r = new HashSet<ComponentDescriptor>();
 
 		for (var e : name2descriptor.values()) {
-			if (e.friendlyName.matches(re)) {
+			if (e.name.matches(re)) {
 				r.add(e);
 			}
 		}
@@ -234,7 +223,7 @@ public class RegistryService extends Service {
 
 						if (b == null) {
 							b = missing.put(n, b = new ComponentDescriptor());
-							b.friendlyName = n;
+							b.name = n;
 						}
 					}
 

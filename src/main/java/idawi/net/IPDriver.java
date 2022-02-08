@@ -5,17 +5,23 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import toools.io.Cout;
 import toools.net.NetUtilities;
 import toools.thread.Q;
 
 public abstract class IPDriver extends TransportLayer {
+
 //	public static final int DEFAULT_PORT = 4553;
 
 	private int port = NetUtilities.randomUserPort();
 	private Thread thread;
 	private final Q waitReady = new Q(1);
+
+	public IPDriver(Component c) {
+		super(c);
+	}
 
 	protected void markReady() {
 		Cout.info(getName() + " is ready");

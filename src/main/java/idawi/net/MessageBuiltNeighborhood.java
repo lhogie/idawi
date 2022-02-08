@@ -31,7 +31,7 @@ public class MessageBuiltNeighborhood {
 			if (System.currentTimeMillis() - lastSeen > timeOutMs) {
 				// drop it
 				i.remove();
-				protocol.listeners.forEach(l -> l.peerLeft(p, protocol));
+				protocol.listeners.forEach(l -> l.neighborLeft(p, protocol));
 			}
 		}
 	}
@@ -41,7 +41,7 @@ public class MessageBuiltNeighborhood {
 		name_lastSeenDate.put(peer, System.currentTimeMillis());
 
 		if ( ! alreadyKnown) {
-			protocol.listeners.forEach(l -> l.peerJoined(peer, protocol));
+			protocol.listeners.forEach(l -> l.newNeighbor(peer, protocol));
 		}
 	}
 

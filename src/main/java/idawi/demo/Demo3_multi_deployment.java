@@ -28,18 +28,18 @@ public class Demo3_multi_deployment {
 
 			p.sshParameters.username = "alacomme";
 			p.inetAddresses.add(childHost);
-			p.friendlyName = childHost.getHostName();
+			p.name = childHost.getHostName();
 			p.sshParameters.hostname = childHost.getHostName();
 
 			children.add(p);
 		}
 
 		// deploy
-		t.lookupService(DeployerService.class).deploy(children, true, 10000, true,
+		t.lookup(DeployerService.class).deploy(children, true, 10000, true,
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = PingService.ping(t.lookupService(PingService.class), children, 1000);
+		MessageList pongs = PingService.ping(t.lookup(PingService.class), children, 1000);
 
 		if (pongs.isEmpty()) {
 			System.err.println("no response");

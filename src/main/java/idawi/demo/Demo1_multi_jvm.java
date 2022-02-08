@@ -21,18 +21,18 @@ public class Demo1_multi_jvm {
 		final int basePort = 4000;
 
 		ComponentDescriptor t1d = new ComponentDescriptor();
-		t1d.friendlyName = "this jvm";
+		t1d.name = "this jvm";
 		t1d.tcpPort = 6677;
 		Component t1 = new Component(t1d);
 
 		ComponentDescriptor t2d = new ComponentDescriptor();
-		t2d.friendlyName = "this jvm";
+		t2d.name = "this jvm";
 		t2d.tcpPort = 6678;
 
-		t1.lookupService(DeployerService.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
+		t1.lookup(DeployerService.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 		
-		Message pong = PingService.ping(t1.lookupService(PingService.class), t2d, 1);
+		Message pong = PingService.ping(t1.lookup(PingService.class), t2d, 1);
 		System.out.println("pong: " + pong);
 
 	}

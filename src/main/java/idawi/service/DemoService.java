@@ -4,15 +4,15 @@ import java.io.Serializable;
 import java.util.Random;
 import java.util.Set;
 
+import idawi.InnerOperation;
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.EOT;
-import idawi.InnerClassOperation;
-import idawi.InnerClassTypedOperation;
 import idawi.MessageQueue;
 import idawi.ProgressRatio;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
+import idawi.To;
+import idawi.TypedOperation;
 import idawi.net.LMI;
 import toools.math.MathsUtilities;
 import toools.thread.Threads;
@@ -22,9 +22,18 @@ public class DemoService extends Service {
 
 	public DemoService(Component component) {
 		super(component);
+		registerOperation(new countFrom1toN());
+		registerOperation(new countFromAtoB());
+		registerOperation(new grep());
+		registerOperation(new sendProgressInformation());
+		registerOperation(new stringLength());
+		registerOperation(new throwError());
+		registerOperation(new waiting());
+		registerOperation("e", q -> {});
+
 	}
 
-	public class OperationID extends InnerClassTypedOperation {
+	public class waiting extends TypedOperation {
 		public double waiting(double maxSeconds) {
 			double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 			Threads.sleepMs((long) (seconds * 1000));
@@ -38,7 +47,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class grep extends InnerClassOperation {
+	public class grep extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			String re = (String) in.get_non_blocking().content;
@@ -70,8 +79,8 @@ public class DemoService extends Service {
 		LMI.connect(a, b);
 
 		Service s = new Service(a);
-		var to = new ComponentAddress(Set.of(b.descriptor())).o(DemoService.stringLength.class);
-		RemotelyRunningOperation stub = s.start(to, true, DemoService.grep.class);
+		var to = new To(Set.of(b.descriptor())).o(DemoService.stringLength.class);
+		RemotelyRunningOperation stub = s.exec(to, true, DemoService.grep.class);
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);
@@ -101,7 +110,7 @@ public class DemoService extends Service {
 //		}
 //	}
 
-	public class stringLength extends InnerClassTypedOperation {
+	public class stringLength extends TypedOperation {
 		public int f(String s) {
 			return s.length();
 		}
@@ -113,7 +122,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class countFrom1toN extends InnerClassOperation {
+	public class countFrom1toN extends InnerOperation {
 		@Override
 		public String getDescription() {
 			// TODO Auto-generated method stub
@@ -139,7 +148,7 @@ public class DemoService extends Service {
 		int a, b;
 	}
 
-	public class countFromAtoB extends InnerClassOperation {
+	public class countFromAtoB extends InnerOperation {
 		@Override
 		public String getDescription() {
 			// TODO Auto-generated method stub
@@ -156,7 +165,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class throwError extends InnerClassOperation {
+	public class throwError extends InnerOperation {
 		@Override
 		public String getDescription() {
 			return null;
@@ -168,7 +177,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class sendProgressInformation extends InnerClassOperation {
+	public class sendProgressInformation extends InnerOperation {
 		@Override
 		public String getDescription() {
 			return null;

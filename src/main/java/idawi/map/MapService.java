@@ -1,7 +1,7 @@
 package idawi.map;
 
 import idawi.Component;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.Route;
 import idawi.RouteEntry;
 import idawi.Service;
@@ -10,17 +10,18 @@ import toools.thread.Threads;
 public class MapService extends Service {
 	static {
 		Threads.newThread_loop(1000, () -> true, () -> {
-			Component.componentsInThisJVM.values().forEach(c -> c.lookupService(MapService.class).map.removeOutdated());
+			Component.componentsInThisJVM.values().forEach(c -> c.lookup(MapService.class).map.removeOutdated());
 		});
 	}
-	
+
 	private final NetworkMap map = new NetworkMap();
 
 	public MapService(Component component) {
 		super(component);
+		registerOperation(new get());
 	}
 
-	public class get extends InnerClassTypedOperation {
+	public class get extends TypedOperation {
 		public NetworkMap get() {
 			return map;
 		}

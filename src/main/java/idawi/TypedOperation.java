@@ -9,12 +9,13 @@ import java.util.List;
 
 import toools.reflect.Clazz;
 
-public abstract class InnerClassTypedOperation extends InnerClassOperation {
-
+public abstract class TypedOperation extends InnerOperation {
 	private final Method method;
-	Service service;
+	
+	// will be set by the service class
+	 Service service;
 
-	public InnerClassTypedOperation() {
+	public TypedOperation() {
 		this.method = findMain();
 	}
 
@@ -29,7 +30,7 @@ public abstract class InnerClassTypedOperation extends InnerClassOperation {
 		}
 
 		if (methods.isEmpty()) {
-			throw new IllegalStateException("no main method defined");
+			throw new IllegalStateException(this + ": no main method found (is it public?)");
 		} else if (methods.size() == 1) {
 			return methods.get(0);
 		} else {
@@ -48,5 +49,4 @@ public abstract class InnerClassTypedOperation extends InnerClassOperation {
 			service.send(r, msg.replyTo);
 		}
 	}
-
 }

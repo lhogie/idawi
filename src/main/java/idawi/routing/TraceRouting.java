@@ -20,38 +20,25 @@ public class TraceRouting extends RoutingTableBasedRouting<FullRouteTable> {
 	}
 
 	@Override
-	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
-		return null;}/*
-		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
-
-		// if it's a broadcast message
-		if (to == null) {
-			return neighbors;
-		}
-		// the msg is targeted to specific nodes
-		else {
-			// but the node is disconnected
-			if (neighbors.isEmpty()) {
-				// try to reach the destinations directly
-				return to;
-			} else {
-				Set<ComponentDescriptor> relays = new HashSet<>(to.size());
-
-				for (ComponentDescriptor t : to) {
-					Route relay = routingTable.get(t);
-
-					// if one relay can't be found, broadcast
-					if (relay == null) {
-						return neighbors;
-					}
-
-					relays.add(relay);
-				}
-
-				return relays;
-			}
-		}
-	}*/
+	public Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol) {
+		return null;
+	}/*
+		 * Collection<ComponentDescriptor> neighbors = protocol.neighbors();
+		 * 
+		 * // if it's a broadcast message if (to == null) { return neighbors; } // the
+		 * msg is targeted to specific nodes else { // but the node is disconnected if
+		 * (neighbors.isEmpty()) { // try to reach the destinations directly return to;
+		 * } else { Set<ComponentDescriptor> relays = new HashSet<>(to.size());
+		 * 
+		 * for (ComponentDescriptor t : to) { Route relay = routingTable.get(t);
+		 * 
+		 * // if one relay can't be found, broadcast if (relay == null) { return
+		 * neighbors; }
+		 * 
+		 * relays.add(relay); }
+		 * 
+		 * return relays; } } }
+		 */
 
 	@Override
 	public String getAlgoName() {

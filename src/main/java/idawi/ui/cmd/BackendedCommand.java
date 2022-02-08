@@ -2,11 +2,12 @@ package idawi.ui.cmd;
 
 import java.util.Set;
 
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.MessageQueue.Enough;
 import idawi.ProgressMessage;
 import idawi.Service;
+import idawi.To;
 import idawi.service.PingService;
 import j4u.CommandLine;
 import toools.io.Cout;
@@ -18,7 +19,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 	public BackendedCommand(RegularFile launcher) {
 		super(launcher);
 		addOption("--hook", "-k", ".+", null,
-				"the CDL description of the component which wille be the entry point to the overlay");
+				"the CDL description of the component which will be the entry point to the overlay");
 	}
 
 	@Override
@@ -32,21 +33,23 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		}
 
 		Cout.info("executing command");
-		var to = new ComponentAddress(
+		var to = new To(
 				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)))
 						.o(CommandsService.exec.class);
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 
-		if (!localService.start(to, true, backend).returnQ.forEach2(msg -> {
+		if (Enough.no == localService.exec(to, true, backend).returnQ.forEachUntilEOF(msg -> {
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {
 				System.out.println("progress; " + msg.content);
+			} else {
+				System.out.println(msg.content);
 			}
 		})) {
-			System.err.println("Timeout!");
+			System.err.println("not enough results!");
 		}
 
 		return 0;

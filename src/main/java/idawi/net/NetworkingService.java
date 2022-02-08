@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.EOT;
+import idawi.TypedOperation;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.RemoteException;
@@ -29,14 +30,17 @@ public class NetworkingService extends Service {
 		AtomicBoolean nastyErrorShown = new AtomicBoolean(false);
 
 		// delete deprecated messages
-		Threads.newThread_loop(1000, () -> true, () -> {
+		Threads.newThread_loop(1000, () -> false, () -> {
 			try {
 				for (Component c : Component.componentsInThisJVM.values()) {
-					NetworkingService t = c.lookupService(NetworkingService.class);
+					NetworkingService t = c.lookup(NetworkingService.class);
 					for (Message m : t.aliveMessages.values()) {
 						if (m.isExpired()) {
 							t.alreadyReceivedMsgs.remove(m.ID);
-							t.alreadySentMsgs.remove(m.ID);
+
+							synchronized (t.alreadySentMsgs) {
+								t.alreadySentMsgs.remove(m.ID);
+							}
 							t.aliveMessages.remove(m.ID);
 						}
 					}
@@ -54,23 +58,23 @@ public class NetworkingService extends Service {
 
 	public final MultiTransport transport;
 	public final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
-	public final LongSet alreadySentMsgs = new LongOpenHashSet();
+	private final LongSet alreadySentMsgs = new LongOpenHashSet();
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 	private final AtomicLong nbMsgReceived = new AtomicLong();
 	public static boolean debug = false;
 
-	public NetworkingService(Component t) {
-		super(t);
-		transport = new MultiTransport();
-		transport.update(t.descriptor());
+	public NetworkingService(Component component) {
+		super(component);
+		transport = new MultiTransport(component);
+		transport.update(component, component.descriptor());
 		transport.setNewMessageConsumer(messagesFromNetwork);
-		var lmi = new LMI();
-		lmi.peer_lmi.put(component.descriptor(), lmi);
-		transport.addProtocol(lmi);
+		var lmi = new LMI(component);
+		lmi.peer2lmi.put(component.descriptor(), lmi);
+		transport.addTransport(lmi);
 
 		transport.listeners.add(new NeighborhoodListener() {
 			@Override
-			public void peerJoined(ComponentDescriptor newPeer, TransportLayer protocol) {
+			public void newNeighbor(ComponentDescriptor newPeer, TransportLayer protocol) {
 				synchronized (aliveMessages) {
 					for (Message msg : aliveMessages.values()) {
 						send(msg, protocol, Set.of(newPeer));
@@ -79,20 +83,31 @@ public class NetworkingService extends Service {
 			}
 
 			@Override
-			public void peerLeft(ComponentDescriptor p, TransportLayer neighborhood) {
+			public void neighborLeft(ComponentDescriptor p, TransportLayer neighborhood) {
 			}
 		});
+
+		registerOperation(new getNbMessagesReceived());
+		registerOperation(new neighbors());
 	}
 
-	private Collection<ComponentDescriptor> listProtocols() {
-		return transport.neighbors();
+	public class getNbMessagesReceived extends TypedOperation {
+		public long f() {
+			return getNbMessagesReceived();
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 	public long getNbMessagesReceived() {
 		return nbMsgReceived.get();
 	}
 
-	public final Consumer<Message> messagesFromNetwork = (msg) -> {
+	public final Consumer<Message> messagesFromNetwork = msg -> {
 		nbMsgReceived.incrementAndGet();
 
 		if (debug) {
@@ -100,16 +115,12 @@ public class NetworkingService extends Service {
 		}
 
 		msg.receptionDate = Date.time();
-
-		for (var s : component.services()) {
-			if (s instanceof MapService) {
-				((MapService) s).feedWith(msg.route);
-			}
-		}
+		component.forEachServiceOfClass(MapService.class, s -> s.feedWith(msg.route));
 
 		if (!msg.isExpired()) {
 			// the message was already received
 			if (alreadyReceivedMsgs.contains(msg.ID)) {
+				// System.out.println("lready receic " + Long.toHexString(msg.ID));
 				alreadyReceivedMsg(msg);
 			} else {
 				alreadyReceivedMsgs.add(msg.ID);
@@ -119,17 +130,16 @@ public class NetworkingService extends Service {
 	};
 
 	private void notYetReceivedMsg(Message msg) {
-		if (msg.to.serviceAddress.componentAddress.isBroadcast()) {
-			Service targetService = component.lookupService(msg.to.serviceAddress.service);
+		if (msg.to.serviceAddress.to.isBroadcast()) {
+			Service targetService = component.lookup(msg.to.serviceAddress.service);
 
 			if (targetService != null) {
 				targetService.considerNewMessage(msg);
 			}
 		} else {
 			// if I'm and explicit recipient
-			if (msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients()
-					.remove(component.descriptor())) {
-				Service targetService = component.lookupService(msg.to.serviceAddress.getServiceID());
+			if (msg.to.serviceAddress.to.getNotYetReachedExplicitRecipients().remove(component.descriptor())) {
+				Service targetService = component.lookup(msg.to.serviceAddress.getServiceID());
 
 				if (targetService != null) {
 					targetService.considerNewMessage(msg);
@@ -140,15 +150,18 @@ public class NetworkingService extends Service {
 				}
 			}
 		}
-
-		if (alreadySentMsgs.contains(msg.ID)) {
+		AtomicBoolean alreadySent = new AtomicBoolean();
+		synchronized (alreadySentMsgs) {
+			alreadySent.set(alreadySentMsgs.contains(msg.ID));
+		}
+		if (alreadySent.get()) {
 			// already sent
-		} else if (msg.route.size() >= msg.to.serviceAddress.componentAddress.getMaxDistance()) {
+		} else if (msg.route.size() >= msg.to.serviceAddress.to.getMaxDistance()) {
 			// went far enough
-		} else if (Math.random() > msg.to.serviceAddress.componentAddress.getForwardProbability()) {
+		} else if (Math.random() > msg.to.serviceAddress.to.getForwardProbability()) {
 			// probabilistic drop
-		} else if (!msg.to.serviceAddress.componentAddress.isBroadcast()
-				&& msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients().isEmpty()) {
+		} else if (!msg.to.serviceAddress.to.isBroadcast()
+				&& msg.to.serviceAddress.to.getNotYetReachedExplicitRecipients().isEmpty()) {
 			// all explicit recipients have been reached
 		} else {
 			Collection<ComponentDescriptor> neighbors = neighbors();
@@ -163,14 +176,14 @@ public class NetworkingService extends Service {
 	}
 
 	private void alreadyReceivedMsg(Message msg) {
-		if (!msg.to.serviceAddress.componentAddress.isBroadcast()) {
+		if (!msg.to.serviceAddress.to.isBroadcast()) {
 			Message firstReceptionOfMsg = aliveMessages.get(msg.ID);
 
 			if (firstReceptionOfMsg == null) {
 				aliveMessages.put(msg.ID, msg);
 			} else {
-				msg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients().retainAll(
-						firstReceptionOfMsg.to.serviceAddress.componentAddress.getNotYetReachedExplicitRecipients());
+				msg.to.serviceAddress.to.getNotYetReachedExplicitRecipients()
+						.retainAll(firstReceptionOfMsg.to.serviceAddress.to.getNotYetReachedExplicitRecipients());
 			}
 		}
 	}
@@ -182,15 +195,12 @@ public class NetworkingService extends Service {
 	public void send(Message msg, TransportLayer protocol) {
 		Collection<ComponentDescriptor> relays = new HashSet<>();
 
-		for (var s : component.services()) {
+		component.forEachService(s -> {
 			if (s instanceof RoutingService) {
 				RoutingService router = (RoutingService) s;
-				relays.addAll(router.findRelaysToReach(protocol,
-						msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients));
-				// Cout.debug("ROUTING: " + msg.to.notYetReachedExplicitRecipients + " -> " +
-				// relays);
+				relays.addAll(router.relaysTo(msg.to.serviceAddress.to.componentIDs, protocol));
 			}
-		}
+		});
 
 		send(msg, protocol, relays);
 	}
@@ -205,12 +215,14 @@ public class NetworkingService extends Service {
 			return;
 		}
 
-		alreadySentMsgs.add(msg.ID);
+		synchronized (alreadySentMsgs) {
+			alreadySentMsgs.add(msg.ID);
+		}
 
-		// in order to avoid modifying the immutable set created by Set.of()
-		if (msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients != null) {
-			msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients = new HashSet<ComponentDescriptor>(
-					msg.to.serviceAddress.componentAddress.notYetReachedExplicitRecipients);
+		// in order not to touch the immutable set created by Set.of()
+		if (msg.to.serviceAddress.to.componentIDs != null) {
+			msg.to.serviceAddress.to.componentIDs = new HashSet<ComponentDescriptor>(
+					msg.to.serviceAddress.to.componentIDs);
 		}
 
 		aliveMessages.put(msg.ID, msg);
@@ -227,6 +239,18 @@ public class NetworkingService extends Service {
 		protocol.send(msg, relays);
 	}
 
+	public class neighbors extends TypedOperation {
+		public Collection<ComponentDescriptor> f() {
+			return neighbors();
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	}
+	
 	public Collection<ComponentDescriptor> neighbors() {
 		Collection<ComponentDescriptor> s = transport.neighbors();
 		s.remove(component.descriptor());

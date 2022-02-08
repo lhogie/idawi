@@ -8,13 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentAddress;
 import idawi.ComponentDescriptor;
-import idawi.InnerClassOperation;
-import idawi.InnerClassTypedOperation;
+import idawi.InnerOperation;
+import idawi.TypedOperation;
 import idawi.MessageQueue;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
+import idawi.To;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
 
@@ -24,18 +24,26 @@ public class ExternalCommandsService extends Service {
 
 	public ExternalCommandsService(Component t) {
 		super(t);
-		registerOperation("list path", in -> reply(in.get_blocking(), commandName2executableFile.keySet()));
-
-		registerOperation("has", in -> {
-			var msg = in.get_blocking();
-			String cmdName = (String) msg.content;
-			RegularFile f = get(cmdName);
-			reply(msg, f != null && f.exists());
-		});
+		registerOperation(new commands());
+		registerOperation(new exec());
+		registerOperation(new has());
 	}
 
-	public class commands extends InnerClassTypedOperation {
-		private Set<String> f() {
+	public class has extends TypedOperation {
+		public boolean f(String cmdName) {
+			RegularFile f = get(cmdName);
+			return f != null && f.exists();
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	}
+
+	public class commands extends TypedOperation {
+		public Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
 
@@ -46,7 +54,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class exec extends InnerClassOperation{
+	public class exec extends InnerOperation {
 		public void exec(MessageQueue in) throws IOException {
 			var parmMsg = in.get_blocking();
 			List<String> cmdLine = (List<String>) parmMsg.content;
@@ -88,9 +96,8 @@ public class ExternalCommandsService extends Service {
 		public String getDescription() {
 			// TODO Auto-generated method stub
 			return null;
-		}		
+		}
 	}
-
 
 	private RegularFile get(String cmdName) {
 		if (cmdName.contains("/")) {
@@ -100,22 +107,10 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		Component a = new Component();
-		ComponentDescriptor b = ComponentDescriptor.fromCDL("ssh=musclotte.inria.fr");
-		a.lookupService(DeployerService.class).deploy(Set.of(b), true, 10, true,
-				feedback -> System.out.println(feedback), peerOk -> System.out.println(peerOk));
-
-		var in = new RegularFile("$HOME/a.wav").createReadingStream();
-		var out = new RegularFile("$HOME/a.mp3").createWritingStream();
-
-		ExternalCommandsService.exec(new Service(), b, in, out, "lame", "-", "-");
-	}
-
 	public static void exec(Service service, ComponentDescriptor b, InputStream in, OutputStream out, String... cmdLine)
 			throws IOException {
-		var to = new ComponentAddress(Set.of(b)).o(ExternalCommandsService.exec.class);
-		RemotelyRunningOperation s = service.start(to, true, cmdLine);
+		var to = new To(Set.of(b)).o(ExternalCommandsService.exec.class);
+		RemotelyRunningOperation s = service.exec(to, true, cmdLine);
 		boolean eofIN = false;
 
 		while (true) {

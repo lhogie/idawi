@@ -28,19 +28,19 @@ public class All2all {
 		System.out.println("Creating components");
 		for (int i = 0; i < 10; ++i) {
 			var c = new Component();
-			if (c.lookupService(ServiceManager.class).has(RoutingScheme_bcast.class)) {
-				c.lookupService(ServiceManager.class).stop(RoutingScheme_bcast.class);
+			if (c.lookupOperation(ServiceManager.has.class).has(RoutingScheme_bcast.class)) {
+				c.lookupOperation(ServiceManager.stop.class).stop(RoutingScheme_bcast.class);
 			}
-			if (c.lookupService(ServiceManager.class).has(RoutingScheme1.class)) {
-				c.lookupService(ServiceManager.class).stop(RoutingScheme1.class);
+			if (c.lookupOperation(ServiceManager.has.class).has(RoutingScheme1.class)) {
+				c.lookupOperation(ServiceManager.stop.class).stop(RoutingScheme1.class);
 			}
-			c.lookupService(ServiceManager.class).start(RoutingScheme1.class);
+			c.lookupOperation(ServiceManager.start.class).f(RoutingScheme1.class);
 			all.add(c.descriptor());
 		}
 
 		System.out.println("Connecting them");
 		var componentList = new ArrayList<>(Component.componentsInThisJVM.values());
-		Collections.sort(componentList, (a, b) -> a.descriptor().friendlyName.compareTo(b.descriptor().friendlyName));
+		Collections.sort(componentList, (a, b) -> a.descriptor().name.compareTo(b.descriptor().name));
 //		LMI.randomTree(new ArrayList<>(Component.componentsInThisJVM.values()));
 		LMI.chain(componentList);
 		System.out.println(componentList);
@@ -54,7 +54,7 @@ public class All2all {
 			var allButMe = new HashSet<>(all);
 			allButMe.remove(c.descriptor());
 			System.out.println(c + " pings " + allButMe);
-			PingService.ping(new Service()).forEach2(msg -> {
+			PingService.ping(new Service(new Component())).forEachUntilEOF(msg -> {
 				n.incrementAndGet();
 				System.out.println(n.get() + ": " + msg);
 				var sender = msg.route.source().component;
@@ -73,7 +73,7 @@ public class All2all {
 		int nbMsg = 0;
 
 		for (var c : Component.componentsInThisJVM.values()) {
-			nbMsg += c.lookupService(NetworkingService.class).getNbMessagesReceived();
+			nbMsg += c.lookup(NetworkingService.class).getNbMessagesReceived();
 		}
 
 		System.out.println("nbMessage received: " + nbMsg);

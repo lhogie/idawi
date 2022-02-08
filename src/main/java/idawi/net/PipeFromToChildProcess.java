@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import toools.io.Cout;
@@ -23,25 +24,30 @@ public class PipeFromToChildProcess extends TransportLayer {
 	public final ComponentDescriptor child;
 
 	// the mark that announces a binary message coming from child stdout
-	public static final String msgMark = "dfmskfjqmkrgjhqsljkvbn<jksfh";
+	public static final String msgMark = "--- MESSAGE MARK --- DZH98744SKO";
 
 	public static interface EOFFound {
 		void found();
 	}
 
 	private boolean run = false;
+	private final Set<ComponentDescriptor> neighbors;
 
-	public PipeFromToChildProcess(ComponentDescriptor child, Process p) throws IOException {
+	public PipeFromToChildProcess(Component c, ComponentDescriptor child, Process p) throws IOException {
+		super(c);
 		this.stdout = p.getInputStream();
 		this.stderr = p.getErrorStream();
 		this.stdin = p.getOutputStream();
 		this.child = child;
+		this.neighbors = Collections.singleton(child);
 	}
 
 	@Override
 	public Set<ComponentDescriptor> neighbors() {
-		return Collections.singleton(child);
+		return neighbors;
 	}
+
+	static int nbW = 0;
 
 	@Override
 	public void send(Message msg, Collection<ComponentDescriptor> neighbors) {
@@ -49,8 +55,12 @@ public class PipeFromToChildProcess extends TransportLayer {
 			return;
 
 		try {
+//			System.out.println("write(" + serializer.toBytes(msg).length + " bytes" + ")        " + nbW++);
+//			Threads.sleep(0.5);
 			serializer.write(msg, stdin);
+//			System.out.println("flush()");
 			stdin.flush();
+//			System.out.println("flush ok");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,7 +68,7 @@ public class PipeFromToChildProcess extends TransportLayer {
 
 	@Override
 	public String getName() {
-		return "SSChild";
+		return "pipe";
 	}
 
 	@Override
@@ -75,11 +85,11 @@ public class PipeFromToChildProcess extends TransportLayer {
 		run = true;
 
 		Threads.newThread_loop(() -> run, () -> {
-			processNextLine(stdout, Cout.out);
+			processNextLine(stdout, Cout.out, Cout.err);
 		});
 
 		Threads.newThread_loop(() -> run, () -> {
-			processNextLine(stderr, Cout.err);
+			processNextLine(stderr, Cout.err, Cout.err);
 		});
 	}
 
@@ -87,16 +97,17 @@ public class PipeFromToChildProcess extends TransportLayer {
 	public static final String failed = "fmdskfjsfgkhjs FAILED";
 	public Q<Object> waitForChild = new Q<>(1);
 
-	private void processNextLine(InputStream in, Cout ps) {
+	private void processNextLine(InputStream in, Cout out, Cout err) {
 		try {
 			ReadUntilResult l = Utilities.readUntil(in, (byte) '\n');
 			String line = new String(l.bytes.toByteArray());
-
+//			System.out.println("stdoutc hild : " + line);
 			if (l.eof) {
 				if (!line.isEmpty()) {
-					ps.add(child + "> " + line);
+					out.add(child + "> " + line);
 				}
 
+				out.add(child + "> END OF TRANMISSION");
 				run = false;
 
 				if (eofHandler != null) {
@@ -108,19 +119,21 @@ public class PipeFromToChildProcess extends TransportLayer {
 				waitForChild.add_blocking(failed);
 			} else if (line.equals(msgMark)) {
 				try {
-					Message msg = (Message) serializer.read(in);
+					var msg = (Message) serializer.read(in);
 					processIncomingMessage(msg);
 				} catch (IOException e) {
-					// the binary input stream was dirty
+					err.add("error decoding message from " + child + " (stream was dirty probably): "
+							+ TextUtilities.exception2string(e));
 					// e.printStackTrace();
 				}
 			} else if (TextUtilities.isASCIIPrintable(line)) {
-				ps.add(child + "> " + line);
+				out.add(child + "> " + line);
 			} else {
-				ps.add(child + "> *** non-printable data ***: " + line);
+				err.add(child + "> *** non-printable data ***: " + line);
 			}
 		} catch (Exception e) {
 			run = false;
+			err.add(TextUtilities.exception2string(e));
 		}
 	}
 

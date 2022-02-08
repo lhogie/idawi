@@ -11,10 +11,10 @@ public class lnBackend extends CommandBackend {
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 
 		if (cmdline.isOptionSpecified("--protocols")) {
-			n.lookupService(NetworkingService.class).transport.neighbors2()
+			n.lookup(NetworkingService.class).transport.neighbors2()
 					.forEach((p, protocols) -> out.accept(p + "\t" + protocols));
 		} else {
-			n.lookupService(NetworkingService.class).transport.neighbors().forEach(p -> out.accept(p));
+			n.lookup(NetworkingService.class).transport.neighbors().forEach(p -> out.accept(p));
 		}
 	}
 }

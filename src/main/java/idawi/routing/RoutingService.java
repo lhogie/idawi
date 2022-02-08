@@ -23,15 +23,14 @@ public abstract class RoutingService extends Service {
 
 	@Override
 	public String getFriendlyName() {
-		return "routing (" + getAlgoName() + ")";
+		return getAlgoName();
 	}
 
 	public abstract String getAlgoName();
 
-	public abstract Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol,
-			Set<ComponentDescriptor> to);
+	public abstract Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol);
 
 	public abstract void feedWith(Route route);
-	
+
 	public abstract NetworkMap map();
 }

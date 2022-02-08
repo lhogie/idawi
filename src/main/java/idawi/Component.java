@@ -1,8 +1,10 @@
 package idawi;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +23,7 @@ import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
 import idawi.service.PingService;
 import idawi.service.ServiceManager;
+import idawi.service.SystemMonitor;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -29,9 +32,8 @@ public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
-	private long id;
+	public String name;
 	private ComponentDescriptor descriptor;
-	public String friendlyName;
 	final Map<Class<? extends Service>, Service> services = new HashMap<>();
 	public final Set<ComponentDescriptor> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
@@ -41,21 +43,20 @@ public class Component {
 		this("name=c" + componentsInThisJVM.size());
 	}
 
-	public Component(String cdl) {
-		this(ComponentDescriptor.fromCDL(cdl));
+	public Component(String name) {
+		this(ComponentDescriptor.fromCDL("name=" + name));
 	}
 
 	public Component(ComponentDescriptor descriptor) {
-		if (componentsInThisJVM.containsKey(descriptor.friendlyName)) {
-			throw new IllegalStateException(descriptor.friendlyName + " is already in use in this JVM");
+		if (componentsInThisJVM.containsKey(descriptor.name)) {
+			throw new IllegalStateException(descriptor.name + " is already in use in this JVM");
 		}
 
-		this.friendlyName = descriptor.friendlyName;
-		this.id = descriptor.id;
+		this.name = descriptor.name;
 
 		// start basic services
-		new NetworkingService(this);
 		new ServiceManager(this);
+		new SystemMonitor(this);
 		new DeployerService(this);
 		new PingService(this);
 		new Bencher(this);
@@ -67,11 +68,13 @@ public class Component {
 		new ExternalCommandsService(this);
 		new FileService(this);
 		new RegistryService(this);
+		new NetworkingService(this);
 
+		System.out.println(services.keySet());
 		this.descriptor = createDescriptor();
 
 		// descriptorRegistry.add(descriptor());
-		componentsInThisJVM.put(descriptor.friendlyName, this);
+		componentsInThisJVM.put(descriptor.name, this);
 	}
 
 	public void dispose() {
@@ -82,27 +85,35 @@ public class Component {
 	public Collection<Service> services() {
 		return services.values();
 	}
+	
+	public void forEachService(Consumer<Service> c) {
+		services.values().forEach(s -> c.accept(s));
+	}
 
-	public <S extends Service> S lookupService(Class<S> id) {
+	public <S extends Service> S lookup(Class<S> id) {
 		return (S) services.get(id);
 	}
 
-	public void lookupServices(Predicate<Service> p, Consumer<Service> h) {
-		services().forEach(s -> {
-			if (p.test(s)) {
-				h.accept((Service) s);
+	public void forEachService(Predicate<Service> predicate, Consumer<Service> h) {
+		forEachService(service -> {
+			if (predicate.test(service)) {
+				h.accept((Service) service);
 			}
 		});
 	}
 
-	public <S extends Service> void lookupServices(Class<S> c, Consumer<S> h) {
-		lookupServices(s -> c.isInstance(s), s -> h.accept((S) s));
+	public <S extends Service> void forEachServiceOfClass(Class<S> serviceID, Consumer<S> h) {
+		forEachService(s -> serviceID.isInstance(s), s -> h.accept((S) s));
 	}
 
-	public <S extends InnerClassOperation> S lookupOperation(Class<? extends S> c) {
+	public <S extends InnerOperation> S lookupOperation(Class<? extends S> c) {
 		var sc = (Class<? extends Service>) c.getDeclaringClass();
-		var s = lookupService(sc);
-		var o = s.lookupOperation(c);
+		var service = lookup(sc);
+
+		if (service == null)
+			throw new IllegalArgumentException("service " + sc.getName() + " cannot be found");
+
+		var o = service.lookup(c);
 		return o;
 	}
 
@@ -110,9 +121,20 @@ public class Component {
 		return new Service(this);
 	}
 
+	public ComponentDescriptor descriptor(String id, boolean create) {
+		var d = lookupOperation(RegistryService.lookUp.class).lookup(id);
+
+		if (d == null && create) {
+			lookupOperation(RegistryService.add.class).f(d = new ComponentDescriptor());
+			d.name = id;
+		}
+
+		return d;
+	}
+
 	public ComponentDescriptor descriptor() {
 		// outdates after 1 second
-		if (descriptor == null || Date.time() - descriptor.date > 1) {
+		if (descriptor == null || !descriptor.valid || descriptor.isOutOfDate()) {
 			this.descriptor = createDescriptor();
 		}
 
@@ -121,12 +143,12 @@ public class Component {
 
 	public ComponentDescriptor createDescriptor() {
 		ComponentDescriptor d = new ComponentDescriptor();
-		d.friendlyName = friendlyName;
-		d.load = Utils.loadRatio();
-		services().forEach(s -> d.servicesNames.add(s.getClass().getName()));
+		d.name = name;
+		d.systemInfo = lookupOperation(SystemMonitor.get.class).f();
+			forEachService(s -> d.servicesNames.add(s.getClass().getName()));
 //		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
-		lookupService(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2
-				.put(e.getKey().friendlyName, e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
+		lookup(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2
+				.put(e.getKey().name, e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
 		return d;
 	}
 
@@ -145,8 +167,18 @@ public class Component {
 		services.remove(s.id);
 	}
 
-	public ComponentAddress getAddress() {
-		return new ComponentAddress(Set.of(descriptor));
+	public To getAddress() {
+		return new To(Set.of(descriptor));
 	}
+
+	public List<ComponentDescriptor> descriptors(String... names) {
+		List<ComponentDescriptor> r = new ArrayList<>();
+
+		for (var n : names) {
+			r.add(descriptor(n, true));
+		}
+		return r;
+	}
+	
 
 }

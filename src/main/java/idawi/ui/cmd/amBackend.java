@@ -10,6 +10,6 @@ public class amBackend extends CommandBackend {
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out)
 			throws Throwable {
-		n.lookupService(NetworkingService.class).aliveMessages.values().forEach(msg -> out.accept(msg.toString()));
+		n.lookup(NetworkingService.class).aliveMessages.values().forEach(msg -> out.accept(msg.toString()));
 	}
 }

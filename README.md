@@ -3,11 +3,11 @@
 a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
 
 *Idawi* is extensively described in this [working paper](http://www.i3s.unice.fr/~hogie/idawi.pdf). To make a long story short, it enables **distributed computations**. To this purpose it comes with the following features:
-- it has a carefully object-oriented designed with component and SOA flavors
-- it has a novel queue-oriented model for distributed computing
-- it has group-based stream/object-oriented asynchronous/synchronous communication model
-- it has automatized deployment/bootstrapping of components through SSH, even in the presence of firewalls and/or NATs
-- it exposes a REST-based web interface
+- it has a carefully object-oriented with SOA flavors
+- it has a collective message+queue-oriented communication model
+- it has a collective computation model
+- it has automatized deployment/bootstrapping of components through SSH
+- it provides interoperability through a REST-based web interface
 - it enables the programmer to work in a *trials and errors* mode within his favourite IDE
 - it is a fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) P2P [service-oriented](https://en.wikipedia.org/wiki/Service-oriented_architecture) architecture
 - it has independance to transport network (includes support for SSH, TCP and UDP)

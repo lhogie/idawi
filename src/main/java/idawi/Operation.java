@@ -11,16 +11,16 @@ public abstract class Operation implements OperationFunctionalInterface {
 	}
 
 	public boolean isSystemOperation() {
-		return getDeclaringService() != Service.class;
+		return getDeclaringServiceClass() != Service.class;
 	}
 
-	protected abstract Class<? extends Service> getDeclaringService();
+	protected abstract Class<? extends Service> getDeclaringServiceClass();
 
 	public abstract String getName();
 
 	@Override
 	public String toString() {
-		return getDeclaringService().getName() + "/" + getName();
+		return getDeclaringServiceClass().getName() + "/" + getName();
 	}
 
 	public abstract String getDescription() ;

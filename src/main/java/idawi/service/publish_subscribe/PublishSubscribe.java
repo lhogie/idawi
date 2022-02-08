@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.InnerClassTypedOperation;
+import idawi.TypedOperation;
 import idawi.QueueAddress;
 import idawi.Service;
 
@@ -36,13 +36,14 @@ public class PublishSubscribe extends Service {
 	public PublishSubscribe(Component peer) {
 		super(peer);
 
-		registerOperation("publish", (msg, returns) -> {
-			Publication p = (Publication) msg.content;
-
-		});
+		registerOperation(new Publish());
+		registerOperation(new ListSubscribers());
+		registerOperation(new ListTopics());
+		registerOperation(new subscribe());
+		registerOperation(new unsubscribe());
 	}
 
-	public class subscribe extends InnerClassTypedOperation {
+	public class subscribe extends TypedOperation {
 		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).add(subscriber);
@@ -55,7 +56,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class unsubscribe extends InnerClassTypedOperation {
+	public class unsubscribe extends TypedOperation {
 		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
@@ -68,7 +69,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListTopics extends InnerClassTypedOperation {
+	public class ListTopics extends TypedOperation {
 		public List<String> exec() throws Throwable {
 			return new ArrayList(topic_history.keySet());
 		}
@@ -80,7 +81,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListSubscribers extends InnerClassTypedOperation {
+	public class ListSubscribers extends TypedOperation {
 		public List<String> exec(String topic) throws Throwable {
 			return new ArrayList(topic_subscribers.values());
 		}
@@ -92,7 +93,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class Publish extends InnerClassTypedOperation {
+	public class Publish extends TypedOperation {
 		public void exec(String topic, Object publication) throws Throwable {
 			publish(publication, topic);
 		}
@@ -109,7 +110,11 @@ public class PublishSubscribe extends Service {
 		Publication p = new Publication();
 		p.content = o;
 		p.topic = topic;
+
+		// store publication
 		topic_history.get(topic).add(p);
+
+		// notify subscribers
 		topic_subscribers.get(topic).forEach(s -> send(p, s));
 	}
 

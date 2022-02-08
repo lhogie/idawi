@@ -12,7 +12,7 @@ public class QueueAddress implements Externalizable {
 
 	private static final long serialVersionUID = 1L;
 	public ServiceAddress serviceAddress;
-	public String queue;
+	public String queueName;
 
 	public QueueAddress() {
 
@@ -20,7 +20,7 @@ public class QueueAddress implements Externalizable {
 
 	public QueueAddress(ServiceAddress s, String qid) {
 		this.serviceAddress = s;
-		this.queue = qid;
+		this.queueName = qid;
 	}
 
 	private static String innerClassName(Class c) {
@@ -44,7 +44,7 @@ public class QueueAddress implements Externalizable {
 
 	@Override
 	public String toString() {
-		return super.toString() + "->" + queue;
+		return serviceAddress + "/" + queueName;
 	}
 
 	@Override
@@ -54,23 +54,24 @@ public class QueueAddress implements Externalizable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof QueueAddress))
+
+		if (!QueueAddress.class.isInstance(o))
 			return false;
 
 		QueueAddress t = (QueueAddress) o;
-		return super.equals(o) && Objects.equals(queue, t.queue);
+		return super.equals(o) && Objects.equals(queueName, t.queueName);
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(serviceAddress);
-		out.writeObject(queue);
+		out.writeObject(queueName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		serviceAddress = (ServiceAddress) in.readObject();
-		queue = (String) in.readObject();
+		queueName = (String) in.readObject();
 	}
 
 }

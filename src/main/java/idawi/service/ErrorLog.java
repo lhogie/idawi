@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
-import idawi.InnerClassTypedOperation;
+import idawi.InnerOperation;
+import idawi.TypedOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Utils;
@@ -15,12 +15,28 @@ public class ErrorLog extends Service {
 
 	public ErrorLog(Component peer) {
 		super(peer);
+		registerOperation(registerError = new registerError());
+		operations.add(new registerError());
 	}
 
-	public class registerError extends InnerClassOperation {
+	public static registerError registerError;
+
+	public class registerError extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			errors.add((Throwable) in.get_blocking().content);
+		}
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	}
+
+	public class listError extends TypedOperation {
+		public List<Throwable> f() {
+			return errors;
 		}
 
 		@Override
@@ -34,14 +50,14 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		start(ca().o(registerError.class), false, error);
+		exec(ca().o(registerError.class), false, error);
 	}
 
 	public void report(String msg) {
 		report(new Error(msg));
 	}
 
-	public class list extends InnerClassTypedOperation {
+	public class list extends TypedOperation {
 		public List<Throwable> f() {
 			return errors;
 		}

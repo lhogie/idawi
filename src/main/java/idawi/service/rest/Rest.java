@@ -8,7 +8,7 @@ public class Rest {
 
 	public static void main(String[] args) throws Throwable {
 		Component a = new Component();
-		a.lookupService(ServiceManager.class).lookupOperation(ensureStarted.class).f(RESTService.class);
-		a.lookupService(RESTService.class).startHTTPServer();
+		a.lookup(ServiceManager.class).lookup(ensureStarted.class).f(RESTService.class);
+		a.lookup(RESTService.class).startHTTPServer();
 	}
 }

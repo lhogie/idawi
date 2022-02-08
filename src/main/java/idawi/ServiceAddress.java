@@ -10,15 +10,15 @@ import toools.reflect.Clazz;
 
 public class ServiceAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
-	public ComponentAddress componentAddress;
+	public To to;
 	public Class<? extends Service> service;
 
 	public ServiceAddress() {
 
 	}
 
-	public ServiceAddress(ComponentAddress ca, Class<? extends Service> sid) {
-		this.componentAddress = ca;
+	public ServiceAddress(To ca, Class<? extends Service> sid) {
+		this.to = ca;
 		this.service = sid;
 	}
 
@@ -36,7 +36,7 @@ public class ServiceAddress implements Externalizable {
 
 	@Override
 	public String toString() {
-		return super.toString() + "->" + Clazz.classNameWithoutPackage(service.getName());
+		return to.toString() + "/" + Clazz.classNameWithoutPackage(service.getName());
 	}
 
 	@Override
@@ -55,13 +55,13 @@ public class ServiceAddress implements Externalizable {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(componentAddress);
+		out.writeObject(to);
 		out.writeObject(service);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		componentAddress = (ComponentAddress) in.readObject();
+		to = (To) in.readObject();
 		service = (Class) in.readObject();
 	}
 

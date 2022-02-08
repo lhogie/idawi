@@ -15,24 +15,24 @@ public class TestFileService {
 	public void pingViaSSH() throws Throwable {
 		Component c1 = new Component();
 		ComponentDescriptor c2 = ComponentDescriptor.fromCDL("name=c2 / ssh=" + ssh);
-		c1.lookupService(DeployerService.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
+		c1.lookup(DeployerService.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 		var client = new Service(c1);
 
-		System.out.println(
-				client.start(new ServiceAddress(Set.of(c2), FileService.class), FileService.find, true, null).returnQ
-						.collect().throwAnyError().resultMessages().contents());
+		System.out.println(client.exec(new To(Set.of(c2)).o(FileService.find.class), true, null).returnQ.collect()
+				.throwAnyError().resultMessages().contents());
 
-		client.start(new ServiceAddress(Set.of(c2), FileService.class), FileService.upload, true,
+		client.exec(new To(Set.of(c2)).o(FileService.upload.class), true,
 				new OperationParameterList("test", new RegularFile("LICENSE").getContent())).returnQ.collect()
 						.throwAnyError();
 
-		System.out.println(client.start(new ServiceAddress(Set.of(c2), FileService.class), FileService.find, true,
-				new OperationParameterList()).returnQ.collect().throwAnyError().resultMessages().contents());
+		System.out.println(
+				client.exec(new To(Set.of(c2)).o(FileService.find.class), true, new OperationParameterList()).returnQ
+						.collect().throwAnyError().resultMessages().contents());
 
-		System.out.println(new String(
-				(byte[]) client.start(new ServiceAddress(Set.of(c2), FileService.class), FileService.download, true,
-						"test").returnQ.collect().throwAnyError().resultMessages().first().content));
+		System.out.println(
+				new String((byte[]) client.exec(new To(Set.of(c2)).o(FileService.download.class), true, "test").returnQ
+						.collect().throwAnyError().resultMessages().first().content));
 
 		// assertNotEquals(null, pong);
 

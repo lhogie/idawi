@@ -32,14 +32,14 @@ public class PublishSubscribeApp extends Service implements Swingable {
 
 		c.add(browser);
 		c.add(renderer);
-		peer.lookupService(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
+		peer.lookup(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
 			@Override
-			public void peerLeft(ComponentDescriptor peer, TransportLayer protocol) {
+			public void neighborLeft(ComponentDescriptor peer, TransportLayer protocol) {
 				((DefaultListModel) nodeList.getModel()).removeElement(peer);
 			}
 
 			@Override
-			public void peerJoined(ComponentDescriptor peer, TransportLayer protocol) {
+			public void newNeighbor(ComponentDescriptor peer, TransportLayer protocol) {
 				((DefaultListModel) nodeList.getModel()).addElement(peer);
 			}
 		});

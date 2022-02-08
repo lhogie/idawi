@@ -54,30 +54,26 @@ public class start extends JThingLineCmd {
 
 		for (int i = 0; i < nbPeers; ++i) {
 			String name = names.get(i);
-			MultiTransport mp = new MultiTransport();
-			UDPDriver udp = new UDPDriver();
-			mp.addProtocol(udp);
-
-			Component peer = new Component(ComponentDescriptor.fromCDL("name=" + name));
+			Component peer = new Component(name);
 
 			peers.add(peer);
 
 			JFrame f = new JFrame("P2P - " + name);
 
-			peer.lookupService(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
+			peer.lookup(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
 				@Override
-				public void peerLeft(ComponentDescriptor p, TransportLayer protocol) {
+				public void neighborLeft(ComponentDescriptor p, TransportLayer protocol) {
 					upateTitle();
 				}
 
 				@Override
-				public void peerJoined(ComponentDescriptor newPeer, TransportLayer protocol) {
+				public void newNeighbor(ComponentDescriptor newPeer, TransportLayer protocol) {
 					upateTitle();
 				}
 
 				private void upateTitle() {
 					f.setTitle(start.class.getPackage().getName() + " - " + name + " - ("
-							+ peer.lookupService(NetworkingService.class).neighbors().size() + " neighbor(s))");
+							+ peer.lookup(NetworkingService.class).neighbors().size() + " neighbor(s))");
 				}
 			});
 
@@ -87,7 +83,7 @@ public class start extends JThingLineCmd {
 			f.setLocation(width * (i % nbCols), height * (i / nbCols));
 
 			// new BeaconingService(peer);
-			new Neighbors(peer);
+//			new Neighbors(peer);
 			new SystemMonitor(peer);
 			// new BroadcastService(peer);
 			// new ErrorLog(peer);

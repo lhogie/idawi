@@ -17,7 +17,7 @@ public class RoutingScheme_bcast extends RoutingService {
 	}
 
 	@Override
-	public Collection<ComponentDescriptor> findRelaysToReach(TransportLayer protocol, Set<ComponentDescriptor> to) {
+	public Collection<ComponentDescriptor> relaysTo(Set<ComponentDescriptor> to, TransportLayer protocol) {
 		Collection<ComponentDescriptor> neighbors = protocol.neighbors();
 
 		// if this is a bcast message
@@ -25,10 +25,11 @@ public class RoutingScheme_bcast extends RoutingService {
 			return neighbors;
 		}
 
-		if (neighbors.isEmpty()) {
+		// if all recipients are in the neighborhood
+		if (neighbors.containsAll(to)) {
 			return to;
 		}
-
+		
 		return neighbors;
 	}
 
@@ -45,7 +46,7 @@ public class RoutingScheme_bcast extends RoutingService {
 	public NetworkMap map() {
 		var m = new NetworkMap();
 		m.add(component.descriptor());
-		component.lookupService(NetworkingService.class).neighbors().forEach(n -> m.add(n));
+		component.lookup(NetworkingService.class).neighbors().forEach(n -> m.add(n));
 		return m;
 	}
 

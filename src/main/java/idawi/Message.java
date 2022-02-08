@@ -39,7 +39,7 @@ public class Message implements Externalizable {
 //			fromComponent.lookupService(NetworkingService.class).messagesFromNetwork.accept(this);
 //		}
 		
-		fromComponent.lookupService(NetworkingService.class).send(this);
+		fromComponent.lookup(NetworkingService.class).send(this);
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class Message implements Externalizable {
 	}
 
 	public double expirationDate() {
-		return creationDate + to.serviceAddress.componentAddress.getValidityDuration();
+		return creationDate + to.serviceAddress.to.getValidityDuration();
 	}
 
 	public double remainingTime() {
@@ -72,7 +72,7 @@ public class Message implements Externalizable {
 
 	@Override
 	public String toString() {
-		String s = "msg " + ID + ", route:" + route + " to:" + to;
+		String s = "msg " + Long.toHexString(ID) + ", route:" + route + " to:" + to;
 
 		if (replyTo != null) {
 			s += ", return:" + replyTo;

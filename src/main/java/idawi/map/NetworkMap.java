@@ -132,7 +132,7 @@ public class NetworkMap {
 
 	public void toDot(PrintWriter out) {
 		out.println("digraph {");
-		forEachEdge((src, e) -> out.println(src.friendlyName + " --" + e.protocolName + "--> " + e.c + ";"));
+		forEachEdge((src, e) -> out.println(src.name + " --" + e.protocolName + "--> " + e.c + ";"));
 		out.println("}");
 	}
 }

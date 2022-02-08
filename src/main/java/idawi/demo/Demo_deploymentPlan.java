@@ -43,24 +43,24 @@ public class Demo_deploymentPlan {
 
 		System.out.println(g.bfs(t.descriptor()));
 
-		t.lookupService(DeployerService.class).apply(g, 10, true, feedback -> System.out.println(feedback),
+		t.lookup(DeployerService.class).apply(g, 10, true, feedback -> System.out.println(feedback),
 				(p) -> System.out.println(p));
 
 		// describes the child peer that will be deployed to
 		ComponentDescriptor child = new ComponentDescriptor();
 		InetAddress childHost = InetAddress.getByName(args[0]);
 		child.inetAddresses.add(childHost);
-		child.friendlyName = childHost.getHostName();
+		child.name = childHost.getHostName();
 		child.sshParameters.hostname = childHost.getHostName();
 
 		// deploy
-		t.lookupService(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+		t.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		// at this step the child is running on the remote host. We can interact with
 		// it.
 		long pingTime = System.currentTimeMillis();
-		Message pong = PingService.ping(t.lookupService(PingService.class), child, 1000);
+		Message pong = PingService.ping(t.lookup(PingService.class), child, 1000);
 
 		if (pong == null) {
 			System.err.println("ping timeout");

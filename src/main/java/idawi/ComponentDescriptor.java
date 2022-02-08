@@ -15,8 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-import idawi.net.TransportLayer;
-import idawi.net.UDPDriver;
+import idawi.service.SystemMonitor.Info;
 import toools.net.NetUtilities;
 import toools.net.SSHParms;
 import toools.text.TextUtilities;
@@ -32,8 +31,7 @@ public class ComponentDescriptor implements Descriptor {
 		here, new_jvm, ssh
 	}
 
-	public long id = ThreadLocalRandom.current().nextLong();
-	public String friendlyName;
+	public String name;
 	public SSHParms sshParameters = new SSHParms();
 	public final List<InetAddress> inetAddresses = new ArrayList<>();
 	public Integer tcpPort, udpPort;
@@ -42,7 +40,7 @@ public class ComponentDescriptor implements Descriptor {
 //	public Set<Class<? extends Service>> services = new HashSet<>();
 	public Set<String> servicesNames = new HashSet<>();
 	// private int isLocalhost;
-	public double load;
+	public Info systemInfo;
 
 	// final Map<String, Object> map = new HashMap<>();
 
@@ -52,13 +50,13 @@ public class ComponentDescriptor implements Descriptor {
 
 	@Override
 	public String toString() {
-		String s = friendlyName.toString();
+		String s = name.toString();
 		return s;
 	}
 
 	public String toCDL() {
 		Properties props = new Properties();
-		props.put("name", friendlyName);
+		props.put("name", name);
 		props.put("ip", TextUtilities.concat(", ", inetAddresses, ip -> ip.getHostName()));
 
 		if (tcpPort != null) {
@@ -98,7 +96,7 @@ public class ComponentDescriptor implements Descriptor {
 	static Map<String, CDLHandler> key2cdlHandler = new HashMap<>();
 
 	static {
-		key2cdlHandler.put("name", (p, v) -> p.friendlyName = v);
+		key2cdlHandler.put("name", (p, v) -> p.name = v);
 		key2cdlHandler.put("tcp_port", (p, v) -> p.tcpPort = Integer.valueOf(v));
 		key2cdlHandler.put("udp_port", (p, v) -> p.udpPort = Integer.valueOf(v));
 		key2cdlHandler.put("ssh", (p, v) -> p.sshParameters = SSHParms.fromSSHString(v));
@@ -154,13 +152,13 @@ public class ComponentDescriptor implements Descriptor {
 			}
 		}
 
-		if (peer.friendlyName == null) {
+		if (peer.name == null) {
 			if (!peer.inetAddresses.isEmpty()) {
-				peer.friendlyName = peer.inetAddresses.get(0).getHostName();
+				peer.name = peer.inetAddresses.get(0).getHostName();
 			} else if (peer.sshParameters.hostname != null) {
-				peer.friendlyName = peer.sshParameters.hostname;
+				peer.name = peer.sshParameters.hostname;
 			} else {
-				peer.friendlyName = "thing-" + ThreadLocalRandom.current().nextInt();
+				peer.name = "thing-" + ThreadLocalRandom.current().nextInt();
 			}
 		}
 
@@ -169,23 +167,12 @@ public class ComponentDescriptor implements Descriptor {
 
 	@Override
 	public int hashCode() {
-		return friendlyName.hashCode();
+		return name.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof ComponentDescriptor && obj.hashCode() == hashCode();
-	}
-
-	public List<TransportLayer> getUseableProtocols() {
-		List<TransportLayer> r = new ArrayList<>();
-		UDPDriver udp = new UDPDriver();
-
-		if (udp.canContact(this)) {
-			r.add(udp);
-		}
-
-		return r;
 	}
 
 	public static List<ComponentDescriptor> fromPDL(List<String> parms) throws Throwable {
