@@ -55,7 +55,7 @@ public class ExitApplication extends Service implements Swingable {
 	public void trigger(int exitCode) {
 		QueueAddress to = new To().s(id).q(null);
 		send(exitCode, to);
-		component.forEachService(s -> s.shutdown());
+		component.forEachService(s -> s.dispose());
 		System.exit(exitCode);
 	}
 

@@ -19,14 +19,14 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.To;
 import idawi.ComponentDescriptor;
-import idawi.TypedOperation;
 import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.ServiceDescriptor;
+import idawi.To;
+import idawi.TypedOperation;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
 import toools.io.JavaResource;
@@ -42,6 +42,8 @@ public class RESTService extends Service {
 	public static int DEFAULT_PORT = 8081;
 
 	private HttpServer restServer;
+
+	private int port;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 
 	static {
@@ -57,6 +59,16 @@ public class RESTService extends Service {
 
 	public RESTService(Component t) {
 		super(t);
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		restServer.stop(0);
+	}
+
+	public int getPort() {
+		return port;
 	}
 
 	public HttpServer startHTTPServer() throws IOException {
@@ -92,7 +104,7 @@ public class RESTService extends Service {
 		restServer.start();
 //		WSS webSocketServer = new WSS(8001, new GenerationData());
 //		webSocketServer.start();
-
+		this.port = port;
 		System.out.println("Web server running on port " + port);
 		return restServer;
 	}
@@ -290,7 +302,7 @@ public class RESTService extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = lookup(RegistryService.lookUp.class).lookup(name);
+			var found = lookup(RegistryService.lookUp.class).f(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));
@@ -348,7 +360,7 @@ public class RESTService extends Service {
 		return query;
 	}
 
-	public class stopHTTPServer extends TypedOperation{
+	public class stopHTTPServer extends TypedOperation {
 		public void f() throws IOException {
 			if (restServer == null) {
 				throw new IOException("REST server is not running");
@@ -365,7 +377,7 @@ public class RESTService extends Service {
 		}
 	}
 
-	public class startHTTPServerOperation extends TypedOperation{
+	public class startHTTPServerOperation extends TypedOperation {
 		public void f(int port) throws IOException {
 			startHTTPServer(port);
 		}

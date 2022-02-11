@@ -11,9 +11,9 @@ import toools.reflect.Clazz;
 
 public abstract class TypedOperation extends InnerOperation {
 	private final Method method;
-	
+
 	// will be set by the service class
-	 Service service;
+	Service service;
 
 	public TypedOperation() {
 		this.method = findMain();

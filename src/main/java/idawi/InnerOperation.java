@@ -6,10 +6,6 @@ public abstract class InnerOperation extends Operation {
 		return c.getName().substring(c.getEnclosingClass().getName().length() + 1);
 	}
 
-	public String name() {
-		return name(getClass());
-	}
-
 	@Override
 	protected Class<? extends Service> getDeclaringServiceClass() {
 		var c = getClass().getEnclosingClass();

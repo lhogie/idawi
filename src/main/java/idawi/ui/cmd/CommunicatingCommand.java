@@ -94,7 +94,7 @@ public abstract class CommunicatingCommand extends Command {
 			if (p.equals("_")) {
 				peers.add(n.descriptor());
 			} else {
-				var pp = n.lookupOperation(RegistryService.lookUp.class).lookup(p);
+				var pp = n.lookupOperation(RegistryService.lookUp.class).f(p);
 
 				if (pp == null) {
 					out.accept("no peer with name: " + p);

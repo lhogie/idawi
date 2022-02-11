@@ -47,8 +47,7 @@ public class RegistryService extends Service {
 		}
 
 		public void f() {
-			exec(new To((Set<ComponentDescriptor>) null).o(RegistryService.add.class), null,
-					new OperationParameterList(component.descriptor()));
+			RegistryService.this.exec(new To().o(RegistryService.add.class), null, component.descriptor());
 		}
 	}
 
@@ -102,9 +101,9 @@ public class RegistryService extends Service {
 	}
 
 	public class updateAll extends TypedOperation {
-		public void updateAll() {
+		public void f() {
 			var to = new OperationAddress(new To(new HashSet<>(name2descriptor.values())), RegistryService.local.class);
-			exec(to, createQueue(), null).returnQ.collect().resultMessages().contents()
+			RegistryService.this.exec(to, createQueue(), null).returnQ.collect().resultMessages().contents()
 					.forEach(d -> lookup(add.class).f((ComponentDescriptor) d));
 		}
 
@@ -115,7 +114,7 @@ public class RegistryService extends Service {
 	}
 
 	public class lookUp extends TypedOperation {
-		public ComponentDescriptor lookup(String name) {
+		public ComponentDescriptor f(String name) {
 			var d = name2descriptor.get(name);
 			return d;
 		}
@@ -127,7 +126,7 @@ public class RegistryService extends Service {
 	}
 
 	public class remove extends TypedOperation {
-		public ComponentDescriptor remove(String name) {
+		public ComponentDescriptor f(String name) {
 			return name2descriptor.remove(name);
 		}
 
@@ -138,7 +137,7 @@ public class RegistryService extends Service {
 	}
 
 	public class clear extends TypedOperation {
-		public void clear() {
+		public void f() {
 			name2descriptor.clear();
 		}
 

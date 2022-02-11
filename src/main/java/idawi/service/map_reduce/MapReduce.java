@@ -1,4 +1,4 @@
-package idawi.service;
+package idawi.service.map_reduce;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -22,6 +22,8 @@ import idawi.OperationParameterList;
 import idawi.ProgressMessage;
 import idawi.Service;
 import idawi.To;
+import idawi.service.DeployerService;
+import idawi.service.ServiceManager;
 import toools.thread.AtomicDouble;
 import toools.util.Date;
 
@@ -29,7 +31,7 @@ public class MapReduce extends Service {
 	public static abstract class Task<R> implements Serializable {
 		// valid at a given round only
 		private int id;
-		private transient MapReduce mr;
+		private transient MapReduce mapReduceService;
 		private transient To to;
 
 		public abstract R compute(Consumer output) throws Throwable;
@@ -43,7 +45,7 @@ public class MapReduce extends Service {
 		public ComponentDescriptor worker;
 	}
 
-	static interface H<R> {
+	static interface ResultHandler<R> {
 		void newResult(Result<R> newResult);
 
 		void newProgressMessage(String msg);
@@ -55,11 +57,11 @@ public class MapReduce extends Service {
 
 	public MapReduce(Component component) {
 		super(component);
-		operations.add(new Process());
+		operations.add(new taskProcessor());
 	}
 
 	// the backend op
-	public class Process extends InnerOperation {
+	public class taskProcessor extends InnerOperation {
 
 		@Override
 		public String getDescription() {
@@ -68,19 +70,17 @@ public class MapReduce extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			while (true) {
-				var msg = in.get_blocking();
-				var t = (Task) msg.content;
-				reply(msg, new ProgressMessage("processing task " + t.id));
-				t.mr = MapReduce.this;
-				Result r = new Result<>();
-				r.receptionDate = Date.time();
-				r.taskID = t.id;
-				r.value = t.compute(something -> reply(msg, something));
-				r.completionDate = Date.time();
-				reply(msg, new ProgressMessage("sending result " + t.id));
-				reply(msg, r);
-			}
+			var msg = in.get_blocking();
+			var t = (Task) msg.content;
+			reply(msg, new ProgressMessage("processing task " + t.id));
+			t.mapReduceService = MapReduce.this;
+			Result r = new Result<>();
+			r.receptionDate = Date.time();
+			r.taskID = t.id;
+			r.value = t.compute(something -> reply(msg, something));
+			r.completionDate = Date.time();
+			reply(msg, new ProgressMessage("sending result " + t.id));
+			reply(msg, r);
 		}
 	}
 
@@ -129,7 +129,7 @@ public class MapReduce extends Service {
 	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentDescriptor> workers, Allocator<R> assigner,
 			Consumer<Result<R>> newResult, Consumer<String> progressMessages, Consumer<Double> progressRatio,
 			Consumer<Message> otherMessages) {
-		return map(tasks, workers, assigner, new H<R>() {
+		return map(tasks, workers, assigner, new ResultHandler<R>() {
 
 			@Override
 			public void newResult(Result<R> nr) {
@@ -154,7 +154,7 @@ public class MapReduce extends Service {
 	}
 
 	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentDescriptor> workers, Allocator<R> allocator,
-			H<R> h) {
+			ResultHandler<R> h) {
 		var unprocessedTasks = new ArrayList<>(tasks);
 
 		// all results will end here
@@ -173,7 +173,7 @@ public class MapReduce extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					exec(task.to.o(Process.class), q, task);
+					exec(task.to.o(taskProcessor.class), q, task);
 				}
 			}
 
@@ -248,7 +248,7 @@ public class MapReduce extends Service {
 
 		new MapReduce(mapper).map(tasks, workerList, (a, b) -> a + b);
 
-		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new H<Integer>() {
+		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new ResultHandler<Integer>() {
 
 			@Override
 			public void newResult(Result<Integer> newResult) {

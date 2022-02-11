@@ -2,7 +2,7 @@
 [Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
 a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
 
-*Idawi* is extensively described in this [working paper](http://www.i3s.unice.fr/~hogie/idawi.pdf). To make a long story short, it enables **distributed computations**. To this purpose it comes with the following features:
+*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it enables **distributed computations**. To this purpose it comes with the following features:
 - it has a carefully object-oriented with SOA flavors
 - it has a collective message+queue-oriented communication model
 - it has a collective computation model

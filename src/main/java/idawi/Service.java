@@ -100,13 +100,6 @@ public class Service {
 		send(r, msg.replyTo);
 	}
 
-	protected <S extends Service> S lookupService(Class<? extends S> serviceID) {
-		return component.lookup(serviceID);
-	}
-
-	public void run() throws Throwable {
-	}
-
 	public Directory directory() {
 		if (this.directory == null) {
 			this.directory = new Directory(Component.directory, "/services/" + id);
@@ -243,7 +236,7 @@ public class Service {
 		return null;
 	}
 
-	public <O> O lookup(Class<O> c) {
+	public <O extends Operation> O lookup(Class<O> c) {
 		for (var o : operations) {
 			if (o.getClass() == c) {
 				return (O) o;
@@ -358,7 +351,7 @@ public class Service {
 
 	public class shutdown extends TypedOperation {
 		public void f() {
-			shutdown();
+			dispose();
 		}
 
 		@Override
@@ -367,7 +360,7 @@ public class Service {
 		}
 	}
 
-	public void shutdown() {
+	public void dispose() {
 		askToRun = false;
 		threads.forEach(t -> t.interrupt());
 

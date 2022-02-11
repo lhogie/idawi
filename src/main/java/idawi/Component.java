@@ -122,7 +122,7 @@ public class Component {
 	}
 
 	public ComponentDescriptor descriptor(String id, boolean create) {
-		var d = lookupOperation(RegistryService.lookUp.class).lookup(id);
+		var d = lookupOperation(RegistryService.lookUp.class).f(id);
 
 		if (d == null && create) {
 			lookupOperation(RegistryService.add.class).f(d = new ComponentDescriptor());
@@ -163,7 +163,7 @@ public class Component {
 	}
 
 	public void removeService(Service s) {
-		s.shutdown();
+		s.dispose();
 		services.remove(s.id);
 	}
 

@@ -22,11 +22,14 @@ import idawi.InnerOperation;
 import idawi.MessageQueue;
 import idawi.RegistryService;
 import idawi.Service;
+import idawi.To;
+import idawi.TypedOperation;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
 import idawi.net.PipeFromToParentProcess;
 import idawi.net.TransportLayer;
+import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
@@ -41,9 +44,9 @@ import toools.thread.OneElementOneThreadProcessing;
 import toools.thread.Threads;
 
 public class DeployerService extends Service {
-	List<ComponentDescriptor> failed = new ArrayList<>();
-
 	private static String remoteClassDir = Service.class.getPackageName() + ".classpath/";
+
+	List<ComponentDescriptor> failed = new ArrayList<>();
 
 	public static class DeploymentRequest implements Serializable {
 		public Collection<ComponentDescriptor> peers;
@@ -123,6 +126,30 @@ public class DeployerService extends Service {
 		}
 	}
 
+	public class deploy_in_other_jvms extends TypedOperation {
+
+		public void f(List<ComponentDescriptor> dd) throws Throwable {
+			deployInNewJVMs(dd);
+		}
+
+		@Override
+		public String getDescription() {
+			return "deploy in new JVMs";
+		}
+	}
+
+	public class deploy_tree_in_other_jvms extends TypedOperation {
+
+		public Set<ComponentDescriptor> f(int depth, Int2IntFunction nbChildren) throws Throwable {
+			return deployTreeInNewJVMs(depth, nbChildren);
+		}
+
+		@Override
+		public String getDescription() {
+			return "deploy tree in new JVMs";
+		}
+	}
+
 	public void apply(Graph deploymentPlan, double timeoutInSecond, boolean printRsync, Consumer<Object> feedback,
 			Consumer<ComponentDescriptor> peerOk) throws IOException {
 		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
@@ -179,6 +206,26 @@ public class DeployerService extends Service {
 				e.printStackTrace();
 			}
 		});
+	}
+
+	public Set<ComponentDescriptor> deployTreeInNewJVMs(int depth, Int2IntFunction depth2nbChildren) throws IOException {
+		Set<ComponentDescriptor> childrenDescriptors = new HashSet<>();
+
+		var nbC = depth2nbChildren.get(depth);
+		
+		for (int i = 0; i < nbC; ++i) {
+			var cd = new ComponentDescriptor();
+			cd.name = component.name + "." + i;
+			childrenDescriptors.add(cd);
+		}
+
+		deployInNewJVMs(childrenDescriptors);
+		var to = new To(childrenDescriptors).o(DeployerService.deploy_tree_in_other_jvms.class);
+		var results = execf(to, 10, childrenDescriptors.size(), depth - 1, depth2nbChildren);
+		Set<ComponentDescriptor> descriptors = new HashSet<>();
+		descriptors.addAll(childrenDescriptors);
+		descriptors.addAll((Collection<ComponentDescriptor>) results.get(0));
+		return descriptors;
 	}
 
 	public void deployOtherJVM(ComponentDescriptor d, boolean suicideWhenParentDie, Consumer<Object> feedback,

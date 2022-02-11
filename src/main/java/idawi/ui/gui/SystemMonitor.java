@@ -56,6 +56,6 @@ public class SystemMonitor extends Service implements Swingable {
 	}
 
 	@Override
-	public void shutdown() {
+	public void dispose() {
 	}
 }

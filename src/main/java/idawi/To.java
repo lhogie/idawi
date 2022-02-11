@@ -11,6 +11,7 @@ import java.util.Set;
 public class To implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
+
 	public Set<ComponentDescriptor> componentIDs;
 	public int coverage;
 	public double forwardProbability;
@@ -22,6 +23,7 @@ public class To implements Externalizable {
 		this(null, Integer.MAX_VALUE, 1);
 	}
 
+	
 	public To(Set<ComponentDescriptor> peers, int maxDistance, double forwardProbability) {
 		this.componentIDs = peers;
 		this.coverage = maxDistance;

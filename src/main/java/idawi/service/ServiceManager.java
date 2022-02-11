@@ -51,7 +51,7 @@ public class ServiceManager extends Service {
 
 	public class start extends TypedOperation {
 		public ServiceDescriptor f(Class<? extends Service> serviceID) {
-			if (lookupService(serviceID) != null) {
+			if (component.lookup(serviceID) != null) {
 				throw new IllegalArgumentException("service already running");
 			}
 
@@ -101,7 +101,7 @@ public class ServiceManager extends Service {
 
 	public class has extends TypedOperation {
 		public boolean has(Class serviceID) {
-			return lookupService(serviceID) != null;
+			return component.lookup(serviceID) != null;
 		}
 
 		@Override

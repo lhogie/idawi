@@ -15,7 +15,9 @@ import idawi.net.LMI;
 import idawi.service.DemoService;
 import idawi.service.DeployerService;
 import idawi.service.PingService;
+import idawi.service.rest.RESTService;
 import toools.io.Cout;
+import toools.net.NetUtilities;
 
 public class LucTests {
 
@@ -27,7 +29,7 @@ public class LucTests {
 	}
 	
 	public static void main2(String[] args) throws Throwable {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting test main2");
 
 		// describes a component by its name only
 		ComponentDescriptor me = new ComponentDescriptor();
@@ -51,7 +53,7 @@ public class LucTests {
 
 	@Test
 	public void twoComponentsConversation() throws CDLException {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting test twoComponentsConversation");
 		// describes a component by its name only
 		ComponentDescriptor me = new ComponentDescriptor();
 		me.name = "c1";
@@ -78,7 +80,7 @@ public class LucTests {
 
 	@Test
 	public void operationSignatures() throws Throwable {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting test operationSignatures");
 		Component c1 = new Component("c1");
 		Component c2 = new Component("c2");
 		LMI.connect(c1, c2);
@@ -96,7 +98,7 @@ public class LucTests {
 
 	@Test
 	public void waitingFirst() throws CDLException {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting test waitingFirst");
 		Component root = new Component("root");
 		Set<Component> others = root.lookup(DeployerService.class).deployInThisJVM(2, i -> "other-" + i, true, null);
 		others.forEach(c -> LMI.connect(root, c));
@@ -114,7 +116,7 @@ public class LucTests {
 
 	@Test
 	public void pingViaTCP() throws CDLException, IOException {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting test pingViaTCP");
 
 		// creates a component in this JVM
 		Component master = new Component("master");
@@ -139,18 +141,29 @@ public class LucTests {
 
 	@Test
 	public void signature() {
-		Cout.debugSuperVisible("Starting test");
+		Cout.debugSuperVisible("Starting signature test");
 		ComponentDescriptor me = new ComponentDescriptor();
 		me.name = "c1";
 		Component c1 = new Component(me);
 		Component c2 = new Component("c2");
 		LMI.connect(c1, c2);
 		Service client = c1.lookup(DemoService.class);
-		var len = client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "hello");
+		var len = client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "hello").get(0);
 		System.out.println(len);
 		System.out.println(len);
-		assertEquals(len, 5);
+		assertEquals(5, len);
 
+		// clean
+		Component.componentsInThisJVM.clear();
+	}
+	
+	@Test
+	public void rest() throws IOException {
+		Cout.debugSuperVisible("Starting REST test");
+		Component c1 = new Component();
+		var ws=c1.lookup(RESTService.class);
+		ws.startHTTPServer();
+		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1.name);
 		// clean
 		Component.componentsInThisJVM.clear();
 	}
@@ -165,7 +178,9 @@ public class LucTests {
 		}
 
 		LMI.chain(l);
-		Message pong = PingService.ping(new Service(l.get(0)), l.get(l.size() - 1).descriptor(), 1);
+		var first = new Service(l.get(0));
+		var last = l.get(l.size() - 1);
+		Message pong = PingService.ping(first, last.descriptor(), 1);
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 
