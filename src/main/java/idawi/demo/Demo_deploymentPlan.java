@@ -60,7 +60,7 @@ public class Demo_deploymentPlan {
 		// at this step the child is running on the remote host. We can interact with
 		// it.
 		long pingTime = System.currentTimeMillis();
-		Message pong = PingService.ping(t.lookup(PingService.class), child, 1000);
+		Message pong = t.lookup(PingService.class).ping(child);
 
 		if (pong == null) {
 			System.err.println("ping timeout");

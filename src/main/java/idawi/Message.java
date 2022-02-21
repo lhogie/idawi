@@ -24,6 +24,8 @@ public class Message implements Externalizable {
 	public boolean dropIfRecipientQueueIsFull = false;
 	public Object routingData;
 
+	public Class<? extends Service> originService;
+
 	public Message() {
 	}
 
@@ -38,7 +40,7 @@ public class Message implements Externalizable {
 //			route.add(fromComponent.descriptor());
 //			fromComponent.lookupService(NetworkingService.class).messagesFromNetwork.accept(this);
 //		}
-		
+
 		fromComponent.lookup(NetworkingService.class).send(this);
 	}
 
@@ -72,7 +74,13 @@ public class Message implements Externalizable {
 
 	@Override
 	public String toString() {
-		String s = "msg " + Long.toHexString(ID) + ", route:" + route + " to:" + to;
+		String s = "msg " + Long.toHexString(ID);
+
+		if (originService != null) {
+			s += ", origin=" + originService;
+		}
+
+		s += ", route:" + route + " to:" + to;
 
 		if (replyTo != null) {
 			s += ", return:" + replyTo;
@@ -85,6 +93,7 @@ public class Message implements Externalizable {
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(ID);
+		out.writeObject(originService);
 		out.writeObject(route);
 		out.writeObject(suggestedRoute);
 		out.writeObject(to);
@@ -98,6 +107,7 @@ public class Message implements Externalizable {
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ID = in.readLong();
+		this.originService = (Class<? extends Service>) in.readObject();
 		route = (Route) in.readObject();
 		suggestedRoute = (Route) in.readObject();
 		to = (QueueAddress) in.readObject();
@@ -114,6 +124,14 @@ public class Message implements Externalizable {
 
 	public boolean isProgress() {
 		return content instanceof ProgressInformation;
+	}
+
+	public boolean isProgressMessage() {
+		return content instanceof ProgressMessage;
+	}
+
+	public boolean isProgressRatio() {
+		return content instanceof ProgressRatio;
 	}
 
 	public boolean isEOT() {

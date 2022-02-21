@@ -17,7 +17,7 @@ public class SSH {
 		new SSH().pingViaSSH();
 	}
 
-	public static final String ssh = "nicoati.inria.fr";
+	public static final String ssh = "musclotte";
 
 	@Test
 	public void pingViaSSH() throws CDLException, IOException {
@@ -35,7 +35,7 @@ public class SSH {
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = PingService.ping(new Service(c1), c2, 5);
+		Message pong = c1.lookup(PingService.class).ping(c2, 5);
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer

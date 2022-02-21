@@ -1,10 +1,7 @@
 package idawi.service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
@@ -12,8 +9,6 @@ import idawi.InnerOperation;
 import idawi.Message;
 import idawi.MessageList;
 import idawi.MessageQueue;
-import idawi.MessageQueue.Enough;
-import idawi.Route;
 import idawi.Service;
 import idawi.To;
 
@@ -31,7 +26,6 @@ public class PingService extends Service {
 	public class ping extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			// do nothing, the EOT message will go automatically
 		}
 
 		@Override
@@ -40,53 +34,32 @@ public class PingService extends Service {
 		}
 	}
 
-	public static MessageQueue ping(Service from, Set<ComponentDescriptor> targets) {
-		return from.exec(new To(targets).o(PingService.ping.class), true, null).returnQ;
+	public MessageQueue ping(Set<ComponentDescriptor> targets) {
+		return exec(new To(targets).o(PingService.ping.class), true, null).returnQ;
 	}
 
-	public static MessageQueue ping(Service from) {
-		return ping(from, null);
+	public MessageQueue ping() {
+		return ping((Set<ComponentDescriptor>) null);
 	}
 
-	public static Message ping(Service from, ComponentDescriptor target, double timeout) {
-		return ping(from, Set.of(target)).setMaxWaitTimeS(timeout).collect().getOrNull(0);
+	public Message ping(ComponentDescriptor target, double timeout) {
+		var r = ping(Set.of(target)).get_blocking(timeout);
+
+		if (!r.route.source().component.equals(target))
+			throw new IllegalStateException("someone else replied to ping!");
+
+		return r;
 	}
 
-	public static void ping(Service from, Set<ComponentDescriptor> targets, double timeout,
-			Function<ComponentDescriptor, Enough> pong) {
-		ping(from, targets).forEach(msg -> pong.apply(msg.route.source().component));
+	public Message ping(ComponentDescriptor target) {
+		return ping(target, MessageQueue.DEFAULT_TIMEOUT);
 	}
 
-	public static MessageList ping(Service from, Set<ComponentDescriptor> targets, double timeout) {
-		return ping(from, targets).setMaxWaitTimeS(timeout).collect();
-	}
-
-	public static void ping(Service from, double timeout, Consumer<Message> found) {
-		ping(from, null).setMaxWaitTimeS(timeout).forEach(newMsg -> {
-			found.accept(newMsg);
-			return Enough.no;
-		});
-	}
-
-	public class traceroute extends InnerOperation {
-		@Override
-		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
-			send(msg.route, msg.replyTo);
-		}
-
-		@Override
-		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
-
-	public static List<Route> traceroute(Service from, Set<ComponentDescriptor> targets, double timeout)
-			throws Throwable {
-		return (List<Route>) (List<?>) from.exec(new To(targets).o(PingService.traceroute.class), true, null).returnQ
-				.setMaxWaitTimeS(timeout).collect().throwAnyError().resultMessages().contents().stream()
-				.collect(Collectors.toList());
+	public MessageList ping(Set<ComponentDescriptor> targets, double timeout, Consumer<Message> realtimeHandler) {
+		return ping(targets).collect(timeout, timeout, c -> {
+			realtimeHandler.accept(c.messages.last());
+			c.stop = c.messages.senders().equals(targets);
+		}).messages;
 	}
 
 	@Override

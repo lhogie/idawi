@@ -2,20 +2,63 @@ package idawi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import idawi.MessageQueue.Enough;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import toools.exceptions.CodeShouldNotHaveBeenReachedException;
-import toools.io.Cout;
 
 public class MessageList extends ArrayList<Message> {
 	private static final long serialVersionUID = 1L;
 	public Enough enough;
 
+	public DoubleList receptionDates() {
+		DoubleList receptionDates = new DoubleArrayList();
+
+		for (var m : this) {
+			receptionDates.add(m.receptionDate);
+		}
+
+		return receptionDates;
+	}
+
+	public void clearContents() {
+		forEach(m -> m.content = null);
+	}
+
+	public Set<ComponentDescriptor> completedPeers() {
+		var r = new HashSet<ComponentDescriptor>();
+
+		for (var m : this) {
+			if (m.isEOT()) {
+				r.add(m.route.source().component);
+			}
+		}
+
+		return r;
+	}
+
+	public Set<ComponentDescriptor> uncompletedPeers() {
+		var r = new HashSet<ComponentDescriptor>();
+
+		for (var m : this) {
+			if (m.isEOT()) {
+				r.remove(m.route.source().component);
+			} else {
+				r.add(m.route.source().component);
+			}
+		}
+
+		return r;
+	}
+	
 	public MessageList filter(Predicate<Message> p) {
 		MessageList l = new MessageList();
 
@@ -68,18 +111,15 @@ public class MessageList extends ArrayList<Message> {
 	public MessageList resultMessages(int n) {
 		MessageList results = resultMessages();
 
-		if (results.size() < n) {
+		if (results.size() < n)
 			throw new IllegalStateException("not enough results");
-		}
 
 		return results;
 	}
 
 	public MessageList ensureSize(int n) {
-
-		if (size() < n) {
+		if (size() < n) 
 			throw new IllegalStateException("not enough elements");
-		}
 
 		return this;
 	}
@@ -144,5 +184,63 @@ public class MessageList extends ArrayList<Message> {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public int count(Predicate<Message> p) {
+		int n = 0;
+
+		for (var m : this) {
+			if (p.test(m)) {
+				++n;
+			}
+		}
+
+		return n;
+	}
+
+	public int countErrors() {
+		return count(m -> m.isError());
+	}
+
+	public int countEOT() {
+		return count(m -> m.isEOT());
+	}
+
+	public int countProgress() {
+		return count(m -> m.isProgress());
+	}
+
+	public Set<ComponentDescriptor> senders() {
+		var r = new HashSet<ComponentDescriptor>();
+		forEach(msg -> r.add(msg.route.source().component));
+		return r;
+	}
+
+	public Set<Route> routes() {
+		var r = new HashSet<Route>();
+		forEach(msg -> r.add(msg.route));
+		return r;
+	}
+
+	public boolean receptionTimeOrdered() {
+		var len = size();
+
+		for (int i = 1; i < len; ++i) {
+			if (get(i - 1).receptionDate >= get(i).receptionDate) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public double timeSpan() {
+		return get(size() - 1).receptionDate - get(0).receptionDate;
+	}
+
+	public Set<ComponentDescriptor> components() {
+		var r = new HashSet<ComponentDescriptor>();
+		forEach(msg -> r.addAll(msg.route.components()));
+		return r;
 	}
 }

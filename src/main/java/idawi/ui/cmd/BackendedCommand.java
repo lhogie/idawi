@@ -27,7 +27,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		ComponentDescriptor hook = ComponentDescriptor.fromCDL(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
-		if (PingService.ping(localService, hook, timeout) == null) {
+		if (localService.component.lookup(PingService.class).ping(hook, timeout) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
@@ -40,7 +40,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 
-		if (Enough.no == localService.exec(to, true, backend).returnQ.forEachUntilEOF(msg -> {
+		if (Enough.no == localService.exec(to, true, backend).returnQ.forEachUntilFirstEOF(msg -> {
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {

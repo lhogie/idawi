@@ -7,7 +7,6 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
 import idawi.RegistryService;
-import idawi.Service;
 import idawi.service.PingService;
 
 public class tracerouteBackend extends CommandBackend {
@@ -19,7 +18,7 @@ public class tracerouteBackend extends CommandBackend {
 
 		for (ComponentDescriptor t : to) {
 			out.accept("ping " + t);
-			Message pong = PingService.ping(new Service(new Component()), t, 1000);
+			Message pong = new Component().lookup(PingService.class).ping(t, 1000);
 
 			if (pong == null) {
 				out.accept("No pong received. :(");

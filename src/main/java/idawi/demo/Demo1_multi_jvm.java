@@ -32,7 +32,7 @@ public class Demo1_multi_jvm {
 		t1.lookup(DeployerService.class).deployOtherJVM(t2d, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 		
-		Message pong = PingService.ping(t1.lookup(PingService.class), t2d, 1);
+		Message pong = t1.lookup(PingService.class).ping( t2d, 1);
 		System.out.println("pong: " + pong);
 
 	}

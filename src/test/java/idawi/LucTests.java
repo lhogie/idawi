@@ -27,7 +27,7 @@ public class LucTests {
 		System.out.println(a.equals(b));
 		System.out.println(a.hashCode());
 	}
-	
+
 	public static void main2(String[] args) throws Throwable {
 		Cout.debugSuperVisible("Starting test main2");
 
@@ -45,8 +45,7 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		// ask c1 to ping c2
-		Service s = new Service(c1);
-		Message pong = PingService.ping(s, c2.descriptor(), 1);
+		Message pong = c1.lookup(PingService.class).ping(c2.descriptor(), 1);
 		System.out.println(pong);
 		Component.stopPlatformThreads();
 	}
@@ -68,11 +67,31 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		// ask c1 to ping c2
-		Service s = new Service(c1);
-		Message pong = PingService.ping(s, c2.descriptor(), 1);
+		Message pong = c1.lookup(PingService.class).ping(c2.descriptor(), 1);
 
 		// be sure c1 got an answer
 		assertNotEquals(null, pong);
+
+		// clean
+		Component.componentsInThisJVM.clear();
+	}
+
+	@Test
+	public void manyMessages() throws CDLException, IOException {
+		Cout.debugSuperVisible("Starting test manyMessages");
+		Component c1 = new Component();
+
+		ComponentDescriptor c2d = new ComponentDescriptor();
+		c2d.name = "c2d";
+		c1.lookup(DeployerService.class).deployOtherJVM(c2d, true, m -> System.out.println(m),
+				m -> System.out.println("ok   " + m));
+
+		for (int i = 0; i < 100; ++i) {
+			Message pong = c1.lookup(PingService.class).ping(c2d, 1);
+
+			// be sure c1 got an answer
+			assertNotEquals(null, pong);
+		}
 
 		// clean
 		Component.componentsInThisJVM.clear();
@@ -86,12 +105,16 @@ public class LucTests {
 		LMI.connect(c1, c2);
 
 		Service client = new Service(c1);
-		assertEquals(5,
-				(Integer) client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "salut").get(0));
+		Cout.debugSuperVisible(1);
+		assertEquals(5, (Integer) client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "salut").get(0));
+		Cout.debugSuperVisible(2);
 		assertEquals(53, (Integer) client.exec(new To(c2).o(DemoService.countFrom1toN.class), true, 100).returnQ
-				.collect().resultMessages(100).get(53).content);
+				.collect(1).resultMessages(100).get(53).content);
+		Cout.debugSuperVisible(3);
 		assertEquals(7, (Integer) client.exec(new To(c2).o(DemoService.countFromAtoB.class), true,
-				new DemoService.Range(0, 13)).returnQ.collect().resultMessages(13).get(7).content);
+				new DemoService.Range(0, 13)).returnQ.collect(1).resultMessages(13).get(7).content);
+		Cout.debugSuperVisible(4);
+//		assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
 
 		Component.componentsInThisJVM.clear();
 	}
@@ -129,7 +152,7 @@ public class LucTests {
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
-		Message pong = PingService.ping(new Service(master), other, 1);
+		Message pong = new Service(master).component.lookup(PingService.class).ping(other, 1);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
@@ -156,12 +179,12 @@ public class LucTests {
 		// clean
 		Component.componentsInThisJVM.clear();
 	}
-	
+
 	@Test
 	public void rest() throws IOException {
 		Cout.debugSuperVisible("Starting REST test");
 		Component c1 = new Component();
-		var ws=c1.lookup(RESTService.class);
+		var ws = c1.lookup(RESTService.class);
 		ws.startHTTPServer();
 		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1.name);
 		// clean
@@ -180,7 +203,7 @@ public class LucTests {
 		LMI.chain(l);
 		var first = new Service(l.get(0));
 		var last = l.get(l.size() - 1);
-		Message pong = PingService.ping(first, last.descriptor(), 1);
+		Message pong = first.component.lookup(PingService.class).ping(last.descriptor(), 1);
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 

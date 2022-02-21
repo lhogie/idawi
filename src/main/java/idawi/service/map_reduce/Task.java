@@ -8,7 +8,7 @@ import idawi.To;
 public abstract class Task<R> implements Serializable {
 	// valid at a given round only
 	int id;
-	transient MapReduce mapReduceService;
+	transient MapReduceService mapReduceService;
 	transient To to;
 
 	public abstract R compute(Consumer output) throws Throwable;

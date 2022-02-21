@@ -15,10 +15,11 @@ import idawi.MessageQueue;
 import idawi.MessageQueue.Enough;
 import idawi.ProgressMessage;
 import idawi.Service;
+import toools.io.Cout;
 import toools.util.Date;
 
-public class MapReduce extends Service {
-	public MapReduce(Component component) {
+public class MapReduceService extends Service {
+	public MapReduceService(Component component) {
 		super(component);
 		operations.add(new taskProcessor());
 	}
@@ -34,9 +35,11 @@ public class MapReduce extends Service {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.get_blocking();
+			Cout.debug(":) received " + msg );
 			var t = (Task) msg.content;
+			Cout.debug("received2 " + msg );
 			reply(msg, new ProgressMessage("processing task " + t.id));
-			t.mapReduceService = MapReduce.this;
+			t.mapReduceService = MapReduceService.this;
 			Result r = new Result<>();
 			r.receptionDate = Date.time();
 			r.taskID = t.id;
@@ -115,7 +118,7 @@ public class MapReduce extends Service {
 			}
 
 			h.newProgressMessage("waiting for results");
-			q.setMaxWaitTimeS(60).forEach(msg -> {
+			q.forEach(60, msg -> {
 				if (msg.content instanceof Result) {
 					var workerResponse = (Result<R>) msg.content;
 					workerResponse.worker = msg.route.source().component;

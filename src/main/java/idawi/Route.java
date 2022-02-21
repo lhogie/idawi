@@ -1,7 +1,10 @@
 package idawi;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Route extends ArrayList<RouteEntry> {
 	private static final long serialVersionUID = 1L;
@@ -48,6 +51,12 @@ public class Route extends ArrayList<RouteEntry> {
 	@Override
 	public boolean equals(Object o) {
 		return o instanceof Route && super.equals(o);
+	}
+
+	public Set<ComponentDescriptor> components(){
+		var r = new HashSet<ComponentDescriptor>();
+		forEach(e -> r.add(e.component));
+		return r;
 	}
 
 }

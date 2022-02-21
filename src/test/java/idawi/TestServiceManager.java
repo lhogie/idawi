@@ -33,7 +33,7 @@ public class TestServiceManager {
 
 	@Test
 	public void startStop() throws Throwable {
-		MessageQueue.DEFAULT_TIMEOUT_IN_SECONDS = 1;
+		MessageCollector.DEFAULT_COLLECT_DURATION = 1;
 		Cout.debugSuperVisible("Starting test");
 		Component a = new Component();
 		Component b = new Component();

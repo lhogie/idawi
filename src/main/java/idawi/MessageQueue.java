@@ -2,32 +2,23 @@ package idawi;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import idawi.Streams.Chunk;
-import toools.io.Cout;
 import toools.thread.Q;
-import toools.util.Date;
 
 public class MessageQueue extends Q<Message> {
 	public final Service service;
 	public final String name;
 //	private final Consumer<MessageQueue> destructor;
 //	private final Set<ComponentDescriptor> completedSenders = new HashSet<>();
-
-	private double expirationDate = Date.time() + DEFAULT_LIFETIME;
-	public static double DEFAULT_LIFETIME = 60;
-
-	private double maxWaitTimeS = DEFAULT_TIMEOUT_IN_SECONDS;
-	public static double DEFAULT_TIMEOUT_IN_SECONDS = 1;
 
 	public enum Enough {
 		yes, no;
@@ -39,106 +30,107 @@ public class MessageQueue extends Q<Message> {
 		this.service = service;
 	}
 
-	public double getExpirationDate() {
-		return expirationDate;
-	}
-
-	public void setExpirationDate(double newExpirationDate) {
-		if (newExpirationDate < Date.time())
-			throw new IllegalArgumentException("expiration date is set in the past");
-
-		this.expirationDate = newExpirationDate;
-	}
-
-	public void expandExpirationDate(double expansion) {
-		setExpirationDate(getExpirationDate() + expansion);
-	}
-
-	public MessageQueue setMaxWaitTimeS(double maxWaitTimeS) {
-		this.maxWaitTimeS = maxWaitTimeS;
-		return this;
-	}
-
 	public enum Timeout {
 		NO, YES
 	}
 
-	// sends a message and waits for returns, until timeout, EOT or explicit req by
-	// the returnsHandler
-	public Enough forEach(Function<Message, Enough> returnsHandler) {
-		while (true) {
-			double remains = expirationDate - Date.time();
-
-			// queue has expired
-			if (remains <= 0) {
-				service.deleteQueue(this);
-				return Enough.no;
-			}
-
-			double waitTime = Math.min(remains, maxWaitTimeS);
-			Message msg = get_blocking(waitTime);
-			Cout.debug("received " + msg);
-			// no message arrived until the q dies or timeout expires
-			if (msg == null) {
-				service.deleteQueue(this);
-				return Enough.no;
-			} else if (returnsHandler.apply(msg) == Enough.yes) {
-				service.deleteQueue(this);
-				return Enough.yes;
-			}
-		}
-	}
-
-	public Enough forEach2(BiFunction<Message, List<Message>, Enough> c) {
-		final var l = new ArrayList<Message>();
-
-		return forEach(msg -> {
-			var r = c.apply(msg, l);
-			l.add(msg);
-			return r;
-		});
-	}
-
-	public Enough forEachUntilEOF(Consumer<Message> c) {
-		return forEach(msg -> {
-			if (msg.isEOT()) {
-				return Enough.yes;
-			} else {
-				c.accept(msg);
-				return Enough.no;
-			}
-		});
-	}
-
-	// sends a message and waits for returns, until EOT or the returnsHandler asks
-	// to stop waiting
-	// incoming messages are demultiplexed according to their role
-	public Enough forEach(Function<Message, Enough> resultHandler, Function<Message, Enough> errorHandler,
-			Function<Message, Enough> progressHandler, Function<Message, Enough> completionHandler) {
-		return forEach(r -> {
-			if (r.isEOT()) {
-				return completionHandler.apply(r);
-			} else if (r.isError()) {
-				return errorHandler.apply(r);
-			} else if (r.isProgress()) {
-				return progressHandler.apply(r);
-			} else {
-				return resultHandler.apply(r);
-			}
-		});
+	public void delete() {
+		service.deleteQueue(this);
 	}
 
 	public Object get() throws Throwable {
 		return collectUntilFirstEOT().throwAnyError().resultMessages(1).first().content;
 	}
 
-	/**
-	 * Collects timeout expires.
-	 * 
-	 * @return
-	 */
+	public <A> Object getAs(Class<A> c) throws Throwable {
+		return (A) get();
+	}
+
+	public MessageCollector collect(final double initialDuration, final double initialTimeout,
+			Consumer<MessageCollector> collector) {
+		var c = new MessageCollector(this);
+		c.collect(initialDuration, initialTimeout, collector);
+		return c;
+	}
+
+	public Enough forEach(final double during, final double waitTime, Function<Message, Enough> returnsHandler) {
+		return collect(during, waitTime, c -> {
+			c.stop = returnsHandler.apply(c.messages.last()) == Enough.yes;
+		}).stop ? Enough.yes : Enough.no;
+	}
+
+	public Enough forEach(final double during, Function<Message, Enough> returnsHandler) {
+		return forEach(during, during, returnsHandler);
+	}
+
+	public Enough forEach(Function<Message, Enough> returnsHandler) {
+		return forEach(MessageCollector.DEFAULT_COLLECT_DURATION, returnsHandler);
+	}
+
+	public Enough forEachUntil(Predicate<Message> c) {
+		return forEach(msg -> {
+			if (c.test(msg)) {
+				return Enough.yes;
+			} else {
+				return Enough.no;
+			}
+		});
+	}
+
+	public Enough forEachUntilFirstEOF(Consumer<Message> c) {
+		return forEachUntil(msg -> {
+			boolean eot = msg.isEOT();
+
+			if (!eot) {
+				c.accept(msg);
+			}
+
+			return eot;
+		});
+	}
+
+	// sends a message and waits for returns, until EOT or the returnsHandler asks
+	// to stop waiting
+	// incoming messages are demultiplexed according to their role
+	public Enough forEach(final double during, final double waitTime, MessageHandler h) {
+		return forEach(during, waitTime, r -> {
+			if (r.isEOT()) {
+				return h.newEOT(r);
+			} else if (r.isError()) {
+				return h.newError(r);
+			} else if (r.isProgressMessage()) {
+				return h.newProgressMessage(r);
+			} else if (r.isProgressRatio()) {
+				return h.newProgressRatio(r);
+			} else {
+				return h.newResult(r);
+			}
+		});
+	}
+
+	public enum Filter {
+		keep, drop
+	}
+
+	public MessageList collect(Iterator<Message> i) {
+		var l = new MessageList();
+		i.forEachRemaining(msg -> l.add(msg));
+		return l;
+	}
+
 	public MessageList collect() {
-		return collect(msg -> Enough.no);
+		return collect(MessageCollector.DEFAULT_COLLECT_DURATION);
+	}
+
+	public MessageList collect(double duration) {
+		return collect(duration, duration, c -> {
+		}).messages;
+	}
+
+	public MessageList collect(Function<Message, Enough> f) {
+		return collect(MessageCollector.DEFAULT_COLLECT_DURATION, MessageCollector.DEFAULT_COLLECT_DURATION, c -> {
+			c.stop = f.apply(c.messages.last()) == Enough.yes;
+		}).messages;
 	}
 
 	/**
@@ -155,27 +147,13 @@ public class MessageQueue extends Q<Message> {
 
 		return collect(msg -> {
 			senders.add(msg.route.source().component);
-			return senders.equals(s) ? Enough.yes : Enough.yes;
+			return senders.equals(s) ? Enough.yes : Enough.no;
 		});
 	}
 
 	public MessageList collectUntilNEOT(int n) {
 		AtomicInteger nbEOT = new AtomicInteger();
 		return collect(msg -> msg.isEOT() && nbEOT.incrementAndGet() == n ? Enough.yes : Enough.no);
-	}
-
-	public MessageList collect(Function<Message, Enough> returnsHandler) {
-		MessageList l = new MessageList();
-		l.enough = forEach(msg -> {
-			// if (msg.content instanceof Throwable && !(msg.content instanceof
-			// RemoteException))
-			// Cout.debugSuperVisible(msg.content);
-
-			l.add(msg);
-			return returnsHandler.apply(msg);
-		});
-
-		return l;
 	}
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {

@@ -320,7 +320,7 @@ public class RESTService extends Service {
 		var to = new To(components).o(ServiceManager.list.class);
 		var res = exec(to, true, null).returnQ;
 
-		for (var m : res.setMaxWaitTimeS(timeout).collect().throwAnyError().resultMessages()) {
+		for (var m : res.collect(timeout).throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
 			c.servicesNames = (Set<String>) m.content;
 			r.add(c);

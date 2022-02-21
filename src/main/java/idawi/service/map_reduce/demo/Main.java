@@ -14,7 +14,7 @@ import idawi.Service;
 import idawi.To;
 import idawi.service.DeployerService;
 import idawi.service.ServiceManager;
-import idawi.service.map_reduce.MapReduce;
+import idawi.service.map_reduce.MapReduceService;
 import idawi.service.map_reduce.Result;
 import idawi.service.map_reduce.ResultHandler;
 import idawi.service.map_reduce.RoundRobinAllocator;
@@ -36,8 +36,8 @@ public class Main {
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
 		var ro = clientService.exec(new To(workers).o(ServiceManager.ensureStarted.class), true,
-				new OperationParameterList(MapReduce.class));
-		ro.returnQ.setMaxWaitTimeS(60).collectUntilNEOT(workers.size());
+				new OperationParameterList(MapReduceService.class));
+		ro.returnQ.collectUntilNEOT(workers.size());
 
 		// create tasks
 		List<Task<Integer>> tasks = new ArrayList<>();
@@ -46,15 +46,9 @@ public class Main {
 		final AtomicDouble finalResult = new AtomicDouble();
 		var workerList = new ArrayList<>(workers);
 
-		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), // assign tasks to workers
-				newResult -> finalResult.set(finalResult.get() + newResult.value), // reduce
-				progress -> System.out.println(progress), // print progress information
-				progressRatio -> System.out.println("progress: " + progressRatio + "%"), // print progress information
-				msg -> System.out.println("---" + msg)); // other messages are just printed out
+//		new MapReduce(mapper).map(tasks, workerList, (a, b) -> a + b);
 
-		new MapReduce(mapper).map(tasks, workerList, (a, b) -> a + b);
-
-		new MapReduce(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new ResultHandler<Integer>() {
+		new MapReduceService(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new ResultHandler<Integer>() {
 
 			@Override
 			public void newResult(Result<Integer> newResult) {

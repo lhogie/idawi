@@ -37,6 +37,7 @@ public class Service {
 	protected final List<Thread> threads = new ArrayList<>();
 	protected final Set<Operation> operations = new HashSet<>();
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
+	private final Set<String> deletedQueues = new HashSet<>();
 	final AtomicLong returnQueueID = new AtomicLong();
 
 	// stores the number of message received at each second
@@ -161,12 +162,19 @@ public class Service {
 				trigger((TriggerMessage) msg, operation);
 			}
 		} else {
-			MessageQueue q = getQueue(msg.to.queueName);
+			MessageQueue q = name2queue.get(msg.to.queueName);
 
 			if (q == null) {
 //				System.out.println(msg);
-				triggerErrorHappened(msg,
-						new IllegalArgumentException(getClass() + ": can't find queue: " + msg.to.queueName));
+
+				if (deletedQueues.contains(msg.to.queueName)) {
+					triggerErrorHappened(msg,
+							new IllegalArgumentException(getClass() + ": queue was deleted: " + msg.to.queueName));
+				} else {
+					triggerErrorHappened(msg,
+							new IllegalArgumentException(getClass() + ": queue is not existing: " + msg.to.queueName));
+				}
+
 			} else {
 				q.add_blocking(msg);
 			}
@@ -204,16 +212,16 @@ public class Service {
 			try {
 //				Cout.debug(operation);
 				operation.exec(inputQ_final);
+
+				// tells the client the processing has completed
+				if (msg.replyTo != null) {
+					send(EOT.instance, msg.replyTo);
+				}
 			} catch (Throwable exception) {
 				operation.nbFailures++;
 				triggerErrorHappened(msg, exception);
 			} finally {
 				operation.totalDuration += Date.time() - start;
-			}
-
-			// tells the client the processing has completed
-			if (msg.replyTo != null) {
-				send(EOT.instance, msg.replyTo);
 			}
 
 			deleteQueue(inputQ_final);
@@ -395,6 +403,7 @@ public class Service {
 
 	protected void deleteQueue(MessageQueue q) {
 		name2queue.remove(q.name);
+		deletedQueues.add(q.name);
 		q.cancelEventisation();
 	}
 
@@ -403,7 +412,9 @@ public class Service {
 	}
 
 	public void send(Object o, QueueAddress to) {
-		new Message(o, to, null).send(component);
+		var m = new Message(o, to, null);
+		m.originService = this.getClass();
+		m.send(component);
 	}
 
 	public RemotelyRunningOperation exec(OperationAddress target, MessageQueue rq, Object initialInputData) {
@@ -417,7 +428,7 @@ public class Service {
 	}
 
 	public List<Object> execf(OperationAddress target, double timeout, int nbResults, Object... parms) {
-		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.setMaxWaitTimeS(timeout).collect()
+		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.collect(timeout)
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
