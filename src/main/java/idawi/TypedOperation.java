@@ -30,7 +30,7 @@ public abstract class TypedOperation extends InnerOperation {
 		}
 
 		if (methods.isEmpty()) {
-			throw new IllegalStateException(this + ": no main method found (is it public?)");
+			throw new IllegalStateException(this + ": no public method found for that operation");
 		} else if (methods.size() == 1) {
 			return methods.get(0);
 		} else {

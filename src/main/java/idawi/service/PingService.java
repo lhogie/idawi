@@ -7,6 +7,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
 import idawi.Message;
+import idawi.MessageCollector;
 import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.Service;
@@ -52,7 +53,7 @@ public class PingService extends Service {
 	}
 
 	public Message ping(ComponentDescriptor target) {
-		return ping(target, MessageQueue.DEFAULT_TIMEOUT);
+		return ping(target, MessageCollector.DEFAULT_COLLECT_DURATION);
 	}
 
 	public MessageList ping(Set<ComponentDescriptor> targets, double timeout, Consumer<Message> realtimeHandler) {

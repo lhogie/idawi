@@ -1,7 +1,11 @@
 package idawi;
 
 public abstract class InnerOperation extends Operation {
+	public static <S extends Service> Class<S> serviceClass(Class<? extends InnerOperation> c) {
+		return (Class<S>) c.getEnclosingClass();
+	}
 
+	
 	public static String name(Class<? extends InnerOperation> c) {
 		return c.getName().substring(c.getEnclosingClass().getName().length() + 1);
 	}

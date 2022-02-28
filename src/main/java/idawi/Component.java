@@ -26,7 +26,6 @@ import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
 import idawi.service.rest.RESTService;
 import toools.io.file.Directory;
-import toools.util.Date;
 
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
@@ -85,13 +84,19 @@ public class Component {
 	public Collection<Service> services() {
 		return services.values();
 	}
-	
+
 	public void forEachService(Consumer<Service> c) {
 		services.values().forEach(s -> c.accept(s));
 	}
 
 	public <S extends Service> S lookup(Class<S> id) {
 		return (S) services.get(id);
+	}
+
+	public <S extends InnerOperation> S lookupO(Class<S> id) {
+		var serviceClass = InnerOperation.serviceClass(id);
+		var service = lookup(serviceClass);
+		return service.lookup(id);
 	}
 
 	public void forEachService(Predicate<Service> predicate, Consumer<Service> h) {
@@ -145,10 +150,10 @@ public class Component {
 		ComponentDescriptor d = new ComponentDescriptor();
 		d.name = name;
 		d.systemInfo = lookupOperation(SystemMonitor.get.class).f();
-			forEachService(s -> d.servicesNames.add(s.getClass().getName()));
+		forEachService(s -> d.servicesNames.add(s.getClass().getName()));
 //		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
-		lookup(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2
-				.put(e.getKey().name, e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
+		lookup(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2.put(e.getKey().name,
+				e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
 		return d;
 	}
 
@@ -179,6 +184,5 @@ public class Component {
 		}
 		return r;
 	}
-	
 
 }

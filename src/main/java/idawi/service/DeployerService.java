@@ -574,7 +574,12 @@ public class DeployerService extends Service {
 
 				try {
 					List<String> stdout = SSHUtils.execShAndWait(peer.sshParameters, "ls " + dir);
-					stdout.forEach(line -> s.add(findByName(line, nodes)));
+					
+					for (var line : stdout) {
+						ComponentDescriptor c = findByName(line, nodes);
+						s.add(c);
+					}
+
 					nasGroups.add(s);
 				} catch (ProcesException e) {
 					feedback.accept("discarding peer " + peer);

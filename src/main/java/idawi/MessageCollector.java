@@ -28,7 +28,7 @@ public class MessageCollector {
 		return endDate - Date.time();
 	}
 
-	public MessageCollector collect(double duration, double timeout, Consumer<MessageCollector> returnsHandler) {
+	public MessageCollector collect(double duration, double timeout, Consumer<MessageCollector> userCode) {
 		this.endDate = Date.time() + duration;
 		this.timeout = timeout;
 
@@ -41,18 +41,24 @@ public class MessageCollector {
 			var m = q.get_blocking(Math.min(remains(), timeout));
 
 			if (m != null && !blacklist.contains(m.route.source().component)) {
-				if (m.isProgress() && deliverProgress) {
+				if (m.isProgress()) {
+					if (deliverProgress) {
+						messages.add(m);
+						userCode.accept(this);
+					}
+				} else if (m.isEOT()) {
+					if (deliverEOT) {
+						messages.add(m);
+						userCode.accept(this);
+					}
+				} else if (m.isError()) {
+					if (deliverError) {
+						messages.add(m);
+						userCode.accept(this);
+					}
+				} else {
 					messages.add(m);
-					returnsHandler.accept(this);
-				} else if (m.isEOT() && deliverEOT) {
-					messages.add(m);
-					returnsHandler.accept(this);
-				} else if (m.isError() && deliverError) {
-					messages.add(m);
-					returnsHandler.accept(this);
-				}else {
-					messages.add(m);
-					returnsHandler.accept(this);
+					userCode.accept(this);
 				}
 
 				if (stop) {
