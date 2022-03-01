@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.QueueAddress;
 import idawi.Service;
 
@@ -43,7 +43,7 @@ public class PublishSubscribe extends Service {
 		registerOperation(new unsubscribe());
 	}
 
-	public class subscribe extends TypedOperation {
+	public class subscribe extends TypedInnerOperation {
 		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).add(subscriber);
@@ -56,7 +56,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class unsubscribe extends TypedOperation {
+	public class unsubscribe extends TypedInnerOperation {
 		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
@@ -69,7 +69,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListTopics extends TypedOperation {
+	public class ListTopics extends TypedInnerOperation {
 		public List<String> exec() throws Throwable {
 			return new ArrayList(topic_history.keySet());
 		}
@@ -81,7 +81,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListSubscribers extends TypedOperation {
+	public class ListSubscribers extends TypedInnerOperation {
 		public List<String> exec(String topic) throws Throwable {
 			return new ArrayList(topic_subscribers.values());
 		}
@@ -93,7 +93,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class Publish extends TypedOperation {
+	public class Publish extends TypedInnerOperation {
 		public void exec(String topic, Object publication) throws Throwable {
 			publish(publication, topic);
 		}

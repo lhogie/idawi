@@ -10,7 +10,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.MessageQueue;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
@@ -29,7 +29,7 @@ public class ExternalCommandsService extends Service {
 		registerOperation(new has());
 	}
 
-	public class has extends TypedOperation {
+	public class has extends TypedInnerOperation {
 		public boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
 			return f != null && f.exists();
@@ -42,7 +42,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class commands extends TypedOperation {
+	public class commands extends TypedInnerOperation {
 		public Set<String> f() {
 			return commandName2executableFile.keySet();
 		}

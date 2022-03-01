@@ -1,7 +1,7 @@
 package idawi.service.time;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Service;
 
 public class TimeService extends Service {
@@ -15,7 +15,7 @@ public class TimeService extends Service {
 		registerOperation(new getModel());
 	}
 
-	public class getTime extends TypedOperation {
+	public class getTime extends TypedInnerOperation {
 		public double f() {
 			return tm.getTime();
 		}
@@ -27,7 +27,7 @@ public class TimeService extends Service {
 		}
 	}
 
-	public class setTime extends TypedOperation {
+	public class setTime extends TypedInnerOperation {
 		public void f(double newTime) {
 			((SettableTimeModel) tm).time = newTime;
 		}
@@ -39,7 +39,7 @@ public class TimeService extends Service {
 		}
 	}
 
-	public class getModel extends TypedOperation {
+	public class getModel extends TypedInnerOperation {
 		public TimeModel f() {
 			return tm;
 		}

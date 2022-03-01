@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Properties;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Service;
 import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
@@ -54,7 +54,7 @@ public class SystemMonitor extends Service {
 		});
 	}
 
-	public class get extends TypedOperation {
+	public class get extends TypedInnerOperation {
 
 		@Override
 		public String getDescription() {

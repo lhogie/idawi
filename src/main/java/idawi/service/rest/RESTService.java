@@ -26,7 +26,7 @@ import idawi.RegistryService;
 import idawi.Service;
 import idawi.ServiceDescriptor;
 import idawi.To;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
 import toools.io.JavaResource;
@@ -360,7 +360,7 @@ public class RESTService extends Service {
 		return query;
 	}
 
-	public class stopHTTPServer extends TypedOperation {
+	public class stopHTTPServer extends TypedInnerOperation {
 		public void f() throws IOException {
 			if (restServer == null) {
 				throw new IOException("REST server is not running");
@@ -377,7 +377,7 @@ public class RESTService extends Service {
 		}
 	}
 
-	public class startHTTPServerOperation extends TypedOperation {
+	public class startHTTPServerOperation extends TypedInnerOperation {
 		public void f(int port) throws IOException {
 			startHTTPServer(port);
 		}

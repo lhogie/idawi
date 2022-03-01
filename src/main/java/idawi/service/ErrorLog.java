@@ -5,7 +5,7 @@ import java.util.List;
 
 import idawi.Component;
 import idawi.InnerOperation;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Utils;
@@ -34,7 +34,7 @@ public class ErrorLog extends Service {
 		}
 	}
 
-	public class listError extends TypedOperation {
+	public class listError extends TypedInnerOperation {
 		public List<Throwable> f() {
 			return errors;
 		}
@@ -57,7 +57,7 @@ public class ErrorLog extends Service {
 		report(new Error(msg));
 	}
 
-	public class list extends TypedOperation {
+	public class list extends TypedInnerOperation {
 		public List<Throwable> f() {
 			return errors;
 		}

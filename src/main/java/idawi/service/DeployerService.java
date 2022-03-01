@@ -23,7 +23,7 @@ import idawi.MessageQueue;
 import idawi.RegistryService;
 import idawi.Service;
 import idawi.To;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
@@ -126,7 +126,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public class deploy_in_other_jvms extends TypedOperation {
+	public class deploy_in_other_jvms extends TypedInnerOperation {
 
 		public void f(List<ComponentDescriptor> dd) throws Throwable {
 			deployInNewJVMs(dd);
@@ -138,7 +138,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public class deploy_tree_in_other_jvms extends TypedOperation {
+	public class deploy_tree_in_other_jvms extends TypedInnerOperation {
 
 		public Set<ComponentDescriptor> f(int depth, Int2IntFunction nbChildren) throws Throwable {
 			return deployTreeInNewJVMs(depth, nbChildren);

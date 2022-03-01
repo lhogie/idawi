@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.Streams;
@@ -35,7 +35,7 @@ public class FileService2 extends Service {
 		registerOperation(new upload());
 	}
 
-	public class pathToLocalFiles extends TypedOperation {
+	public class pathToLocalFiles extends TypedInnerOperation {
 		public String pathToLocalFiles() {
 			return dir.getPath();
 		}
@@ -47,7 +47,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class listFiles extends TypedOperation {
+	public class listFiles extends TypedInnerOperation {
 		public Set<String> listFiles() throws IOException {
 			dir.ensureExists();
 			List<AbstractFile> files = dir.retrieveTree();
@@ -62,7 +62,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class downloadFileAsOneSingleMessage extends TypedOperation {
+	public class downloadFileAsOneSingleMessage extends TypedInnerOperation {
 		public byte[] downloadFileAsOneSingleMessage(String path) throws IOException {
 			return new RegularFile(dir, path).getContent();
 		}
@@ -74,7 +74,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class uploadFileAsOneSingleMessage extends TypedOperation {
+	public class uploadFileAsOneSingleMessage extends TypedInnerOperation {
 		public void uploadFileAsOneSingleMessage(String path, byte[] bytes) throws IOException {
 			new RegularFile(dir, path).setContent(bytes);
 		}
@@ -115,7 +115,7 @@ public class FileService2 extends Service {
 		long len;
 	}
 
-	public class downloadFile extends TypedOperation {
+	public class downloadFile extends TypedInnerOperation {
 		public void downloadFile(MessageQueue q) throws IOException {
 			var msg = q.get_blocking();
 			DownloadFileParms parms = (DownloadFileParms) msg.content;
@@ -134,7 +134,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class upload extends TypedOperation {
+	public class upload extends TypedInnerOperation {
 		public void upload(String name, boolean append, InputStream in) throws IOException {
 			dir.ensureExists();
 			var fos = new RegularFile(dir, name).createWritingStream(append);
@@ -149,7 +149,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class exists extends TypedOperation {
+	public class exists extends TypedInnerOperation {
 		public boolean exists(String name) {
 			dir.ensureExists();
 			return new RegularFile(dir, name).exists();
@@ -162,7 +162,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class delete extends TypedOperation {
+	public class delete extends TypedInnerOperation {
 		public void delete(String name) {
 			dir.ensureExists();
 			new RegularFile(dir, name).delete();
@@ -175,7 +175,7 @@ public class FileService2 extends Service {
 		}
 	}
 
-	public class size extends TypedOperation {
+	public class size extends TypedInnerOperation {
 		public long size(String name) {
 			dir.ensureExists();
 			return new RegularFile(name).getSize();

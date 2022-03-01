@@ -12,7 +12,7 @@ import idawi.ProgressRatio;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.To;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.net.LMI;
 import toools.math.MathsUtilities;
 import toools.thread.Threads;
@@ -33,7 +33,7 @@ public class DemoService extends Service {
 
 	}
 
-	public class waiting extends TypedOperation {
+	public class waiting extends TypedInnerOperation {
 		public double waiting(double maxSeconds) {
 			double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 			Threads.sleepMs((long) (seconds * 1000));
@@ -110,7 +110,7 @@ public class DemoService extends Service {
 //		}
 //	}
 
-	public class stringLength extends TypedOperation {
+	public class stringLength extends TypedInnerOperation {
 		public int f(String s) {
 			return s.length();
 		}

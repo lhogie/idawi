@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.function.Predicate;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Service;
 
 /**
@@ -20,7 +20,7 @@ public class PredicateRunner extends Service {
 		super(node);
 	}
 
-	public class Test extends TypedOperation {
+	public class Test extends TypedInnerOperation {
 
 		@Override
 		public String getDescription() {

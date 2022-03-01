@@ -7,7 +7,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.QueueAddress;
 import idawi.Service;
 import idawi.To;
@@ -39,7 +39,7 @@ public class ExitApplication extends Service implements Swingable {
 		return "exit";
 	}
 
-	public class exit extends TypedOperation {
+	public class exit extends TypedInnerOperation {
 		public void f(int code) {
 			trigger(code);
 		}

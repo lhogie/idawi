@@ -64,7 +64,7 @@ public class Service {
 		return new To(component.descriptor());
 	}
 
-	public class getFriendlyName extends TypedOperation {
+	public class getFriendlyName extends TypedInnerOperation {
 
 		public String f() {
 			return getFriendlyName();
@@ -77,7 +77,7 @@ public class Service {
 
 	}
 
-	public class sec2nbMessages extends TypedOperation {
+	public class sec2nbMessages extends TypedInnerOperation {
 		@Override
 		public String getDescription() {
 			// TODO Auto-generated method stub
@@ -109,7 +109,7 @@ public class Service {
 		return this.directory;
 	}
 
-	public class nbMessagesReceived extends TypedOperation {
+	public class nbMessagesReceived extends TypedInnerOperation {
 		public long f() {
 			return nbMsgsReceived;
 		}
@@ -120,7 +120,7 @@ public class Service {
 		}
 	}
 
-	public class listOperationNames extends TypedOperation {
+	public class listOperationNames extends TypedInnerOperation {
 		@Override
 		public String getDescription() {
 			return "returns the name of available operations";
@@ -131,7 +131,7 @@ public class Service {
 		}
 	}
 
-	public class listNativeOperations extends TypedOperation {
+	public class listNativeOperations extends TypedInnerOperation {
 		public Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
 		}
@@ -317,8 +317,8 @@ public class Service {
 					"in class: " + o.getDeclaringServiceClass() + ", operation name is already in use: " + o);
 		}
 
-		if (o instanceof TypedOperation) {
-			((TypedOperation) o).service = this;
+		if (o instanceof TypedInnerOperation) {
+			((TypedInnerOperation) o).service = this;
 		}
 
 		operations.add(o);
@@ -357,7 +357,7 @@ public class Service {
 		return askToRun;
 	}
 
-	public class shutdown extends TypedOperation {
+	public class shutdown extends TypedInnerOperation {
 		public void f() {
 			dispose();
 		}
@@ -432,7 +432,7 @@ public class Service {
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
-	public class DescriptorOperation extends TypedOperation {
+	public class DescriptorOperation extends TypedInnerOperation {
 		public ServiceDescriptor f() {
 			return Service.this.descriptor();
 		}

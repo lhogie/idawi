@@ -1,7 +1,7 @@
 package idawi.map;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Route;
 import idawi.RouteEntry;
 import idawi.Service;
@@ -21,7 +21,7 @@ public class MapService extends Service {
 		registerOperation(new get());
 	}
 
-	public class get extends TypedOperation {
+	public class get extends TypedInnerOperation {
 		public NetworkMap get() {
 			return map;
 		}

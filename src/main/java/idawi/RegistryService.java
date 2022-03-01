@@ -38,7 +38,7 @@ public class RegistryService extends Service {
 		registerOperation(new updateAll());
 	}
 
-	public class broadcastLocalInfo extends TypedOperation {
+	public class broadcastLocalInfo extends TypedInnerOperation {
 
 		@Override
 		public String getDescription() {
@@ -51,7 +51,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class add extends TypedOperation {
+	public class add extends TypedInnerOperation {
 
 		@Override
 		public String getDescription() {
@@ -67,7 +67,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class addAll extends TypedOperation {
+	public class addAll extends TypedInnerOperation {
 		@Override
 		public String getDescription() {
 			return null;
@@ -78,7 +78,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class size extends TypedOperation {
+	public class size extends TypedInnerOperation {
 		public int size() {
 			return name2descriptor.size();
 		}
@@ -89,7 +89,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class names extends TypedOperation {
+	public class names extends TypedInnerOperation {
 		public Set<String> names() {
 			return name2descriptor.keySet();
 		}
@@ -100,7 +100,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class updateAll extends TypedOperation {
+	public class updateAll extends TypedInnerOperation {
 		public void f() {
 			var to = new OperationAddress(new To(new HashSet<>(name2descriptor.values())), RegistryService.local.class);
 			RegistryService.this.exec(to, createQueue(), null).returnQ.collect().resultMessages().contents()
@@ -113,7 +113,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class lookUp extends TypedOperation {
+	public class lookUp extends TypedInnerOperation {
 		public ComponentDescriptor f(String name) {
 			var d = name2descriptor.get(name);
 			return d;
@@ -125,7 +125,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class remove extends TypedOperation {
+	public class remove extends TypedInnerOperation {
 		public ComponentDescriptor f(String name) {
 			return name2descriptor.remove(name);
 		}
@@ -136,7 +136,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class clear extends TypedOperation {
+	public class clear extends TypedInnerOperation {
 		public void f() {
 			name2descriptor.clear();
 		}
@@ -147,7 +147,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class list extends TypedOperation {
+	public class list extends TypedInnerOperation {
 		public Set<ComponentDescriptor> list() {
 			return new HashSet<>(name2descriptor.values());
 		}
@@ -158,7 +158,7 @@ public class RegistryService extends Service {
 		}
 	}
 
-	public class local extends TypedOperation {
+	public class local extends TypedInnerOperation {
 		public ComponentDescriptor local() {
 			return component.descriptor();
 		}

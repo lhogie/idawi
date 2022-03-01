@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Service;
 import toools.io.Cout;
 import toools.io.file.AbstractFile;
@@ -34,7 +34,7 @@ public class FileService extends Service {
 		registerOperation(new upload());
 	}
 
-	public class pathToLocalFiles extends TypedOperation {
+	public class pathToLocalFiles extends TypedInnerOperation {
 		public String pathToLocalFiles() {
 			return dir.getPath();
 		}
@@ -46,7 +46,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class find extends TypedOperation {
+	public class find extends TypedInnerOperation {
 		public Set<String> f() throws IOException {
 			Cout.debug(dir);
 			dir.ensureExists();
@@ -64,7 +64,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class download extends TypedOperation {
+	public class download extends TypedInnerOperation {
 		public byte[] download(String path) throws IOException {
 			return new RegularFile(dir, path).getContent();
 		}
@@ -75,7 +75,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class upload extends TypedOperation {
+	public class upload extends TypedInnerOperation {
 		public void f(String path, byte[] bytes) throws IOException {
 			new RegularFile(dir, path).setContent(bytes);
 		}
@@ -86,7 +86,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class exists extends TypedOperation {
+	public class exists extends TypedInnerOperation {
 		public boolean exists(String name) {
 			dir.ensureExists();
 			return new RegularFile(dir, name).exists();
@@ -98,7 +98,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class delete extends TypedOperation {
+	public class delete extends TypedInnerOperation {
 		public void delete(String name) {
 			dir.ensureExists();
 			new RegularFile(dir, name).delete();
@@ -111,7 +111,7 @@ public class FileService extends Service {
 		}
 	}
 
-	public class size extends TypedOperation {
+	public class size extends TypedInnerOperation {
 		public long size(String name) {
 			dir.ensureExists();
 			return new RegularFile(name).getSize();

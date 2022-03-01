@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.MessageQueue;
 import idawi.MessageQueue.Enough;
 import idawi.Service;
@@ -75,7 +75,7 @@ public class Bencher extends Service {
 		return map;
 	}
 
-	public class localBench extends TypedOperation {
+	public class localBench extends TypedInnerOperation {
 		public Results f(int size) {
 			Results r = new Results();
 			Q<Object> q = new Q<>(4);

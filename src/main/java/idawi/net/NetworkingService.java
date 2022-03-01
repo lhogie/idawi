@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.EOT;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.Message;
 import idawi.NeighborhoodListener;
 import idawi.RemoteException;
@@ -91,7 +91,7 @@ public class NetworkingService extends Service {
 		registerOperation(new neighbors());
 	}
 
-	public class getNbMessagesReceived extends TypedOperation {
+	public class getNbMessagesReceived extends TypedInnerOperation {
 		public long f() {
 			return getNbMessagesReceived();
 		}
@@ -239,7 +239,7 @@ public class NetworkingService extends Service {
 		protocol.send(msg, relays);
 	}
 
-	public class neighbors extends TypedOperation {
+	public class neighbors extends TypedInnerOperation {
 		public Collection<ComponentDescriptor> f() {
 			return neighbors();
 		}

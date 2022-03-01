@@ -9,13 +9,13 @@ import java.util.List;
 
 import toools.reflect.Clazz;
 
-public abstract class TypedOperation extends InnerOperation {
+public abstract class TypedInnerOperation extends InnerOperation {
 	private final Method method;
 
 	// will be set by the service class
 	Service service;
 
-	public TypedOperation() {
+	public TypedInnerOperation() {
 		this.method = findMain();
 	}
 

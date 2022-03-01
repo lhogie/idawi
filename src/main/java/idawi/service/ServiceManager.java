@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.TypedOperation;
+import idawi.TypedInnerOperation;
 import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.ServiceAddress;
@@ -49,7 +49,7 @@ public class ServiceManager extends Service {
 		registerOperation(new stop());
 	}
 
-	public class start extends TypedOperation {
+	public class start extends TypedInnerOperation {
 		public ServiceDescriptor f(Class<? extends Service> serviceID) {
 			if (component.lookup(serviceID) != null) {
 				throw new IllegalArgumentException("service already running");
@@ -72,7 +72,7 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class stop extends TypedOperation {
+	public class stop extends TypedInnerOperation {
 		public void stop(Class<? extends Service> serviceID) {
 			Service s = component.lookup(serviceID);
 			component.removeService(s);
@@ -85,7 +85,7 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class list extends TypedOperation {
+	public class list extends TypedInnerOperation {
 		public Set<String> list() {
 			Set<String> r = new HashSet<>();
 			component.forEachService(s -> r.add(s.id.getName()));
@@ -99,7 +99,7 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class has extends TypedOperation {
+	public class has extends TypedInnerOperation {
 		public boolean has(Class serviceID) {
 			return component.lookup(serviceID) != null;
 		}
@@ -114,7 +114,7 @@ public class ServiceManager extends Service {
 		lookup(ensureStarted.class).f(serviceID);
 	}
 
-	public class ensureStarted extends TypedOperation {
+	public class ensureStarted extends TypedInnerOperation {
 		public void f(Class serviceID) {
 //			Cout.debugSuperVisible("ensure started " + serviceID);
 			if (!lookup(has.class).has(serviceID)) {
