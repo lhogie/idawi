@@ -6,14 +6,14 @@ import java.util.TreeSet;
 public class ServiceDescriptor implements Descriptor {
 	public String name;
 	public String description;
-	public Set<OperationDescriptor> operationDescriptors = new TreeSet<>();
+	public Set<OperationDescriptor> operations = new TreeSet<>();
 	public long nbMessagesReceived = 0;
 
 	@Override
 	public String toString() {
 		String s = "service " + name;
 
-		for (var o : operationDescriptors) {
+		for (var o : operations) {
 			s += "- " + o + "\n";
 		}
 

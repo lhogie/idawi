@@ -453,18 +453,6 @@ public class DeployerService extends Service {
 		return r;
 	}
 
-	private Collection<ComponentDescriptor> findThoseForAnotherJVMInTheSameComputer(
-			Collection<ComponentDescriptor> peers) {
-		Collection<ComponentDescriptor> r = new HashSet<>();
-
-		for (ComponentDescriptor p : peers) {
-			if (p.isLocalhost()) {
-				r.add(p);
-			}
-		}
-
-		return r;
-	}
 
 	public static class DeployInfo implements Serializable {
 		ComponentDescriptor id;

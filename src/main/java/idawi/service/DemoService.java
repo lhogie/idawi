@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.Random;
 import java.util.Set;
 
-import idawi.InnerOperation;
 import idawi.Component;
 import idawi.EOT;
+import idawi.InnerOperation;
 import idawi.MessageQueue;
 import idawi.ProgressRatio;
 import idawi.RemotelyRunningOperation;
@@ -29,7 +29,8 @@ public class DemoService extends Service {
 		registerOperation(new stringLength());
 		registerOperation(new throwError());
 		registerOperation(new waiting());
-		registerOperation("e", q -> {});
+		registerOperation("e", q -> {
+		});
 
 	}
 
@@ -117,7 +118,6 @@ public class DemoService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 	}
@@ -151,7 +151,6 @@ public class DemoService extends Service {
 	public class countFromAtoB extends InnerOperation {
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 

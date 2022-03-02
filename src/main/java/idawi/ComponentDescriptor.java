@@ -38,7 +38,7 @@ public class ComponentDescriptor implements Descriptor {
 	public final List<String> webServers = new ArrayList<>();
 	public WHERE where;
 //	public Set<Class<? extends Service>> services = new HashSet<>();
-	public Set<String> servicesNames = new HashSet<>();
+	public Set<ServiceDescriptor> services = new HashSet<>();
 	// private int isLocalhost;
 	public Info systemInfo;
 

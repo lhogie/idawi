@@ -29,6 +29,7 @@ import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -282,7 +283,7 @@ public class RESTService extends Service {
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
 					var to = new To(components).s(serviceID).o(operation);
-					List<Object> r = exec(to, true, parms).returnQ.collect().throwAnyError_Runtime().contents();
+					List<Object> r = exec(to, true, parms).returnQ.collectUntilFirstEOT().throwAnyError_Runtime().contents();
 
 					if (r.size() == 1) {
 						return r.get(0);
@@ -321,9 +322,11 @@ public class RESTService extends Service {
 		var to = new To(components).o(ServiceManager.list.class);
 		var res = exec(to, true, null).returnQ;
 
-		for (var m : res.collect(timeout).throwAnyError().resultMessages()) {
+		for (var m : res.collect(timeout, timeout, c -> {
+			c.stop = c.messages.senders().equals(components);
+		}).messages.throwAnyError().resultMessages()) {
 			ComponentDescriptor c = m.route.source().component;
-			c.servicesNames = (Set<String>) m.content;
+			c.services = (Set<ServiceDescriptor>) m.content;
 			r.add(c);
 		}
 
@@ -336,7 +339,7 @@ public class RESTService extends Service {
 		var to = new To(components).s(serviceID).o(Service.DescriptorOperation.class);
 		var res = exec(to, true, null).returnQ;
 
-		for (Message m : res.collect().throwAnyError().resultMessages()) {
+		for (Message m : res.collectUntilFirstEOT().throwAnyError().resultMessages()) {
 			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
 		}
 

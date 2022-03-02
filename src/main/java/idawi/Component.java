@@ -150,7 +150,7 @@ public class Component {
 		ComponentDescriptor d = new ComponentDescriptor();
 		d.name = name;
 		d.systemInfo = lookupOperation(SystemMonitor.get.class).f();
-		forEachService(s -> d.servicesNames.add(s.getClass().getName()));
+		forEachService(s -> d.services.add(s.descriptor()));
 //		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
 		lookup(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2.put(e.getKey().name,
 				e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));

@@ -30,8 +30,8 @@ public class ServiceAddress implements Externalizable {
 		return new OperationAddress(this, name);
 	}
 
-	public OperationAddress o(Class<? extends Operation> o) {
-		return o(o.getName());
+	public OperationAddress o(Class<? extends InnerOperation> o) {
+		return o(InnerOperation.name(o));
 	}
 
 	@Override

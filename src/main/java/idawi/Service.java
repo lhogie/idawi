@@ -21,6 +21,7 @@ import idawi.service.PredicateRunner.SerializablePredicate;
 import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
@@ -166,15 +167,6 @@ public class Service {
 
 			if (q == null) {
 //				System.out.println(msg);
-
-				if (deletedQueues.contains(msg.to.queueName)) {
-					triggerErrorHappened(msg,
-							new IllegalArgumentException(getClass() + ": queue was deleted: " + msg.to.queueName));
-				} else {
-					triggerErrorHappened(msg,
-							new IllegalArgumentException(getClass() + ": queue is not existing: " + msg.to.queueName));
-				}
-
 			} else {
 				q.add_blocking(msg);
 			}
@@ -450,7 +442,7 @@ public class Service {
 		var d = new ServiceDescriptor();
 		d.name = id.getName();
 		d.description = getDescription();
-		operations.forEach(o -> d.operationDescriptors.add(o.descriptor()));
+		operations.forEach(o -> d.operations.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;
 		return d;
 	}
