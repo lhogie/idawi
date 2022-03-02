@@ -244,9 +244,12 @@ public class Service {
 		return null;
 	}
 
-	public <O extends Operation> O lookup(Class<O> c) {
+	public <O extends InnerOperation> O lookup(Class<O> oc) {
+		if (InnerOperation.serviceClass(oc) != getClass())
+			throw new IllegalStateException("searching operation " + oc.getName() +  " in service class " + getClass().getName());
+		
 		for (var o : operations) {
-			if (o.getClass() == c) {
+			if (o.getClass() == oc) {
 				return (O) o;
 			}
 		}
@@ -420,7 +423,7 @@ public class Service {
 	public RemotelyRunningOperation exec(OperationAddress target, MessageQueue rq, Object initialInputData) {
 		String remoteQid = target.opid + "@" + Long.toHexString(Date.timeNs());
 		var remoteInputQaddr = new QueueAddress(target.sa, remoteQid);
-		return new RemotelyRunningOperation(remoteInputQaddr, target.opid, rq, initialInputData);
+		return new RemotelyRunningOperation(this, remoteInputQaddr, target.opid, rq, initialInputData);
 	}
 
 	public RemotelyRunningOperation exec(OperationAddress target, boolean createQueue, Object initialInputData) {

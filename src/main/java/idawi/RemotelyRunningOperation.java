@@ -6,14 +6,14 @@ public class RemotelyRunningOperation {
 	public MessageQueue returnQ;
 	public final Service clientService;
 
-	public RemotelyRunningOperation(QueueAddress to, String operationName, MessageQueue returnQ,
+	public RemotelyRunningOperation(Service sourceService, QueueAddress to, String operationName, MessageQueue returnQ,
 			Object initialInputData) {
-		this(returnQ.service, to, operationName, returnQ == null ? null : returnQ.addr(), initialInputData);
+		this(sourceService, to, operationName, returnQ == null ? null : returnQ.addr(), initialInputData);
 		this.returnQ = returnQ;
 	}
 
-	public RemotelyRunningOperation(Service clientService, QueueAddress to, String operationName, QueueAddress returnQaddr,
-			Object initialInputData) {
+	public RemotelyRunningOperation(Service clientService, QueueAddress to, String operationName,
+			QueueAddress returnQaddr, Object initialInputData) {
 		this.clientService = clientService;
 		this.triggerMsg.operationName = operationName;
 		this.triggerMsg.to = to;
@@ -25,7 +25,6 @@ public class RemotelyRunningOperation {
 
 //		System.out.println(to + "   4" + initialInputData);
 
-		
 		triggerMsg.originService = clientService.getClass();
 		triggerMsg.send(clientService.component);
 	}

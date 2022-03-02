@@ -5,23 +5,36 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import idawi.map.NetworkMap;
+import toools.collections.Collections;
 import toools.thread.Threads;
 
 public class RegistryService extends Service {
+	public final static AtomicBoolean run = new AtomicBoolean(true);
 
 	static {
-		Threads.newThread_loop(1000, () -> true, () -> {
-			// Component.componentsInThisJVM.values()
-			// .forEach(c ->
-			// c.lookup(RegistryService.class).lookupOperation(broadcastLocalInfo.class).f());
-		});
+		var r = new Random();
+
+		new Thread(() -> {
+			while (run.get()) {
+				if (Component.componentsInThisJVM.isEmpty()) {
+					Threads.sleep(0.1);
+				} else {
+					var from = Collections.pickRandomObject(Component.componentsInThisJVM.values(), r);
+					from.lookupO(RegistryService.broadcastLocalInfo.class).f();
+					Threads.sleep(10d / Component.componentsInThisJVM.size());
+				}
+			}
+		}).start();
 	}
 
-	private final Map<String, ComponentDescriptor> name2descriptor = new HashMap<>();
+	private final Map<String, ComponentDescriptor> name2descriptor = java.util.Collections
+			.synchronizedMap(new HashMap<>());
 
 	public RegistryService(Component component) {
 		super(component);
@@ -39,15 +52,15 @@ public class RegistryService extends Service {
 	}
 
 	public class broadcastLocalInfo extends TypedInnerOperation {
-
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "broadcast local info to all nodes closer that 10 hops";
 		}
 
 		public void f() {
-			RegistryService.this.exec(new To().o(RegistryService.add.class), null, component.descriptor());
+			var to = new To(null, 10, 1).o(RegistryService.add.class);
+			RegistryService.this.exec(to, null, new OperationParameterList(component.descriptor()));
+			System.out.println(component + " sent " +   component.descriptor());
 		}
 	}
 
@@ -59,6 +72,7 @@ public class RegistryService extends Service {
 		}
 
 		public void f(ComponentDescriptor d) {
+			System.out.println(component + " received " + d);
 			var alreadyHere = name2descriptor.get(d.name);
 
 			if (alreadyHere == null || d.isNewerThan(alreadyHere)) {

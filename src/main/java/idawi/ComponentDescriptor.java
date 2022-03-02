@@ -50,8 +50,7 @@ public class ComponentDescriptor implements Descriptor {
 
 	@Override
 	public String toString() {
-		String s = name.toString();
-		return s;
+		return name;
 	}
 
 	public String toCDL() {
@@ -110,6 +109,12 @@ public class ComponentDescriptor implements Descriptor {
 				}
 			}
 		});
+	}
+
+	public static ComponentDescriptor fromName(String name) {
+		ComponentDescriptor d = new ComponentDescriptor();
+		d.name = name;
+		return d;
 	}
 
 	public static ComponentDescriptor fromCDL(String s) {

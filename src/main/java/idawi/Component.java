@@ -39,11 +39,11 @@ public class Component {
 	public ComponentDescriptor parent;
 
 	public Component() {
-		this("name=c" + componentsInThisJVM.size());
+		this("c" + componentsInThisJVM.size());
 	}
 
 	public Component(String name) {
-		this(ComponentDescriptor.fromCDL("name=" + name));
+		this(ComponentDescriptor.fromName(name));
 	}
 
 	public Component(ComponentDescriptor descriptor) {

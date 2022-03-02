@@ -214,6 +214,7 @@ public class RESTService extends Service {
 						+ ". Available format are 'errors', 'warnings' or 'results'");
 			}
 		} catch (Throwable e) {
+			e.printStackTrace();
 			RESTError err = new RESTError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
@@ -302,7 +303,7 @@ public class RESTService extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = lookup(RegistryService.lookUp.class).f(name);
+			var found = component.lookupO(RegistryService.lookUp.class).f(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));
