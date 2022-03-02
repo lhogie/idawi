@@ -24,7 +24,7 @@ public class Message implements Externalizable {
 	public boolean dropIfRecipientQueueIsFull = false;
 	public Object routingData;
 
-	public Class<? extends Service> originService;
+	public String originService;
 
 	public Message() {
 	}
@@ -93,7 +93,7 @@ public class Message implements Externalizable {
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(ID);
-		out.writeObject(originService);
+		out.writeUTF(originService);
 		out.writeObject(route);
 		out.writeObject(suggestedRoute);
 		out.writeObject(to);
@@ -107,7 +107,7 @@ public class Message implements Externalizable {
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		ID = in.readLong();
-		this.originService = (Class<? extends Service>) in.readObject();
+		this.originService = in.readUTF();
 		route = (Route) in.readObject();
 		suggestedRoute = (Route) in.readObject();
 		to = (QueueAddress) in.readObject();

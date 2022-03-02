@@ -408,7 +408,7 @@ public class Service {
 
 	public void send(Object o, QueueAddress to) {
 		var m = new Message(o, to, null);
-		m.originService = this.getClass();
+		m.originService = this.getClass().getName();
 		m.send(component);
 	}
 

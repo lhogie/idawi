@@ -53,6 +53,13 @@ public class MessageQueue extends Q<Message> {
 		return c;
 	}
 
+	public MessageCollector collectUntilAllHaveReplied(final double initialDuration,
+			Set<ComponentDescriptor> components) {
+		return collect(initialDuration, initialDuration, c -> {
+			c.stop = c.messages.senders().equals(components);
+		});
+	}
+
 	public Enough forEach(final double during, final double waitTime, Function<Message, Enough> returnsHandler) {
 		return collect(during, waitTime, c -> {
 			c.stop = returnsHandler.apply(c.messages.last()) == Enough.yes;

@@ -21,6 +21,7 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.MessageList;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.Service;
@@ -29,7 +30,6 @@ import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
 import idawi.service.ServiceManager;
-import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -283,14 +283,11 @@ public class RESTService extends Service {
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
 					var to = new To(components).s(serviceID).o(operation);
-					List<Object> r = exec(to, true, parms).returnQ.collectUntilFirstEOT().throwAnyError_Runtime().contents();
+					MessageList r = exec(to, true, parms).returnQ.collectUntilAllHaveReplied(timeout,
+							components).messages.throwAnyError();
 
-					if (r.size() == 1) {
-						return r.get(0);
-					} else {
-						return r;
-					}
-
+//					return r.get(0);
+					return r.classifyByComponentName();
 				}
 			}
 		}

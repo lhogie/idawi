@@ -33,6 +33,7 @@ public class SystemMonitor extends Service {
 	public SystemMonitor(Component peer) {
 		super(peer);
 		registerOperation(new get());
+		registerOperation(new loadAvg());
 
 		newThread_loop_periodic(20000, () -> {
 			Info i = new Info();
@@ -63,6 +64,18 @@ public class SystemMonitor extends Service {
 
 		public Info f() {
 			return lastInfo;
+		}
+	}
+	
+	public class loadAvg extends TypedInnerOperation {
+
+		@Override
+		public String getDescription() {
+			return "gives the load average";
+		}
+
+		public double f() {
+			return Utils.loadRatio();
 		}
 	}
 }

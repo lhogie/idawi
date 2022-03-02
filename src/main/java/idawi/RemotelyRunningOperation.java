@@ -25,7 +25,7 @@ public class RemotelyRunningOperation {
 
 //		System.out.println(to + "   4" + initialInputData);
 
-		triggerMsg.originService = clientService.getClass();
+		triggerMsg.originService = clientService.getClass().getName();
 		triggerMsg.send(clientService.component);
 	}
 

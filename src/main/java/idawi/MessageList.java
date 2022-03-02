@@ -17,7 +17,7 @@ import toools.exceptions.CodeShouldNotHaveBeenReachedException;
 
 public class MessageList extends ArrayList<Message> {
 	private static final long serialVersionUID = 1L;
-	public Enough enough;
+	//public Enough enough;
 
 	public DoubleList receptionDates() {
 		DoubleList receptionDates = new DoubleArrayList();
@@ -150,6 +150,22 @@ public class MessageList extends ArrayList<Message> {
 
 			if (l == null) {
 				r.put(m.route.source().component, l = new MessageList());
+			}
+
+			l.add(m);
+		}
+
+		return r;
+	}
+
+	public Map<String, MessageList> classifyByComponentName() {
+		Map<String, MessageList> r = new HashMap<>();
+
+		for (Message m : this) {
+			MessageList l = r.get(m.route.source().component);
+
+			if (l == null) {
+				r.put(m.route.source().component.name, l = new MessageList());
 			}
 
 			l.add(m);
