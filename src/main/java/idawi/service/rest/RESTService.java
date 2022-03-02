@@ -36,6 +36,8 @@ import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
+import toools.io.ser.TOMLSerializer;
+import toools.io.ser.YAMLSerializer;
 import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
@@ -49,13 +51,15 @@ public class RESTService extends Service {
 
 	static {
 		name2serializer.put("json_gson", new GSONSerializer<>());
-		name2serializer.put("json_jackson", new JacksonSerializer());
+		name2serializer.put("json_jackson", new JacksonSerializer<>());
 		name2serializer.put("ser", new JavaSerializer<>());
 		name2serializer.put("fst", new FSTSerializer<>());
 		name2serializer.put("xml", new XMLSerializer<>());
 		name2serializer.put("toString", new ToStringSerializer<>());
 		name2serializer.put("error", new StrackTraceSerializer<>());
-		name2serializer.put("bytes", new ToBytesSerializer());
+		name2serializer.put("bytes", new ToBytesSerializer<>());
+		name2serializer.put("toml", new TOMLSerializer<>());
+		name2serializer.put("yaml", new YAMLSerializer<>());
 	}
 
 	public RESTService(Component t) {
@@ -160,9 +164,9 @@ public class RESTService extends Service {
 	}
 
 	public static class Response {
-		List<RESTError> errors = new ArrayList<>();
-		List<String> warnings = new ArrayList<>();
-		List<Object> results = new ArrayList<>();
+		public List<RESTError> errors = new ArrayList<>();
+		public List<String> warnings = new ArrayList<>();
+		public List<Object> results = new ArrayList<>();
 
 		@Override
 		public String toString() {
@@ -286,8 +290,8 @@ public class RESTService extends Service {
 					MessageList r = exec(to, true, parms).returnQ.collectUntilAllHaveReplied(timeout,
 							components).messages.throwAnyError();
 
-//					return r.get(0);
-					return r.classifyByComponentName();
+					var m = r.sender2message();
+					return m;
 				}
 			}
 		}

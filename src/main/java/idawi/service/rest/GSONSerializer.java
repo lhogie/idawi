@@ -38,6 +38,7 @@ public class GSONSerializer<E> extends Serializer<E> {
 	static final Gson gson;
 
 	static {
+		
 		GsonBuilder builder = new GsonBuilder();
 		builder.registerTypeAdapter(Class.class, new ClassAdapter());
 		builder.setPrettyPrinting();

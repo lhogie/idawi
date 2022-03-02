@@ -6,6 +6,7 @@ public class EOT implements Serializable {
 	private EOT() {
 		
 	}
+	
 	@Override
 	public String toString() {
 		return "EOT";

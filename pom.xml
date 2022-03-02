@@ -70,7 +70,9 @@
 			</plugin>
 		</plugins>
 	</build>
+
 	<dependencies>
+
 		<dependency>
 			<groupId>batik</groupId>
 			<artifactId>batik-swing</artifactId>

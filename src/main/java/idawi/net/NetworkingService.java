@@ -131,7 +131,7 @@ public class NetworkingService extends Service {
 
 	private void notYetReceivedMsg(Message msg) {
 		if (msg.to.serviceAddress.to.isBroadcast()) {
-			Service targetService = component.lookup(msg.to.serviceAddress.service);
+			Service targetService = component.lookup(msg.to.serviceAddress.getServiceID());
 
 			if (targetService != null) {
 				targetService.considerNewMessage(msg);

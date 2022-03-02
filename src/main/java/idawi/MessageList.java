@@ -10,14 +10,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import idawi.MessageQueue.Enough;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import toools.exceptions.CodeShouldNotHaveBeenReachedException;
 
 public class MessageList extends ArrayList<Message> {
 	private static final long serialVersionUID = 1L;
-	//public Enough enough;
+	// public Enough enough;
 
 	public DoubleList receptionDates() {
 		DoubleList receptionDates = new DoubleArrayList();
@@ -58,7 +57,7 @@ public class MessageList extends ArrayList<Message> {
 
 		return r;
 	}
-	
+
 	public MessageList filter(Predicate<Message> p) {
 		MessageList l = new MessageList();
 
@@ -118,7 +117,7 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList ensureSize(int n) {
-		if (size() < n) 
+		if (size() < n)
 			throw new IllegalStateException("not enough elements");
 
 		return this;
@@ -142,7 +141,7 @@ public class MessageList extends ArrayList<Message> {
 		}).collect(Collectors.toList());
 	}
 
-	public Map<ComponentDescriptor, MessageList> classifyByComponent() {
+	public Map<ComponentDescriptor, MessageList> sender2message() {
 		Map<ComponentDescriptor, MessageList> r = new HashMap<>();
 
 		for (Message m : this) {
@@ -158,17 +157,21 @@ public class MessageList extends ArrayList<Message> {
 		return r;
 	}
 
-	public Map<String, MessageList> classifyByComponentName() {
+	public Map<String, MessageList> senderName2messages() {
 		Map<String, MessageList> r = new HashMap<>();
 
-		for (Message m : this) {
-			MessageList l = r.get(m.route.source().component);
+		for (var e : sender2message().entrySet()) {
+			r.put(e.getKey().name, e.getValue());
+		}
 
-			if (l == null) {
-				r.put(m.route.source().component.name, l = new MessageList());
-			}
+		return r;
+	}
 
-			l.add(m);
+	public Map<String, List<Object>> senderName2contents() {
+		Map<String, List<Object>> r = new HashMap<>();
+
+		for (var e : sender2message().entrySet()) {
+			r.put(e.getKey().name, e.getValue().contents());
 		}
 
 		return r;
