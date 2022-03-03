@@ -35,8 +35,6 @@ public class ComponentDescriptor implements Descriptor {
 	public SSHParms sshParameters = new SSHParms();
 	public final List<InetAddress> inetAddresses = new ArrayList<>();
 	public Integer tcpPort, udpPort;
-	public final List<String> webServers = new ArrayList<>();
-	public WHERE where;
 //	public Set<Class<? extends Service>> services = new HashSet<>();
 	public Set<ServiceDescriptor> services = new HashSet<>();
 	// private int isLocalhost;
@@ -99,7 +97,6 @@ public class ComponentDescriptor implements Descriptor {
 		key2cdlHandler.put("tcp_port", (p, v) -> p.tcpPort = Integer.valueOf(v));
 		key2cdlHandler.put("udp_port", (p, v) -> p.udpPort = Integer.valueOf(v));
 		key2cdlHandler.put("ssh", (p, v) -> p.sshParameters = SSHParms.fromSSHString(v));
-		key2cdlHandler.put("where", (p, v) -> p.where = WHERE.valueOf(v));
 		key2cdlHandler.put("ip", (p, v) -> {
 			for (String i : v.split(",")) {
 				try {

@@ -287,10 +287,11 @@ public class RESTService extends Service {
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
 					var to = new To(components).s(serviceID).o(operation);
-					MessageList r = exec(to, true, parms).returnQ.collectUntilAllHaveReplied(timeout,
-							components).messages.throwAnyError();
+					MessageList r = exec(to, true, parms).returnQ.collect(timeout, timeout, c -> {
+						c.stop = c.messages.filter(m -> m.isEOT()).senders().equals(components);
+					}).messages.throwAnyError();
 
-					var m = r.sender2message();
+					var m = r.senderName2contents();
 					return m;
 				}
 			}

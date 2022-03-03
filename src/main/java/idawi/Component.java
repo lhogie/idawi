@@ -21,6 +21,7 @@ import idawi.service.DeployerService;
 import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
+import idawi.service.JVMInfo;
 import idawi.service.PingService;
 import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
@@ -68,6 +69,7 @@ public class Component {
 		new FileService(this);
 		new RegistryService(this);
 		new NetworkingService(this);
+		new JVMInfo(this);
 
 		System.out.println(services.keySet());
 		this.descriptor = createDescriptor();

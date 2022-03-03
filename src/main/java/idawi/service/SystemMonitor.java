@@ -1,11 +1,10 @@
 package idawi.service;
 
 import java.io.Serializable;
-import java.util.Properties;
 
 import idawi.Component;
-import idawi.TypedInnerOperation;
 import idawi.Service;
+import idawi.TypedInnerOperation;
 import idawi.Utils;
 import idawi.service.publish_subscribe.PublishSubscribe;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -22,11 +21,10 @@ public class SystemMonitor extends Service {
 	public static class Info implements Serializable {
 		public DoubleList loadAvg = new DoubleArrayList();
 		public int nbCores;
-		public Properties systemProperties;// = System.getProperties();
 
 		@Override
 		public String toString() {
-			return "Info [loadAvg=" + loadAvg + ", nbCores=" + nbCores + ", systemProperties=" + systemProperties + "]";
+			return "loadAvg=" + loadAvg;
 		}
 	}
 
@@ -44,7 +42,6 @@ public class SystemMonitor extends Service {
 			}
 
 			i.nbCores = Runtime.getRuntime().availableProcessors();
-			i.systemProperties = System.getProperties();
 			this.lastInfo = i;
 
 			var ps = component.lookup(PublishSubscribe.class);
@@ -66,7 +63,7 @@ public class SystemMonitor extends Service {
 			return lastInfo;
 		}
 	}
-	
+
 	public class loadAvg extends TypedInnerOperation {
 
 		@Override
