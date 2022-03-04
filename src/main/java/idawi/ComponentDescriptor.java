@@ -1,6 +1,7 @@
 package idawi;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -44,7 +45,7 @@ public class ComponentDescriptor implements Descriptor {
 
 	public Map<String, Set<String>> protocol2neighbors = new HashMap<>();
 	public Set<String> neighbors = new HashSet<>();
-	public Map<String, Set<String>> neighbors2 = new HashMap<>();
+	public Set<Link> links = new HashSet<>();
 
 	@Override
 	public String toString() {
@@ -200,6 +201,10 @@ public class ComponentDescriptor implements Descriptor {
 		}
 
 		return true;
+	}
+
+	public static class Link implements Serializable {
+		public String neighbor, protocol;
 	}
 
 }

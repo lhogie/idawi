@@ -10,10 +10,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
+import idawi.net.TransportLayer;
 import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
 import idawi.service.DemoService;
@@ -154,8 +154,16 @@ public class Component {
 		d.systemInfo = lookupOperation(SystemMonitor.get.class).f();
 		forEachService(s -> d.services.add(s.descriptor()));
 //		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
-		lookup(NetworkingService.class).transport.neighbors2().entrySet().forEach(e -> d.neighbors2.put(e.getKey().name,
-				e.getValue().stream().map(t -> t.getName()).collect(Collectors.toSet())));
+
+		for (TransportLayer protocol : lookup(NetworkingService.class).transport.transports()) {
+			for (ComponentDescriptor peer : protocol.neighbors()) {
+				var l = new ComponentDescriptor.Link();
+				l.neighbor = peer.name;
+				l.protocol = protocol.getName();
+				d.links.add(l);
+			}
+		}
+
 		return d;
 	}
 

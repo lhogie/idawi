@@ -14,18 +14,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.MessageCollector;
 import idawi.MessageList;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
+import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.ServiceDescriptor;
+import idawi.Streams;
 import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
@@ -89,21 +93,35 @@ public class RESTService extends Service {
 		restServer = HttpServer.create(new InetSocketAddress(port), 0);
 		restServer.createContext("/", e -> {
 			URI uri = e.getRequestURI();
-			InputStream is = e.getRequestBody();
-			var data = is.readAllBytes();
-			is.close();
+			InputStream is = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
+			// is.close();
 			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
+			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
+			OutputStream out = e.getResponseBody();
 
 			try {
+				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 				Map<String, String> query = query(uri.getQuery());
-				var response = processRequest(path, query, data);
-				sendBack(HttpURLConnection.HTTP_OK, response, e);
+				processRequest(path, query, is, r -> {
+					try {
+						System.out.println("sending " + new String(r));
+						out.write(r);
+					} catch (IOException e1) {
+						// cannot write anything back
+						// at least show in the server's console
+						e1.printStackTrace();
+					}
+				});
 			} catch (Throwable err) {
 //				Cout.debugSuperVisible(path + "   sending 404");
-//				sendBack(HttpURLConnection.HTTP_NOT_FOUND, TextUtilities.exception2string(err).getBytes(), e);
+				var er = TextUtilities.exception2string(err).getBytes();
+				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, er.length);
+				out.write(er);
+				logError(err.getMessage());
 				err.printStackTrace();
 			}
+			out.close();
 		});
 		restServer.setExecutor(Service.threadPool);
 		restServer.start();
@@ -114,53 +132,51 @@ public class RESTService extends Service {
 		return restServer;
 	}
 
-	private void sendBack(int returnCode, byte[] o, HttpExchange e) {
-		try {
-			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
-			e.sendResponseHeaders(returnCode, o.length);
-			OutputStream out = e.getResponseBody();
-			// Cout.debug("sending " + o.length + " bytes");
-			out.write(o);
-			out.close();
-		} catch (IOException t) {
-			logError(t);
-		}
-	}
-
-	private synchronized byte[] processRequest(List<String> path, Map<String, String> query, byte[] data)
-			throws Throwable {
+	private synchronized void processRequest(List<String> path, Map<String, String> query, InputStream is,
+			Consumer<byte[]> output) throws Throwable {
 		if (path == null) {
-			return new JavaResource(getClass(), "root.html").getByteArray();
+			output.accept(new JavaResource(getClass(), "root.html").getByteArray());
 		} else {
 //			Cout.debugSuperVisible("path: " + path);
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
-				return serveAPI(path, query, data);
+				serveAPI(path, query, is, output);
 			} else if (context.equals("file")) {
-				return serveFiles(path, query);
+				serveFiles(path, query, output);
 			} else if (context.equals("favicon.ico")) {
-				return new JavaResource(RESTService.class, "flavicon.ico").getByteArray();
+				output.accept(new JavaResource(RESTService.class, "flavicon.ico").getByteArray());
 			} else if (context.equals("web")) {
-				return serveWeb(path, query);
+				serveWeb(path, query, output);
 			} else {
 				throw new IllegalArgumentException("unknown context: " + context);
 			}
 		}
 	}
 
-	private byte[] serveWeb(List<String> path, Map<String, String> query) throws Throwable {
+	private void serveWeb(List<String> path, Map<String, String> query, Consumer<byte[]> output) throws Throwable {
 		if (path.isEmpty()) {
-			return new JavaResource(getClass(), "web/index.html").getByteArray();
+			output.accept(new JavaResource(getClass(), "web/index.html").getByteArray());
 		} else {
 			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
 			// Cout.debugSuperVisible("sending " + res.getName());
-			return res.getByteArray();
+			output.accept(res.getByteArray());
 		}
 	}
 
-	private byte[] serveFiles(List<String> path, Map<String, String> query) throws Throwable {
-		return new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).getContent();
+	private void serveFiles(List<String> path, Map<String, String> query, Consumer<byte[]> output) throws Throwable {
+		var i = new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).createReadingStream();
+		byte[] b = new byte[1024];
+
+		while (true) {
+			int n = i.read(b);
+
+			if (n == -1) {
+				return;
+			} else if (n > 0) {
+				output.accept(n == b.length ? b : Arrays.copyOf(b, n));
+			}
+		}
 	}
 
 	public static class Response {
@@ -178,56 +194,44 @@ public class RESTService extends Service {
 		}
 	}
 
-	private byte[] serveAPI(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
-		Response r = new Response();
-		String only;
-		Serializer serializer = new GSONSerializer<>();
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, Consumer<byte[]> output)
+			throws Throwable {
+		Serializer serializer = ser(query.remove("format"));
 
 		try {
+			processRESTRequest(path, query, is, r -> {
+				if (r == null) {
+					r = new NULL();
+				}
 
-			String format = query.remove("format");
+				output.accept(serializer.toBytes(r));
+			});
 
-			if (format != null) {
-				serializer = name2serializer.get(format);
-			}
-
-			if (serializer == null) {
-				throw new IllegalArgumentException(
-						"unknown format: " + format + ". Available format are: " + name2serializer.keySet());
-			}
-
-			Object result = processRESTRequest(path, query, data);
-
-			if (result == null) {
-				result = new NULL();
-			}
-
-			r.results.add(result);
-			only = query.remove("only");
-			query.keySet().forEach(k -> r.warnings.add("unused parameter: " + k));
-
-			if (only == null) {
-				return serializer.toBytes(r);
-			} else if (only.equals("errors")) {
-				return serializer.toBytes(r.errors);
-			} else if (only.equals("warnings")) {
-				return serializer.toBytes(r.warnings);
-			} else if (only.equals("results")) {
-				return serializer.toBytes(r.results.get(0));
-			} else {
-				throw new IllegalArgumentException("unknown value for 'only': " + only
-						+ ". Available format are 'errors', 'warnings' or 'results'");
-			}
+			query.keySet().forEach(k -> output.accept(serializer.toBytes("unused parameter: " + k)));
+			output.accept(serializer.toBytes("EOF"));
 		} catch (Throwable e) {
 			e.printStackTrace();
 			RESTError err = new RESTError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
 			err.javaStackTrace = TextUtilities.exception2string(e);
-			r.errors.add(err);
-			return serializer.toBytes(r);
+			output.accept(serializer.toBytes(err));
+		}
+	}
+
+	private Serializer ser(String format) {
+		Serializer serializer = new GSONSerializer<>();
+
+		if (format != null) {
+			serializer = name2serializer.get(format);
+
+			if (serializer == null) {
+				throw new IllegalArgumentException(
+						"unknown format: " + format + ". Available format are: " + name2serializer.keySet());
+			}
 		}
 
+		return serializer;
 	}
 
 	public static class RESTError implements Serializable {
@@ -255,17 +259,18 @@ public class RESTService extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private Object processRESTRequest(List<String> path, Map<String, String> query, byte[] data) throws Throwable {
+	private void processRESTRequest(List<String> path, Map<String, String> query, InputStream is,
+			Consumer<Object> output) throws Throwable {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
 		if (path == null || path.isEmpty()) {
-			return component.descriptor();
+			output.accept(component.descriptor());
 		} else {
 			Set<ComponentDescriptor> components = componentsFromURL(path.remove(0));
 
 			// there's nothing more
 			if (path.isEmpty()) {
-				return describeComponent(components, timeout).toArray(new ComponentDescriptor[0]);
+				output.accept(describeComponent(components, timeout).toArray(new ComponentDescriptor[0]));
 			} else {
 				String serviceName = path.remove(0);
 				Class<? extends Service> serviceID = Clazz.findClass(serviceName);
@@ -273,26 +278,33 @@ public class RESTService extends Service {
 				if (serviceID == null) {
 					throw new Error("service " + serviceName + " is not known");
 				} else if (path.isEmpty()) {
-					return decribeService(components, serviceID);
+					output.accept(decribeService(components, serviceID));
 				} else {
 					String operation = path.remove(0);
 					var parms = new OperationParameterList();
 					parms.addAll(path);
 
-					if (data != null && data.length > 0) {
-						// POST data is always passed as the last parameter
-						parms.add(data);
-					}
-
 					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
 							+ " with parameters: " + parms);
 					var to = new To(components).s(serviceID).o(operation);
-					MessageList r = exec(to, true, parms).returnQ.collect(timeout, timeout, c -> {
-						c.stop = c.messages.filter(m -> m.isEOT()).senders().equals(components);
-					}).messages.throwAnyError();
+
+					Consumer<MessageCollector> c1 = c -> c.stop = c.messages.filter(m -> m.isEOT()).senders()
+							.equals(components);
+
+					AtomicInteger i = new AtomicInteger();
+					Consumer<MessageCollector> c2 = c -> c.stop = i.incrementAndGet() == 3;
+
+					RemotelyRunningOperation ro = exec(to, true, parms);
+
+					if (is != null) {
+						Streams.split(is, 1000, m -> ro.send(m));
+					}
+
+					MessageCollector c = ro.returnQ.collect(timeout, timeout, c1);
+					MessageList r = c.messages.throwAnyError();
 
 					var m = r.senderName2contents();
-					return m;
+					output.accept(m);
 				}
 			}
 		}

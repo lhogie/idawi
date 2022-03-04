@@ -145,6 +145,10 @@ public class MultiTransport extends TransportLayer {
 		return peer_protocols;
 	}
 
+	public Set<TransportLayer> transports() {
+		return transports;
+	}
+	
 	public LMI lmi() {
 		for (var t : transports) {
 			if (t instanceof LMI) {

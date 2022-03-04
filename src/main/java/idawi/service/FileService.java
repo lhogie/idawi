@@ -1,34 +1,34 @@
 package idawi.service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
+import idawi.ComponentDescriptor;
 import idawi.TypedInnerOperation;
+import idawi.MessageQueue;
 import idawi.Service;
-import toools.io.Cout;
+import idawi.Streams;
+import idawi.To;
+import idawi.service.DemoService.waiting;
+import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 
 public class FileService extends Service {
-	final private Directory dir = new Directory(directory(), "shared_files");
-	public find find = new find();
-	public delete delete = new delete();
-	public download download = new download();
-	public exists exists = new exists();
-	public size size = new size();
-	public upload upload = new upload();
-	public pathToLocalFiles pathToLocalFiles = new pathToLocalFiles();
+	final Directory dir = new Directory(directory(), "shared_files");
 
 	public FileService(Component t) {
 		super(t);
 		registerOperation(new delete());
-		registerOperation(new download());
+		registerOperation(new downloadFile());
+		registerOperation(new listFiles());
 		registerOperation(new exists());
-		registerOperation(new find());
 		registerOperation(new pathToLocalFiles());
 		registerOperation(new size());
 		registerOperation(new upload());
@@ -46,15 +46,12 @@ public class FileService extends Service {
 		}
 	}
 
-	public class find extends TypedInnerOperation {
-		public Set<String> f() throws IOException {
-			Cout.debug(dir);
+	public class listFiles extends TypedInnerOperation {
+		public Set<String> listFiles() throws IOException {
 			dir.ensureExists();
 			List<AbstractFile> files = dir.retrieveTree();
-			Cout.debug(files);
 			files.remove(dir);
-			var r = files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
-			return r;
+			return files.stream().map(f -> f.getPath()).collect(Collectors.toSet());
 		}
 
 		@Override
@@ -64,24 +61,62 @@ public class FileService extends Service {
 		}
 	}
 
-	public class download extends TypedInnerOperation {
-		public byte[] download(String path) throws IOException {
-			return new RegularFile(dir, path).getContent();
+
+
+
+	public static waiting fileInfo;
+
+	public static class FileInfo implements Serializable {
+		public String name;
+		public long len;
+		public long age;
+	}
+
+	private FileInfo fileInfo(String name) throws IOException {
+		var f = new RegularFile(dir, name);
+		var info = new FileInfo();
+		info.name = name;
+		info.len = f.getSize();
+		info.age = f.getAgeMs();
+		return info;
+	}
+
+	public static class DownloadFileParms implements Serializable {
+		String name;
+		long seek = 0;
+		long len = Long.MAX_VALUE;
+	}
+
+	public class downloadFile extends TypedInnerOperation {
+		public void downloadFile(MessageQueue q) throws IOException {
+			var msg = q.get_blocking();
+			DownloadFileParms parms = (DownloadFileParms) msg.content;
+			dir.ensureExists();
+			var f = new RegularFile(dir, parms.name);
+			long fileLength = f.getSize();
+			var inputStream = f.createReadingStream();
+			inputStream.skip(parms.seek);
+			Streams.split(inputStream, 1000, c -> send(inputStream, msg.replyTo));
 		}
 
 		@Override
 		public String getDescription() {
+			// TODO Auto-generated method stub
 			return null;
 		}
 	}
 
 	public class upload extends TypedInnerOperation {
-		public void f(String path, byte[] bytes) throws IOException {
-			new RegularFile(dir, path).setContent(bytes);
+		public void upload(String name, boolean append, InputStream in) throws IOException {
+			dir.ensureExists();
+			var fos = new RegularFile(dir, name).createWritingStream(append);
+			Utilities.copy(in, fos);
+			fos.close();
 		}
 
 		@Override
 		public String getDescription() {
+			// TODO Auto-generated method stub
 			return null;
 		}
 	}
@@ -94,6 +129,7 @@ public class FileService extends Service {
 
 		@Override
 		public String getDescription() {
+			// TODO Auto-generated method stub
 			return null;
 		}
 	}
@@ -123,4 +159,5 @@ public class FileService extends Service {
 			return null;
 		}
 	}
+
 }
