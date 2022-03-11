@@ -193,6 +193,7 @@ public class NetworkingService extends Service {
 	}
 
 	public void send(Message msg, TransportLayer protocol) {
+		Cout.debugSuperVisible(msg);
 		Collection<ComponentDescriptor> relays = new HashSet<>();
 
 		component.forEachService(s -> {

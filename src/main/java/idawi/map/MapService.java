@@ -28,14 +28,13 @@ public class MapService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "provides a map of the network";
 		}
 	}
 
 	@Override
 	public String getFriendlyName() {
-		return "graph map";
+		return "map";
 	}
 
 	public void feedWith(Route route) {

@@ -26,7 +26,7 @@ public class RegistryService extends Service {
 					Threads.sleep(0.1);
 				} else {
 					var from = Collections.pickRandomObject(Component.componentsInThisJVM.values(), r);
-					from.lookupO(RegistryService.broadcastLocalInfo.class).f();
+					from.lookupO(RegistryService.broadcastLocalDescriptor.class).f(1	);
 					Threads.sleep(10d / Component.componentsInThisJVM.size());
 				}
 			}
@@ -40,7 +40,8 @@ public class RegistryService extends Service {
 		super(component);
 		registerOperation(new add());
 		registerOperation(new addAll());
-		registerOperation(new broadcastLocalInfo());
+		registerOperation(new broadcastLocalDescriptor());
+		registerOperation(new broadcastFullDatabase());
 		registerOperation(new clear());
 		registerOperation(new list());
 		registerOperation(new local());
@@ -51,28 +52,40 @@ public class RegistryService extends Service {
 		registerOperation(new updateAll());
 	}
 
-	public class broadcastLocalInfo extends TypedInnerOperation {
+
+	public class broadcastLocalDescriptor extends TypedInnerOperation {
 		@Override
 		public String getDescription() {
 			return "broadcast local info to all nodes closer that 10 hops";
 		}
 
-		public void f() {
-			var to = new To(null, 10, 1).o(RegistryService.add.class);
+		public void f(int nbHops) {
+			var to = new To(null, nbHops, 1).o(RegistryService.add.class);
 			RegistryService.this.exec(to, null, new OperationParameterList(component.descriptor()));
-			System.out.println(component + " sent " +   component.descriptor());
+			// System.out.println(component + " sent " + component.descriptor());
+		}
+	}
+
+	public class broadcastFullDatabase extends TypedInnerOperation {
+		@Override
+		public String getDescription() {
+			return "broadcast all the known descriptors";
+		}
+
+		public void f(int nbHops) {
+			var to = new To(null, nbHops, 1).o(RegistryService.add.class);
+			RegistryService.this.exec(to, null, new OperationParameterList(name2descriptor.values()));
 		}
 	}
 
 	public class add extends TypedInnerOperation {
-
 		@Override
 		public String getDescription() {
 			return null;
 		}
 
 		public void f(ComponentDescriptor d) {
-			System.out.println(component + " received " + d);
+			// System.out.println(component + " received " + d);
 			var alreadyHere = name2descriptor.get(d.name);
 
 			if (alreadyHere == null || d.isNewerThan(alreadyHere)) {

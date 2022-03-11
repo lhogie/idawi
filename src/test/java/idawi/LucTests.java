@@ -12,12 +12,14 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
+import idawi.net.NetworkingService;
 import idawi.service.DemoService;
 import idawi.service.DeployerService;
 import idawi.service.PingService;
 import idawi.service.rest.RESTService;
 import toools.io.Cout;
 import toools.net.NetUtilities;
+import toools.thread.Threads;
 
 public class LucTests {
 
@@ -143,16 +145,16 @@ public class LucTests {
 
 		// creates a component in this JVM
 		Component master = new Component("master");
-		master.descriptor().tcpPort = 56756;
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentDescriptor other = ComponentDescriptor.fromCDL("name=other_peer /  tcp_port=56757");
+		ComponentDescriptor other = new ComponentDescriptor();
+		other.name = "other_peer";
 		master.lookup(DeployerService.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
-
+		
 		// asks the master to ping the other component
-		Message pong = new Service(master).component.lookup(PingService.class).ping(other, 1);
+		Message pong = new Service(master).component.lookup(PingService.class).ping(other, 10);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer

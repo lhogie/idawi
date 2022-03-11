@@ -12,6 +12,7 @@ import idawi.MessageList;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.To;
+import toools.io.Cout;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -27,6 +28,7 @@ public class PingService extends Service {
 	public class ping extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
+			Cout.debugSuperVisible(in.get_blocking());
 		}
 
 		@Override
@@ -46,7 +48,7 @@ public class PingService extends Service {
 	public Message ping(ComponentDescriptor target, double timeout) {
 		var r = ping(Set.of(target)).get_blocking(timeout);
 
-		if (!r.route.source().component.equals(target))
+		if (r != null && !r.route.source().component.equals(target))
 			throw new IllegalStateException("someone else replied to ping!");
 
 		return r;

@@ -148,6 +148,7 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
+		Cout.debug(msg);
 		int sec = (int) Date.time();
 		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
@@ -166,7 +167,7 @@ public class Service {
 			MessageQueue q = name2queue.get(msg.to.queueName);
 
 			if (q == null) {
-//				System.out.println(msg);
+				System.out.println("ERERROEORO");
 			} else {
 				q.add_blocking(msg);
 			}

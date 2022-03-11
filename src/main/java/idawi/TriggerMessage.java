@@ -25,6 +25,6 @@ public class TriggerMessage extends Message {
 
 	@Override
 	public String toString() {
-		return "trigger " + super.toString();
+		return "trigger " +  operationName + " " + super.toString();
 	}
 }

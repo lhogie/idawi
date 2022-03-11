@@ -14,26 +14,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Message;
+import idawi.InnerOperation;
 import idawi.MessageCollector;
-import idawi.MessageList;
+import idawi.OperationAddress;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.ServiceDescriptor;
 import idawi.Streams;
 import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
-import idawi.service.ServiceManager;
 import toools.io.JavaResource;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -101,6 +99,7 @@ public class RESTService extends Service {
 			OutputStream out = e.getResponseBody();
 
 			try {
+				e.getResponseHeaders().set("Content-type", "idawi");
 				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 				Map<String, String> query = query(uri.getQuery());
 				processRequest(path, query, is, r -> {
@@ -121,6 +120,7 @@ public class RESTService extends Service {
 				logError(err.getMessage());
 				err.printStackTrace();
 			}
+
 			out.close();
 		});
 		restServer.setExecutor(Service.threadPool);
@@ -208,7 +208,6 @@ public class RESTService extends Service {
 			});
 
 			query.keySet().forEach(k -> output.accept(serializer.toBytes("unused parameter: " + k)));
-			output.accept(serializer.toBytes("EOF"));
 		} catch (Throwable e) {
 			e.printStackTrace();
 			RESTError err = new RESTError();
@@ -263,51 +262,63 @@ public class RESTService extends Service {
 			Consumer<Object> output) throws Throwable {
 		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
 
+		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
 			output.accept(component.descriptor());
 		} else {
-			Set<ComponentDescriptor> components = componentsFromURL(path.remove(0));
+			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
 			// there's nothing more
 			if (path.isEmpty()) {
-				output.accept(describeComponent(components, timeout).toArray(new ComponentDescriptor[0]));
-			} else {
-				String serviceName = path.remove(0);
-				Class<? extends Service> serviceID = Clazz.findClass(serviceName);
-
-				if (serviceID == null) {
-					throw new Error("service " + serviceName + " is not known");
-				} else if (path.isEmpty()) {
-					output.accept(decribeService(components, serviceID));
-				} else {
-					String operation = path.remove(0);
-					var parms = new OperationParameterList();
-					parms.addAll(path);
-
-					System.out.println("calling operation " + components + "/" + serviceID.toString() + "/" + operation
-							+ " with parameters: " + parms);
-					var to = new To(components).s(serviceID).o(operation);
-
-					Consumer<MessageCollector> c1 = c -> c.stop = c.messages.filter(m -> m.isEOT()).senders()
-							.equals(components);
-
-					AtomicInteger i = new AtomicInteger();
-					Consumer<MessageCollector> c2 = c -> c.stop = i.incrementAndGet() == 3;
-
-					RemotelyRunningOperation ro = exec(to, true, parms);
-
-					if (is != null) {
-						Streams.split(is, 1000, m -> ro.send(m));
-					}
-
-					MessageCollector c = ro.returnQ.collect(timeout, timeout, c1);
-					MessageList r = c.messages.throwAnyError();
-
-					var m = r.senderName2contents();
-					output.accept(m);
-				}
+				path.add(RegistryService.class.getName());
+				path.add(InnerOperation.name(RegistryService.local.class));
 			}
+
+			String serviceName = path.remove(0);
+			Class<? extends Service> serviceID = Clazz.findClass(serviceName);
+
+			if (serviceID == null)
+				throw new Error("service " + serviceName + " is not known");
+
+			if (path.isEmpty()) {
+				path.add(InnerOperation.name(Service.DescriptorOperation.class));
+			}
+
+			String operation = path.remove(0);
+			var parms = new OperationParameterList();
+			parms.addAll(path);
+
+			System.out.println("calling operation " + targets + "/" + serviceID.toString() + "/" + operation
+					+ " with parameters: " + parms);
+			var to = new To(targets).s(serviceID).o(operation);
+
+			RemotelyRunningOperation ro = exec(to, true, parms);
+
+			if (is != null) {
+				Streams.split(is, 1000, m -> ro.send(m));
+			}
+
+			String stops = query.remove("stop");
+			var stop = stops == null ? stoppers.get("aeot") : stoppers.get(Integer.valueOf(stops));
+
+			if (!query.isEmpty()) {
+				output.accept("unused parameters: " + query.keySet());
+			}
+
+			ro.returnQ.collect(timeout, timeout, c -> {
+				output.accept(c.messages.last());
+				c.stop = stop.test(to, c);
+			});
 		}
+	}
+
+	public static final Map<String, BiPredicate<OperationAddress, MessageCollector>> stoppers = new HashMap<>();
+
+	static {
+		stoppers.put("aeot", (to, c) -> c.messages.filter(m -> m.isEOT()).senders().equals(to.sa.to.componentIDs));
+		stoppers.put("1eot", (to, c) -> !c.messages.filter(m -> m.isEOT()).isEmpty());
+		stoppers.put("1m", (to, c) -> !c.messages.isEmpty());
+		stoppers.put("1r", (to, c) -> !c.messages.filter(m -> m.isResult()).isEmpty());
 	}
 
 	private Set<ComponentDescriptor> componentsFromURL(String s) {
@@ -328,36 +339,6 @@ public class RESTService extends Service {
 		}
 
 		return components;
-	}
-
-	private Set<ComponentDescriptor> describeComponent(Set<ComponentDescriptor> components, double timeout)
-			throws Throwable {
-		Set<ComponentDescriptor> r = new HashSet<>();
-		var to = new To(components).o(ServiceManager.list.class);
-		var res = exec(to, true, null).returnQ;
-
-		for (var m : res.collect(timeout, timeout, c -> {
-			c.stop = c.messages.senders().equals(components);
-		}).messages.throwAnyError().resultMessages()) {
-			ComponentDescriptor c = m.route.source().component;
-			c.services = (Set<ServiceDescriptor>) m.content;
-			r.add(c);
-		}
-
-		return r;
-	}
-
-	private Map<ComponentDescriptor, ServiceDescriptor> decribeService(Set<ComponentDescriptor> components,
-			Class<? extends Service> serviceID) throws Throwable {
-		Map<ComponentDescriptor, ServiceDescriptor> descriptors = new HashMap<>();
-		var to = new To(components).s(serviceID).o(Service.DescriptorOperation.class);
-		var res = exec(to, true, null).returnQ;
-
-		for (Message m : res.collectUntilFirstEOT().throwAnyError().resultMessages()) {
-			descriptors.put(m.route.source().component, (ServiceDescriptor) m.content);
-		}
-
-		return descriptors;
 	}
 
 	private Map<String, String> query(String s) {
