@@ -99,23 +99,14 @@ public class RESTService extends Service {
 			OutputStream out = e.getResponseBody();
 
 			try {
-				e.getResponseHeaders().set("Content-type", "idawi");
+				e.getResponseHeaders().set("Content-type", "Idawi");
 				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 				Map<String, String> query = query(uri.getQuery());
-				processRequest(path, query, is, r -> {
-					try {
-						out.write(r);
-						System.out.println("sending " + new String(r));
-					} catch (IOException e1) {
-						// cannot write anything back
-						// at least show in the server's console
-						e1.printStackTrace();
-					}
-				});
+				processRequest(path, query, is, out);
 			} catch (Throwable err) {
 //				Cout.debugSuperVisible(path + "   sending 404");
 				var er = TextUtilities.exception2string(err).getBytes();
-				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, er.length);
+				e.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, er.length);
 				out.write(er);
 				logError(err.getMessage());
 				err.printStackTrace();
@@ -133,23 +124,28 @@ public class RESTService extends Service {
 	}
 
 	private synchronized void processRequest(List<String> path, Map<String, String> query, InputStream is,
-			Consumer<byte[]> output) throws Throwable {
+			OutputStream output) throws IOException {
 		if (path == null) {
-			output.accept(new JavaResource(getClass(), "root.html").getByteArray());
+			output.write(new JavaResource(getClass(), "root.html").getByteArray());
 		} else {
 //			Cout.debugSuperVisible("path: " + path);
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
 				serveAPI(path, query, is, (type, bytes) -> {
-					output.accept((type + "\n").getBytes());
-					output.accept((bytes.length + "\n").getBytes());
-					output.accept(bytes);
+					try {
+						output.write((type + "\n").getBytes());
+						output.write((bytes.length + "\n").getBytes());
+						output.write(bytes);
+						output.flush();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
 				});
 			} else if (context.equals("file")) {
 				serveFiles(path, query, output);
 			} else if (context.equals("favicon.ico")) {
-				output.accept(new JavaResource(RESTService.class, "flavicon.ico").getByteArray());
+				output.write(new JavaResource(RESTService.class, "flavicon.ico").getByteArray());
 			} else if (context.equals("web")) {
 				serveWeb(path, query, output);
 			} else {
@@ -158,17 +154,17 @@ public class RESTService extends Service {
 		}
 	}
 
-	private void serveWeb(List<String> path, Map<String, String> query, Consumer<byte[]> output) throws Throwable {
+	private void serveWeb(List<String> path, Map<String, String> query, OutputStream output) throws IOException {
 		if (path.isEmpty()) {
-			output.accept(new JavaResource(getClass(), "web/index.html").getByteArray());
+			output.write(new JavaResource(getClass(), "web/index.html").getByteArray());
 		} else {
 			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
 			// Cout.debugSuperVisible("sending " + res.getName());
-			output.accept(res.getByteArray());
+			output.write(res.getByteArray());
 		}
 	}
 
-	private void serveFiles(List<String> path, Map<String, String> query, Consumer<byte[]> output) throws Throwable {
+	private void serveFiles(List<String> path, Map<String, String> query, OutputStream output) throws IOException {
 		var i = new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).createReadingStream();
 		byte[] b = new byte[1024];
 
@@ -178,7 +174,7 @@ public class RESTService extends Service {
 			if (n == -1) {
 				return;
 			} else if (n > 0) {
-				output.accept(n == b.length ? b : Arrays.copyOf(b, n));
+				output.write(n == b.length ? b : Arrays.copyOf(b, n));
 			}
 		}
 	}
@@ -202,8 +198,7 @@ public class RESTService extends Service {
 		void send(String contentType, byte[] data);
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, BackToClient output)
-			throws Throwable {
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, BackToClient output) {
 		var format = removeOrDefault(query, "format", "gson");
 		Serializer serializer = name2serializer.get(format);
 
@@ -227,7 +222,6 @@ public class RESTService extends Service {
 			output.send("error", serializer.toBytes(err));
 		}
 	}
-
 
 	public static class RESTError implements Serializable {
 		public String msg;
@@ -372,8 +366,7 @@ public class RESTService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "stops the HTTP server";
 		}
 	}
 
@@ -384,8 +377,7 @@ public class RESTService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "starts the HTTP server";
 		}
 	}
 
