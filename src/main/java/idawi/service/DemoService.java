@@ -8,6 +8,7 @@ import idawi.Component;
 import idawi.EOT;
 import idawi.InnerOperation;
 import idawi.MessageQueue;
+import idawi.OperationParameterList;
 import idawi.ProgressRatio;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
@@ -29,9 +30,31 @@ public class DemoService extends Service {
 		registerOperation(new stringLength());
 		registerOperation(new throwError());
 		registerOperation(new waiting());
+		registerOperation(new multipleRandomMessages());
 		registerOperation("e", q -> {
 		});
 
+	}
+
+	public class multipleRandomMessages extends InnerOperation {
+
+		@Override
+		public String getDescription() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			var tg = in.get_blocking();
+			var opl = (OperationParameterList) tg.content;
+			int n = Integer.valueOf(opl.get(0).toString());
+
+			for (int i = 0; i < n; ++i) {
+				reply(tg, i);
+				Threads.sleepMs(1000);
+			}
+		}
 	}
 
 	public class waiting extends TypedInnerOperation {
@@ -72,6 +95,7 @@ public class DemoService extends Service {
 		public String getDescription() {
 			return null;
 		}
+
 	}
 
 	public static void main(String[] args) {

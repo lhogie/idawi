@@ -33,8 +33,6 @@ import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
 import toools.io.JavaResource;
-import toools.io.file.Directory;
-import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
@@ -83,7 +81,6 @@ public class RESTService extends Service {
 	}
 
 	public HttpServer startHTTPServer(int port) throws IOException {
-
 		if (restServer != null) {
 			throw new IOException("REST server is already running");
 		}
@@ -104,7 +101,6 @@ public class RESTService extends Service {
 				Map<String, String> query = query(uri.getQuery());
 				processRequest(path, query, is, out);
 			} catch (Throwable err) {
-//				Cout.debugSuperVisible(path + "   sending 404");
 				var er = TextUtilities.exception2string(err).getBytes();
 				e.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, er.length);
 				out.write(er);
@@ -114,10 +110,9 @@ public class RESTService extends Service {
 
 			out.close();
 		});
+
 		restServer.setExecutor(Service.threadPool);
 		restServer.start();
-//		WSS webSocketServer = new WSS(8001, new GenerationData());
-//		webSocketServer.start();
 		this.port = port;
 		System.out.println("Web server running on port " + port);
 		return restServer;
@@ -142,65 +137,28 @@ public class RESTService extends Service {
 						throw new RuntimeException(e);
 					}
 				});
-			} else if (context.equals("file")) {
-				serveFiles(path, query, output);
 			} else if (context.equals("favicon.ico")) {
 				output.write(new JavaResource(RESTService.class, "flavicon.ico").getByteArray());
 			} else if (context.equals("web")) {
-				serveWeb(path, query, output);
+				if (path.isEmpty()) {
+					output.write(new JavaResource(getClass(), "web/index.html").getByteArray());
+				} else {
+					var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
+					output.write(res.getByteArray());
+				}
 			} else {
 				throw new IllegalArgumentException("unknown context: " + context);
 			}
 		}
 	}
 
-	private void serveWeb(List<String> path, Map<String, String> query, OutputStream output) throws IOException {
-		if (path.isEmpty()) {
-			output.write(new JavaResource(getClass(), "web/index.html").getByteArray());
-		} else {
-			var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
-			// Cout.debugSuperVisible("sending " + res.getName());
-			output.write(res.getByteArray());
-		}
-	}
-
-	private void serveFiles(List<String> path, Map<String, String> query, OutputStream output) throws IOException {
-		var i = new RegularFile(Directory.getHomeDirectory(), TextUtilities.concatene(path, "/")).createReadingStream();
-		byte[] b = new byte[1024];
-
-		while (true) {
-			int n = i.read(b);
-
-			if (n == -1) {
-				return;
-			} else if (n > 0) {
-				output.write(n == b.length ? b : Arrays.copyOf(b, n));
-			}
-		}
-	}
-
-	public static class Response {
-		public List<RESTError> errors = new ArrayList<>();
-		public List<String> warnings = new ArrayList<>();
-		public List<Object> results = new ArrayList<>();
-
-		@Override
-		public String toString() {
-			Map<String, List> m = new HashMap<>();
-			m.put("errors", errors);
-			m.put("warnings", warnings);
-			m.put("results", results);
-			return m.toString();
-		}
-	}
-
-	public static interface BackToClient {
+	private static interface BackToClient {
 		void send(String contentType, byte[] data);
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, BackToClient output) {
-		var format = removeOrDefault(query, "format", "gson");
-		Serializer serializer = name2serializer.get(format);
+		var preferredFormat = removeOrDefault(query, "format", "gson");
+		Serializer serializer = name2serializer.get(preferredFormat);
 
 		try {
 			processRESTRequest(path, query, is, r -> {
@@ -208,17 +166,23 @@ public class RESTService extends Service {
 					r = new NULL();
 				}
 
-				var bytes = serializer.toBytes(r);
-				output.send(format, bytes);
+				if (r instanceof byte[]) {
+					output.send("bytes", (byte[]) r);
+				} else if (r instanceof Throwable) {
+					output.send("bytes", TextUtilities.exception2string((Throwable) r).getBytes());
+				} else {
+					var bytes = serializer.toBytes(r);
+					output.send(preferredFormat, bytes);
+				}
 			});
 
 			query.keySet().forEach(k -> output.send("text", serializer.toBytes("unused parameter: " + k)));
-		} catch (Throwable e) {
-			e.printStackTrace();
+		} catch (Throwable exception) {
+			exception.printStackTrace();
 			RESTError err = new RESTError();
-			err.msg = e.getMessage();
-			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
-			err.javaStackTrace = TextUtilities.exception2string(e);
+			err.msg = exception.getMessage();
+			err.type = Clazz.classNameWithoutPackage(exception.getClass().getName());
+			err.javaStackTrace = TextUtilities.exception2string(exception);
 			output.send("error", serializer.toBytes(err));
 		}
 	}
