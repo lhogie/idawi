@@ -35,6 +35,10 @@ public class Message implements Externalizable {
 		this.content = content;
 	}
 
+	public String getType() {
+		return "test";
+	}
+	
 	public void send(Component fromComponent) {
 //		if (to.notYetReachedExplicitRecipients != null && to.notYetReachedExplicitRecipients.contains(fromComponent.descriptor())) {
 //			route.add(fromComponent.descriptor());

@@ -52,7 +52,7 @@ public class RESTService extends Service {
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 
 	static {
-		name2serializer.put("json_gson", new GSONSerializer<>());
+		name2serializer.put("gson", new GSONSerializer<>());
 		name2serializer.put("json_jackson", new JacksonSerializer<>());
 		name2serializer.put("ser", new JavaSerializer<>());
 		name2serializer.put("fst", new FSTSerializer<>());
@@ -104,8 +104,8 @@ public class RESTService extends Service {
 				Map<String, String> query = query(uri.getQuery());
 				processRequest(path, query, is, r -> {
 					try {
-						System.out.println("sending " + new String(r));
 						out.write(r);
+						System.out.println("sending " + new String(r));
 					} catch (IOException e1) {
 						// cannot write anything back
 						// at least show in the server's console
@@ -141,7 +141,11 @@ public class RESTService extends Service {
 			String context = path.remove(0);
 
 			if (context.equals("api")) {
-				serveAPI(path, query, is, output);
+				serveAPI(path, query, is, (type, bytes) -> {
+					output.accept((type + "\n").getBytes());
+					output.accept((bytes.length + "\n").getBytes());
+					output.accept(bytes);
+				});
 			} else if (context.equals("file")) {
 				serveFiles(path, query, output);
 			} else if (context.equals("favicon.ico")) {
@@ -194,9 +198,14 @@ public class RESTService extends Service {
 		}
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, Consumer<byte[]> output)
+	public static interface BackToClient {
+		void send(String contentType, byte[] data);
+	}
+
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, BackToClient output)
 			throws Throwable {
-		Serializer serializer = ser(query.remove("format"));
+		var format = removeOrDefault(query, "format", "gson");
+		Serializer serializer = name2serializer.get(format);
 
 		try {
 			processRESTRequest(path, query, is, r -> {
@@ -204,34 +213,21 @@ public class RESTService extends Service {
 					r = new NULL();
 				}
 
-				output.accept(serializer.toBytes(r));
+				var bytes = serializer.toBytes(r);
+				output.send(format, bytes);
 			});
 
-			query.keySet().forEach(k -> output.accept(serializer.toBytes("unused parameter: " + k)));
+			query.keySet().forEach(k -> output.send("text", serializer.toBytes("unused parameter: " + k)));
 		} catch (Throwable e) {
 			e.printStackTrace();
 			RESTError err = new RESTError();
 			err.msg = e.getMessage();
 			err.type = Clazz.classNameWithoutPackage(e.getClass().getName());
 			err.javaStackTrace = TextUtilities.exception2string(e);
-			output.accept(serializer.toBytes(err));
+			output.send("error", serializer.toBytes(err));
 		}
 	}
 
-	private Serializer ser(String format) {
-		Serializer serializer = new GSONSerializer<>();
-
-		if (format != null) {
-			serializer = name2serializer.get(format);
-
-			if (serializer == null) {
-				throw new IllegalArgumentException(
-						"unknown format: " + format + ". Available format are: " + name2serializer.keySet());
-			}
-		}
-
-		return serializer;
-	}
 
 	public static class RESTError implements Serializable {
 		public String msg;
@@ -260,7 +256,8 @@ public class RESTService extends Service {
 
 	private void processRESTRequest(List<String> path, Map<String, String> query, InputStream is,
 			Consumer<Object> output) throws Throwable {
-		double timeout = Double.valueOf(query.getOrDefault("timeout", "1"));
+		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "1"));
+		double duration = Double.valueOf(removeOrDefault(query, "duration", "1"));
 
 		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
@@ -298,18 +295,22 @@ public class RESTService extends Service {
 				Streams.split(is, 1000, m -> ro.send(m));
 			}
 
-			String stops = query.remove("stop");
-			var stop = stops == null ? stoppers.get("aeot") : stoppers.get(Integer.valueOf(stops));
+			var stop = stoppers.get(removeOrDefault(query, "stop", "aeot"));
 
 			if (!query.isEmpty()) {
 				output.accept("unused parameters: " + query.keySet());
 			}
 
-			ro.returnQ.collect(timeout, timeout, c -> {
+			ro.returnQ.collect(duration, timeout, c -> {
 				output.accept(c.messages.last());
 				c.stop = stop.test(to, c);
 			});
 		}
+	}
+
+	private String removeOrDefault(Map<String, String> map, String k, String d) {
+		var r = map.remove(k);
+		return r == null ? d : r;
 	}
 
 	public static final Map<String, BiPredicate<OperationAddress, MessageCollector>> stoppers = new HashMap<>();
