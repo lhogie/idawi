@@ -40,8 +40,7 @@ public class DemoService extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "sends a random message every second";
 		}
 
 		@Override

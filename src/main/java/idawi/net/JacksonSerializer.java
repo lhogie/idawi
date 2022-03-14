@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import toools.io.ser.Serializer;
@@ -36,7 +37,8 @@ public class JacksonSerializer<E> extends Serializer<E> {
 		M m = new M();
 		m.o = o;
 		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		objectMapper.writeValue(os, m);
+		objectMapper.writer().withRootName(o.getClass().getName());
+		objectMapper.writeValue(os, o);
 	}
 
 	@Override

@@ -21,7 +21,6 @@ public class MessageCollector {
 
 	public MessageCollector(MessageQueue q) {
 		this.q = q;
-
 	}
 
 	public double remains() {

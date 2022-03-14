@@ -16,7 +16,7 @@ import idawi.net.NetworkingService;
 import idawi.service.DemoService;
 import idawi.service.DeployerService;
 import idawi.service.PingService;
-import idawi.service.rest.RESTService;
+import idawi.service.rest.WebServer;
 import toools.io.Cout;
 import toools.net.NetUtilities;
 import toools.thread.Threads;
@@ -186,7 +186,7 @@ public class LucTests {
 	public void rest() throws IOException {
 		Cout.debugSuperVisible("Starting REST test");
 		Component c1 = new Component();
-		var ws = c1.lookup(RESTService.class);
+		var ws = c1.lookup(WebServer.class);
 		ws.startHTTPServer();
 		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1.name);
 		// clean

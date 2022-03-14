@@ -25,7 +25,7 @@ import idawi.service.JVMInfo;
 import idawi.service.PingService;
 import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
-import idawi.service.rest.RESTService;
+import idawi.service.rest.WebServer;
 import toools.io.file.Directory;
 
 public class Component {
@@ -64,7 +64,7 @@ public class Component {
 		new RoutingScheme_bcast(this);
 		new ErrorLog(this);
 		new DemoService(this);
-		new RESTService(this);
+		new WebServer(this);
 		new ExternalCommandsService(this);
 		new FileService(this);
 		new RegistryService(this);

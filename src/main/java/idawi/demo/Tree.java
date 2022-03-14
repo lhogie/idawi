@@ -7,7 +7,7 @@ import java.util.Random;
 import idawi.Component;
 import idawi.net.LMI;
 import idawi.service.ServiceManager;
-import idawi.service.rest.RESTService;
+import idawi.service.rest.WebServer;
 import toools.thread.Threads;
 
 public class Tree {
@@ -22,8 +22,8 @@ public class Tree {
 			LMI.connect(a, b);
 		}
 		
-		l.get(0).lookupO(ServiceManager.ensureStarted.class).f(RESTService.class);
-		l.get(0).lookup(RESTService.class).startHTTPServer();
+		l.get(0).lookupO(ServiceManager.ensureStarted.class).f(WebServer.class);
+		l.get(0).lookup(WebServer.class).startHTTPServer();
 		Threads.sleepForever();
 	}
 }

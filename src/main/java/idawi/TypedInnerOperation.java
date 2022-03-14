@@ -56,6 +56,7 @@ public abstract class TypedInnerOperation extends InnerOperation {
 
 		if (method.getReturnType() != void.class) {
 			service.send(r, msg.replyTo);
+			service.send(EOT.instance, msg.replyTo);
 		}
 	}
 }

@@ -58,7 +58,8 @@ public class Service {
 		registerOperation(new nbMessagesReceived());
 		registerOperation(new sec2nbMessages());
 		registerOperation(new shutdown());
-		registerOperation("friendlyName", m -> getFriendlyName());
+		registerOperation(new getFriendlyName());
+		registerOperation("friendlyName", q -> getFriendlyName());
 	}
 
 	protected To ca() {
@@ -148,7 +149,7 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
-		Cout.debug(msg);
+		//Cout.debug(msg);
 		int sec = (int) Date.time();
 		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
@@ -167,7 +168,7 @@ public class Service {
 			MessageQueue q = name2queue.get(msg.to.queueName);
 
 			if (q == null) {
-				System.out.println("ERERROEORO");
+//				System.out.println("ERERROEORO");
 			} else {
 				q.add_blocking(msg);
 			}

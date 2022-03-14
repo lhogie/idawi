@@ -1,7 +1,5 @@
 package idawi;
 
-import toools.io.Cout;
-
 public abstract class Operation implements OperationFunctionalInterface {
 	int nbCalls, nbFailures;
 	double totalDuration;
@@ -13,8 +11,7 @@ public abstract class Operation implements OperationFunctionalInterface {
 		this.descriptor.description = getDescription();
 	}
 
-	protected  OperationDescriptor createOperationDescriptor()
-	{
+	protected OperationDescriptor createOperationDescriptor() {
 		return new OperationDescriptor();
 	}
 
@@ -31,7 +28,7 @@ public abstract class Operation implements OperationFunctionalInterface {
 		return getDeclaringServiceClass().getName() + "/" + getName();
 	}
 
-	public abstract String getDescription() ;
+	public abstract String getDescription();
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;
@@ -45,10 +42,10 @@ public abstract class Operation implements OperationFunctionalInterface {
 		if (descriptor == null || descriptor.isOutOfDate()) {
 			updateDescriptor();
 		}
-		
+
 		return descriptor;
 	}
-	
+
 	protected void updateDescriptor() {
 		this.descriptor.nbCalls = this.nbCalls;
 		this.descriptor.totalDuration = this.totalDuration;
