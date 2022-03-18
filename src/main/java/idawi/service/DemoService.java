@@ -50,7 +50,7 @@ public class DemoService extends Service {
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
-				reply(tg, i);
+				reply(tg, new Random().nextInt());
 				Threads.sleepMs(1000);
 			}
 		}

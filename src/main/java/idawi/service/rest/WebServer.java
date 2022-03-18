@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.JacksonSerializer;
 import toools.io.JavaResource;
+import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
 import toools.io.ser.JSONExSerializer;
 import toools.io.ser.JavaSerializer;
@@ -122,6 +124,11 @@ public class WebServer extends Service {
 							var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
 							output.write(res.getByteArray());
 						}
+					} else if (context.equals("files")) {
+						var f = new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"));
+						var fis = f.createReadingStream();
+						fis.transferTo(output);
+						fis.close();
 					} else {
 						throw new IllegalArgumentException("unknown context: " + context);
 					}
@@ -147,8 +154,40 @@ public class WebServer extends Service {
 		return httpServer;
 	}
 
-	private static void write(OutputStream out, ChunkInfo i, byte[] b) {
+	private static void writeSSE(OutputStream out, ChunkInfo info, byte[] b) {
 
+		try {
+			if (info != null) {
+				info.len = b.length;
+				out.write("data ".getBytes());
+				out.write(encode(info.toJSON().getBytes()).getBytes());
+				out.write('\n');
+			}
+
+			out.write("data ".getBytes());
+			out.write(encode(b).getBytes());
+
+			out.write('\n');
+			out.write('\n');
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static String encode(byte[] bytes) {
+		var s = Base64.getMimeEncoder().encode(bytes);
+		var r = new StringBuilder(s.length);
+
+		for (var b : s) {
+			if (!Character.isWhitespace((char) b)) {
+				r.append(b);
+			}
+		}
+
+		return r.toString();
+	}
+
+	private static void writeOLD(OutputStream out, ChunkInfo i, byte[] b) {
 		try {
 			if (i != null) {
 				i.len = b.length;
@@ -167,12 +206,12 @@ public class WebServer extends Service {
 		var preferredFormat = removeOrDefault(query, "format", "gson", name2serializer.keySet());
 		Serializer serializer = name2serializer.get(preferredFormat);
 
-		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "1", null));
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
+		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 
 		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
-			write(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(component.descriptor()));
+			writeSSE(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(component.descriptor()));
 		} else {
 			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
@@ -210,26 +249,26 @@ public class WebServer extends Service {
 			var simple = removeOrDefault(query, "mode", "idawi", Set.of("idawi", "simple")).equals("simple");
 
 			if (!query.isEmpty()) {
-				write(output, new ChunkInfo("warning", "text/plain"),
+				writeSSE(output, new ChunkInfo("warning", "text/plain"),
 						("unused parameters: " + query.keySet().toString()).getBytes());
 			}
 
 			if (simple) {
 				var collector = ro.returnQ.collect(duration, timeout, c -> c.stop = stop.test(to, c));
-				write(output, null, serializer.toBytes(collector.messages));
+				writeSSE(output, null, serializer.toBytes(collector.messages));
 			} else {
 				ro.returnQ.collect(duration, timeout, c -> {
 					var r = c.messages.last();
 
 					if (r.isEOT()) {
-						write(output, new ChunkInfo("eot", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkInfo("eot", preferredFormat), serializer.toBytes(r));
 					} else if (r.isError()) {
-						write(output, new ChunkInfo("error", "text/plain"),
+						writeSSE(output, new ChunkInfo("error", "text/plain"),
 								TextUtilities.exception2string((Throwable) r.content).getBytes());
 					} else if (r.isProgress()) {
-						write(output, new ChunkInfo("progress", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkInfo("progress", preferredFormat), serializer.toBytes(r));
 					} else {
-						write(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(r));
 					}
 
 					c.stop = stop.test(to, c);
