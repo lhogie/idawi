@@ -4,7 +4,7 @@ import idawi.Component;
 import idawi.service.ServiceManager;
 import idawi.service.ServiceManager.ensureStarted;
 
-public class Rest {
+public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
 		Component a = new Component();
