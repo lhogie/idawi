@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -31,14 +33,18 @@ import idawi.Service;
 import idawi.Streams;
 import idawi.To;
 import idawi.TypedInnerOperation;
-import idawi.net.JacksonSerializer;
 import toools.io.JavaResource;
 import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
+import toools.io.ser.GSONSerializer;
 import toools.io.ser.JSONExSerializer;
+import toools.io.ser.JacksonJSONSerializer;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 import toools.io.ser.TOMLSerializer;
+import toools.io.ser.ToBytesSerializer;
+import toools.io.ser.ToStringSerializer;
+import toools.io.ser.XMLSerializer;
 import toools.io.ser.YAMLSerializer;
 import toools.reflect.Clazz;
 import toools.text.TextUtilities;
@@ -55,7 +61,7 @@ public class WebServer extends Service {
 		stoppers.put("1r", (to, c) -> !c.messages.filter(m -> m.isResult()).isEmpty());
 
 		name2serializer.put("gson", new GSONSerializer<>());
-		name2serializer.put("json_jackson", new JacksonSerializer<>());
+		name2serializer.put("json_jackson", new JacksonJSONSerializer<>());
 		name2serializer.put("jsonex", new JSONExSerializer<>());
 		name2serializer.put("ser", new JavaSerializer<>());
 		name2serializer.put("fst", new FSTSerializer<>());
@@ -116,17 +122,17 @@ public class WebServer extends Service {
 						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 						serveAPI(path, query, is, output);
 					} else if (context.equals("favicon.ico")) {
-						write(HttpURLConnection.HTTP_OK, "image/x-icon", new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e,
-								output);
+						write(HttpURLConnection.HTTP_OK, "image/x-icon",
+								new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e, output);
 					} else if (context.equals("web")) {
 						if (path.isEmpty()) {
 							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
 
-						write(HttpURLConnection.HTTP_OK, extension(path),
+						write(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("files")) {
-						write(HttpURLConnection.HTTP_OK, extension(path),
+						write(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"))
 										.getContent(),
 								e, output);
@@ -136,7 +142,8 @@ public class WebServer extends Service {
 				}
 			} catch (Throwable err) {
 				try {
-					write(HttpURLConnection.HTTP_INTERNAL_ERROR, extension(path), TextUtilities.exception2string(err).getBytes(), e, output);
+//					write(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain", TextUtilities.exception2string(err).getBytes(),
+//							e, output);
 					logError(err.getMessage());
 					System.err.println("The following error was sent to the Web client");
 					err.printStackTrace();
@@ -154,13 +161,29 @@ public class WebServer extends Service {
 		return httpServer;
 	}
 
-	private String extension(List<String> path) {
+	private String guessMIMEType(List<String> path) {
+		if (path == null || path.isEmpty()) {
+			return "application/octet-stream";
+		}
 		var p = path.get(path.size() - 1);
-		int i = p.lastIndexOf('.');
-		return i == -1 ? "application/octet-stream" : p.substring(i + 1);
+		try {
+			var r = Files.probeContentType(Path.of(p));
+			return r == null ? "application/octet-stream" : r;
+		} catch (IOException e) {
+			return "application/octet-stream";
+		}
+		/*
+		 * int i = p.lastIndexOf('.');
+		 * 
+		 * if (i == -1) { return "application/octet-stream"; }else { switch
+		 * (p.substring(i + 1)) { case "html": return "text/html"; case "js": return
+		 * "text/javascript"; case "txt": return "text/plain"; default: return
+		 * "application/octet-stream"; } }
+		 */
 	}
 
-	public static void write(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os) throws IOException {
+	public static void write(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
+			throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
 		e.sendResponseHeaders(code, bytes.length);
 		os.write(bytes);
@@ -169,21 +192,19 @@ public class WebServer extends Service {
 	private static void writeSSE(OutputStream out, ChunkInfo info, byte[] b) {
 
 		try {
-			var encodedData = encode(b).getBytes();
+			var encodedData = encode(b);
 
 			if (info != null) {
 				info.len = b.length;
-				info.encodedDataLength = encodedData.length;
+				info.encodedDataLength = encodedData.length();
 				out.write("data: ".getBytes());
 				var json = info.toJSON();
-				System.out.println(json);
-				out.write(encode(json.getBytes()).getBytes());
+				var encodedJson = encode(json.getBytes());
+				out.write(encodedJson.getBytes());
 				out.write('\n');
 			}
 
-			out.write("data: ".getBytes());
-			out.write(encodedData);
-
+			out.write(("data: " + encodedData).getBytes());
 			out.write('\n');
 			out.write('\n');
 		} catch (IOException e) {
@@ -192,26 +213,12 @@ public class WebServer extends Service {
 	}
 
 	private static String encode(byte[] bytes) {
-		return new String(Base64.getMimeEncoder().encode(bytes)).replace('\n', ' ');
-	}
-
-	private static void writeOLD(OutputStream out, ChunkInfo i, byte[] b) {
-		try {
-			if (i != null) {
-				i.len = b.length;
-				out.write(i.toJSON().getBytes());
-				out.write('\n');
-			}
-
-			out.write(b);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output)
 			throws IOException {
-		var preferredFormat = removeOrDefault(query, "format", "gson", name2serializer.keySet());
+		var preferredFormat = removeOrDefault(query, "format", "json_jackson", name2serializer.keySet());
 		Serializer serializer = name2serializer.get(preferredFormat);
 
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
