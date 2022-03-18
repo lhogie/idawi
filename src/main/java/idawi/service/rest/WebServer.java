@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
@@ -100,10 +101,7 @@ public class WebServer extends Service {
 			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
 			Map<String, String> query = query(uri.getQuery());
-
-			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
-			e.getResponseHeaders().set("Content-type", "idawi");
-			e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
+			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*	");
 			OutputStream output = e.getResponseBody();
 
 			try {
@@ -114,29 +112,31 @@ public class WebServer extends Service {
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
+						e.getResponseHeaders().set("Content-type", "text/event-stream");
+						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 						serveAPI(path, query, is, output);
 					} else if (context.equals("favicon.ico")) {
-						output.write(new JavaResource(WebServer.class, "flavicon.ico").getByteArray());
+						write(HttpURLConnection.HTTP_OK, "image/x-icon", new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e,
+								output);
 					} else if (context.equals("web")) {
 						if (path.isEmpty()) {
-							output.write(new JavaResource(getClass(), "web/index.html").getByteArray());
-						} else {
-							var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
-							output.write(res.getByteArray());
+							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
+
+						write(HttpURLConnection.HTTP_OK, extension(path),
+								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("files")) {
-						var f = new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"));
-						var fis = f.createReadingStream();
-						fis.transferTo(output);
-						fis.close();
+						write(HttpURLConnection.HTTP_OK, extension(path),
+								new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"))
+										.getContent(),
+								e, output);
 					} else {
 						throw new IllegalArgumentException("unknown context: " + context);
 					}
 				}
 			} catch (Throwable err) {
 				try {
-					var er = TextUtilities.exception2string(err).getBytes();
-					output.write(er);
+					write(HttpURLConnection.HTTP_INTERNAL_ERROR, extension(path), TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
 					System.err.println("The following error was sent to the Web client");
 					err.printStackTrace();
@@ -154,18 +154,35 @@ public class WebServer extends Service {
 		return httpServer;
 	}
 
+	private String extension(List<String> path) {
+		var p = path.get(path.size() - 1);
+		int i = p.lastIndexOf('.');
+		return i == -1 ? "application/octet-stream" : p.substring(i + 1);
+	}
+
+	public static void write(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os) throws IOException {
+		e.getResponseHeaders().set("Content-type", mimeType);
+		e.sendResponseHeaders(code, bytes.length);
+		os.write(bytes);
+	}
+
 	private static void writeSSE(OutputStream out, ChunkInfo info, byte[] b) {
 
 		try {
+			var encodedData = encode(b).getBytes();
+
 			if (info != null) {
 				info.len = b.length;
-				out.write("data ".getBytes());
-				out.write(encode(info.toJSON().getBytes()).getBytes());
+				info.encodedDataLength = encodedData.length;
+				out.write("data: ".getBytes());
+				var json = info.toJSON();
+				System.out.println(json);
+				out.write(encode(json.getBytes()).getBytes());
 				out.write('\n');
 			}
 
-			out.write("data ".getBytes());
-			out.write(encode(b).getBytes());
+			out.write("data: ".getBytes());
+			out.write(encodedData);
 
 			out.write('\n');
 			out.write('\n');
@@ -175,16 +192,7 @@ public class WebServer extends Service {
 	}
 
 	private static String encode(byte[] bytes) {
-		var s = Base64.getMimeEncoder().encode(bytes);
-		var r = new StringBuilder(s.length);
-
-		for (var b : s) {
-			if (!Character.isWhitespace((char) b)) {
-				r.append(b);
-			}
-		}
-
-		return r.toString();
+		return new String(Base64.getMimeEncoder().encode(bytes)).replace('\n', ' ');
 	}
 
 	private static void writeOLD(OutputStream out, ChunkInfo i, byte[] b) {
