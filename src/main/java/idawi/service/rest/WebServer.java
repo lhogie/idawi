@@ -100,10 +100,7 @@ public class WebServer extends Service {
 			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
 			Map<String, String> query = query(uri.getQuery());
-
 			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
-			e.getResponseHeaders().set("Content-type", "idawi");
-			e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 			OutputStream output = e.getResponseBody();
 
 			try {
@@ -114,17 +111,27 @@ public class WebServer extends Service {
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
+						e.getResponseHeaders().set("Content-type", "idawi");
+						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 						serveAPI(path, query, is, output);
 					} else if (context.equals("favicon.ico")) {
+						e.getResponseHeaders().set("Content-type", "image/x-icon");
+						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 						output.write(new JavaResource(WebServer.class, "flavicon.ico").getByteArray());
 					} else if (context.equals("web")) {
 						if (path.isEmpty()) {
+							e.getResponseHeaders().set("Content-type", "image/x-icon");
+							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 							output.write(new JavaResource(getClass(), "web/index.html").getByteArray());
 						} else {
+							e.getResponseHeaders().set("Content-type", "application/octet-stream");
+							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 							var res = new JavaResource("/" + TextUtilities.concatene(path, "/"));
 							output.write(res.getByteArray());
 						}
 					} else if (context.equals("files")) {
+						e.getResponseHeaders().set("Content-type", "text/html");
+						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 						var f = new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"));
 						var fis = f.createReadingStream();
 						fis.transferTo(output);
