@@ -193,19 +193,19 @@ public class WebServer extends Service {
 	private static void writeSSE(OutputStream out, ChunkInfo info, byte[] b) {
 
 		try {
-			var encodedData = encode(b);
+			var bas64Data = base64(b);
 
 			if (info != null) {
 				info.len = b.length;
-				info.encodedDataLength = encodedData.length();
+				info.encodedDataLength = bas64Data.length();
 				out.write("data: ".getBytes());
 				var json = info.toJSON();
-				var encodedJson = encode(json.getBytes());
+				var encodedJson = base64(json.getBytes());
 				out.write(encodedJson.getBytes());
 				out.write('\n');
 			}
 
-			out.write(("data: " + encodedData).getBytes());
+			out.write(("data: " + bas64Data).getBytes());
 			out.write('\n');
 			out.write('\n');
 		} catch (IOException e) {
@@ -213,7 +213,7 @@ public class WebServer extends Service {
 		}
 	}
 
-	private static String encode(byte[] bytes) {
+	private static String base64(byte[] bytes) {
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
