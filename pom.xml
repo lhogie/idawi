@@ -72,7 +72,11 @@
 	</build>
 
 	<dependencies>
-
+		<dependency>
+			<groupId>io.github.lhogie</groupId>
+			<artifactId>jaseto</artifactId>
+			<version>0.0.1</version>
+		</dependency>
 		<dependency>
 			<groupId>net.sf.bluecove</groupId>
 			<artifactId>bluecove</artifactId>

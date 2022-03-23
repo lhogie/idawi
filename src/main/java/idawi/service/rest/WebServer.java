@@ -71,6 +71,7 @@ public class WebServer extends Service {
 		name2serializer.put("bytes", new ToBytesSerializer<>());
 		name2serializer.put("toml", new TOMLSerializer<>());
 		name2serializer.put("yaml", new YAMLSerializer<>());
+		name2serializer.put("jaseto", new JasetoSerializer<>());
 	}
 
 	private HttpServer httpServer;
@@ -218,7 +219,7 @@ public class WebServer extends Service {
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output)
 			throws IOException {
-		var preferredFormat = removeOrDefault(query, "format", "json_jackson", name2serializer.keySet());
+		var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
 		Serializer serializer = name2serializer.get(preferredFormat);
 
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
