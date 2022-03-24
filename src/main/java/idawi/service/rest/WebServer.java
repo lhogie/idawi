@@ -110,6 +110,7 @@ public class WebServer extends Service {
 			Map<String, String> query = query(uri.getQuery());
 			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*	");
 			OutputStream output = e.getResponseBody();
+boolean plain = query.remove("plain") != null;
 
 			try {
 				if (path == null) {
@@ -119,9 +120,9 @@ public class WebServer extends Service {
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
-						e.getResponseHeaders().set("Content-type", "text/event-stream");
+						e.getResponseHeaders().set("Content-type", plain ? "text/plain" : "text/event-stream");
 						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
-						serveAPI(path, query, is, output);
+						serveAPI(path, query, is, output, plain);
 					} else if (context.equals("favicon.ico")) {
 						write(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e, output);
@@ -190,34 +191,40 @@ public class WebServer extends Service {
 		os.write(bytes);
 	}
 
-	private static void writeSSE(OutputStream out, ChunkInfo info, byte[] b) {
+	private static void writeSSE(OutputStream out, ChunkHeader info, byte[] b, boolean plain) {
 
 		try {
-			var bas64Data = base64(b);
+			if (plain) {
+				out.write(info.toJSON().getBytes());
+				out.write(b);
+			} else {
+				var bas64Data = base64(b);
 
-			if (info != null) {
-				info.len = b.length;
-				info.encodedDataLength = bas64Data.length();
-				out.write("data: ".getBytes());
-				var json = info.toJSON();
-				var encodedJson = base64(json.getBytes());
-				out.write(encodedJson.getBytes());
+				if (info != null) {
+					info.len = b.length;
+					info.encodedDataLength = bas64Data.length();
+					out.write("data: ".getBytes());
+					var json = info.toJSON();
+					var encodedJson = base64(json.getBytes());
+					out.write(encodedJson.getBytes());
+					out.write('\n');
+				}
+
+				out.write(("data: " + bas64Data).getBytes());
+				out.write('\n');
 				out.write('\n');
 			}
-
-			out.write(("data: " + bas64Data).getBytes());
-			out.write('\n');
-			out.write('\n');
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
 	}
 
 	private static String base64(byte[] bytes) {
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output)
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output, boolean plain)
 			throws IOException {
 		var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
 		Serializer serializer = name2serializer.get(preferredFormat);
@@ -227,7 +234,7 @@ public class WebServer extends Service {
 
 		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
-			writeSSE(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(component.descriptor()));
+			writeSSE(output, new ChunkHeader("result", preferredFormat), serializer.toBytes(component.descriptor()), plain);
 		} else {
 			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
@@ -265,26 +272,26 @@ public class WebServer extends Service {
 			var simple = removeOrDefault(query, "mode", "idawi", Set.of("idawi", "simple")).equals("simple");
 
 			if (!query.isEmpty()) {
-				writeSSE(output, new ChunkInfo("warning", "text/plain"),
-						("unused parameters: " + query.keySet().toString()).getBytes());
+				writeSSE(output, new ChunkHeader("warning", "text/plain"),
+						("unused parameters: " + query.keySet().toString()).getBytes(), plain);
 			}
 
 			if (simple) {
 				var collector = ro.returnQ.collect(duration, timeout, c -> c.stop = stop.test(to, c));
-				writeSSE(output, null, serializer.toBytes(collector.messages));
+				writeSSE(output, null, serializer.toBytes(collector.messages), plain);
 			} else {
 				ro.returnQ.collect(duration, timeout, c -> {
 					var r = c.messages.last();
 
 					if (r.isEOT()) {
-						writeSSE(output, new ChunkInfo("eot", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkHeader("eot", preferredFormat), serializer.toBytes(r), plain);
 					} else if (r.isError()) {
-						writeSSE(output, new ChunkInfo("error", "text/plain"),
-								TextUtilities.exception2string((Throwable) r.content).getBytes());
+						writeSSE(output, new ChunkHeader("error", "text/plain"),
+								TextUtilities.exception2string((Throwable) r.content).getBytes(), plain);
 					} else if (r.isProgress()) {
-						writeSSE(output, new ChunkInfo("progress", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkHeader("progress", preferredFormat), serializer.toBytes(r), plain);
 					} else {
-						writeSSE(output, new ChunkInfo("result", preferredFormat), serializer.toBytes(r));
+						writeSSE(output, new ChunkHeader("result", preferredFormat), serializer.toBytes(r), plain);
 					}
 
 					c.stop = stop.test(to, c);

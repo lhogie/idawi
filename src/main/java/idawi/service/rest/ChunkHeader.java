@@ -1,11 +1,11 @@
 package idawi.service.rest;
 
-class ChunkInfo {
+class ChunkHeader {
 	public String semantic, syntax;
 	public int len;
 	public int encodedDataLength;
 
-	public ChunkInfo(String semantics, String syntax) {
+	public ChunkHeader(String semantics, String syntax) {
 		this.semantic = semantics;
 		this.syntax = syntax;
 	}
@@ -13,7 +13,7 @@ class ChunkInfo {
 	public String toJSON() {
 		StringBuilder b = new StringBuilder();
 		b.append("{");
-		var fields = ChunkInfo.class.getDeclaredFields();
+		var fields = ChunkHeader.class.getDeclaredFields();
 
 		for (int i = 0; i < fields.length; ++i) {
 			b.append("\"");
