@@ -205,8 +205,7 @@ public class WebServer extends Service {
 					info.encodedDataLength = bas64Data.length();
 					out.write("data: ".getBytes());
 					var json = info.toJSON();
-					var encodedJson = base64(json.getBytes());
-					out.write(encodedJson.getBytes());
+					out.write(json.getBytes());
 					out.write('\n');
 				}
 
@@ -298,7 +297,7 @@ public class WebServer extends Service {
 					c.stop = stop.test(to, c);
 				});
 
-				ro.dispose();
+//				ro.dispose();
 				writeSSE(output, new ChunkHeader("EOT", preferredFormat), serializer.toBytes(ro.returnQ.size()), plain);
 			}
 		}
