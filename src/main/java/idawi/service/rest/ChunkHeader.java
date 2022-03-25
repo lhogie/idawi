@@ -2,8 +2,6 @@ package idawi.service.rest;
 
 class ChunkHeader {
 	public String semantic, syntax;
-	public int len;
-	public int encodedDataLength;
 
 	public ChunkHeader(String semantics, String syntax) {
 		this.semantic = semantics;
