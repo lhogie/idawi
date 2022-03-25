@@ -110,7 +110,7 @@ public class WebServer extends Service {
 			Map<String, String> query = query(uri.getQuery());
 			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*	");
 			OutputStream output = e.getResponseBody();
-boolean plain = query.remove("plain") != null;
+			boolean plain = query.remove("plain") != null;
 
 			try {
 				if (path == null) {
@@ -224,8 +224,8 @@ boolean plain = query.remove("plain") != null;
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output, boolean plain)
-			throws IOException {
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output,
+			boolean plain) throws IOException {
 		var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
 		Serializer serializer = name2serializer.get(preferredFormat);
 
@@ -234,7 +234,8 @@ boolean plain = query.remove("plain") != null;
 
 		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
-			writeSSE(output, new ChunkHeader("result", preferredFormat), serializer.toBytes(component.descriptor()), plain);
+			writeSSE(output, new ChunkHeader("result", preferredFormat), serializer.toBytes(component.descriptor()),
+					plain);
 		} else {
 			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
@@ -296,6 +297,9 @@ boolean plain = query.remove("plain") != null;
 
 					c.stop = stop.test(to, c);
 				});
+
+				ro.dispose();
+				writeSSE(output, new ChunkHeader("EOT", preferredFormat), serializer.toBytes(ro.returnQ.size()), plain);
 			}
 		}
 	}
