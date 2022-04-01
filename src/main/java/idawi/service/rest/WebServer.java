@@ -274,7 +274,7 @@ public class WebServer extends Service {
 				var collector = ro.returnQ.collect(duration, timeout, c -> c.stop = stop.test(to, c));
 				sendEvent(output, null, serializer.toBytes(collector.messages), base64);
 			} else {
-				ro.returnQ.collect(duration, timeout, c -> {
+				var collector = ro.returnQ.collect(duration, timeout, c -> {
 					var r = c.messages.last();
 					sendEvent(output, new ChunkHeader("component message", preferredFormat), serializer.toBytes(r),
 							base64);
@@ -283,7 +283,7 @@ public class WebServer extends Service {
 				});
 
 //				ro.dispose();
-				sendEvent(output, new ChunkHeader("EOT", preferredFormat), serializer.toBytes(ro.returnQ.size()),
+				sendEvent(output, new ChunkHeader("EOT", preferredFormat), serializer.toBytes(collector.messages.size()),
 						base64);
 			}
 		}

@@ -31,6 +31,7 @@ public class DemoService extends Service {
 		registerOperation(new throwError());
 		registerOperation(new waiting());
 		registerOperation(new multipleRandomMessages());
+		registerOperation(new complexResponse());
 		registerOperation("e", q -> {
 		});
 
@@ -216,4 +217,24 @@ public class DemoService extends Service {
 			}
 		}
 	}
+
+	public class complexResponse extends InnerOperation {
+		@Override
+		public String getDescription() {
+			return "simulate a complex output";
+		}
+
+		@Override
+		public void exec(MessageQueue in) {
+			var msg = in.get_blocking();
+			int target = 10;
+
+			for (int i = 0; i < 10; ++i) {
+				reply(msg, Math.random());
+				reply(msg, new ProgressRatio(target, i));
+				Threads.sleep(1);
+			}
+		}
+	}
+
 }
