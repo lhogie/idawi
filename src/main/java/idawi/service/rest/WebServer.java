@@ -121,21 +121,35 @@ public class WebServer extends Service {
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
+						var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
+						Serializer serializer = name2serializer.get(preferredFormat);
+
+						double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
+						double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
+
+						var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
+						var simple = removeOrDefault(query, "mode", "idawi", Set.of("idawi", "simple"))
+								.equals("simple");
+
+						if (!query.isEmpty()) {
+							throw new IllegalStateException("unused parameters: " + query.keySet().toString());
+						}
+
 						e.getResponseHeaders().set("Content-type", plain ? "text/plain" : "text/event-stream");
 						e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
-						serveAPI(path, query, is, output, base64);
+						serveAPI(path, query, is, output, base64, serializer, duration, timeout, stop, simple);
 					} else if (context.equals("favicon.ico")) {
-						write(HttpURLConnection.HTTP_OK, "image/x-icon",
+						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e, output);
 					} else if (context.equals("web")) {
 						if (path.isEmpty()) {
 							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
 
-						write(HttpURLConnection.HTTP_OK, guessMIMEType(path),
+						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("files")) {
-						write(HttpURLConnection.HTTP_OK, guessMIMEType(path),
+						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"))
 										.getContent(),
 								e, output);
@@ -145,11 +159,11 @@ public class WebServer extends Service {
 				}
 			} catch (Throwable err) {
 				try {
-//					write(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain", TextUtilities.exception2string(err).getBytes(),
-//							e, output);
-					logError(err.getMessage());
-					System.err.println("The following error was sent to the Web client");
+					System.err.println("The following error will be sent to the Web client");
 					err.printStackTrace();
+					writeOneShot(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
+							TextUtilities.exception2string(err).getBytes(), e, output);
+					logError(err.getMessage());
 				} catch (Throwable ee) {
 					ee.printStackTrace();
 				}
@@ -185,7 +199,7 @@ public class WebServer extends Service {
 		 */
 	}
 
-	public static void write(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
+	public static void writeOneShot(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
 			throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
 		e.sendResponseHeaders(code, bytes.length);
@@ -217,18 +231,14 @@ public class WebServer extends Service {
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output, boolean base64)
-			throws IOException {
-		var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
-		Serializer serializer = name2serializer.get(preferredFormat);
-
-		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
-		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output,
+			boolean base64, Serializer serializer, double duration, double timeout,
+			BiPredicate<OperationAddress, MessageCollector> stop, boolean simple) throws IOException {
 
 		// no target component are specified: let's consider the local one
 		if (path == null || path.isEmpty()) {
-			sendEvent(output, new ChunkHeader("result", preferredFormat), serializer.toBytes(component.descriptor()),
-					false);
+			sendEvent(output, new ChunkHeader("component descriptor", serializer.getMIMEType()),
+					serializer.toBytes(component.descriptor()), false);
 		} else {
 			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
@@ -262,29 +272,21 @@ public class WebServer extends Service {
 				Streams.split(is, 1000, m -> ro.send(m));
 			}
 
-			var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
-			var simple = removeOrDefault(query, "mode", "idawi", Set.of("idawi", "simple")).equals("simple");
-
-			if (!query.isEmpty()) {
-				sendEvent(output, new ChunkHeader("warning", "text/plain"),
-						("unused parameters: " + query.keySet().toString()).getBytes(), base64);
-			}
-
 			if (simple) {
 				var collector = ro.returnQ.collect(duration, timeout, c -> c.stop = stop.test(to, c));
-				sendEvent(output, null, serializer.toBytes(collector.messages), base64);
+				sendEvent(output, new ChunkHeader("component message list", serializer.getMIMEType()), serializer.toBytes(collector.messages), base64);
 			} else {
 				var collector = ro.returnQ.collect(duration, timeout, c -> {
 					var r = c.messages.last();
-					sendEvent(output, new ChunkHeader("component message", preferredFormat), serializer.toBytes(r),
-							base64);
+					sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
+							serializer.toBytes(r), base64);
 
 					c.stop = stop.test(to, c);
 				});
 
 //				ro.dispose();
-				sendEvent(output, new ChunkHeader("EOT", preferredFormat), serializer.toBytes(collector.messages.size()),
-						base64);
+				sendEvent(output, new ChunkHeader("EOT", serializer.getMIMEType()),
+						serializer.toBytes(collector.messages.size()), base64);
 			}
 		}
 	}

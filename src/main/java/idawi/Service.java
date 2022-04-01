@@ -160,7 +160,7 @@ public class Service {
 
 			if (operation == null) {
 				triggerErrorHappened(msg,
-						new IllegalArgumentException(getClass() + ": can't find operation: " + operationName));
+						new IllegalArgumentException("can't find operation '" + operationName + "' in service " + getClass().getName()));
 			} else {
 				trigger((TriggerMessage) msg, operation);
 			}
