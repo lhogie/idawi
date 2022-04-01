@@ -227,12 +227,14 @@ public class DemoService extends Service {
 		@Override
 		public void exec(MessageQueue in) {
 			var msg = in.get_blocking();
-			int target = 10;
+			int target = 100;
 
-			for (int i = 0; i < 10; ++i) {
+			double pauseS = Math.random();
+			
+			for (int i = 0; i < target; ++i) {
 				reply(msg, Math.random());
 				reply(msg, new ProgressRatio(target, i));
-				Threads.sleep(1);
+				Threads.sleep(pauseS);
 			}
 		}
 	}

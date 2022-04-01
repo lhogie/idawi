@@ -23,7 +23,7 @@ public class JasetoSerializer<E> extends Serializer<E> {
 
 	@Override
 	public String getMIMEType() {
-		return "text/json";
+		return "jaseto";
 	}
 
 }
