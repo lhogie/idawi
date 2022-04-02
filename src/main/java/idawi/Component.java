@@ -95,7 +95,7 @@ public class Component {
 		return (S) services.get(id);
 	}
 
-	public <S extends InnerOperation> S lookupO(Class<S> id) {
+	public <O extends InnerOperation> O lookupO(Class<O> id) {
 		var serviceClass = InnerOperation.serviceClass(id);
 		var service = lookup(serviceClass);
 		return service.lookup(id);

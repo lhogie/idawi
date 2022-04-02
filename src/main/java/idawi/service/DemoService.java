@@ -9,6 +9,7 @@ import idawi.EOT;
 import idawi.InnerOperation;
 import idawi.MessageQueue;
 import idawi.OperationParameterList;
+import idawi.ProgressMessage;
 import idawi.ProgressRatio;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
@@ -230,12 +231,22 @@ public class DemoService extends Service {
 			int target = 100;
 
 			double pauseS = Math.random();
-			
+
 			for (int i = 0; i < target; ++i) {
+				if (i == target / 2) {
+					reply(msg, new ProgressMessage("I did half of the job!"));
+				}
+
 				reply(msg, Math.random());
-				reply(msg, new ProgressRatio(target, i));
+
+				if (Math.random() < 0.4) {
+					reply(msg, new ProgressRatio(target, i));
+				}
+
 				Threads.sleep(pauseS);
 			}
+
+			reply(msg, new ProgressRatio(target, target));
 		}
 	}
 
