@@ -12,7 +12,7 @@ public class To implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
 
-	public Set<ComponentDescriptor> componentIDs;
+	public Set<ComponentDescriptor> componentNames;
 	public int coverage;
 	public double forwardProbability;
 	public double validityDuration = 10;// Double.MAX_VALUE;
@@ -25,7 +25,7 @@ public class To implements Externalizable {
 
 	
 	public To(Set<ComponentDescriptor> peers, int maxDistance, double forwardProbability) {
-		this.componentIDs = peers;
+		this.componentNames = peers;
 		this.coverage = maxDistance;
 		this.forwardProbability = forwardProbability;
 	}
@@ -84,7 +84,7 @@ public class To implements Externalizable {
 
 	@Override
 	public String toString() {
-		return componentIDs == null ? "*" : componentIDs.toString();
+		return componentNames == null ? "*" : componentNames.toString();
 	}
 
 	@Override
@@ -98,18 +98,18 @@ public class To implements Externalizable {
 			return false;
 
 		To t = (To) o;
-		return Objects.equals(componentIDs, t.componentIDs) && coverage == t.coverage;
+		return Objects.equals(componentNames, t.componentNames) && coverage == t.coverage;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 
-		if (componentIDs == null) {
+		if (componentNames == null) {
 			out.writeInt(-1);
 		} else {
-			out.writeInt(componentIDs.size());
+			out.writeInt(componentNames.size());
 
-			for (ComponentDescriptor p : componentIDs) {
+			for (ComponentDescriptor p : componentNames) {
 				out.writeObject(p);
 			}
 		}
@@ -124,10 +124,10 @@ public class To implements Externalizable {
 		int toLen = in.readInt();
 
 		if (toLen != -1) {
-			componentIDs = new HashSet<ComponentDescriptor>(toLen);
+			componentNames = new HashSet<ComponentDescriptor>(toLen);
 
 			for (int i = 0; i < toLen; ++i) {
-				componentIDs.add((ComponentDescriptor) in.readObject());
+				componentNames.add((ComponentDescriptor) in.readObject());
 			}
 		}
 
@@ -137,15 +137,15 @@ public class To implements Externalizable {
 	}
 
 	public boolean isBroadcast() {
-		return componentIDs == null;
+		return componentNames == null;
 	}
 
 	public boolean isUnicast() {
-		return componentIDs != null && componentIDs.size() == 1;
+		return componentNames != null && componentNames.size() == 1;
 	}
 
 	public boolean isMulticast() {
-		return componentIDs != null && componentIDs.size() > 1;
+		return componentNames != null && componentNames.size() > 1;
 	}
 
 	public double getValidityDuration() {
@@ -153,7 +153,7 @@ public class To implements Externalizable {
 	}
 
 	public Set<ComponentDescriptor> getNotYetReachedExplicitRecipients() {
-		return componentIDs;
+		return componentNames;
 	}
 
 	public int getMaxDistance() {

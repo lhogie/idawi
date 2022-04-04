@@ -26,4 +26,9 @@ public class JasetoSerializer<E> extends Serializer<E> {
 		return "jaseto";
 	}
 
+	@Override
+	public boolean isBinary() {
+		return false;
+	}
+
 }

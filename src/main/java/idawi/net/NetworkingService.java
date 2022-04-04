@@ -199,7 +199,7 @@ public class NetworkingService extends Service {
 		component.forEachService(s -> {
 			if (s instanceof RoutingService) {
 				RoutingService router = (RoutingService) s;
-				relays.addAll(router.relaysTo(msg.to.serviceAddress.to.componentIDs, protocol));
+				relays.addAll(router.relaysTo(msg.to.serviceAddress.to.componentNames, protocol));
 			}
 		});
 
@@ -221,9 +221,9 @@ public class NetworkingService extends Service {
 		}
 
 		// in order not to touch the immutable set created by Set.of()
-		if (msg.to.serviceAddress.to.componentIDs != null) {
-			msg.to.serviceAddress.to.componentIDs = new HashSet<ComponentDescriptor>(
-					msg.to.serviceAddress.to.componentIDs);
+		if (msg.to.serviceAddress.to.componentNames != null) {
+			msg.to.serviceAddress.to.componentNames = new HashSet<ComponentDescriptor>(
+					msg.to.serviceAddress.to.componentNames);
 		}
 
 		aliveMessages.put(msg.ID, msg);

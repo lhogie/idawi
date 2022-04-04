@@ -56,7 +56,7 @@ public class WebServer extends Service {
 	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
 
 	static {
-		stoppers.put("aeot", (to, c) -> c.messages.filter(m -> m.isEOT()).senders().equals(to.sa.to.componentIDs));
+		stoppers.put("aeot", (to, c) -> c.messages.filter(m -> m.isEOT()).senders().equals(to.sa.to.componentNames));
 		stoppers.put("1eot", (to, c) -> !c.messages.filter(m -> m.isEOT()).isEmpty());
 		stoppers.put("1m", (to, c) -> !c.messages.isEmpty());
 		stoppers.put("1r", (to, c) -> !c.messages.filter(m -> m.isResult()).isEmpty());
@@ -72,7 +72,7 @@ public class WebServer extends Service {
 		name2serializer.put("bytes", new ToBytesSerializer<>());
 		name2serializer.put("toml", new TOMLSerializer<>());
 		name2serializer.put("yaml", new YAMLSerializer<>());
-		name2serializer.put("jaseto", new JasetoSerializer<>());
+		name2serializer.put("jaseto", new IdawiWebSerializer());
 	}
 
 	private HttpServer httpServer;
@@ -104,7 +104,7 @@ public class WebServer extends Service {
 		httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 		httpServer.createContext("/", e -> {
 			URI uri = e.getRequestURI();
-			InputStream is = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
+			InputStream input = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
 			// is.close();
 			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
@@ -120,7 +120,22 @@ public class WebServer extends Service {
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
-						serveAPI(path, query, is, output, e);
+						Serializer serializer = name2serializer.get("jaseto");
+
+						try {
+							var preferredFormat = removeOrDefault(query, "format", serializer.getMIMEType(),
+									name2serializer.keySet());
+							serializer = name2serializer.get(preferredFormat);
+
+							e.getResponseHeaders().set("Content-type", "text/event-stream");
+							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
+							serveAPI(path, query, input, output, serializer);
+						} catch (Throwable err) {
+							sendEvent(output, new ChunkHeader("error", serializer.getMIMEType()),
+									serializer.toBytes(err), serializer.isBinary());
+						} finally {
+							sendEvent(output, new ChunkHeader("EOT", serializer.getMIMEType()), "ok".getBytes(), false);
+						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e, output);
@@ -215,92 +230,60 @@ public class WebServer extends Service {
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output,
-			HttpExchange e) throws IOException {
-		var preferredFormat = removeOrDefault(query, "format", "jaseto", name2serializer.keySet());
-		Serializer serializer = name2serializer.get(preferredFormat);
+			Serializer serializer) throws IOException {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 		var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
-		var events = removeOrDefault(query, "events", "yes", Set.of("yes", "no")).equals("yes");
+		var fds = removeOrDefault(query, "events", "yes", Set.of("yes", "no")).equals("yes");
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
 		// no target component are specified: let's consider the local one
-		if (path == null || path.isEmpty()) {
-			var b = serializer.toBytes(component.descriptor());
+		if (path.isEmpty()) {
+			path.add("");
+		}
 
-			if (events) {
-				e.getResponseHeaders().set("Content-type", events ? "text/event-stream" : serializer.getMIMEType());
-				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
-				sendEvent(output, new ChunkHeader("component descriptor", serializer.getMIMEType()), b,
-						serializer.isBinary());
-			} else {
-				writeOneShot(HttpURLConnection.HTTP_OK, serializer.getMIMEType(), b, e, output);
-				return;
-			}
-		} else {
-			Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
+		Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
 
-			// there's no service specified
-			if (path.isEmpty()) {
-				path.add(RegistryService.class.getName());
-				path.add(InnerOperation.name(RegistryService.local.class));
-			} // there no operation specified
-			else if (path.size() == 1) {
-				path.add(InnerOperation.name(Service.DescriptorOperation.class));
-			}
+		// there's no service specified
+		if (path.isEmpty()) {
+			path.add(RegistryService.class.getName());
+			path.add(InnerOperation.name(RegistryService.local.class));
+		} // there no operation specified, let's describe the service
+		else if (path.size() == 1) {
+			path.add(InnerOperation.name(Service.DescriptorOperation.class));
+		}
 
-			String serviceName = path.remove(0);
-			Class<? extends Service> serviceID = Clazz.findClass(serviceName);
+		String serviceName = path.remove(0);
+		Class<? extends Service> serviceID = Clazz.findClass(serviceName);
 
-			if (serviceID == null) {
-				writeOneShot(HttpURLConnection.HTTP_NOT_FOUND, serializer.getMIMEType(),
-						("no such class " + serviceName).getBytes(), e, output);
-				return;
-			}
+		if (serviceID == null)
+			throw new IllegalArgumentException("no such class " + serviceName);
 
-			if (path.isEmpty()) {
-				path.add(InnerOperation.name(Service.DescriptorOperation.class));
-			}
+		String operation = path.remove(0);
+		var parms = new OperationParameterList();
+		parms.addAll(path);
 
-			String operation = path.remove(0);
-			var parms = new OperationParameterList();
-			parms.addAll(path);
+		System.out.println("calling operation " + targets + "/" + serviceID.toString() + "/" + operation
+				+ " with parameters: " + parms);
+		var to = new To(targets).s(serviceID).o(operation);
 
-			System.out.println("calling operation " + targets + "/" + serviceID.toString() + "/" + operation
-					+ " with parameters: " + parms);
-			var to = new To(targets).s(serviceID).o(operation);
+		RemotelyRunningOperation ro = exec(to, true, parms);
 
-			RemotelyRunningOperation ro = exec(to, true, parms);
+		if (is != null) {
+			Streams.split(is, 1000, m -> ro.send(m));
+		}
 
-			if (is != null) {
-				Streams.split(is, 1000, m -> ro.send(m));
-			}
+		ro.returnQ.collect(duration, timeout, c -> {
+			sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
+					serializer.toBytes(c.messages.last()), serializer.isBinary());
 
-			if (events) {
-				e.getResponseHeaders().set("Content-type", events ? "text/event-stream" : serializer.getMIMEType());
-				e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
-
-				ro.returnQ.collect(duration, timeout, c -> {
-					var r = c.messages.last();
-					sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
-							serializer.toBytes(r), serializer.isBinary());
-
-					c.stop = stop.test(to, c);
-				});
-
-				sendEvent(output, new ChunkHeader("EOT", serializer.getMIMEType()), "ok".getBytes(), false);
-			} else {
-				var collector = ro.returnQ.collect(duration, timeout, c -> c.stop = stop.test(to, c));
-				writeOneShot(HttpURLConnection.HTTP_OK, serializer.getMIMEType(),
-						serializer.toBytes(collector.messages), e, output);
-				return;
-			}
+			c.stop = stop.test(to, c);
+		});
 
 //			ro.dispose();
-		}
 
 	}
 

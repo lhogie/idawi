@@ -29,7 +29,7 @@ public abstract class TransportLayer {
 		msg.receptionDate = Date.time();
 
 		// fill the route with component views
-		msg.route.forEach(e -> e.component = c.descriptor(e.componentID, true));
+		msg.route.forEach(e -> e.component = c.descriptor(e.componentName, true));
 //		new Exception().printStackTrace();
 //		System.out.println(getName() +  " new message size = " + serializer.toBytes(msg).length + "  " + msg);
 

@@ -126,7 +126,7 @@ public class MapReduceService extends Service {
 					h.newResult(workerResponse);
 					h.newProgressRatio(100 * (tasks.size() - unprocessedTasks.size()) / (double) tasks.size());
 				} else if (msg.content instanceof ProgressMessage) {
-					h.newProgressMessage(msg.route.source().componentID + ": " + msg.content);
+					h.newProgressMessage(msg.route.source().componentName + ": " + msg.content);
 				} else {
 					h.newMessage(msg);
 				}

@@ -8,13 +8,13 @@ import java.util.Objects;
 
 public class RouteEntry implements Externalizable {
 	public transient ComponentDescriptor component;
-	public String componentID;
+	public String componentName;
 	public String protocolName;
 	public double emissionDate;
 
 	@Override
 	public String toString() {
-		return componentID + "-(" + protocolName + ")";
+		return componentName + "-(" + protocolName + ")";
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class RouteEntry implements Externalizable {
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		componentID = in.readUTF();
+		componentName = in.readUTF();
 		protocolName = in.readUTF();
 		emissionDate = in.readDouble();
 	}

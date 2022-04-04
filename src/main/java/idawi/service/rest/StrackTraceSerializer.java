@@ -22,4 +22,9 @@ public class StrackTraceSerializer<E> extends Serializer<E> {
 	public String getMIMEType() {
 		return "stack_trace";
 	}
+	@Override
+	public boolean isBinary() {
+		return false;
+	}
+
 }
