@@ -13,9 +13,6 @@ To this purpose it comes with the following features:
 - it does [lock-free](https://preshing.com/20120612/an-introduction-to-lock-free-programming/) multi-core parallelism
 - it has the ability to do emulation
 
- *Idawi* is developed at the
-[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
-a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
 
 
 
@@ -54,8 +51,10 @@ new Service(c1) {
 
 
 # People involved
-Contributors:
-- Luc Hogie(http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
+ *Idawi* is developed at the
+[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
+a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr), by:
+- [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
 - Antonin Lacomme (Master degree intern)
 - Fedi Ghalloussi (Bachelor degree intern)
 
