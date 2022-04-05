@@ -19,19 +19,29 @@ To this purpose it comes with the following features:
 # Example usage
 ## Creating components
 ### Creating a few components inside a single JVM
+```java
+// creates 3 components in this JVM
+var a = new Component("a");
+var b = new Component("b");
+var c = new Component("c");
 
+// enable them to communicate via shared memory
+LMI.connect(a, b);
+LMI.connect(b, c);
+```
 ### Deploying new components to another JVM in same node
 
 
 Here is an example code of a component deploying another one in another JVM and then invoking an operation on it.
 ```java
-		// creates a component in this JVM
-		var a = new Component();
+var a = new Component();
 
-		// we'll put another component in a different JVM
-		var bd = new ComponentDescriptor();
-		bd.name = "b";
-		a.lookup(DeployerService.class).deployOtherJVM(bd, true, feedback -> {}, ok -> {});
+// remote components are referred to as a descriptor
+var b = new ComponentDescriptor();
+b.name = "b";
+
+// ask the deployment service on "a" to deploy "b" according to its description
+a.lookup(DeployerService.class).deployOtherJVM(b, true, feedback -> {}, ok -> {});
 ```
 ### Deploying new components to another JVM in other node
 ```java
