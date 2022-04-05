@@ -1,10 +1,9 @@
-*Idawi* is a Java middleware for Research in distributing computing, and it application fields (HPC, IOT, fog/edge computing, IA, etc). It is developed at the
-[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
-a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
+# Description
 
-*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it makes applications based on it to be organized as **distributed component system**. To this purpose it comes with the following features:
+*Idawi* is a Java middleware for distributed applications. It is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a structuring framework and implementations of algorithms for the construction of **distributed component systems**. Besides, *Idawi* aims at maximizing its usefulness to Researchers working in the application fields of distributing computing (HPC, IOT, fog/edge computing, IA, etc).
+To this purpose it comes with the following features:
 - it has a carefully object-oriented with SOA flavors
-- it has a collective message+queue-oriented communication model
+- it has a collective (message/queue)-oriented communication model
 - it has a collective computation model
 - it has automatized deployment/bootstrapping of components through SSH
 - it provides interoperability through a REST-based web interface
@@ -13,6 +12,14 @@ a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://
 - it has independance to transport network (includes support for SSH, TCP and UDP)
 - it does [lock-free](https://preshing.com/20120612/an-introduction-to-lock-free-programming/) multi-core parallelism
 - it has the ability to do emulation
+
+ *Idawi* is developed at the
+[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
+a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr).
+
+
+
+# Example usage
 
 Here is an example code of a component deploying another one in another JVM and then invoking an operation on it.
 ```java
@@ -46,7 +53,7 @@ new Service(c1) {
 ```
 
 
-
+# People involved
 Contributors:
 - Luc Hogie(http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
 - Antonin Lacomme (Master degree intern)

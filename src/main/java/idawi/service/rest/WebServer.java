@@ -234,7 +234,6 @@ public class WebServer extends Service {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 		var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
-		var fds = removeOrDefault(query, "events", "yes", Set.of("yes", "no")).equals("yes");
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
