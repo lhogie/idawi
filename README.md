@@ -17,37 +17,35 @@ To this purpose it comes with the following features:
 
 
 # Example usage
+## Creating components
+### Creating a few components inside a single JVM
+
+### Deploying new components to another JVM in same node
+
 
 Here is an example code of a component deploying another one in another JVM and then invoking an operation on it.
 ```java
-// creates a component in this JVM
-var c1 = new Component();
+		// creates a component in this JVM
+		var a = new Component();
 
-// prints the list of its builtin services
-c1.services().forEach(s -> System.out.println(s));
-
-// among them, picks up the service for component deployments
-var deployer = c1.lookupService(DeployerService.class);
-
-// and prints the operations exposed by it
-System.out.println(deployer.listOperationNames());
-
-// we'll put another component in a different JVM
-var c2d = new ComponentDescriptor();
-c2d.friendlyName = "other component";
-c1.lookupService(DeployerService.class).deployOtherJVM(c2d, true, feedback -> {}, ok -> {});
-
-// creates a new service that asks the other component to compute something
-new Service(c1) {
-	public void run() {
-		// executes an operation (exposed by DummyService) which computes the length of
-		// a given string
-		var l = exec(new ServiceAddress(Set.of(c2d), DummyService.class),
-				DummyService.stringLength2, 1, 1, "Hello Idawi!");
-		System.out.println(l);
-	}
-}.run();
+		// we'll put another component in a different JVM
+		var bd = new ComponentDescriptor();
+		bd.name = "b";
+		a.lookup(DeployerService.class).deployOtherJVM(bd, true, feedback -> {}, ok -> {});
 ```
+### Deploying new components to another JVM in other node
+```java
+		var a = new Component();
+		ComponentDescriptor child = new ComponentDescriptor();
+		child.name = "b";
+		child.sshParameters.hostname = "192.168.32.44";
+		a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+```
+## Creating a new service
+### Creating a new operation
+
+
 
 
 # People involved
