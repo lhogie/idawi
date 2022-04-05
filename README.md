@@ -106,11 +106,6 @@ Just like services, operation are identified by their class.
 var o = s.lookup(ExampleOperation.class);
 ```
 
-A quicker way exists:
-```java
-var o = a.lookupO(MyService.ExampleOperation.class);
-```
-
 ### Invoking an operation
 ```java
 // the operation has to be scheduled to an address that can refer to multiple components
@@ -122,12 +117,12 @@ var rop = o.exec(to, true, null);
 ```
 
 ### Obtaining result
-Print to incoming results from the running operation during 1s.
+Synchronously waits 1s for incoming results. Print them as they come.
 ```java
 rop.returnQ.collect(1, 1, c -> System.out.println("just received : " + c.messages.last().content));
 ```
 
-Synchronously waits for 1 first result.
+Same thing but stops waiting when one message has arrived.
 ```java
 rop.returnQ.collect(1, 1, c -> {
 	System.out.println("just received : " + c.messages.last().content);
