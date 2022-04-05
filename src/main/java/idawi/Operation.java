@@ -4,6 +4,7 @@ public abstract class Operation implements OperationFunctionalInterface {
 	int nbCalls, nbFailures;
 	double totalDuration;
 	protected final OperationDescriptor descriptor = createOperationDescriptor();
+	Service service;
 
 	public Operation() {
 		this.descriptor.implementationClass = getClass().getName();
@@ -50,4 +51,11 @@ public abstract class Operation implements OperationFunctionalInterface {
 		this.descriptor.nbCalls = this.nbCalls;
 		this.descriptor.totalDuration = this.totalDuration;
 	}
+
+	public RemotelyRunningOperation exec(To to, boolean createQ, Object initialData) {
+		Class c = getClass();
+		return service.exec(to.o(c), createQ, initialData);
+
+	}
+
 }

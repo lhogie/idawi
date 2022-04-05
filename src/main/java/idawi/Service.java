@@ -319,6 +319,7 @@ public class Service {
 		}
 
 		operations.add(o);
+		o.service = this;
 	}
 
 	public void newThread_loop_periodic(long periodMs, Runnable r) {

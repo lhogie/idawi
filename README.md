@@ -26,6 +26,7 @@ var b = new Component("b");
 var c = new Component("c");
 
 // enable them to communicate via shared memory
+// b be relay messages to/from a and c
 LMI.connect(a, b);
 LMI.connect(b, c);
 ```
@@ -45,16 +46,93 @@ a.lookup(DeployerService.class).deployOtherJVM(b, true, feedback -> {}, ok -> {}
 ```
 ### Deploying new components to another JVM in other node
 ```java
-		var a = new Component();
-		ComponentDescriptor child = new ComponentDescriptor();
-		child.name = "b";
-		child.sshParameters.hostname = "192.168.32.44";
-		a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
-				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+var a = new Component();
+		
+ComponentDescriptor child = new ComponentDescriptor();
+child.name = "b";
+child.sshParameters.hostname = "192.168.32.44"; // this is where the b will be deployed to
+a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+	feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 ```
 ## Creating a new service
+This installs a new service in a component:
+```java
+		var a = new Component();
+		var s = new Service(a);
+```
+But here, s has no specific operations.
 ### Creating a new operation
+```java
+	public static void main(String[] args) throws IOException {
+		var a = new Component();
+		
+		// installs the service in component
+		var s = new MyService(a);
+	}
+	
+	public static class MyService extends Service{
 
+		public MyService(Component component) {
+			super(component);
+			registerOperation(new doNothingOperation());
+		}
+		
+		public static class doNothingOperation extends InnerOperation{
+
+			@Override
+			public void exec(MessageQueue in) throws Throwable {
+				// do nothing
+			}
+
+			@Override
+			public String getDescription() {
+				return "an operation that does nothing";
+			}			
+		}		
+	}
+```
+
+
+### lookup a specific service
+Services are identified by their class.
+```java
+MyService s = a.lookup(MyService.class);
+```
+
+### lookup a specific operation
+Just like services, operation are identified by their class.
+```java
+var o = s.lookup(doNothingOperation.class);
+```
+
+A quicker way exists:
+```java
+var o = a.lookupO(MyService.doNothingOperation.class);
+```
+
+### Invoking an operation
+```java
+// the operation has to be scheduled to an address that can refer to multiple components
+var to = new To(a);
+
+// the operation is run asynchronously
+// we obtain a bridge to the remotely running operation
+var rop = o.exec(to, true, null);
+```
+
+### Obtaining result
+Print to incoming results from the running operation during 1s.
+```java
+rop.returnQ.collect(1, 1, c -> System.out.println("just received : " + c.messages.last().content));
+```
+
+Synchronously waits for 1 first result.
+```java
+		rop.returnQ.collect(1, 1, c -> {
+			System.out.println("just received : " + c.messages.last().content);
+			c.stop = true;
+		});
+```
 
 
 
