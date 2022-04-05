@@ -63,51 +63,52 @@ This installs a new service in a component:
 But here, s has no specific operations.
 ### Creating a new operation
 ```java
-	public static void main(String[] args) throws IOException {
-		var a = new Component();
-		
-		// installs the service in component
-		var s = new MyService(a);
-	}
+public static void main(String[] args) throws IOException {
+	var a = new Component();
 	
-	public static class MyService extends Service{
+	// installs the service in component
+	var s = new ExampleService(a);
+}
 
-		public MyService(Component component) {
-			super(component);
-			registerOperation(new doNothingOperation());
-		}
-		
-		public static class doNothingOperation extends InnerOperation{
+public static class ExampleService extends Service {
 
-			@Override
-			public void exec(MessageQueue in) throws Throwable {
-				// do nothing
-			}
-
-			@Override
-			public String getDescription() {
-				return "an operation that does nothing";
-			}			
-		}		
+	public ExampleService(Component component) {
+		super(component);
+		registerOperation(new ExampleOperation());
 	}
+
+	public class ExampleOperation extends InnerOperation {
+		@Override
+		public void exec(MessageQueue in) throws Throwable {
+			Message triggerMessage = in.get_blocking();
+			reply(triggerMessage, "a result");
+			reply(triggerMessage, "another result");
+		}
+
+		@Override
+		public String getDescription() {
+			return "an operation that does nothing";
+		}
+	}
+}
 ```
 
 
 ### lookup a specific service
 Services are identified by their class.
 ```java
-MyService s = a.lookup(MyService.class);
+MyService s = a.lookup(ExampleService.class);
 ```
 
 ### lookup a specific operation
 Just like services, operation are identified by their class.
 ```java
-var o = s.lookup(doNothingOperation.class);
+var o = s.lookup(ExampleOperation.class);
 ```
 
 A quicker way exists:
 ```java
-var o = a.lookupO(MyService.doNothingOperation.class);
+var o = a.lookupO(MyService.ExampleOperation.class);
 ```
 
 ### Invoking an operation
@@ -128,10 +129,10 @@ rop.returnQ.collect(1, 1, c -> System.out.println("just received : " + c.message
 
 Synchronously waits for 1 first result.
 ```java
-		rop.returnQ.collect(1, 1, c -> {
-			System.out.println("just received : " + c.messages.last().content);
-			c.stop = true;
-		});
+rop.returnQ.collect(1, 1, c -> {
+	System.out.println("just received : " + c.messages.last().content);
+	c.stop = true;
+});
 ```
 
 
