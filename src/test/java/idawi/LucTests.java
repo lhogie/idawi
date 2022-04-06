@@ -109,10 +109,10 @@ public class LucTests {
 		assertEquals(5, (Integer) client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "salut").get(0));
 		Cout.debugSuperVisible(2);
 		assertEquals(53, (Integer) client.exec(new To(c2).o(DemoService.countFrom1toN.class), true, 100).returnQ
-				.collect(1).messages.resultMessages(100).get(53).content);
+				.recv_sync(1).messages.resultMessages(100).get(53).content);
 		Cout.debugSuperVisible(3);
 		assertEquals(7, (Integer) client.exec(new To(c2).o(DemoService.countFromAtoB.class), true,
-				new DemoService.Range(0, 13)).returnQ.collect(1).messages.resultMessages(13).get(7).content);
+				new DemoService.Range(0, 13)).returnQ.recv_sync(1).messages.resultMessages(13).get(7).content);
 		Cout.debugSuperVisible(4);
 //		assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
 
@@ -172,11 +172,11 @@ public class LucTests {
 		LMI.connect(c1, c2);
 		Service client = c1.lookup(DemoService.class);
 		System.err.println("client: " + client);
-		var o = c1.lookupO(DemoService.stringLength.class);
+		var o = c1.operation(DemoService.stringLength.class);
 //		var rom = o.exec(new To(c2), false, new OperationParameterList("hello"));
 
 		var rom = client.exec(new To(c2).o(DemoService.stringLength.class), true, new OperationParameterList("hello"));
-		var c = rom.returnQ.collect(5, 5, cc -> {
+		var c = rom.returnQ.recv_sync(5, 5, cc -> {
 			cc.stop = !cc.messages.resultMessages().isEmpty();
 		});
 

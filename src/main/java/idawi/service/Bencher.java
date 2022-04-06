@@ -13,11 +13,10 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
-import idawi.TypedInnerOperation;
 import idawi.MessageQueue;
-import idawi.MessageQueue.Enough;
 import idawi.Service;
 import idawi.To;
+import idawi.TypedInnerOperation;
 import toools.thread.Q;
 
 /**

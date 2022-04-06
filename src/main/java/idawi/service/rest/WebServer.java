@@ -275,7 +275,7 @@ public class WebServer extends Service {
 			Streams.split(is, 1000, m -> ro.send(m));
 		}
 
-		ro.returnQ.collect(duration, timeout, c -> {
+		ro.returnQ.recv_sync(duration, timeout, c -> {
 			sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
 					serializer.toBytes(c.messages.last()), serializer.isBinary());
 
@@ -323,7 +323,7 @@ public class WebServer extends Service {
 		Set<ComponentDescriptor> components = new HashSet<>();
 
 		for (String name : s.split(",")) {
-			var found = component.lookupO(RegistryService.lookUp.class).f(name);
+			var found = component.operation(RegistryService.lookUp.class).f(name);
 
 			if (found == null) {
 				components.add(ComponentDescriptor.fromCDL("name=" + name));

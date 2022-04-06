@@ -21,7 +21,7 @@ public class CreateNewService2 {
 
 		var o = s.lookup(ExampleOperation.class);
 
-		o = a.lookupO(ExampleService.ExampleOperation.class);
+		o = a.operation(ExampleService.ExampleOperation.class);
 
 		// the operation has to be scheduled to an addess that can refer to multiple
 		// components
@@ -30,7 +30,7 @@ public class CreateNewService2 {
 		// we obtain a bridge to the remotely running operation
 		var rop = o.exec(to, true, null);
 
-		rop.returnQ.collect(1, 1, c -> {
+		rop.returnQ.recv_sync(1, 1, c -> {
 			System.out.println("just received : " + c.messages.last().content);
 			c.stop = true;
 		});

@@ -38,7 +38,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var c = localService.exec(to, true, backend).returnQ.collect(1, 1, c2 -> {
+		var c = localService.exec(to, true, backend).returnQ.recv_sync(1, 1, c2 -> {
 			var msg = c2.messages.last();
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();

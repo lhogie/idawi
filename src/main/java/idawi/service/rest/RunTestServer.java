@@ -12,7 +12,7 @@ public class RunTestServer {
 		Component c = new Component("c");
 		LMI.connect(a, b);
 		LMI.connect(b, c);
-		a.lookupO(ServiceManager.ensureStarted.class).f(WebServer.class);
+		a.operation(ServiceManager.ensureStarted.class).f(WebServer.class);
 		a.lookup(WebServer.class).startHTTPServer();
 	}
 }

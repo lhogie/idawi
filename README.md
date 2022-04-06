@@ -40,15 +40,19 @@ Two components in a same JVM can communicate using the LMI (Local Method Invocat
 ### Creating a few components inside a single JVM
 Just drop the following instructions into any main method.
 ```java
-// creates 3 components in this JVM
-var a = new Component("a");
-var b = new Component("b");
-var c = new Component("c");
+public IdawiQuickStart {
+	public static void main(String... args) {
+		// creates 3 components in this JVM
+		var a = new Component("a");
+		var b = new Component("b");
+		var c = new Component("c");
 
-// enable them to communicate via shared memory
-// b be relay messages to/from a and c
-LMI.connect(a, b);
-LMI.connect(b, c);
+		// enable them to communicate via shared memory
+		// b be relay messages to/from a and c
+		LMI.connect(a, b);
+		LMI.connect(b, c);
+	}
+}
 ```
 ### Deploying new components to another JVM in same node
 

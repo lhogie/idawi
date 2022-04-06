@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import toools.exceptions.CodeShouldNotHaveBeenReachedException;
 
 public class MessageList extends ArrayList<Message> {
 	private static final long serialVersionUID = 1L;
@@ -32,16 +31,12 @@ public class MessageList extends ArrayList<Message> {
 		forEach(m -> m.content = null);
 	}
 
+	public MessageList eots() {
+		return filter(m -> m.isEOT());
+	}
+
 	public Set<ComponentDescriptor> completedPeers() {
-		var r = new HashSet<ComponentDescriptor>();
-
-		for (var m : this) {
-			if (m.isEOT()) {
-				r.add(m.route.source().component);
-			}
-		}
-
-		return r;
+		return eots().senders();
 	}
 
 	public Set<ComponentDescriptor> uncompletedPeers() {
@@ -71,20 +66,8 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList retainFirstCompleted() {
-		var firstCompleted = filter(msg -> msg.isEOT()).ensureSize(1).first().route.source().component;
-		MessageList l = new MessageList();
-
-		for (Message m : this) {
-			if (m.route.source().component.equals(firstCompleted)) {
-				l.add(m);
-
-				if (m.isEOT()) {
-					return l;
-				}
-			}
-		}
-
-		throw new CodeShouldNotHaveBeenReachedException();
+		var firstCompleted = eots().first().route.source().component;
+		return filter(m -> m.route.source().component.equals(firstCompleted) && !m.isEOT());
 	}
 
 	public Message first() {

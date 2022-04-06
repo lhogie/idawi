@@ -33,30 +33,30 @@ public class MessageCollector {
 
 	public void collect(double duration, double timeout, Consumer<MessageCollector> userCode) {
 		this.startDate = Date.time();
-		this.endDate = Date.time() + duration;
+		this.endDate = startDate + duration;
 		this.timeout = timeout;
 
 		while (remains() > 0 && !stop) {
-			var m = q.poll_sync(Math.min(remains(), timeout));
+			var msg = q.poll_sync(Math.min(remains(), timeout));
 
-			if (m != null && !blacklist.contains(m.route.source().component)) {
-				if (m.isProgress()) {
+			if (msg != null && !blacklist.contains(msg.route.source().component)) {
+				if (msg.isProgress()) {
 					if (deliverProgress) {
-						messages.add(m);
+						messages.add(msg);
 						userCode.accept(this);
 					}
-				} else if (m.isEOT()) {
+				} else if (msg.isEOT()) {
 					if (deliverEOT) {
-						messages.add(m);
+						messages.add(msg);
 						userCode.accept(this);
 					}
-				} else if (m.isError()) {
+				} else if (msg.isError()) {
 					if (deliverError) {
-						messages.add(m);
+						messages.add(msg);
 						userCode.accept(this);
 					}
 				} else {
-					messages.add(m);
+					messages.add(msg);
 					userCode.accept(this);
 				}
 			}

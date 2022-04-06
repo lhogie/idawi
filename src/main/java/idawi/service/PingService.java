@@ -59,7 +59,7 @@ public class PingService extends Service {
 	}
 
 	public MessageList ping(Set<ComponentDescriptor> targets, double timeout, Consumer<Message> realtimeHandler) {
-		return ping(targets).collect(timeout, timeout, c -> {
+		return ping(targets).recv_sync(timeout, timeout, c -> {
 			realtimeHandler.accept(c.messages.last());
 			c.stop = c.messages.senders().equals(targets);
 		}).messages;

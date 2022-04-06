@@ -39,7 +39,7 @@ public class Demo3_multi_deployment {
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = t.lookup(PingService.class).ping(children).collect(1000, 1000, c -> {
+		MessageList pongs = t.lookup(PingService.class).ping(children).recv_sync(1000, 1000, c -> {
 		}).messages;
 
 		if (pongs.isEmpty()) {

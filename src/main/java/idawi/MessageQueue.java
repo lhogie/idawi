@@ -15,56 +15,47 @@ public class MessageQueue extends Q<Message> {
 //	private final Consumer<MessageQueue> destructor;
 //	private final Set<ComponentDescriptor> completedSenders = new HashSet<>();
 
-	public enum Enough {
-		yes, no;
-	}
-
 	public MessageQueue(Service service, String name, int capacity) {
 		super(capacity);
 		this.name = name;
 		this.service = service;
 	}
 
-	public enum Timeout {
-		NO, YES
-	}
-
 	public void detach() {
 		service.detachQueue(this);
 	}
 
-	public Object get() throws Throwable {
+	public Object collectOneResult() throws Throwable {
 		return collectUntilFirstEOT(1).messages.throwAnyError().resultMessages(1).first().content;
 	}
 
-	public <A> Object getAs(Class<A> c) throws Throwable {
-		return (A) get();
+	public <A> A collectOneResult(Class<A> c) throws Throwable {
+		return (A) collectOneResult();
 	}
 
-	public MessageCollector collect(final double initialDuration, final double initialTimeout,
+	public MessageCollector recv_sync(final double initialDuration, final double initialTimeout,
 			Consumer<MessageCollector> collector) {
 		var c = new MessageCollector(this);
 		c.collect(initialDuration, initialTimeout, collector);
 		return c;
 	}
-	
-	
+
 	public MessageCollector collect(Consumer<MessageCollector> collector) {
-		return collect(1, 1, collector);
+		return recv_sync(1, 1, collector);
 	}
 
-	public MessageCollector collect() {
-		return collect(1);
+	public MessageCollector recv_sync() {
+		return recv_sync(1);
 	}
 
-	public MessageCollector collect(final double initialDuration) {
-		return collect(initialDuration, initialDuration, c -> {
+	public MessageCollector recv_sync(final double initialDuration) {
+		return recv_sync(initialDuration, initialDuration, c -> {
 		});
 	}
 
 	public MessageCollector collectUntilAllHaveReplied(final double initialDuration,
 			Set<ComponentDescriptor> components) {
-		return collect(initialDuration, initialDuration, c -> {
+		return recv_sync(initialDuration, initialDuration, c -> {
 			c.stop = c.messages.senders().equals(components);
 		});
 	}
@@ -75,11 +66,11 @@ public class MessageQueue extends Q<Message> {
 	 * @return
 	 */
 	public MessageCollector collectUntilFirstEOT(double timeout) {
-		return collect(timeout, timeout, c -> c.stop = c.messages.last().isEOT());
+		return recv_sync(timeout, timeout, c -> c.stop = c.messages.last().isEOT());
 	}
 
 	public MessageCollector collectUntilNEOT(double timeout, int n) {
-		return collect(timeout, timeout, c -> c.stop = c.messages.countEOT() == n);
+		return recv_sync(timeout, timeout, c -> c.stop = c.messages.countEOT() == n);
 	}
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {

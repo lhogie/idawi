@@ -27,19 +27,19 @@ public class ServiceStub {
 
 	public ServiceDescriptor descriptor() throws Throwable {
 		return (ServiceDescriptor) localService.exec(toO(Service.DescriptorOperation.class),
-				localService.createQueue(), null).returnQ.get();
+				localService.createQueue(), null).returnQ.collectOneResult();
 	}
 
 	public long nbMessagesReceived() throws Throwable {
-		return (Long) localService.exec(toO(Service.nbMessagesReceived.class), localService.createQueue(), null).returnQ.get();
+		return (Long) localService.exec(toO(Service.nbMessagesReceived.class), localService.createQueue(), null).returnQ.collectOneResult();
 	}
 
 	public Int2LongMap second2nbMessages() throws Throwable {
-		return (Int2LongMap) localService.exec(toO(Service.sec2nbMessages.class), localService.createQueue(), null).returnQ.get();
+		return (Int2LongMap) localService.exec(toO(Service.sec2nbMessages.class), localService.createQueue(), null).returnQ.collectOneResult();
 
 	}
 
 	public Set<String> listOperationNames() throws Throwable {
-		return (Set<String>) localService.exec(toO(Service.listOperationNames.class), localService.createQueue(), null).returnQ.get();
+		return (Set<String>) localService.exec(toO(Service.listOperationNames.class), localService.createQueue(), null).returnQ.collectOneResult();
 	}
 }

@@ -423,7 +423,7 @@ public class Service {
 	}
 
 	public List<Object> execf(OperationAddress target, double timeout, int nbResults, Object... parms) {
-		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.collect(timeout).messages
+		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.recv_sync(timeout).messages
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
@@ -453,7 +453,7 @@ public class Service {
 
 		// asks the ServiceManager on all components in "to" if they they have that
 		// service
-		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.collect(timeout, timeout, c -> {
+		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.recv_sync(timeout, timeout, c -> {
 			var msg = c.messages.last();
 
 			// if this component claims he has

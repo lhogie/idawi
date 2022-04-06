@@ -26,7 +26,7 @@ public class RegistryService extends Service {
 					Threads.sleep(0.1);
 				} else {
 					var from = Collections.pickRandomObject(Component.componentsInThisJVM.values(), r);
-					from.lookupO(RegistryService.broadcastLocalDescriptor.class).f(1);
+					from.operation(RegistryService.broadcastLocalDescriptor.class).f(1);
 					Threads.sleep(10d / Component.componentsInThisJVM.size());
 				}
 			}
@@ -129,7 +129,7 @@ public class RegistryService extends Service {
 	public class updateAll extends TypedInnerOperation {
 		public void f() {
 			var to = new OperationAddress(new To(new HashSet<>(name2descriptor.values())), RegistryService.local.class);
-			RegistryService.this.exec(to, createQueue(), null).returnQ.collect().messages.resultMessages().contents()
+			RegistryService.this.exec(to, createQueue(), null).returnQ.recv_sync().messages.resultMessages().contents()
 					.forEach(d -> lookup(add.class).f((ComponentDescriptor) d));
 		}
 

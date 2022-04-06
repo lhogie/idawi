@@ -22,7 +22,7 @@ public class Tree {
 			LMI.connect(a, b);
 		}
 		
-		l.get(0).lookupO(ServiceManager.ensureStarted.class).f(WebServer.class);
+		l.get(0).operation(ServiceManager.ensureStarted.class).f(WebServer.class);
 		l.get(0).lookup(WebServer.class).startHTTPServer();
 		Threads.sleepForever();
 	}
