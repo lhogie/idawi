@@ -16,9 +16,24 @@ To this purpose it comes with the following features:
 
 
 
-# Example usage
+# Quick start
+The following tutorial shows and explains the very basic concepts in *Idawi*. It order to keep it short and useful, we show here only the concepts that help for a quick start.
+## Installing
+
+We recommend you to install *Idawi* using Maven. To do this, simply add the following dependency to the POM file of your project:
+```maven
+<dependency>
+  <groupId>io.github.lhogie</groupId>
+  <artifactId>idawi</artifactId>
+  <version>0.0.5</version>
+</dependency>
+```
+As this tutorial is not updated every single time a new version of the code is released, please first make sure you will get the very last version: [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi).
+
 ## Creating components
 ### Creating a few components inside a single JVM
+In a JVM, a component is POJO with a few things in it.
+Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP.
 ```java
 // creates 3 components in this JVM
 var a = new Component("a");
@@ -31,7 +46,6 @@ LMI.connect(a, b);
 LMI.connect(b, c);
 ```
 ### Deploying new components to another JVM in same node
-
 
 Here is an example code of a component deploying another one in another JVM and then invoking an operation on it.
 ```java
@@ -54,23 +68,18 @@ child.sshParameters.hostname = "192.168.32.44"; // this is where the b will be d
 a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
 	feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 ```
-## Creating a new service
-This installs a new service in a component:
-```java
-		var a = new Component();
-		var s = new Service(a);
-```
-But here, s has no specific operations.
-### Creating a new operation
-```java
-public static void main(String[] args) throws IOException {
-	var a = new Component();
-	
-	// installs the service in component
-	var s = new ExampleService(a);
-}
 
-public static class ExampleService extends Service {
+
+### lookup a specific service
+Services in component are identified by their class. A specific service can be searched for like this:
+```java
+MyService s = a.lookup(ExampleService.class);
+```
+
+## Creating a new service
+Let us create a new service. This can be done by extending the __Service__ class, just like this:
+```java
+public class ExampleService extends Service {
 
 	public ExampleService(Component component) {
 		super(component);
@@ -92,13 +101,21 @@ public static class ExampleService extends Service {
 	}
 }
 ```
+As you can see here, an operation must be declared as an inner class of its service class. This makes it possible to identify an operation by its class name, in a way that can be verified by the compiler.
 
 
-### lookup a specific service
-Services are identified by their class.
+To use this new service, let us install it into a component:
+
 ```java
-MyService s = a.lookup(ExampleService.class);
-```
+public static void main(String[] args) throws IOException {
+	var a = new Component();
+	
+	// installs the service in component
+	var s = new ExampleService(a);
+}
+
+
+
 
 ### lookup a specific operation
 Just like services, operation are identified by their class.
