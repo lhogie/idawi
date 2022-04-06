@@ -9,7 +9,7 @@ import java.util.Objects;
 public class OperationAddress implements Externalizable {
 	private static final long serialVersionUID = 1L;
 	public ServiceAddress sa;
-	public String opid;
+	public String operationID;
 
 	public OperationAddress() {
 
@@ -17,7 +17,7 @@ public class OperationAddress implements Externalizable {
 
 	public OperationAddress(ServiceAddress sa, String opid) {
 		this.sa = sa;
-		this.opid = opid;
+		this.operationID = opid;
 	}
 
 	public OperationAddress(To ca, Class<? extends InnerOperation> opid) {
@@ -26,12 +26,12 @@ public class OperationAddress implements Externalizable {
 	}
 
 	public OperationAddress o(ServiceAddress s) {
-		return new OperationAddress(s, opid);
+		return new OperationAddress(s, operationID);
 	}
 
 	@Override
 	public String toString() {
-		return sa.toString() + "->" + opid;
+		return sa.toString() + "->" + operationID;
 	}
 
 	@Override
@@ -51,12 +51,12 @@ public class OperationAddress implements Externalizable {
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(sa);
-		out.writeObject(opid);
+		out.writeObject(operationID);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		sa = (ServiceAddress) in.readObject();
-		opid = (String) in.readObject();
+		operationID = (String) in.readObject();
 	}
 }

@@ -3,13 +3,11 @@ package idawi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import idawi.Streams.Chunk;
 import toools.thread.Q;
@@ -34,8 +32,8 @@ public class MessageQueue extends Q<Message> {
 		NO, YES
 	}
 
-	public void delete() {
-		service.deleteQueue(this);
+	public void detach() {
+		service.detachQueue(this);
 	}
 
 	public Object get() throws Throwable {
@@ -74,8 +72,6 @@ public class MessageQueue extends Q<Message> {
 		return forEach(MessageCollector.DEFAULT_COLLECT_DURATION, returnsHandler);
 	}
 
-
-	
 	public MessageList collect() {
 		return collect(MessageCollector.DEFAULT_COLLECT_DURATION);
 	}
@@ -140,7 +136,7 @@ public class MessageQueue extends Q<Message> {
 			}
 
 			private void fillBuffer() throws IOException {
-				Message msg = get_blocking(timeout);
+				Message msg = poll(timeout);
 
 				if (msg == null) {
 					throw new IOException("timeout");
@@ -165,5 +161,12 @@ public class MessageQueue extends Q<Message> {
 
 	public QueueAddress addr() {
 		return service.component.getAddress().s(service.id).q(name);
+	}
+
+	@Override
+	public MessageList toList() {
+		var r = new MessageList();
+		r.addAll(super.toList());
+		return r;
 	}
 }

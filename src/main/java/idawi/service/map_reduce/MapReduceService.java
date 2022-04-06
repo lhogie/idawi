@@ -135,7 +135,7 @@ public class MapReduceService extends Service {
 			});
 		}
 
-		deleteQueue(q);
+		detachQueue(q);
 		return unprocessedTasks;
 	}
 

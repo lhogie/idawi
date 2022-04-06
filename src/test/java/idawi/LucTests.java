@@ -12,14 +12,12 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import idawi.net.LMI;
-import idawi.net.NetworkingService;
 import idawi.service.DemoService;
 import idawi.service.DeployerService;
 import idawi.service.PingService;
 import idawi.service.rest.WebServer;
 import toools.io.Cout;
 import toools.net.NetUtilities;
-import toools.thread.Threads;
 
 public class LucTests {
 
@@ -152,7 +150,7 @@ public class LucTests {
 		other.name = "other_peer";
 		master.lookup(DeployerService.class).deployOtherJVM(other, true, fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
-		
+
 		// asks the master to ping the other component
 		Message pong = new Service(master).component.lookup(PingService.class).ping(other, 10);
 		System.out.println("***** " + pong.route);
@@ -173,9 +171,17 @@ public class LucTests {
 		Component c2 = new Component("c2");
 		LMI.connect(c1, c2);
 		Service client = c1.lookup(DemoService.class);
-		var len = client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "hello").get(0);
-		System.out.println(len);
-		System.out.println(len);
+		System.err.println("client: " + client);
+		var o = c1.lookupO(DemoService.stringLength.class);
+//		var rom = o.exec(new To(c2), false, new OperationParameterList("hello"));
+		
+		var rom = client.exec(new To(c2).o(DemoService.stringLength.class), true, new OperationParameterList("hello"));
+		var c = rom.returnQ.collect(5, 5, cc -> {
+			cc.stop = !cc.messages.resultMessages().isEmpty();
+		});
+
+		var l = c.messages;
+		int len = (int) l.resultMessages().contents().get(0);
 		assertEquals(5, len);
 
 		// clean

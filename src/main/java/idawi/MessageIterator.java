@@ -46,19 +46,19 @@ public class MessageIterator implements Iterator<Message> {
 
 		if (remains <= 0) {
 			// expired!
-			q.delete();
+			q.detach();
 			completed = true;
 		} else {
 			var w = Math.min(remains, waitTime);
-			next = q.get_blocking(w);
+			next = q.poll(w);
 
 			// no message arrived until the q expires
 			if (next == null) {
-				q.delete();
+				q.detach();
 				completed = true;
 			} else {
 				if (f.apply(next) == Enough.yes) {
-					q.delete();
+					q.detach();
 					completed = true;
 				} else {
 					completed = false;

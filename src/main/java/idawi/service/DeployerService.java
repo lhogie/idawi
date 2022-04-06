@@ -262,7 +262,7 @@ public class DeployerService extends Service {
 		network.transport.add(childDescriptor, childPipe);
 
 		feedback.accept("waiting for " + childDescriptor + " to be ready");
-		String response = (String) childPipe.waitForChild.get_blocking(10000);
+		String response = (String) childPipe.waitForChild.poll(10000);
 
 		if (response == null) {
 			throw new IllegalStateException("timeout");

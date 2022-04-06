@@ -46,7 +46,7 @@ public class PingService extends Service {
 	}
 
 	public Message ping(ComponentDescriptor target, double timeout) {
-		var r = ping(Set.of(target)).get_blocking(timeout);
+		var r = ping(Set.of(target)).poll(timeout);
 
 		if (r != null && !r.route.source().component.equals(target))
 			throw new IllegalStateException("someone else replied to ping!");

@@ -71,7 +71,6 @@ public class Component {
 		new NetworkingService(this);
 		new JVMInfo(this);
 
-		System.out.println(services.keySet());
 		this.descriptor = createDescriptor();
 
 		// descriptorRegistry.add(descriptor());

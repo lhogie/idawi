@@ -38,7 +38,7 @@ public class TraceRouteService extends Service {
 
 	public Route traceRoute(ComponentDescriptor t, double timeout) {
 		return (Route) exec(new To(t).o(TraceRouteService.traceroute.class), true, null).returnQ
-				.get_blocking(timeout).content;
+				.poll(timeout).content;
 	}
 
 	public Map<ComponentDescriptor, Route> traceRoute(Set<ComponentDescriptor> targets, double timeout) {

@@ -38,7 +38,7 @@ Technically, within a given JVM, a component is plain Java object (POJO).
 Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMs, on the same node or not, must communicate via the network stack.
 
 ### Creating a few components inside a single JVM
-Just drop the following instructions into any `main(String...)` method.
+Just drop the following instructions into any main method.
 ```java
 // creates 3 components in this JVM
 var a = new Component("a");

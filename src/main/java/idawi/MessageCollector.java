@@ -36,8 +36,8 @@ public class MessageCollector {
 		this.endDate = Date.time() + duration;
 		this.timeout = timeout;
 
-		while (remains() <= 0 && !stop) {
-			var m = q.get_blocking(Math.min(remains(), timeout));
+		while (remains() > 0 && !stop) {
+			var m = q.poll(Math.min(remains(), timeout));
 
 			if (m != null && !blacklist.contains(m.route.source().component)) {
 				if (m.isProgress()) {
@@ -62,6 +62,6 @@ public class MessageCollector {
 			}
 		}
 
-		q.delete();
+		q.detach();
 	}
 }

@@ -38,7 +38,7 @@ public class Service {
 	protected final List<Thread> threads = new ArrayList<>();
 	protected final Set<Operation> operations = new HashSet<>();
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
-	private final Set<String> deletedQueues = new HashSet<>();
+	private final Set<String> detachedQueues = new HashSet<>();
 	final AtomicLong returnQueueID = new AtomicLong();
 
 	// stores the number of message received at each second
@@ -218,7 +218,7 @@ public class Service {
 				operation.totalDuration += Date.time() - start;
 			}
 
-			deleteQueue(inputQ_final);
+			detachQueue(inputQ_final);
 		};
 
 		if (msg.premptive) {
@@ -399,9 +399,9 @@ public class Service {
 		return name2queue.get(qid);
 	}
 
-	protected void deleteQueue(MessageQueue q) {
+	protected void detachQueue(MessageQueue q) {
 		name2queue.remove(q.name);
-		deletedQueues.add(q.name);
+		detachedQueues.add(q.name);
 		q.cancelEventisation();
 	}
 
@@ -416,9 +416,9 @@ public class Service {
 	}
 
 	public RemotelyRunningOperation exec(OperationAddress target, MessageQueue rq, Object initialInputData) {
-		String remoteQid = target.opid + "@" + Long.toHexString(Date.timeNs());
-		var remoteInputQaddr = new QueueAddress(target.sa, remoteQid);
-		return new RemotelyRunningOperation(this, remoteInputQaddr, target.opid, rq, initialInputData);
+		String remoteInputQid = target.operationID + "@" + Long.toHexString(Date.timeNs());
+		var remoteInputQaddr = new QueueAddress(target.sa, remoteInputQid);
+		return new RemotelyRunningOperation(this, remoteInputQaddr, target.operationID, rq, initialInputData);
 	}
 
 	public RemotelyRunningOperation exec(OperationAddress target, boolean createQueue, Object initialInputData) {
