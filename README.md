@@ -146,20 +146,37 @@ var rop = o.exec(to, true, null);
 ```
 
 ### Obtaining result
-Synchronously waits 1s for incoming results. Print them as they come.
+One strength of *Idawi* lies in it result collection algorithm. This algorithm perform __synchronous__ collection of result, from the return input queue of the remotely running operation.
+
+In its most general form:
+Waits 1s for incoming results. Print them as they come.
+Stops when 3 messages have been received.
+```java
+rop.returnQ.collect(1, 1, c -> {
+	System.out.println("just received : " + c.messages.last().content);
+	c.stop = c.messages.size() == 3;
+});
+```
+
+Many variation on this pattern are proposed to the user.
+
+Waits 1s for a result:
+```java
+var r = rop.returnQ.collect(1);
+```
+
 ```java
 rop.returnQ.collect(1, 1, c -> System.out.println("just received : " + c.messages.last().content));
 ```
 
-Same thing but stops waiting when one message has arrived.
+
+### Dealing with remote errors
 ```java
-rop.returnQ.collect(1, 1, c -> {
-	System.out.println("just received : " + c.messages.last().content);
-	c.stop = true;
-});
+r.throwExceptionsIfAny();
 ```
 
-
+### Monitoring a running system
+In progress
 
 # People involved
  *Idawi* is developed at the
