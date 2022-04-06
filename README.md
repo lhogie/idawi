@@ -31,9 +31,10 @@ We recommend you to install *Idawi* using Maven. To do this, simply add the foll
 As this tutorial is not updated every single time a new version of the code is released, please first make sure you will get the very last version: [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi).
 
 ## Creating components
-### Creating a few components inside a single JVM
 In a JVM, a component is POJO with a few things in it.
-Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP.
+Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMS, on the same node or not, must communicate via the network stack.
+
+### Creating a few components inside a single JVM
 ```java
 // creates 3 components in this JVM
 var a = new Component("a");
@@ -70,14 +71,31 @@ a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
 ```
 
 
-### lookup a specific service
-Services in component are identified by their class. A specific service can be searched for like this:
+### lookup a specific service or operation
+The only thing a component can do, is exposing services to other components. A service exposes a set of operations, which can be triggered by other components. These operations constitute the API of the service. They implement the concern the service is about. They are many builtin services in a components. These can be listed like this:
 ```java
-MyService s = a.lookup(ExampleService.class);
+var services = a.services();
 ```
 
-## Creating a new service
-Let us create a new service. This can be done by extending the __Service__ class, just like this:
+Services in component are identified by their class.  This makes it possible to identify an operation by its class name, in a way that can be verified by the compiler.
+A specific service can be searched for like this:
+```java
+var s = a.lookup(ExampleService.class);
+```
+
+Just like services, operation are identified by their class.
+```java
+var o = s.lookup(ExampleOperation.class);
+```
+An operation is a  piece of sequential code that is fed by a queue of messages. It is triggered by an initial message (called the *trigger message*) sent by a component. This input queue is public can it can be fed by any component in the application. Also the return of an operation is not limited to a single value. Operation send data anytime durin their execution by sending message to any other component in the system.
+In many cases, an operation will obtain one single input message and will reply one single message to its *caller*. But the multiplicity of input/output has many advantages. In particular it enables:
+- stream processing
+- the construction of complex workflows
+- the emission of any information that is not a result, such as progress/debug information
+
+## Creating a new service and operation
+A new *Idawi* application will come as one or several new services.
+Creating a new service can be done by extending the __Service__ class, just like this:
 ```java
 public class ExampleService extends Service {
 
@@ -101,7 +119,7 @@ public class ExampleService extends Service {
 	}
 }
 ```
-As you can see here, an operation must be declared as an inner class of its service class. This makes it possible to identify an operation by its class name, in a way that can be verified by the compiler.
+As you can see here, an operation must be declared as an inner class of its service class.
 
 
 To use this new service, let us install it into a component:
@@ -113,19 +131,13 @@ public static void main(String[] args) throws IOException {
 	// installs the service in component
 	var s = new ExampleService(a);
 }
-
-
-
-
-### lookup a specific operation
-Just like services, operation are identified by their class.
-```java
-var o = s.lookup(ExampleOperation.class);
 ```
+
 
 ### Invoking an operation
 ```java
 // the operation has to be scheduled to an address that can refer to multiple components
+// in our case, let it run on component "a" only
 var to = new To(a);
 
 // the operation is run asynchronously
