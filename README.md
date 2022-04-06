@@ -33,12 +33,12 @@ We recommend you to install *Idawi* using Maven. To do this, simply add the foll
 As this tutorial is not updated every single time a new version of the code is released, please first check from [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi) you will get the very last version.
 
 ## Creating components
-Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application.
-In a JVM, a component is plain Java object (POJO).
+Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application domain.
+Technically, within a given JVM, a component is plain Java object (POJO).
 Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMs, on the same node or not, must communicate via the network stack.
 
 ### Creating a few components inside a single JVM
-Just drop the following instructions into any __main__ method.
+Just drop the following instructions into any `main(String...)` method.
 ```java
 // creates 3 components in this JVM
 var a = new Component("a");
