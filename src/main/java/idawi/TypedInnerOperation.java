@@ -48,7 +48,7 @@ public abstract class TypedInnerOperation extends InnerOperation {
 	}
 
 	@Override
-	public final void exec(MessageQueue in)
+	public final void impl(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Message msg = in.poll_sync();
 		OperationParameterList parmsList = OperationParameterList.from(this, msg.content, method.getParameterTypes());

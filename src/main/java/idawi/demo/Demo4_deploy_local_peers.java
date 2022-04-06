@@ -10,9 +10,9 @@ import idawi.InnerOperation;
 import idawi.MessageQueue;
 import idawi.Service;
 import idawi.To;
+import idawi.deploy.DeployerService;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
-import idawi.service.DeployerService;
 import toools.thread.Q;
 
 /**
@@ -36,7 +36,7 @@ public class Demo4_deploy_local_peers {
 
 		public class op extends InnerOperation {
 			@Override
-			public void exec(MessageQueue in) throws Throwable {
+			public void impl(MessageQueue in) throws Throwable {
 				var msg = in.poll_sync();
 				System.out.println("message route: " + msg.route);
 				wait.add_sync("");

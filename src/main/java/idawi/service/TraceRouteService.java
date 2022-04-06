@@ -25,7 +25,7 @@ public class TraceRouteService extends Service {
 
 	public class traceroute extends InnerOperation {
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
 			reply(msg, msg.route);
 		}

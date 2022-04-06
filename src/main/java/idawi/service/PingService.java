@@ -27,7 +27,7 @@ public class PingService extends Service {
 
 	public class ping extends InnerOperation {
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			Cout.debugSuperVisible(in.poll_sync());
 		}
 

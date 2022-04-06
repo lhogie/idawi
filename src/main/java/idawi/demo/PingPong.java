@@ -8,8 +8,8 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
+import idawi.deploy.DeployerService;
 import idawi.net.LMI;
-import idawi.service.DeployerService;
 import idawi.service.PingService;
 
 /**
@@ -38,7 +38,9 @@ public class PingPong {
 			DeployerService deployer = t.lookup(DeployerService.class);
 
 			// and asks it to deploy a new thing within the JVM
-			List<Component> newThings = deployer.deploy(Set.of(newPeer), true, 1d, true, msg -> System.out.println(msg),
+			List<Component> newThings = deployer.deploy(Set.of(newPeer), true, 1d,
+					rsyncOut -> System.out.println("rsync: " + rsyncOut),
+					rsyncErr -> System.err.println("rsync: " + rsyncErr), msg -> System.out.println(msg),
 					ok -> System.out.println(ok + " is ready"));
 
 			// registers the newly available thing in our list of things

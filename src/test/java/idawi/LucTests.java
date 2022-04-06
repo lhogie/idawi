@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import idawi.deploy.DeployerService;
 import idawi.net.LMI;
 import idawi.service.DemoService;
-import idawi.service.DeployerService;
 import idawi.service.PingService;
 import idawi.service.rest.WebServer;
 import toools.io.Cout;

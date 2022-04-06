@@ -32,7 +32,7 @@ public class MapReduceService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
 			Cout.debug(":) received " + msg);
 			var t = (Task) msg.content;

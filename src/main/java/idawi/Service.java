@@ -201,7 +201,7 @@ public class Service {
 
 			try {
 //				Cout.debug(operation);
-				operation.exec(inputQ_final);
+				operation.impl(inputQ_final);
 
 				// tells the client the processing has completed
 				if (msg.replyTo != null) {
@@ -266,8 +266,8 @@ public class Service {
 			}
 
 			@Override
-			public void exec(MessageQueue in) throws Throwable {
-				userCode.exec(in);
+			public void impl(MessageQueue in) throws Throwable {
+				userCode.impl(in);
 			}
 
 			@Override
@@ -293,7 +293,7 @@ public class Service {
 			}
 
 			@Override
-			public void exec(MessageQueue in) throws Throwable {
+			public void impl(MessageQueue in) throws Throwable {
 				var m = in.poll_sync();
 				userCode.accept(m, r -> reply(m, r));
 			}

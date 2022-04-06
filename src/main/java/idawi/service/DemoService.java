@@ -46,7 +46,7 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
 			var opl = (OperationParameterList) tg.content;
 			int n = Integer.valueOf(opl.get(0).toString());
@@ -74,7 +74,7 @@ public class DemoService extends Service {
 
 	public class grep extends InnerOperation {
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			String re = (String) in.poll_async().content;
 
 			while (true) {
@@ -155,7 +155,7 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 
 			for (int i = 0; i < (Integer) m.content; ++i) {
@@ -179,7 +179,7 @@ public class DemoService extends Service {
 			return null;
 		}
 
-		public void exec(MessageQueue in) {
+		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
 			var p = (Range) m.content;
 
@@ -196,7 +196,7 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) {
+		public void impl(MessageQueue in) {
 			throw new Error("this is a test error");
 		}
 	}
@@ -208,7 +208,7 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) {
+		public void impl(MessageQueue in) {
 			var msg = in.poll_sync();
 			int target = (Integer) msg.content;
 
@@ -226,7 +226,7 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void exec(MessageQueue in) {
+		public void impl(MessageQueue in) {
 			var msg = in.poll_sync();
 			int target = 100;
 

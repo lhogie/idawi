@@ -16,7 +16,7 @@ public class CommandsService extends Service {
 	public class exec extends InnerOperation {
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			while (true) {
 				Message m = in.poll_sync();
 

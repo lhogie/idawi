@@ -1,9 +1,15 @@
 # Description
 
-*Idawi* is a Java middleware for distributed applications. Its design is driven by our experience in distributed computing applied to scientific experimentation.
+*Idawi* is a Java middleware for decentralized applications, as they can be found in the Internet Of Things (IOT), in the fog, in Mobile Ad hoc Networks (MANETs), etc. 
+Because who can do more can do less, it can also be used for usual distributed computing in cluster. 
+*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction and operation of decentralized systems. 
 
-*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction of **distributed systems**. Besides, *Idawi* aims at being useful to Researchers working in applied distributed computing (HPC, IOT, fog/edge computing, IA, etc).
-To this purpose it comes with the following features:
+ *Idawi* is developed at the
+[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
+a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr)
+Its design is driven by our practical experience in distributed computing applied to scientific experimentation. 
+
+Here are some of his features of interest:
 - it has a polished **mixed object/message/queue/component/service-oriented architecture**
 - it has a **collective** communication and computation models
 - it has **automatized deployment**/bootstrapping of components through SSH
@@ -16,9 +22,7 @@ To this purpose it comes with the following features:
 - it is able to do **emulation**
 
 
- *Idawi* is developed at the
-[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
-a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr), by:
+Team members:
 - [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
 - Antonin Lacomme (Master degree intern)
 - Fedi Ghalloussi (Bachelor degree intern)
@@ -124,7 +128,7 @@ public class ExampleService extends Service {
 
 	public class ExampleOperation extends InnerOperation {
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			Message triggerMessage = in.get_blocking();
 			reply(triggerMessage, "a result");
 			reply(triggerMessage, "another result");

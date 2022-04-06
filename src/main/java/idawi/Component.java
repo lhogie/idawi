@@ -11,13 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import idawi.deploy.DeployerService;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.TransportLayer;
 import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
 import idawi.service.DemoService;
-import idawi.service.DeployerService;
 import idawi.service.ErrorLog;
 import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;

@@ -8,7 +8,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.MessageList;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
 import idawi.service.PingService;
 
 public class Demo3_multi_deployment {
@@ -35,7 +35,9 @@ public class Demo3_multi_deployment {
 		}
 
 		// deploy
-		t.lookup(DeployerService.class).deploy(children, true, 10000, true,
+		t.lookup(DeployerService.class).deploy(children, true, 10000, 
+				rsyncOut -> System.out.println("rsync: " + rsyncOut),
+				rsyncErr -> System.err.println("rsync: " + rsyncErr),
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		long pingTime = System.currentTimeMillis();

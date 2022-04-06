@@ -5,7 +5,7 @@ import java.io.IOException;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
 import idawi.service.PingService;
 
 /**

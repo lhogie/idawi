@@ -5,10 +5,10 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.To;
+import idawi.deploy.DeployerService;
 import idawi.ComponentDescriptor;
 import idawi.Service;
 import idawi.service.DemoService;
-import idawi.service.DeployerService;
 
 public class BasicExample {
 	public static void main(String[] args) throws IOException {

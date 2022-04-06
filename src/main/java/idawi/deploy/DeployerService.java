@@ -1,4 +1,4 @@
-package idawi.service;
+package idawi.deploy;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,19 +17,15 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Graph;
 import idawi.InnerOperation;
 import idawi.MessageQueue;
 import idawi.RegistryService;
 import idawi.Service;
-import idawi.To;
-import idawi.TypedInnerOperation;
 import idawi.net.LMI;
 import idawi.net.NetworkingService;
 import idawi.net.PipeFromToChildProcess;
 import idawi.net.PipeFromToParentProcess;
 import idawi.net.TransportLayer;
-import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import toools.extern.ProcesException;
 import toools.io.Cout;
@@ -45,24 +41,17 @@ import toools.thread.Threads;
 
 public class DeployerService extends Service {
 	private static String remoteClassDir = Service.class.getPackageName() + ".classpath/";
-
 	List<ComponentDescriptor> failed = new ArrayList<>();
 
 	public static class DeploymentRequest implements Serializable {
-		public Collection<ComponentDescriptor> peers;
+		public Collection<ComponentDescriptor> peers = new HashSet<>();
 		public double timeoutInSecond;
 		public boolean suicideWhenParentDie;
-		public boolean printRsync;
 	}
 
 	public static class LocalDeploymentRequest implements Serializable {
 		public int n;
 		public boolean suicideWhenParentDie;
-	}
-
-	@Override
-	public String getFriendlyName() {
-		return "deployer";
 	}
 
 	public DeployerService(Component peer) {
@@ -76,14 +65,22 @@ public class DeployerService extends Service {
 		registerOperation(new deploy_in_other_jvm());
 	}
 
+	@Override
+	public String getFriendlyName() {
+		return "deployer";
+	}
+
 	public class deploy extends InnerOperation {
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.poll_sync();
-			DeploymentRequest req = (DeploymentRequest) msg.content;
-			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, req.printRsync,
-					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
+		public void impl(MessageQueue in) throws Throwable {
+			var trigger = in.poll_sync();
+			DeploymentRequest req = (DeploymentRequest) trigger.content;
+			System.err.println(req.peers);
+			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, rsyncOut -> reply(trigger, rsyncOut),
+					rsyncErr -> reply(trigger, rsyncErr), stdout -> reply(trigger, stdout),
+					peerOk -> reply(trigger, peerOk));
+			System.err.println("done");
 		}
 
 		@Override
@@ -95,7 +92,7 @@ public class DeployerService extends Service {
 	public class local_deploy extends InnerOperation {
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
 			List<Component> compoennts = new ArrayList<>();
@@ -107,17 +104,18 @@ public class DeployerService extends Service {
 
 		@Override
 		public String getDescription() {
-			return "deploy";
+			return "deploy new components in the current JVM";
 		}
 	}
 
 	public class deploy_in_other_jvm extends InnerOperation {
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			Graph deploymentPlan = (Graph) msg.content;
-			apply(deploymentPlan, 1, true, stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
+			var deploymentGraph = (DeploymentPlan) msg.content;
+			apply(deploymentGraph, 1, rsyncOut -> reply(msg, rsyncOut), rsyncErr -> reply(msg, rsyncErr),
+					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
 		}
 
 		@Override
@@ -126,42 +124,34 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public class deploy_in_other_jvms extends TypedInnerOperation {
-
-		public void f(List<ComponentDescriptor> dd) throws Throwable {
-			deployInNewJVMs(dd);
-		}
+	public class deploy_in_other_jvms extends InnerOperation {
 
 		@Override
 		public String getDescription() {
 			return "deploy in new JVMs";
 		}
-	}
-
-	public class deploy_tree_in_other_jvms extends TypedInnerOperation {
-
-		public Set<ComponentDescriptor> f(int depth, Int2IntFunction nbChildren) throws Throwable {
-			return deployTreeInNewJVMs(depth, nbChildren);
-		}
 
 		@Override
-		public String getDescription() {
-			return "deploy tree in new JVMs";
+		public void impl(MessageQueue q) throws Throwable {
+			var trigger = q.poll_sync();
+			var dd = (List<ComponentDescriptor>) trigger.content;
+			deployInNewJVMs(dd, line -> reply(trigger, line), ok -> reply(trigger, ok));
 		}
 	}
 
-	public void apply(Graph deploymentPlan, double timeoutInSecond, boolean printRsync, Consumer<Object> feedback,
-			Consumer<ComponentDescriptor> peerOk) throws IOException {
-		Set<ComponentDescriptor> toDeploy = deploymentPlan.get(component.descriptor());
-		deploy(toDeploy, true, timeoutInSecond, printRsync, feedback, peerOk);
+	public void apply(DeploymentPlan deploymentGraph, double timeoutInSecond, Consumer<String> rsyncOut,
+			Consumer<String> rsyncErr, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
+			throws IOException {
+		Set<ComponentDescriptor> toDeploy = deploymentGraph.g.getSuccessors(component.descriptor());
+		deploy(toDeploy, true, timeoutInSecond, rsyncOut, rsyncErr, feedback, peerOk);
 
 		// var to = new OperationAddress(toDeploy, DeployerService.d3);
 		// start(to, true, deploymentPlan).returnQ.collect();
 	}
 
 	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
-			double timeoutInSecond, boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
-			throws IOException {
+			double timeoutInSecond, Consumer<String> rsyncOut, Consumer<String> rsyncErr, Consumer<Object> feedback,
+			Consumer<ComponentDescriptor> peerOk) throws IOException {
 
 		Collection<ComponentDescriptor> inThisJVM = findLocalhosts(peers);
 		List<Component> localThings = new ArrayList<>();
@@ -176,22 +166,20 @@ public class DeployerService extends Service {
 		Set<ComponentDescriptor> remotePeers = toools.collections.Collections.difference(peers, inThisJVM);
 
 		if (!remotePeers.isEmpty()) {
-			deployRemote(remotePeers, suicideWhenParentDie, timeoutInSecond, printRsync, feedback, peerOk);
+			deployRemote(remotePeers, suicideWhenParentDie, timeoutInSecond, rsyncOut, rsyncErr, feedback, peerOk);
 		}
 
 		return localThings;
 	}
 
-	public void deployInNewJVMs(Collection<ComponentDescriptor> dd) throws IOException {
+	public void deployInNewJVMs(Collection<ComponentDescriptor> dd, Consumer<Object> messages,
+			Consumer<ComponentDescriptor> ok) throws IOException {
 		var threads = new ArrayList<Thread>();
 
 		for (var d : dd) {
 			threads.add(new Thread(() -> {
 				try {
-					deployOtherJVM(d, true, fdbck -> {
-					}, ok -> {
-						System.out.println(ok + " successfully deployed in its own JVM");
-					});
+					deployOtherJVM(d, true, messages, ok);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -206,26 +194,6 @@ public class DeployerService extends Service {
 				e.printStackTrace();
 			}
 		});
-	}
-
-	public Set<ComponentDescriptor> deployTreeInNewJVMs(int depth, Int2IntFunction depth2nbChildren) throws IOException {
-		Set<ComponentDescriptor> childrenDescriptors = new HashSet<>();
-
-		var nbC = depth2nbChildren.get(depth);
-		
-		for (int i = 0; i < nbC; ++i) {
-			var cd = new ComponentDescriptor();
-			cd.name = component.name + "." + i;
-			childrenDescriptors.add(cd);
-		}
-
-		deployInNewJVMs(childrenDescriptors);
-		var to = new To(childrenDescriptors).o(DeployerService.deploy_tree_in_other_jvms.class);
-		var results = execf(to, 10, childrenDescriptors.size(), depth - 1, depth2nbChildren);
-		Set<ComponentDescriptor> descriptors = new HashSet<>();
-		descriptors.addAll(childrenDescriptors);
-		descriptors.addAll((Collection<ComponentDescriptor>) results.get(0));
-		return descriptors;
 	}
 
 	public void deployOtherJVM(ComponentDescriptor d, boolean suicideWhenParentDie, Consumer<Object> feedback,
@@ -316,8 +284,8 @@ public class DeployerService extends Service {
 	}
 
 	public void deployRemote(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
-			double timeoutInSecond, boolean printRsync, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
-			throws IOException {
+			double timeoutInSecond, Consumer<String> rsyncOut, Consumer<String> rsyncErr, Consumer<Object> feedback,
+			Consumer<ComponentDescriptor> peerOk) throws IOException {
 
 		// identifies the set of peers that have filesystem in common
 		Set<Set<ComponentDescriptor>> nasGroups = groupByNAS(peers, feedback);
@@ -332,7 +300,7 @@ public class DeployerService extends Service {
 				ComponentDescriptor n = nasGroup.iterator().next();
 
 				// sends the binaries there
-				rsyncBinaries(n.sshParameters);
+				rsyncBinaries(n.sshParameters, rsyncOut, rsyncErr);
 
 				// makes sure the JVM is okay for all the nodes in the group
 				ensureCompliantJVM(n.sshParameters);
@@ -357,16 +325,11 @@ public class DeployerService extends Service {
 				}
 			}
 
-			private void rsyncBinaries(SSHParms ssh) throws IOException {
+			private void rsyncBinaries(SSHParms ssh, Consumer<String> rsyncOut, Consumer<String> rsyncErr)
+					throws IOException {
 				LongProcess rsyncing = new LongProcess("rsync to " + ssh, null, -1, line -> feedback.accept(line));
-				Consumer<String> rsyncOut = l -> {
-					if (printRsync) {
-						rsyncing.stdout((String) l);
-					}
-				};
-
 				int exitCode = ClassPath.retrieveSystemClassPath().rsyncTo(ssh, ssh.hostname, remoteClassDir,
-						l -> rsyncOut.accept(l), l -> rsyncOut.accept(l));
+						l -> rsyncOut.accept(l), l -> rsyncErr.accept(l));
 				rsyncing.end();
 
 				if (exitCode != 0) {
@@ -452,7 +415,6 @@ public class DeployerService extends Service {
 
 		return r;
 	}
-
 
 	public static class DeployInfo implements Serializable {
 		ComponentDescriptor id;
@@ -562,7 +524,7 @@ public class DeployerService extends Service {
 
 				try {
 					List<String> stdout = SSHUtils.execShAndWait(peer.sshParameters, "ls " + dir);
-					
+
 					for (var line : stdout) {
 						ComponentDescriptor c = findByName(line, nodes);
 						s.add(c);

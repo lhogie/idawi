@@ -1,4 +1,4 @@
-package idawi;
+package idawi.deploy;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Graph<V> implements Serializable {
+public class DiGraph<V> implements Serializable {
 	private final Map<V, Set<V>> m = new HashMap<>();
 
-	public void add(V u, V v) {
+	public void addArc(V u, V v) {
 		Set<V> s = m.get(u);
 
 		if (s == null) {
@@ -22,11 +22,11 @@ public class Graph<V> implements Serializable {
 		s.add(v);
 	}
 
-	public Set<V> get(V u) {
+	public Set<V> getSuccessors(V u) {
 		return m.containsKey(u) ? m.get(u) : Collections.EMPTY_SET;
 	}
 
-	public void remove(V u, V v) {
+	public void removeArc(V u, V v) {
 		Set<V> s = m.get(u);
 
 		if (s == null) {
@@ -51,7 +51,7 @@ public class Graph<V> implements Serializable {
 			u = q.remove(0);
 			visit.add(u);
 
-			for (V v : get(u)) {
+			for (V v : getSuccessors(u)) {
 				if (!visit.contains(v)) {
 					q.add(v);
 				}

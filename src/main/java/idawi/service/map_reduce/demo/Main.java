@@ -12,7 +12,7 @@ import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.To;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
 import idawi.service.ServiceManager;
 import idawi.service.map_reduce.MapReduceService;
 import idawi.service.map_reduce.Result;
@@ -31,7 +31,8 @@ public class Main {
 		IntStream.range(0, 1).forEach(i -> workers.add(mapper.descriptor("w" + i, true)));
 
 		// deploy JVMs
-		mapper.lookup(DeployerService.class).deployInNewJVMs(workers);
+		mapper.lookup(DeployerService.class).deployInNewJVMs(workers, stdout -> System.out.println(stdout),
+				ok -> System.out.println("peer ok: " + ok));
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
@@ -48,30 +49,31 @@ public class Main {
 
 //		new MapReduce(mapper).map(tasks, workerList, (a, b) -> a + b);
 
-		new MapReduceService(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(), new ResultHandler<Integer>() {
+		new MapReduceService(mapper).map(tasks, workerList, new RoundRobinAllocator<Integer>(),
+				new ResultHandler<Integer>() {
 
-			@Override
-			public void newResult(Result<Integer> newResult) {
-				double previousResult = finalResult.get();
-				double sum = previousResult + newResult.value;
-				finalResult.set(sum);
-			}
+					@Override
+					public void newResult(Result<Integer> newResult) {
+						double previousResult = finalResult.get();
+						double sum = previousResult + newResult.value;
+						finalResult.set(sum);
+					}
 
-			@Override
-			public void newProgressMessage(String msg) {
-				System.out.println("progress: " + msg);
-			}
+					@Override
+					public void newProgressMessage(String msg) {
+						System.out.println("progress: " + msg);
+					}
 
-			@Override
-			public void newProgressRatio(double r) {
-				System.out.println("progress ratio: " + r + "%");
-			}
+					@Override
+					public void newProgressRatio(double r) {
+						System.out.println("progress ratio: " + r + "%");
+					}
 
-			@Override
-			public void newMessage(Message a) {
-				System.out.println("---" + a.content);
-			}
-		});
+					@Override
+					public void newMessage(Message a) {
+						System.out.println("---" + a.content);
+					}
+				});
 
 		System.out.println("result= " + finalResult.get());
 

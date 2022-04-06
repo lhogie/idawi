@@ -5,9 +5,9 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.Graph;
 import idawi.Message;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
+import idawi.deploy.DeploymentPlan;
 import idawi.service.PingService;
 
 /**
@@ -32,18 +32,19 @@ public class Demo_deploymentPlan {
 		ComponentDescriptor t4 = ComponentDescriptor.fromCDL("name=t4");
 		ComponentDescriptor jvm2 = ComponentDescriptor.fromCDL("name=jvm1 / where=new_jvm");
 
-		Graph<ComponentDescriptor> g = new Graph<>();
-		g.add(t.descriptor(), musclotte);
-		g.add(t.descriptor(), nicoati);
-		g.add(t.descriptor(), dronic);
-		g.add(t.descriptor(), t2);
-		g.add(t.descriptor(), t3);
-		g.add(t.descriptor(), t4);
-		g.add(t.descriptor(), jvm2);
+		var plan = new DeploymentPlan();
+		plan.g.addArc(t.descriptor(), musclotte);
+		plan.g.addArc(t.descriptor(), nicoati);
+		plan.g.addArc(t.descriptor(), dronic);
+		plan.g.addArc(t.descriptor(), t2);
+		plan.g.addArc(t.descriptor(), t3);
+		plan.g.addArc(t.descriptor(), t4);
+		plan.g.addArc(t.descriptor(), jvm2);
 
-		System.out.println(g.bfs(t.descriptor()));
+		System.out.println(plan.g.bfs(t.descriptor()));
 
-		t.lookup(DeployerService.class).apply(g, 10, true, feedback -> System.out.println(feedback),
+		t.lookup(DeployerService.class).apply(plan, 10, rsyncOut -> System.out.println("rsync: " + rsyncOut),
+				rsyncErr -> System.err.println("rsync: " + rsyncErr), feedback -> System.out.println(feedback),
 				(p) -> System.out.println(p));
 
 		// describes the child peer that will be deployed to
@@ -54,7 +55,9 @@ public class Demo_deploymentPlan {
 		child.sshParameters.hostname = childHost.getHostName();
 
 		// deploy
-		t.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+		t.lookup(DeployerService.class).deploy(Set.of(child), true, 10000,
+				rsyncOut -> System.out.println("rsync: " + rsyncOut),
+				rsyncErr -> System.err.println("rsync: " + rsyncErr),
 				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 
 		// at this step the child is running on the remote host. We can interact with

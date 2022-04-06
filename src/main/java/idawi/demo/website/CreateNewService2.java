@@ -45,7 +45,7 @@ public class CreateNewService2 {
 
 		public class ExampleOperation extends InnerOperation {
 			@Override
-			public void exec(MessageQueue in) throws Throwable {
+			public void impl(MessageQueue in) throws Throwable {
 				Message triggerMessage = in.poll_sync();
 				reply(triggerMessage, "a result");
 				reply(triggerMessage, "another result");

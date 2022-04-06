@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
 
 public class DeployToAnotherJVM {
 	public static void main(String[] args) throws IOException {

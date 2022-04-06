@@ -55,7 +55,7 @@ public class ExternalCommandsService extends Service {
 	}
 
 	public class exec extends InnerOperation {
-		public void exec(MessageQueue in) throws IOException {
+		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
 			Process p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));

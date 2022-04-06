@@ -98,7 +98,7 @@ public class Bencher extends Service {
 	public class localBench2 extends InnerOperation {
 
 		@Override
-		public void exec(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			int size = (int) m.content;
 			localBench(size, r -> reply(m, r));

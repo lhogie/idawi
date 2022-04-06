@@ -1,12 +1,11 @@
 package idawi.demo.website;
 
 import java.io.IOException;
-import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
-import idawi.To;
-import idawi.service.DeployerService;
+import idawi.deploy.DeployerService;
+import idawi.deploy.DeployerService.DeploymentRequest;
 
 public class DeployToAnotherNode {
 	public static void main(String[] args) throws IOException {
@@ -15,11 +14,14 @@ public class DeployToAnotherNode {
 		child.name = "b";
 		child.sshParameters.hostname = "musclotte.inria.fr";
 
-		var ro = a.operation(DeployerService.deploy.class).exec(new To(child), true, null);
-		
-		ro.returnQ.recv_sync();
+		var r = new DeploymentRequest();
+		r.peers.add(child);
 
-		a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
-				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+		var ro = a.operation(DeployerService.deploy.class).execfd(r);
+		
+		ro.returnQ.recv_sync(10, 10, c -> System.out.println(c.messages.last().content));
+
+//		a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+//				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 	}
 }

@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import idawi.deploy.DeployerService;
 import idawi.net.NetworkingService;
-import idawi.service.DeployerService;
 import idawi.service.PingService;
 import toools.io.Cout;
 
@@ -31,7 +31,9 @@ public class SSH {
 		// they will communicate through standard streams
 		ComponentDescriptor c2 = ComponentDescriptor.fromCDL("name=c2 / ssh=" + ssh);
 
-		c1.lookup(DeployerService.class).deploy(Set.of(c2), true, 10, true, fdbck -> System.out.println(fdbck),
+		c1.lookup(DeployerService.class).deploy(Set.of(c2), true, 10, 
+				rsyncOut -> System.out.println("rsync: " + rsyncOut),
+				rsyncErr -> System.err.println("rsync: " + rsyncErr), fdbck -> System.out.println(fdbck),
 				p -> System.out.println("ok"));
 
 		// asks the master to ping the other component
