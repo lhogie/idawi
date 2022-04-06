@@ -2,11 +2,12 @@
 
 *Idawi* is a Java middleware for distributed applications. Its design is driven by our experience in distributed computing applied to scientific experimentation.
 
-*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction of **distributed systems**. Besides, *Idawi* aims at being useful to Researchers working in applied distributing computing (HPC, IOT, fog/edge computing, IA, etc).
+*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction of **distributed systems**. Besides, *Idawi* aims at being useful to Researchers working in applied distributed computing (HPC, IOT, fog/edge computing, IA, etc).
 To this purpose it comes with the following features:
 - it has a polished **mixed object/message/queue/component/service-oriented architecture**
 - it has a **collective** communication and computation models
 - it has **automatized deployment**/bootstrapping of components through SSH
+- SSH-bootstrapping allow *Idawi*-based application to work even in the presence of firewalls/NATs.
 - it provides interoperability through a **REST-based web interface**
 - it enables the programmer to work in a *trials and errors* mode within his favourite IDE
 - it enables the construction of **decentralized** systems
@@ -29,10 +30,11 @@ We recommend you to install *Idawi* using Maven. To do this, simply add the foll
   <version>0.0.5</version>
 </dependency>
 ```
-As this tutorial is not updated every single time a new version of the code is released, please first make sure you will get the very last version: [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi).
+As this tutorial is not updated every single time a new version of the code is released, please first check from [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi) you will get the very last version.
 
 ## Creating components
-In a JVM, a component is POJO with a few things in it.
+Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application.
+In a JVM, a component is plain Java object (POJO).
 Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMS, on the same node or not, must communicate via the network stack.
 
 ### Creating a few components inside a single JVM
