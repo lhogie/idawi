@@ -35,9 +35,10 @@ As this tutorial is not updated every single time a new version of the code is r
 ## Creating components
 Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application.
 In a JVM, a component is plain Java object (POJO).
-Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMS, on the same node or not, must communicate via the network stack.
+Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMs, on the same node or not, must communicate via the network stack.
 
 ### Creating a few components inside a single JVM
+Just drop the following instructions into any __main__ method.
 ```java
 // creates 3 components in this JVM
 var a = new Component("a");
