@@ -21,7 +21,7 @@ The following tutorial shows and explains the very basic concepts in *Idawi*. It
 ## Installing
 
 We recommend you to install *Idawi* using Maven. To do this, simply add the following dependency to the POM file of your project:
-```maven
+```mvn
 <dependency>
   <groupId>io.github.lhogie</groupId>
   <artifactId>idawi</artifactId>
