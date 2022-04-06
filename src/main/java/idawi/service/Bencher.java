@@ -80,13 +80,13 @@ public class Bencher extends Service {
 			Results r = new Results();
 			Q<Object> q = new Q<>(4);
 			localBench(size, out -> {
-				q.add_blocking(out);
+				q.add_sync(out);
 			});
 
-			q.get_blocking();
-			r.monothread = (Long) q.get_blocking();
-			q.get_blocking();
-			r.multithread = (Long) q.get_blocking();
+			q.poll_sync();
+			r.monothread = (Long) q.poll_sync();
+			q.poll_sync();
+			r.multithread = (Long) q.poll_sync();
 			return r;
 		}
 
@@ -101,7 +101,7 @@ public class Bencher extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var m = in.get_blocking();
+			var m = in.poll_sync();
 			int size = (int) m.content;
 			localBench(size, r -> reply(m, r));
 		}

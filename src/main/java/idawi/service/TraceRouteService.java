@@ -26,7 +26,7 @@ public class TraceRouteService extends Service {
 	public class traceroute extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			reply(msg, msg.route);
 		}
 
@@ -38,7 +38,7 @@ public class TraceRouteService extends Service {
 
 	public Route traceRoute(ComponentDescriptor t, double timeout) {
 		return (Route) exec(new To(t).o(TraceRouteService.traceroute.class), true, null).returnQ
-				.poll(timeout).content;
+				.poll_sync(timeout).content;
 	}
 
 	public Map<ComponentDescriptor, Route> traceRoute(Set<ComponentDescriptor> targets, double timeout) {

@@ -136,7 +136,7 @@ public class MessageQueue extends Q<Message> {
 			}
 
 			private void fillBuffer() throws IOException {
-				Message msg = poll(timeout);
+				Message msg = poll_sync(timeout);
 
 				if (msg == null) {
 					throw new IOException("timeout");

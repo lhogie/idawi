@@ -80,7 +80,7 @@ public class DeployerService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			DeploymentRequest req = (DeploymentRequest) msg.content;
 			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, req.printRsync,
 					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
@@ -96,7 +96,7 @@ public class DeployerService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
 			List<Component> compoennts = new ArrayList<>();
 			deployInThisJVM(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> compoennts.add(peerOk));
@@ -115,7 +115,7 @@ public class DeployerService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			Graph deploymentPlan = (Graph) msg.content;
 			apply(deploymentPlan, 1, true, stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
 		}
@@ -262,7 +262,7 @@ public class DeployerService extends Service {
 		network.transport.add(childDescriptor, childPipe);
 
 		feedback.accept("waiting for " + childDescriptor + " to be ready");
-		String response = (String) childPipe.waitForChild.poll(10000);
+		String response = (String) childPipe.waitForChild.poll_sync(10000);
 
 		if (response == null) {
 			throw new IllegalStateException("timeout");

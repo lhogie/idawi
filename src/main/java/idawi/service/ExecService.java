@@ -31,7 +31,7 @@ public class ExecService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			((Request) msg.content).execute(r -> reply(msg, r));
 		}
 

@@ -47,7 +47,7 @@ public class DemoService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var tg = in.get_blocking();
+			var tg = in.poll_sync();
 			var opl = (OperationParameterList) tg.content;
 			int n = Integer.valueOf(opl.get(0).toString());
 
@@ -75,10 +75,10 @@ public class DemoService extends Service {
 	public class grep extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			String re = (String) in.get_non_blocking().content;
+			String re = (String) in.poll_async().content;
 
 			while (true) {
-				var msg = in.get_non_blocking();
+				var msg = in.poll_async();
 
 				if (msg.content instanceof EOT) {
 					break;
@@ -156,7 +156,7 @@ public class DemoService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			var m = in.get_blocking();
+			var m = in.poll_sync();
 
 			for (int i = 0; i < (Integer) m.content; ++i) {
 				reply(m, i);
@@ -180,7 +180,7 @@ public class DemoService extends Service {
 		}
 
 		public void exec(MessageQueue in) {
-			var m = in.get_blocking();
+			var m = in.poll_sync();
 			var p = (Range) m.content;
 
 			for (int i = p.a; i < p.b; ++i) {
@@ -209,7 +209,7 @@ public class DemoService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			int target = (Integer) msg.content;
 
 			for (int i = 0; i < target; ++i) {
@@ -227,7 +227,7 @@ public class DemoService extends Service {
 
 		@Override
 		public void exec(MessageQueue in) {
-			var msg = in.get_blocking();
+			var msg = in.poll_sync();
 			int target = 100;
 
 			double pauseS = Math.random();

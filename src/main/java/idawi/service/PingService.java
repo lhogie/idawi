@@ -28,7 +28,7 @@ public class PingService extends Service {
 	public class ping extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			Cout.debugSuperVisible(in.get_blocking());
+			Cout.debugSuperVisible(in.poll_sync());
 		}
 
 		@Override
@@ -46,7 +46,7 @@ public class PingService extends Service {
 	}
 
 	public Message ping(ComponentDescriptor target, double timeout) {
-		var r = ping(Set.of(target)).poll(timeout);
+		var r = ping(Set.of(target)).poll_sync(timeout);
 
 		if (r != null && !r.route.source().component.equals(target))
 			throw new IllegalStateException("someone else replied to ping!");

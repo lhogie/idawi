@@ -56,7 +56,7 @@ public class ExternalCommandsService extends Service {
 
 	public class exec extends InnerOperation {
 		public void exec(MessageQueue in) throws IOException {
-			var parmMsg = in.get_blocking();
+			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
 			Process p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
 			var stdout = p.getInputStream();
@@ -80,7 +80,7 @@ public class ExternalCommandsService extends Service {
 			});
 
 			while (true) {
-				var msg = in.get_blocking();
+				var msg = in.poll_sync();
 
 				if (msg.isEOT()) {
 					break;
@@ -115,7 +115,7 @@ public class ExternalCommandsService extends Service {
 
 		while (true) {
 			while (s.returnQ.size() > 0) {
-				var returnMsg = s.returnQ.get_non_blocking();
+				var returnMsg = s.returnQ.poll_async();
 
 				if (returnMsg.isEOT()) {
 					return;

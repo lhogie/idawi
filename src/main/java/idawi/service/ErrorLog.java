@@ -24,7 +24,7 @@ public class ErrorLog extends Service {
 	public class registerError extends InnerOperation {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
-			errors.add((Throwable) in.get_blocking().content);
+			errors.add((Throwable) in.poll_sync().content);
 		}
 
 		@Override

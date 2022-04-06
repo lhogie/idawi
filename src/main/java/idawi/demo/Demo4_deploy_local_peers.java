@@ -37,9 +37,9 @@ public class Demo4_deploy_local_peers {
 		public class op extends InnerOperation {
 			@Override
 			public void exec(MessageQueue in) throws Throwable {
-				var msg = in.get_blocking();
+				var msg = in.poll_sync();
 				System.out.println("message route: " + msg.route);
-				wait.add_blocking("");
+				wait.add_sync("");
 			}
 
 			@Override
@@ -71,7 +71,7 @@ public class Demo4_deploy_local_peers {
 
 		var to = new To(last.descriptor()).o(DummyService.op.class);
 		first.lookup(NetworkingService.class).exec(to, true, "hello!");
-		s.wait.get_blocking();
+		s.wait.poll_sync();
 		System.out.println("completed");
 		Component.stopPlatformThreads();
 	}

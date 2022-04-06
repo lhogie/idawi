@@ -89,7 +89,7 @@ public class FileService extends Service {
 
 	public class downloadFile extends TypedInnerOperation {
 		public void downloadFile(MessageQueue q) throws IOException {
-			var msg = q.get_blocking();
+			var msg = q.poll_sync();
 			DownloadFileParms parms = (DownloadFileParms) msg.content;
 			dir.ensureExists();
 			var f = new RegularFile(dir, parms.name);

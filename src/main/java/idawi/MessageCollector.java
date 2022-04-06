@@ -37,7 +37,7 @@ public class MessageCollector {
 		this.timeout = timeout;
 
 		while (remains() > 0 && !stop) {
-			var m = q.poll(Math.min(remains(), timeout));
+			var m = q.poll_sync(Math.min(remains(), timeout));
 
 			if (m != null && !blacklist.contains(m.route.source().component)) {
 				if (m.isProgress()) {

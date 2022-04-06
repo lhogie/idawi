@@ -50,7 +50,7 @@ public class MessageIterator implements Iterator<Message> {
 			completed = true;
 		} else {
 			var w = Math.min(remains, waitTime);
-			next = q.poll(w);
+			next = q.poll_sync(w);
 
 			// no message arrived until the q expires
 			if (next == null) {

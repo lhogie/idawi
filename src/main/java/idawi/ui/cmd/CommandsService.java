@@ -18,7 +18,7 @@ public class CommandsService extends Service {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			while (true) {
-				Message m = in.get_blocking();
+				Message m = in.poll_sync();
 
 				if (m.isEOT()) {
 					break;

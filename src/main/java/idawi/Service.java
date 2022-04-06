@@ -170,7 +170,7 @@ public class Service {
 			if (q == null) {
 //				System.out.println("ERERROEORO");
 			} else {
-				q.add_blocking(msg);
+				q.add_sync(msg);
 			}
 		}
 	}
@@ -196,7 +196,7 @@ public class Service {
 			inputQ = createQueue(msg.to.queueName);
 		}
 
-		inputQ.add_blocking(msg);
+		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
 		Runnable r = () -> {
@@ -297,7 +297,7 @@ public class Service {
 
 			@Override
 			public void exec(MessageQueue in) throws Throwable {
-				var m = in.get_blocking();
+				var m = in.poll_sync();
 				userCode.accept(m, r -> reply(m, r));
 			}
 

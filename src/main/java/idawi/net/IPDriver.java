@@ -25,7 +25,7 @@ public abstract class IPDriver extends TransportLayer {
 
 	protected void markReady() {
 		Cout.info(getName() + " is ready");
-		waitReady.add_blocking("ready");
+		waitReady.add_sync("ready");
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public abstract class IPDriver extends TransportLayer {
 			thread.start();
 
 			// and waits that the server actually listens
-			waitReady.get_blockingOrFail(1000000);
+			waitReady.pollOrFail_sync(1000000);
 		}
 	}
 

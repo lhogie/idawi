@@ -114,9 +114,9 @@ public class PipeFromToChildProcess extends TransportLayer {
 					eofHandler.found();
 				}
 			} else if (line.equals(started)) {
-				waitForChild.add_blocking(started);
+				waitForChild.add_sync(started);
 			} else if (line.equals(failed)) {
-				waitForChild.add_blocking(failed);
+				waitForChild.add_sync(failed);
 			} else if (line.equals(msgMark)) {
 				try {
 					var msg = (Message) serializer.read(in);
