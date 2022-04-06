@@ -71,7 +71,7 @@ a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
 ```
 
 
-### lookup a specific service or operation
+### service or operation
 The only thing a component can do, is exposing services to other components. A service exposes a set of operations, which can be triggered by other components. These operations constitute the API of the service. They implement the concern the service is about. They are many builtin services in a components. These can be listed like this:
 ```java
 var services = a.services();
@@ -92,6 +92,8 @@ In many cases, an operation will obtain one single input message and will reply 
 - stream processing
 - the construction of complex workflows
 - the emission of any information that is not a result, such as progress/debug information
+
+Operation are scheduled into a pool of thread, which ensure scalability.
 
 ## Creating a new service and operation
 A new *Idawi* application will come as one or several new services.
@@ -144,9 +146,10 @@ var to = new To(a);
 // we obtain a bridge to the remotely running operation
 var rop = o.exec(to, true, null);
 ```
+Operation execution is always __asynchronous___.
 
 ### Obtaining result
-One strength of *Idawi* lies in it result collection algorithm. This algorithm perform __synchronous__ collection of result, from the return input queue of the remotely running operation.
+One strength of *Idawi* lies in it result collection algorithm. This algorithm performs __synchronous__ collection of messages, from the return input queue of the remotely running operation.
 
 In its most general form:
 Waits 1s for incoming results. Print them as they come.
