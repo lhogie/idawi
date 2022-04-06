@@ -16,6 +16,15 @@ To this purpose it comes with the following features:
 - it is able to do **emulation**
 
 
+ *Idawi* is developed at the
+[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
+a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr), by:
+- [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
+- Antonin Lacomme (Master degree intern)
+- Fedi Ghalloussi (Bachelor degree intern)
+
+:new: **You can now [chat with other members of Idawi's community](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1) as they are connected!** :satisfied:
+
 
 
 # Quick start
@@ -38,7 +47,6 @@ Technically, within a given JVM, a component is plain Java object (POJO).
 Two components in a same JVM can communicate using the LMI (Local Method Invocation) protocol, which relies on shared memory. But they can also be forced to use other protocols like TCP or UDP. Two components in different JVMs, on the same node or not, must communicate via the network stack.
 
 ### Creating a few components inside a single JVM
-Just drop the following instructions into any main method.
 ```java
 public IdawiQuickStart {
 	public static void main(String... args) {
@@ -188,14 +196,3 @@ r.throwExceptionsIfAny();
 
 ### Monitoring a running system
 In progress
-
-# People involved
- *Idawi* is developed at the
-[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
-a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr), by:
-- [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
-- Antonin Lacomme (Master degree intern)
-- Fedi Ghalloussi (Bachelor degree intern)
-
-:new: **You can now [chat with other members of Idawi's community](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1) as they are connected!** :satisfied:
-
