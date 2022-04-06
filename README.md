@@ -2,7 +2,7 @@
 
 *Idawi* is a Java middleware for distributed applications. Its design is driven by our experience in distributed computing applied to scientific experimentation.
 
-*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a structuring framework and implementations of algorithms for the construction of **distributed component systems**. Besides, *Idawi* aims at maximizing its usefulness to Researchers working in the application fields of distributing computing (HPC, IOT, fog/edge computing, IA, etc).
+*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction of **distributed systems**. Besides, *Idawi* aims at being useful to Researchers working in the applied distributing computing (HPC, IOT, fog/edge computing, IA, etc).
 To this purpose it comes with the following features:
 - it has a polished **mixed object/message/queue/component/service-oriented architecture**
 - it has a **collective** communication and computation models
