@@ -1,17 +1,18 @@
 # Description
 
-*Idawi* is a Java middleware for distributed applications. It is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a structuring framework and implementations of algorithms for the construction of **distributed component systems**. Besides, *Idawi* aims at maximizing its usefulness to Researchers working in the application fields of distributing computing (HPC, IOT, fog/edge computing, IA, etc).
+*Idawi* is a Java middleware for distributed applications. Its design is driven by our experience in distributed computing applied to scientific experimentation.
+
+*Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a structuring framework and implementations of algorithms for the construction of **distributed component systems**. Besides, *Idawi* aims at maximizing its usefulness to Researchers working in the application fields of distributing computing (HPC, IOT, fog/edge computing, IA, etc).
 To this purpose it comes with the following features:
-- it has a carefully object-oriented with SOA flavors
-- it has a collective (message/queue)-oriented communication model
-- it has a collective computation model
-- it has automatized deployment/bootstrapping of components through SSH
-- it provides interoperability through a REST-based web interface
+- it has a polished **mixed object/message/queue/component/service-oriented architecture**
+- it has a **collective** communication and computation models
+- it has **automatized deployment**/bootstrapping of components through SSH
+- it provides interoperability through a **REST-based web interface**
 - it enables the programmer to work in a *trials and errors* mode within his favourite IDE
-- it is a fully [decentralized](https://en.wikipedia.org/wiki/Decentralised_system) P2P [service-oriented](https://en.wikipedia.org/wiki/Service-oriented_architecture) architecture
-- it has independance to transport network (includes support for SSH, TCP and UDP)
+- it enables the construction of **decentralized** systems
+- it provides agnosticism to transport network (includes support for SSH, TCP and UDP)
 - it does [lock-free](https://preshing.com/20120612/an-introduction-to-lock-free-programming/) multi-core parallelism
-- it has the ability to do emulation
+- it is able to do **emulation**
 
 
 
@@ -59,23 +60,23 @@ b.name = "b";
 // ask the deployment service on "a" to deploy "b" according to its description
 a.lookup(DeployerService.class).deployOtherJVM(b, true, feedback -> {}, ok -> {});
 ```
-### Deploying new components to another JVM in other node
+### Deploying new components to a remote node
 ```java
 var a = new Component();
-		
-ComponentDescriptor child = new ComponentDescriptor();
+var b = new ComponentDescriptor();
 child.name = "b";
 child.sshParameters.hostname = "192.168.32.44"; // this is where the b will be deployed to
-a.lookup(DeployerService.class).deploy(Set.of(child), true, 10000, true,
+a.lookup(DeployerService.class).deploy(Set.of(b), true, 10000, true,
 	feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
 ```
 
 
-### service or operation
+### Services and operations
 The only thing a component can do, is exposing services to other components. A service exposes a set of operations, which can be triggered by other components. These operations constitute the API of the service. They implement the concern the service is about. They are many builtin services in a components. These can be listed like this:
 ```java
 var services = a.services();
 ```
+Builtin services enable node messaging, routing, service lifetime management, system monitoring, error logging, HTTP interoperability, etc.
 
 Services in component are identified by their class.  This makes it possible to identify an operation by its class name, in a way that can be verified by the compiler.
 A specific service can be searched for like this:

@@ -74,57 +74,8 @@ public class MessageQueue extends Q<Message> {
 		return forEach(MessageCollector.DEFAULT_COLLECT_DURATION, returnsHandler);
 	}
 
-	public Enough forEachUntil(Predicate<Message> c) {
-		return forEach(msg -> {
-			if (c.test(msg)) {
-				return Enough.yes;
-			} else {
-				return Enough.no;
-			}
-		});
-	}
 
-	public Enough forEachUntilFirstEOF(Consumer<Message> c) {
-		return forEachUntil(msg -> {
-			boolean eot = msg.isEOT();
-
-			if (!eot) {
-				c.accept(msg);
-			}
-
-			return eot;
-		});
-	}
-
-	// sends a message and waits for returns, until EOT or the returnsHandler asks
-	// to stop waiting
-	// incoming messages are demultiplexed according to their role
-	public Enough forEach(final double during, final double waitTime, MessageHandler h) {
-		return forEach(during, waitTime, r -> {
-			if (r.isEOT()) {
-				return h.newEOT(r);
-			} else if (r.isError()) {
-				return h.newError(r);
-			} else if (r.isProgressMessage()) {
-				return h.newProgressMessage(r);
-			} else if (r.isProgressRatio()) {
-				return h.newProgressRatio(r);
-			} else {
-				return h.newResult(r);
-			}
-		});
-	}
-
-	public enum Filter {
-		keep, drop
-	}
-
-	public MessageList collect(Iterator<Message> i) {
-		var l = new MessageList();
-		i.forEachRemaining(msg -> l.add(msg));
-		return l;
-	}
-
+	
 	public MessageList collect() {
 		return collect(MessageCollector.DEFAULT_COLLECT_DURATION);
 	}

@@ -4,7 +4,6 @@ import java.util.Set;
 
 import idawi.ComponentDescriptor;
 import idawi.Message;
-import idawi.MessageQueue.Enough;
 import idawi.ProgressMessage;
 import idawi.Service;
 import idawi.To;
@@ -39,8 +38,8 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-
-		if (Enough.no == localService.exec(to, true, backend).returnQ.forEachUntilFirstEOF(msg -> {
+		var c = localService.exec(to, true, backend).returnQ.collect(1, 1, c2 -> {
+			var msg = c2.messages.last();
 			if (msg.isError()) {
 				((Throwable) msg.content).printStackTrace();
 			} else if (msg.isProgress()) {
@@ -48,7 +47,9 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 			} else {
 				System.out.println(msg.content);
 			}
-		})) {
+		});
+
+		if (c.stop) {
 			System.err.println("not enough results!");
 		}
 

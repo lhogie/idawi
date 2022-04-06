@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import toools.util.Date;
 
 public class MessageCollector {
-	public double endDate;
+	public double endDate, startDate;
 	public double timeout;
 	public final MessageList messages = new MessageList();
 	public boolean stop;
@@ -27,16 +27,16 @@ public class MessageCollector {
 		return endDate - Date.time();
 	}
 
-	public MessageCollector collect(double duration, double timeout, Consumer<MessageCollector> userCode) {
+	public double duration() {
+		return Date.time() - startDate;
+	}
+
+	public void collect(double duration, double timeout, Consumer<MessageCollector> userCode) {
+		this.startDate = Date.time();
 		this.endDate = Date.time() + duration;
 		this.timeout = timeout;
 
-		while (true) {
-			if (remains() <= 0) { // expired!
-				q.delete();
-				return this;
-			}
-
+		while (remains() <= 0 && !stop) {
 			var m = q.get_blocking(Math.min(remains(), timeout));
 
 			if (m != null && !blacklist.contains(m.route.source().component)) {
@@ -59,12 +59,9 @@ public class MessageCollector {
 					messages.add(m);
 					userCode.accept(this);
 				}
-
-				if (stop) {
-					q.delete();
-					return this;
-				}
 			}
 		}
+
+		q.delete();
 	}
 }
