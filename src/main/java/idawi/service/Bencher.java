@@ -62,14 +62,13 @@ public class Bencher extends Service {
 		var to = new To(peers).s(Bencher.class).o("default");
 		Map<ComponentDescriptor, Results> map = new HashMap<>();
 
-		exec(to, createQueue(), parms).returnQ.forEach(r -> {
+		exec(to, createQueue(), parms).returnQ.collect(c -> {
+			var r = c.messages.last();
 			if (r.content instanceof String) {
 				msg.accept(r.route.source().component, (String) r.content);
 			} else if (r.content instanceof Results) {
 				map.put(r.route.source().component, (Results) r.content);
 			}
-
-			return Enough.no;
 		});
 
 		return map;

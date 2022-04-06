@@ -109,10 +109,10 @@ public class LucTests {
 		assertEquals(5, (Integer) client.execf(new To(c2).o(DemoService.stringLength.class), 1, 1, "salut").get(0));
 		Cout.debugSuperVisible(2);
 		assertEquals(53, (Integer) client.exec(new To(c2).o(DemoService.countFrom1toN.class), true, 100).returnQ
-				.collect(1).resultMessages(100).get(53).content);
+				.collect(1).messages.resultMessages(100).get(53).content);
 		Cout.debugSuperVisible(3);
 		assertEquals(7, (Integer) client.exec(new To(c2).o(DemoService.countFromAtoB.class), true,
-				new DemoService.Range(0, 13)).returnQ.collect(1).resultMessages(13).get(7).content);
+				new DemoService.Range(0, 13)).returnQ.collect(1).messages.resultMessages(13).get(7).content);
 		Cout.debugSuperVisible(4);
 //		assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
 
@@ -130,7 +130,7 @@ public class LucTests {
 		Set<ComponentDescriptor> ss = others.stream().map(c -> c.descriptor()).collect(Collectors.toSet());
 
 		ComponentDescriptor first = client.exec(new To(ss).o(DemoService.waiting.class), true,
-				new OperationParameterList(1)).returnQ.collectUntilFirstEOT().resultMessages(1).first().route
+				new OperationParameterList(1)).returnQ.collectUntilFirstEOT(1).messages.resultMessages(1).first().route
 						.source().component;
 		System.out.println(first);
 //		assertEquals(7, (Double) );
@@ -174,7 +174,7 @@ public class LucTests {
 		System.err.println("client: " + client);
 		var o = c1.lookupO(DemoService.stringLength.class);
 //		var rom = o.exec(new To(c2), false, new OperationParameterList("hello"));
-		
+
 		var rom = client.exec(new To(c2).o(DemoService.stringLength.class), true, new OperationParameterList("hello"));
 		var c = rom.returnQ.collect(5, 5, cc -> {
 			cc.stop = !cc.messages.resultMessages().isEmpty();

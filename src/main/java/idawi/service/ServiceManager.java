@@ -24,11 +24,11 @@ public class ServiceManager extends Service {
 
 		public List<String> list() {
 			return (List<String>) (List) localService.exec(to.o(list.class), true,
-					new OperationParameterList()).returnQ.collect().contents();
+					new OperationParameterList()).returnQ.collect().messages.contents();
 		}
 
 		public boolean has(Class<? extends Service> s) {
-			return localService.exec(to.o(has.class), true, s).returnQ.collect().contents().contains(true);
+			return localService.exec(to.o(has.class), true, s).returnQ.collect().messages.contents().contains(true);
 		}
 
 		public void start(Class<? extends Service> s) {

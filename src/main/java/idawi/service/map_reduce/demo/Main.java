@@ -37,7 +37,7 @@ public class Main {
 		System.out.println("starting map/reduce service on " + workers);
 		var ro = clientService.exec(new To(workers).o(ServiceManager.ensureStarted.class), true,
 				new OperationParameterList(MapReduceService.class));
-		ro.returnQ.collectUntilNEOT(workers.size());
+		ro.returnQ.collectUntilNEOT(1, workers.size());
 
 		// create tasks
 		List<Task<Integer>> tasks = new ArrayList<>();

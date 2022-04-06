@@ -14,14 +14,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import idawi.MessageQueue.Enough;
 import idawi.service.ErrorLog;
-import idawi.service.PredicateRunner;
-import idawi.service.PredicateRunner.SerializablePredicate;
 import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
@@ -149,7 +145,7 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
-		//Cout.debug(msg);
+		// Cout.debug(msg);
 		int sec = (int) Date.time();
 		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
@@ -159,8 +155,8 @@ public class Service {
 			Operation operation = lookupOperation(operationName);
 
 			if (operation == null) {
-				triggerErrorHappened(msg,
-						new IllegalArgumentException("can't find operation '" + operationName + "' in service " + getClass().getName()));
+				triggerErrorHappened(msg, new IllegalArgumentException(
+						"can't find operation '" + operationName + "' in service " + getClass().getName()));
 			} else {
 				trigger((TriggerMessage) msg, operation);
 			}
@@ -240,8 +236,9 @@ public class Service {
 
 	public <O extends InnerOperation> O lookup(Class<O> oc) {
 		if (InnerOperation.serviceClass(oc) != getClass())
-			throw new IllegalStateException("searching operation " + oc.getName() +  " in service class " + getClass().getName());
-		
+			throw new IllegalStateException(
+					"searching operation " + oc.getName() + " in service class " + getClass().getName());
+
 		for (var o : operations) {
 			if (o.getClass() == oc) {
 				return (O) o;
@@ -426,7 +423,7 @@ public class Service {
 	}
 
 	public List<Object> execf(OperationAddress target, double timeout, int nbResults, Object... parms) {
-		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.collect(timeout)
+		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.collect(timeout).messages
 				.throwAnyError_Runtime().resultMessages(nbResults).contents();
 	}
 
@@ -450,48 +447,19 @@ public class Service {
 		return d;
 	}
 
-	public Set<ComponentDescriptor> whoHasService(To to, Class<? extends Service> serviceID) {
+	public Set<ComponentDescriptor> whoHasService(double timeout, To to, Class<? extends Service> serviceID) {
 		// we'll store herein the components that expose the given service
 		Set<ComponentDescriptor> r = new HashSet<>();
 
 		// asks the ServiceManager on all components in "to" if they they have that
 		// service
-		exec(to.o(ServiceManager.has.class), createQueue(), serviceID).returnQ.forEach(msg -> {
+		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.collect(timeout, timeout, c -> {
+			var msg = c.messages.last();
+
 			// if this component claims he has
 			if ((boolean) msg.content) {
 				r.add(msg.route.source().component);
 			}
-
-			// don't quit not, other components may reply
-			return Enough.no;
-		});
-
-		return r;
-	}
-
-	public <O extends InnerOperation> Set<ComponentDescriptor> test(To to, Class<O> predicate, Object... parms) {
-		Set<ComponentDescriptor> r = new HashSet<>();
-
-		exec(to.o(predicate), createQueue(), new OperationParameterList(parms)).returnQ.forEach(msg -> {
-			if ((boolean) msg.content) {
-				r.add(msg.route.source().component);
-			}
-
-			return Enough.no;
-		});
-
-		return r;
-	}
-
-	public Set<ComponentDescriptor> test(To to, SerializablePredicate p) {
-		Set<ComponentDescriptor> r = new HashSet<>();
-
-		exec(to.o(PredicateRunner.Test.class), createQueue(), p).returnQ.forEach(msg -> {
-			if ((boolean) msg.content) {
-				r.add(msg.route.source().component);
-			}
-
-			return Enough.no;
 		});
 
 		return r;

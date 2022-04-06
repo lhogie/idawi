@@ -12,7 +12,6 @@ import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
 import idawi.Message;
 import idawi.MessageQueue;
-import idawi.MessageQueue.Enough;
 import idawi.ProgressMessage;
 import idawi.Service;
 import toools.io.Cout;
@@ -35,9 +34,9 @@ public class MapReduceService extends Service {
 		@Override
 		public void exec(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			Cout.debug(":) received " + msg );
+			Cout.debug(":) received " + msg);
 			var t = (Task) msg.content;
-			Cout.debug("received2 " + msg );
+			Cout.debug("received2 " + msg);
 			reply(msg, new ProgressMessage("processing task " + t.id));
 			t.mapReduceService = MapReduceService.this;
 			Result r = new Result<>();
@@ -118,7 +117,8 @@ public class MapReduceService extends Service {
 			}
 
 			h.newProgressMessage("waiting for results");
-			q.forEach(60, msg -> {
+			q.collect(c -> {
+				var msg = c.messages.last();
 				if (msg.content instanceof Result) {
 					var workerResponse = (Result<R>) msg.content;
 					workerResponse.worker = msg.route.source().component;
@@ -131,13 +131,12 @@ public class MapReduceService extends Service {
 					h.newMessage(msg);
 				}
 
-				return unprocessedTasks.isEmpty() ? Enough.yes : Enough.no;
+				c.stop = unprocessedTasks.isEmpty();
 			});
 		}
 
 		detachQueue(q);
 		return unprocessedTasks;
 	}
-
 
 }

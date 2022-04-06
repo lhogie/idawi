@@ -2,12 +2,9 @@ package idawi;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import idawi.Streams.Chunk;
 import toools.thread.Q;
@@ -37,7 +34,7 @@ public class MessageQueue extends Q<Message> {
 	}
 
 	public Object get() throws Throwable {
-		return collectUntilFirstEOT().throwAnyError().resultMessages(1).first().content;
+		return collectUntilFirstEOT(1).messages.throwAnyError().resultMessages(1).first().content;
 	}
 
 	public <A> Object getAs(Class<A> c) throws Throwable {
@@ -50,6 +47,20 @@ public class MessageQueue extends Q<Message> {
 		c.collect(initialDuration, initialTimeout, collector);
 		return c;
 	}
+	
+	
+	public MessageCollector collect(Consumer<MessageCollector> collector) {
+		return collect(1, 1, collector);
+	}
+
+	public MessageCollector collect() {
+		return collect(1);
+	}
+
+	public MessageCollector collect(final double initialDuration) {
+		return collect(initialDuration, initialDuration, c -> {
+		});
+	}
 
 	public MessageCollector collectUntilAllHaveReplied(final double initialDuration,
 			Set<ComponentDescriptor> components) {
@@ -58,56 +69,17 @@ public class MessageQueue extends Q<Message> {
 		});
 	}
 
-	public Enough forEach(final double during, final double waitTime, Function<Message, Enough> returnsHandler) {
-		return collect(during, waitTime, c -> {
-			c.stop = returnsHandler.apply(c.messages.last()) == Enough.yes;
-		}).stop ? Enough.yes : Enough.no;
-	}
-
-	public Enough forEach(final double during, Function<Message, Enough> returnsHandler) {
-		return forEach(during, during, returnsHandler);
-	}
-
-	public Enough forEach(Function<Message, Enough> returnsHandler) {
-		return forEach(MessageCollector.DEFAULT_COLLECT_DURATION, returnsHandler);
-	}
-
-	public MessageList collect() {
-		return collect(MessageCollector.DEFAULT_COLLECT_DURATION);
-	}
-
-	public MessageList collect(double duration) {
-		return collect(duration, duration, c -> {
-		}).messages;
-	}
-
-	public MessageList collect(Function<Message, Enough> f) {
-		return collect(MessageCollector.DEFAULT_COLLECT_DURATION, MessageCollector.DEFAULT_COLLECT_DURATION, c -> {
-			c.stop = f.apply(c.messages.last()) == Enough.yes;
-		}).messages;
-	}
-
 	/**
 	 * Collects until one component have completed.
 	 * 
 	 * @return
 	 */
-	public MessageList collectUntilFirstEOT() {
-		return collect(msg -> msg.isEOT() ? Enough.yes : Enough.no);
+	public MessageCollector collectUntilFirstEOT(double timeout) {
+		return collect(timeout, timeout, c -> c.stop = c.messages.last().isEOT());
 	}
 
-	public MessageList collect(Set<ComponentDescriptor> s) {
-		Set<ComponentDescriptor> senders = new HashSet<>();
-
-		return collect(msg -> {
-			senders.add(msg.route.source().component);
-			return senders.equals(s) ? Enough.yes : Enough.no;
-		});
-	}
-
-	public MessageList collectUntilNEOT(int n) {
-		AtomicInteger nbEOT = new AtomicInteger();
-		return collect(msg -> msg.isEOT() && nbEOT.incrementAndGet() == n ? Enough.yes : Enough.no);
+	public MessageCollector collectUntilNEOT(double timeout, int n) {
+		return collect(timeout, timeout, c -> c.stop = c.messages.countEOT() == n);
 	}
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {
