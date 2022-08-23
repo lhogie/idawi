@@ -106,12 +106,14 @@ public class DemoService extends Service {
 
 		Service s = new Service(a);
 		var to = new To(Set.of(b.descriptor())).o(DemoService.stringLength.class);
-		RemotelyRunningOperation stub = s.exec(to, true, DemoService.grep.class);
+		RemotelyRunningOperation stub = s.exec(to, true, new OperationParameterList(""));
 
 		for (int i = 0; i < 50; ++i) {
 			stub.send("" + i);
 		}
 
+		stub.returnQ.collect(c -> c.messages.last().getClass());
+		
 		stub.dispose();
 
 	}

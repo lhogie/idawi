@@ -3,6 +3,7 @@ package idawi.service.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
@@ -82,6 +84,26 @@ public class WebServer extends Service {
 		super(t);
 	}
 
+	public class Base64URL extends TypedInnerOperation {
+		class A {
+			String routing;
+			String service;
+			String operation;
+		}
+
+		public void f(String url) throws IOException {
+			var text = new String(Base64.getMimeDecoder().decode(url));
+			var p = new Properties();
+			p.load(new StringReader(text));
+		}
+
+		@Override
+		public String getDescription() {
+			return "interpret URLs encoded in base64";
+		}
+
+	}
+
 	@Override
 	public void dispose() {
 		super.dispose();
@@ -123,9 +145,9 @@ public class WebServer extends Service {
 						Serializer serializer = name2serializer.get("jaseto");
 
 						try {
-							var preferredFormat = removeOrDefault(query, "format", serializer.getMIMEType(),
+							var preferredOuputFormat = removeOrDefault(query, "format", serializer.getMIMEType(),
 									name2serializer.keySet());
-							serializer = name2serializer.get(preferredFormat);
+							serializer = name2serializer.get(preferredOuputFormat);
 
 							e.getResponseHeaders().set("Content-type", "text/event-stream");
 							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
@@ -204,10 +226,10 @@ public class WebServer extends Service {
 		os.write(bytes);
 	}
 
-	private static void sendEvent(OutputStream out, ChunkHeader info, byte[] data, boolean base64) {
+	private static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64) {
 		try {
 			out.write("data: ".getBytes());
-			out.write(info.toJSON().getBytes());
+			out.write(header.toJSON().getBytes());
 			out.write('\n');
 
 			if (base64) {
@@ -218,7 +240,6 @@ public class WebServer extends Service {
 			out.write(dataText.getBytes());
 			out.write('\n');
 			out.write('\n');
-
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

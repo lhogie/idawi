@@ -174,7 +174,7 @@ public class Service {
 	private void triggerErrorHappened(Message triggerMsg, Throwable s) {
 //		System.out.println(msg);
 		RemoteException err = new RemoteException(s);
-		logError(err);
+		logError(s);
 
 		// report the error to the guy who asked
 		if (triggerMsg.replyTo != null) {

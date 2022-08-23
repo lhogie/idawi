@@ -32,9 +32,9 @@ public class OperationParameterList extends ArrayList {
 		}
 
 		if (content instanceof OperationParameterList) {
-			var l = (OperationParameterList) content;
-			l.convertTo(operation, types);
-			return l;
+			var oarmList = (OperationParameterList) content;
+			oarmList.convertTo(operation, types);
+			return oarmList;
 		} else {
 			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "
 					+ OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)

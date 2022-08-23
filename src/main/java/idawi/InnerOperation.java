@@ -5,9 +5,9 @@ public abstract class InnerOperation extends Operation {
 		return (Class<S>) c.getEnclosingClass();
 	}
 
-
 	public static String name(Class<? extends InnerOperation> c) {
-		return c.getName().substring(c.getEnclosingClass().getName().length() + 1);
+		int afterDollar = c.getEnclosingClass().getName().length() + 1;
+		return c.getName().substring(afterDollar);
 	}
 
 	@Override

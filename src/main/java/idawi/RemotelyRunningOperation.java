@@ -17,6 +17,7 @@ public class RemotelyRunningOperation {
 		this.clientService = clientService;
 		this.triggerMsg.operationName = operationName;
 		this.triggerMsg.to = to;
+
 		this.triggerMsg.content = initialInputData;
 
 		if (returnQaddr != null) {
@@ -31,6 +32,7 @@ public class RemotelyRunningOperation {
 
 	public void send(Object content) {
 		var msg = new Message(content, triggerMsg.replyTo, triggerMsg.replyTo);
+		msg.originService = clientService.getClass().getName();
 		msg.send(clientService.component);
 	}
 
