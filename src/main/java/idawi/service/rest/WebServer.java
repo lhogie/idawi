@@ -136,7 +136,8 @@ public class WebServer extends Service {
 
 			try {
 				if (path == null) {
-					output.write(new JavaResource(getClass(), "root.html").getByteArray());
+					writeOneShot(HttpURLConnection.HTTP_OK, "text/html", new JavaResource(getClass(), "root.html").getByteArray(), e, output);
+//					output.write(new JavaResource(getClass(), "root.html").getByteArray());
 				} else {
 //					Cout.debugSuperVisible("path: " + path);
 					String context = path.remove(0);
@@ -219,10 +220,10 @@ public class WebServer extends Service {
 		 */
 	}
 
-	public static void writeOneShot(int code, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
+	public static void writeOneShot(int returnCode, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
 			throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
-		e.sendResponseHeaders(code, bytes.length);
+		e.sendResponseHeaders(returnCode, bytes.length);
 		os.write(bytes);
 	}
 
