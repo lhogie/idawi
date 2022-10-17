@@ -235,7 +235,7 @@ public class Service {
 	}
 
 	public <O extends InnerOperation> O lookup(Class<O> oc) {
-		if (InnerOperation.serviceClass(oc) != getClass())
+		if (InnerOperation.serviceClass(oc).isAssignableFrom(getClass()))
 			throw new IllegalStateException(
 					"searching operation " + oc.getName() + " in service class " + getClass().getName());
 
