@@ -5,7 +5,7 @@ Because who can do more can do less, it can also be used for usual distributed c
 *Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184). To make a long story short, it provides a **structuring framework** and implementations of algorithms for the construction and operation of decentralized systems. 
 
  *Idawi* is developed at the
-[Computer Science Laboratory of the Universté Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
+[Computer Science Laboratory of the Université Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
 a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr)
 Its design is driven by our practical experience in distributed computing applied to scientific experimentation. 
 
