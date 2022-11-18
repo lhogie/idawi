@@ -53,8 +53,8 @@ public abstract class Operation implements OperationFunctionalInterface {
 	}
 
 	public RemotelyRunningOperation exec(To to, boolean createQ, Object initialData) {
-		Class c = getClass();
-		return service.exec(to.o(c), createQ, initialData);
+		Class operationClass = getClass();
+		return service.exec(to.o(operationClass), createQ, initialData);
 	}
 	public RemotelyRunningOperation execfd(Object initialData) {
 		return exec(new To(service.component), true, initialData);

@@ -26,6 +26,7 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
+import idawi.Message;
 import idawi.MessageCollector;
 import idawi.OperationAddress;
 import idawi.OperationParameterList;
@@ -50,7 +51,6 @@ import toools.io.ser.XMLSerializer;
 import toools.io.ser.YAMLSerializer;
 import toools.reflect.Clazz;
 import toools.text.TextUtilities;
-
 
 public class WebServer extends Service {
 	public static int DEFAULT_PORT = 8081;
@@ -137,13 +137,15 @@ public class WebServer extends Service {
 
 			try {
 				if (path == null) {
-					writeOneShot(HttpURLConnection.HTTP_OK, "text/html", new JavaResource(getClass(), "root.html").getByteArray(), e, output);
+					writeOneShot(HttpURLConnection.HTTP_OK, "text/html",
+							new JavaResource(getClass(), "root.html").getByteArray(), e, output);
 //					output.write(new JavaResource(getClass(), "root.html").getByteArray());
 				} else {
 //					Cout.debugSuperVisible("path: " + path);
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
+						// setting default serializer
 						Serializer serializer = name2serializer.get("jaseto");
 
 						try {
@@ -252,10 +254,11 @@ public class WebServer extends Service {
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
-	private void serveAPI(List<String> path, Map<String, String> query, InputStream is, OutputStream output,
-			Serializer serializer) throws IOException {
+	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
+			OutputStream output, Serializer serializer) throws IOException {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
+		String whatToSend = removeOrDefault(query, "whatToSend", "msg", whatToSends.keySet());
 		var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
 
 		if (!query.isEmpty()) {
@@ -294,13 +297,15 @@ public class WebServer extends Service {
 
 		RemotelyRunningOperation ro = exec(to, true, parms);
 
-		if (is != null) {
-			Streams.split(is, 1000, m -> ro.send(m));
+		if (postDataInputStream != null) {
+			Streams.split(postDataInputStream, 1000, m -> ro.send(m));
 		}
 
 		ro.returnQ.recv_sync(duration, timeout, c -> {
 			sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
-					serializer.toBytes(c.messages.last()), serializer.isBinary());
+					serializer.toBytes(whatToSends.get(whatToSend).f(c.messages.last(), whatToSend)), serializer.isBinary());
+
+//			c.timeout = ?
 
 			c.stop = stop.test(to, c);
 		});
@@ -308,6 +313,23 @@ public class WebServer extends Service {
 //			ro.dispose();
 
 	}
+
+	static interface WhatToSend{
+		Object f(Message msg, String w);
+	}
+	
+	public static Map<String, WhatToSend> whatToSends = new HashMap<>();
+	
+	static
+	{
+		whatToSends.put("msg", (msg, w) -> msg);
+		whatToSends.put("content", (msg, w) -> msg.content);
+		whatToSends.put("mirror", (msg, w) -> w);
+		whatToSends.put("route", (msg, w) -> msg.route.components());
+		whatToSends.put("src", (msg, w) -> msg.route.source().component.name);
+	}
+	
+	
 
 	private List<String> path(String s) {
 		if (s == null) {
@@ -325,11 +347,12 @@ public class WebServer extends Service {
 		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
 	}
 
-	private static String removeOrDefault(Map<String, String> map, String k, String d, Set<String> validKeys) {
+	private static String removeOrDefault(Map<String, String> map, String k, String defaultValue,
+			Set<String> validKeys) {
 		var r = map.remove(k);
 
 		if (r == null)
-			r = d;
+			r = defaultValue;
 
 		if (validKeys != null && !validKeys.contains(r))
 			throw new IllegalArgumentException(

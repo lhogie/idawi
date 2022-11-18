@@ -18,6 +18,7 @@ import idawi.service.ErrorLog;
 import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
@@ -235,7 +236,9 @@ public class Service {
 	}
 
 	public <O extends InnerOperation> O lookup(Class<O> oc) {
-		if (InnerOperation.serviceClass(oc).isAssignableFrom(getClass()))
+//		Cout.debug(InnerOperation.serviceClass(oc));
+//		Cout.debug(getClass());
+		if (!InnerOperation.serviceClass(oc).isAssignableFrom(getClass()))
 			throw new IllegalStateException(
 					"searching operation " + oc.getName() + " in service class " + getClass().getName());
 

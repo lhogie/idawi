@@ -31,13 +31,13 @@ public class MessageCollector {
 		return Date.time() - startDate;
 	}
 
-	public void collect(double duration, double timeout, Consumer<MessageCollector> userCode) {
+	public void collect(final double initialCollectDuration, final double initialTimeout, Consumer<MessageCollector> userCode) {
 		this.startDate = Date.time();
-		this.endDate = startDate + duration;
-		this.timeout = timeout;
+		this.endDate = startDate + initialCollectDuration;
+		this.timeout = initialTimeout;
 
 		while (remains() > 0 && !stop) {
-			var msg = q.poll_sync(Math.min(remains(), timeout));
+			var msg = q.poll_sync(Math.min(remains(), initialTimeout));
 
 			if (msg != null && !blacklist.contains(msg.route.source().component)) {
 				if (msg.isProgress()) {

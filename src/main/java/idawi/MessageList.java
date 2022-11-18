@@ -75,7 +75,11 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public Message last() {
-		return get(size() - 1);
+		return last(0);
+	}
+	
+	public Message last(int rewind) {
+		return get(size() - 1 - rewind);
 	}
 
 	public Message getOrNull(int i) {

@@ -11,7 +11,7 @@ class ChunkHeader {
 	public String toJSON() {
 		StringBuilder b = new StringBuilder();
 		b.append("{");
-		var fields = ChunkHeader.class.getDeclaredFields();
+		var fields = getClass().getDeclaredFields();
 
 		for (int i = 0; i < fields.length; ++i) {
 			b.append("\"");
