@@ -1,5 +1,7 @@
 package idawi.service.rest;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,6 +22,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import javax.crypto.SecretKey;
+
+import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -33,10 +38,10 @@ import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.Streams;
 import idawi.To;
 import idawi.TypedInnerOperation;
 import toools.io.JavaResource;
+import toools.io.Utilities;
 import toools.io.file.RegularFile;
 import toools.io.ser.FSTSerializer;
 import toools.io.ser.GSONSerializer;
@@ -49,6 +54,7 @@ import toools.io.ser.ToBytesSerializer;
 import toools.io.ser.ToStringSerializer;
 import toools.io.ser.XMLSerializer;
 import toools.io.ser.YAMLSerializer;
+import toools.net.NetUtilities;
 import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
@@ -57,8 +63,18 @@ public class WebServer extends Service {
 	public static final Map<String, BiPredicate<OperationAddress, MessageCollector>> stoppers = new HashMap<>();
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
+	public static Map<String, WhatToSend> whatToSends = new HashMap<>();
+
+	static interface WhatToSend {
+		Object f(Message msg);
+	}
 
 	static {
+		whatToSends.put("msg", msg -> msg);
+		whatToSends.put("content", msg -> msg.content);
+		whatToSends.put("route", msg -> msg.route.components());
+		whatToSends.put("src", msg -> msg.route.source().component.name);
+
 		stoppers.put("aeot", (to, c) -> c.messages.filter(m -> m.isEOT()).senders().equals(to.sa.to.componentNames));
 		stoppers.put("1eot", (to, c) -> !c.messages.filter(m -> m.isEOT()).isEmpty());
 		stoppers.put("1m", (to, c) -> !c.messages.isEmpty());
@@ -157,26 +173,36 @@ public class WebServer extends Service {
 							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 							serveAPI(path, query, input, output, serializer);
 						} catch (Throwable err) {
-							sendEvent(output, new ChunkHeader("error", serializer.getMIMEType()),
+							sendEvent(output, new ChunkHeader("error", List.of(serializer.getMIMEType())),
 									serializer.toBytes(err), serializer.isBinary());
 						} finally {
-							sendEvent(output, new ChunkHeader("EOT", serializer.getMIMEType()), "ok".getBytes(), false);
+							sendEvent(output, new ChunkHeader("EOT", List.of(serializer.getMIMEType())),
+									"ok".getBytes(), false);
 						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebServer.class, "flavicon.ico").getByteArray(), e, output);
-					} else if (context.equals("web")) {
+					} else if (context.equals("frontend")) {
 						if (path.isEmpty()) {
 							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
 
 						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
-					} else if (context.equals("files")) {
-						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
-								new RegularFile("$HOME/public_html/idawi/" + TextUtilities.concatene(path, "/"))
-										.getContent(),
-								e, output);
+					} else if (context.equals("forward")) {
+						var filename = TextUtilities.concatene(path, "/");
+						byte[] bytes = null;
+						String src = path.remove(0);
+
+						if (src.equals("files")) { // enables the dev of frontend code
+							bytes = new RegularFile("$HOME/public_html/idawi/" + filename).getContent();
+						} else if (src.equals("web")) {
+							bytes = NetUtilities.retrieveURLContent(filename);
+						} else {
+							throw new IllegalArgumentException("unknown forward source: " + src);
+						}
+
+						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path), bytes, e, output);
 					} else {
 						throw new IllegalArgumentException("unknown context: " + context);
 					}
@@ -254,10 +280,16 @@ public class WebServer extends Service {
 		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
 	}
 
+	private static byte[] unbase64(byte[] bytes) {
+		return Base64.getMimeDecoder().decode(bytes);
+	}
+
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
 			OutputStream output, Serializer serializer) throws IOException {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
+		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "no", Set.of("yes", "no")));
+		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "compress", "no", Set.of("yes", "no")));
 		String whatToSend = removeOrDefault(query, "whatToSend", "msg", whatToSends.keySet());
 		var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
 
@@ -296,14 +328,75 @@ public class WebServer extends Service {
 		var to = new To(targets).s(serviceID).o(operation);
 
 		RemotelyRunningOperation ro = exec(to, true, parms);
+		var aes = new AESEncrypter();
+		SecretKey key = null;
 
 		if (postDataInputStream != null) {
-			Streams.split(postDataInputStream, 1000, m -> ro.send(m));
+
+			new Thread(() -> {
+				var r = new BufferedReader(new java.io.InputStreamReader(postDataInputStream));
+				ChunkHeader header = null;
+				ByteArrayOutputStream content = null;
+
+				while (true) {
+					String l = null;
+
+					try {
+						l = r.readLine();
+					} catch (IOException e) {
+						// l will remain null
+					}
+
+					if (l == null) { // EOF
+						send(ro, header, content, aes, key);
+						break;
+					} else if (l.isEmpty()) { // end of event
+						send(ro, header, content, aes, key);
+						header = null;
+						content = null;
+					} else if (header == null) { // new event
+						header = new Gson().fromJson(l, ChunkHeader.class);
+						content = new ByteArrayOutputStream();
+					} else { // some content for the current event
+						try {
+							content.write(l.getBytes());
+						} catch (IOException e) {
+							throw new IllegalStateException(e);
+						}
+					}
+				}
+
+				try {
+					r.close();
+				} catch (IOException e) {
+					throw new IllegalStateException(e);
+				}
+			}).start();
 		}
 
 		ro.returnQ.recv_sync(duration, timeout, c -> {
-			sendEvent(output, new ChunkHeader("component message", serializer.getMIMEType()),
-					serializer.toBytes(whatToSends.get(whatToSend).f(c.messages.last(), whatToSend)), serializer.isBinary());
+			List<String> encodings = new ArrayList<>();
+			var bytes = serializer.toBytes(whatToSends.get(whatToSend).f(c.messages.last()));
+			encodings.add(serializer.getMIMEType());
+			boolean base64 = serializer.isBinary();
+
+			if (compress) {
+				bytes = Utilities.gzip(bytes);
+				encodings.add("gzip");
+				base64 = true;
+			}
+
+			if (encrypt) {
+				try {
+					bytes = aes.encrypt(bytes, key);
+					encodings.add("aes");
+					base64 = true;
+				} catch (Exception e) {
+					System.err.println(e.getMessage());
+				}
+			}
+
+			sendEvent(output, new ChunkHeader("component message", encodings), bytes, base64);
 
 //			c.timeout = ?
 
@@ -314,22 +407,41 @@ public class WebServer extends Service {
 
 	}
 
-	static interface WhatToSend{
-		Object f(Message msg, String w);
+	private void send(RemotelyRunningOperation ro, ChunkHeader header, ByteArrayOutputStream content, AESEncrypter aes,
+			SecretKey key) {
+		var bytes = content.toByteArray();
+
+		// restore the original data by reversing the encoding
+		for (int i = header.syntax.size() - 1; i > 0; --i) {
+			var deser = header.syntax.get(i);
+
+			if (deser.equals("gzip")) {
+				bytes = Utilities.gunzip(bytes);
+			} else if (deser.equals("base64")) {
+				bytes = unbase64(bytes);
+			} else if (deser.equals("aes")) {
+				try {
+					bytes = aes.decrypt(bytes, key);
+				} catch (Exception e) {
+					throw new IllegalStateException(e);
+				}
+			}
+		}
+
+		String serializerName = header.syntax.get(0);
+		var ser = name2serializer.get(serializerName);
+		Object o = ser.fromBytes(bytes);
 	}
-	
-	public static Map<String, WhatToSend> whatToSends = new HashMap<>();
-	
-	static
-	{
-		whatToSends.put("msg", (msg, w) -> msg);
-		whatToSends.put("content", (msg, w) -> msg.content);
-		whatToSends.put("mirror", (msg, w) -> w);
-		whatToSends.put("route", (msg, w) -> msg.route.components());
-		whatToSends.put("src", (msg, w) -> msg.route.source().component.name);
+
+	private void send(RemotelyRunningOperation ro, ChunkHeader header, ByteArrayOutputStream content) {
+		// TODO Auto-generated method stub
+
 	}
-	
-	
+
+	private void send(RemotelyRunningOperation ro, ByteArrayOutputStream content) {
+		// TODO Auto-generated method stub
+
+	}
 
 	private List<String> path(String s) {
 		if (s == null) {
