@@ -45,7 +45,7 @@ We recommend you to install *Idawi* using Maven. To do this, simply add the foll
 <dependency>
   <groupId>io.github.lhogie</groupId>
   <artifactId>idawi</artifactId>
-  <version>0.0.5</version>
+  <version>#replace this with the last version#</version>
 </dependency>
 ```
 As this tutorial is not updated every single time a new version of the code is released, please first check from [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi) you will get the very last version.
