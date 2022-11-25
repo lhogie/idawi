@@ -48,6 +48,7 @@ We recommend you to install *Idawi* using Maven. To do this, simply add the foll
   <version>#replace this with the last version#</version>
 </dependency>
 ```
+Version history can be found [there](https://search.maven.org/artifact/io.github.lhogie/idawi).
 As this tutorial is not updated every single time a new version of the code is released, please first check from [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi) you will get the very last version.
 
 ## Creating components
