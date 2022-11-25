@@ -1,5 +1,8 @@
 package idawi.service.rest;
 
+import java.awt.Desktop;
+import java.net.URI;
+
 import idawi.Component;
 import idawi.net.LMI;
 import idawi.service.ServiceManager;
@@ -14,5 +17,6 @@ public class RunTestServer {
 		LMI.connect(b, c);
 		a.operation(ServiceManager.ensureStarted.class).f(WebServer.class);
 		a.lookup(WebServer.class).startHTTPServer();
+		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}
 }

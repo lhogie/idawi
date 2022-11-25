@@ -23,9 +23,14 @@ Here are some of his features of interest:
 
 
 Team members:
-- [Luc Hogie](http://www.i3s.unice.fr/~hogie/) (project manager and main developer)
-- Antonin Lacomme (Master degree intern)
-- Fedi Ghalloussi (Bachelor degree intern)
+- [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
+- Eliel Wotobe (Master degree intern in autumn 2022)
+- Saad El Din Ahmed (Master degree intern in spring 2022)
+- Mamadou Camara (Master degree intern in spring 2022)
+- Khadidiatou Dieye (Master degree intern in autumn 2021)
+- Ahmed El Hanafi Si Dehbi (Master degree intern in autumn 2021)
+- Fedi Ghalloussi (Bachelor degree intern in spring 2021)
+- Antonin Lacomme (Master degree intern in autumn 2020)
 
 :new: **You can now [chat with other members of Idawi's community](http://webchat.ircnet.net/?channels=idawi&uio=MT11bmRlZmluZWQb1) as they are connected!** :satisfied:
 

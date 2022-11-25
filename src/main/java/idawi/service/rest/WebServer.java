@@ -190,14 +190,17 @@ public class WebServer extends Service {
 						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("forward")) {
+						String src = path.remove(0);
 						var filename = TextUtilities.concatene(path, "/");
 						byte[] bytes = null;
-						String src = path.remove(0);
 
 						if (src.equals("files")) { // enables the dev of frontend code
 							bytes = new RegularFile("$HOME/public_html/idawi/" + filename).getContent();
 						} else if (src.equals("web")) {
+//							filename = "http://" + filename;
+							System.out.println("wget " + filename);
 							bytes = NetUtilities.retrieveURLContent(filename);
+							System.out.println(bytes.length);
 						} else {
 							throw new IllegalArgumentException("unknown forward source: " + src);
 						}
@@ -396,7 +399,7 @@ public class WebServer extends Service {
 				}
 			}
 
-			sendEvent(output, new ChunkHeader("component message", encodings), bytes, base64);
+			sendEvent(output, new ChunkHeader("message", encodings), bytes, base64);
 
 //			c.timeout = ?
 
@@ -431,16 +434,6 @@ public class WebServer extends Service {
 		String serializerName = header.syntax.get(0);
 		var ser = name2serializer.get(serializerName);
 		Object o = ser.fromBytes(bytes);
-	}
-
-	private void send(RemotelyRunningOperation ro, ChunkHeader header, ByteArrayOutputStream content) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private void send(RemotelyRunningOperation ro, ByteArrayOutputStream content) {
-		// TODO Auto-generated method stub
-
 	}
 
 	private List<String> path(String s) {

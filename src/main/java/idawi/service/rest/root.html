@@ -21,15 +21,22 @@
 
 
     <body>
-        <h1>Idawi</h1>
+        <h1>Idawi Web server</h1>
+        <br>
+        <br>
+        This is the Idawi Web server.
         <ul>
-        <li><a href="frontend/">Monitoring interface</a>
-        <li><a href="api/">API</a>
-        <li><a href="file/">Serves files in directory <tt>$HOME/public_html/idawi/</tt></a>
-        <li><a href="web">Serves files from any Web server </a>
-        <li><a href="https://github.com/lhogie/idawi">complete source code Github</a> 
-        <li><a href="https://github.com/lhogie/idawi/blob/main/doc/slides/full/slides.pdf">Slideshow</a> 
+        <li><a href="api/">The Web API</a> exposing all components/services/operation to a Web client. 
+        <li><a href="frontend/">A user-friendly front-end</a> to the API, developed by students at Université Côte d'Azur.
+        <li><a href="https://github.com/lhogie/idawi">complete source code</a> hosted on Github. 
         <li><a href="https://dl.acm.org/doi/proceedings/10.1145/3565385">Article presenting the middleware (Middleware 2022)</a> 
+        <li><a href="https://github.com/lhogie/idawi/blob/main/doc/slides/full/slides.pdf">A slideshow</a> 
+        </ul>
+        <br>
+        Developer tools.
+        <ul>
+        <li><a href="file/">Serves files</a> in directory <tt>$HOME/public_html/idawi/</tt>
+        <li><a href="web/">Serves files from any Web server</a> <a href="http://localhost:8081/forward/web/https://raw.githubusercontent.com/lhogie/idawi/main/src/main/java/idawi/Component.java">Example</a>
         </ul>
     </body>
 </html>

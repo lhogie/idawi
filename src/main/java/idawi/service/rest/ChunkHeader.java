@@ -40,6 +40,6 @@ class ChunkHeader {
 			}
 		}
 
-		return "{\"semantic\": \"" + semantic + "\", \"syntax\": \"" + b + "\"}";
+		return "{\"nature\": \"" + semantic + "\", \"format\": \"" + b + "\"}";
 	}
 }
