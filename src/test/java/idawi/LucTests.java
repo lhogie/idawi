@@ -176,7 +176,7 @@ public class LucTests {
 //		var rom = o.exec(new To(c2), false, new OperationParameterList("hello"));
 
 		var rom = client.exec(new To(c2).o(DemoService.stringLength.class), true, new OperationParameterList("hello"));
-		var c = rom.returnQ.recv_sync(5, 5, cc -> {
+		var c = rom.returnQ.collect(5, 5, cc -> {
 			cc.stop = !cc.messages.resultMessages().isEmpty();
 		});
 

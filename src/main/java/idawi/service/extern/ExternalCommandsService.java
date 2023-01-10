@@ -1,4 +1,4 @@
-package idawi.service;
+package idawi.service.extern;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,8 +86,12 @@ public class ExternalCommandsService extends Service {
 					break;
 				}
 
+				// if the command is explicitly fed with binary data
 				if (msg.content instanceof byte[]) {
 					stdin.write((byte[]) msg.content);
+				}
+				else  {
+					stdin.write(msg.content.toString().getBytes());
 				}
 			}
 		}

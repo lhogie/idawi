@@ -1,6 +1,6 @@
 package idawi;
 
-public abstract class InnerOperation extends Operation {
+public abstract class InnerOperation extends AbstractOperation {
 	public static <S extends Service> Class<S> serviceClass(Class<? extends InnerOperation> c) {
 		return (Class<S>) c.getEnclosingClass();
 	}

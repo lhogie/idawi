@@ -40,16 +40,8 @@ Team members:
 The following tutorial shows and explains the very basic concepts in *Idawi*. It order to keep it short and useful, we show here only the concepts that help for a quick start.
 ## Installing
 
-We recommend you to install *Idawi* using Maven. To do this, simply add the following dependency to the POM file of your project:
-```.xml
-<dependency>
-  <groupId>io.github.lhogie</groupId>
-  <artifactId>idawi</artifactId>
-  <version>#replace this with the last version#</version>
-</dependency>
-```
+We recommend you to install *Idawi* using a package manager (like Maven), which will manage the dependancies for you.
 Version history can be found [there](https://search.maven.org/artifact/io.github.lhogie/idawi).
-As this tutorial is not updated every single time a new version of the code is released, please first check from [Maven central](https://search.maven.org/artifact/io.github.lhogie/idawi) you will get the very last version.
 
 ## Creating components
 Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application domain.

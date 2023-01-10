@@ -1,45 +1,35 @@
 package idawi.service.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import toools.text.TextUtilities;
+
 class ChunkHeader {
-	public String semantic;
-	public List<String> syntax;
+	public List<String> encodings;
 
-	public ChunkHeader(String semantics, List<String> syntax) {
-		this.semantic = semantics;
-		this.syntax = syntax;
+	public ChunkHeader(List<String> encodings) {
+		this.encodings = encodings;
 	}
 
-	public String toJSON() {
-		/*
-		 * StringBuilder b = new StringBuilder(); b.append("{"); var fields =
-		 * getClass().getDeclaredFields();
-		 * 
-		 * for (int i = 0; i < fields.length; ++i) { b.append("\""); var f = fields[i];
-		 * b.append(f.getName()); b.append("\": \"");
-		 * 
-		 * try { b.append(f.get(this).toString()); } catch (IllegalArgumentException |
-		 * IllegalAccessException e) { throw new Error(e); }
-		 * 
-		 * b.append("\"");
-		 * 
-		 * if (i < fields.length - 1) { b.append(", "); } }
-		 * 
-		 * b.append("}");
-		 * 
-		 * return b.toString();
-		 */
-		StringBuilder b = new StringBuilder();
-
-		for (int i = 0; i < syntax.size(); ++i) {
-			b.append(syntax.get(i));
-
-			if (i < syntax.size()) {
-				b.append(',');
-			}
-		}
-
-		return "{\"nature\": \"" + semantic + "\", \"format\": \"" + b + "\"}";
+	public ObjectNode toJSONNode() {
+		var f = new JsonNodeFactory(false);
+		ObjectNode n = new ObjectNode(f);
+		n.put("encodings", TextUtilities.concat(", ", encodings, e -> e));
+		return n;
 	}
+
+	public static void main(String[] args) {
+		System.out.println("test");
+		var l = new ArrayList<String>();
+		l.add("fds");
+		ChunkHeader h = new ChunkHeader(l);
+		var s = h.toJSONNode().toString();
+		System.out.println(s.length());
+		System.out.println(s);
+	}
+
 }

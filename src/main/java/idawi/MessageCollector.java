@@ -3,6 +3,7 @@ package idawi;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import toools.util.Date;
 
@@ -23,7 +24,7 @@ public class MessageCollector {
 		this.q = q;
 	}
 
-	public double remains() {
+	public double remainingTime() {
 		return endDate - Date.time();
 	}
 
@@ -36,8 +37,8 @@ public class MessageCollector {
 		this.endDate = startDate + initialCollectDuration;
 		this.timeout = initialTimeout;
 
-		while (remains() > 0 && !stop) {
-			var msg = q.poll_sync(Math.min(remains(), initialTimeout));
+		while (remainingTime() > 0 && !stop) {
+			var msg = q.poll_sync(Math.min(remainingTime(), initialTimeout));
 
 			if (msg != null && !blacklist.contains(msg.route.source().component)) {
 				if (msg.isProgress()) {

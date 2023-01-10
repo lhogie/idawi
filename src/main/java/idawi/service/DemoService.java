@@ -1,5 +1,6 @@
 package idawi.service;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Random;
 import java.util.Set;
@@ -16,7 +17,10 @@ import idawi.Service;
 import idawi.To;
 import idawi.TypedInnerOperation;
 import idawi.net.LMI;
+import idawi.service.rest.Chart;
+import idawi.service.rest.Graph;
 import toools.math.MathsUtilities;
+import toools.net.NetUtilities;
 import toools.thread.Threads;
 
 public class DemoService extends Service {
@@ -113,7 +117,7 @@ public class DemoService extends Service {
 		}
 
 		stub.returnQ.collect(c -> c.messages.last().getClass());
-		
+
 		stub.dispose();
 
 	}
@@ -191,6 +195,19 @@ public class DemoService extends Service {
 		}
 	}
 
+	public class loremPicsum extends TypedInnerOperation {
+		@Override
+		public String getDescription() {
+			return "returns a random image";
+		}
+
+		public byte[] f(int w, int h) throws IOException {
+			int id = new Random().nextInt(100);
+			String url = "https://picsum.photos/id/" + id + "/" + w + "/" + h;
+			return NetUtilities.retrieveURLContent(url);
+		}
+	}
+
 	public class throwError extends InnerOperation {
 		@Override
 		public String getDescription() {
@@ -216,7 +233,7 @@ public class DemoService extends Service {
 
 			for (int i = 0; i < target; ++i) {
 				reply(msg, i);
-				reply(msg, new ProgressRatio(target, i));
+				reply(msg, new ProgressRatio(i, target));
 			}
 		}
 	}
@@ -228,24 +245,33 @@ public class DemoService extends Service {
 		}
 
 		@Override
-		public void impl(MessageQueue in) {
+		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 			int target = 100;
 
-			double pauseS = Math.random();
+			var rand = new Random();
 
 			for (int i = 0; i < target; ++i) {
-				if (i == target / 2) {
-					reply(msg, new ProgressMessage("I did half of the job!"));
+				var d = rand.nextDouble();
+
+				if (d < 0.1) {
+					reply(msg, new ProgressRatio(i, target));
+				} else if (d < 0.2) {
+					reply(msg, rand.nextInt());
+				} else if (d < 0.2) {
+					reply(msg, new Error("test error"));
+				} else if (d < 0.2) {
+					reply(msg, lookupOperation(loremPicsum.class).f(200, 100));
+				} else if (d < 0.3) {
+					reply(msg, Chart.random());
+				} else if (d < 0.4) {
+					reply(msg, Graph.random());
+				} else if (d < 0.4) {
+					reply(msg, new ProgressMessage("I'm still working!"));
+				} else {
 				}
 
-				reply(msg, Math.random());
-
-				if (Math.random() < 0.4) {
-					reply(msg, new ProgressRatio(target, i));
-				}
-
-				Threads.sleep(pauseS);
+				Threads.sleep(rand.nextDouble());
 			}
 
 			reply(msg, new ProgressRatio(target, target));

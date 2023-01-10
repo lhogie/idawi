@@ -33,12 +33,12 @@ public class Service {
 	public final Component component;
 	private boolean askToRun = true;
 	protected final List<Thread> threads = new ArrayList<>();
-	protected final Set<Operation> operations = new HashSet<>();
+	protected final Set<AbstractOperation> operations = new HashSet<>();
 	private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	private final Set<String> detachedQueues = new HashSet<>();
 	final AtomicLong returnQueueID = new AtomicLong();
 
-	// stores the number of message received at each second
+	// stores the number of messages received at each second
 	final Int2LongMap second2nbMessages = new Int2LongAVLTreeMap();
 
 	private long nbMsgsReceived;
@@ -47,7 +47,7 @@ public class Service {
 
 	public Service(Component component) {
 		this.component = component;
-		component.services.put(getClass(), this);
+		component.services.add(this);
 		this.id = getClass();
 		registerOperation(new DescriptorOperation());
 		registerOperation(new listNativeOperations());
@@ -79,8 +79,7 @@ public class Service {
 	public class sec2nbMessages extends TypedInnerOperation {
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "gets a map associating a number a message received during seconds";
 		}
 
 		public Int2LongMap f() {
@@ -153,7 +152,7 @@ public class Service {
 
 		if (msg instanceof TriggerMessage) {
 			var operationName = ((TriggerMessage) msg).operationName;
-			Operation operation = lookupOperation(operationName);
+			AbstractOperation operation = lookupOperation(operationName);
 
 			if (operation == null) {
 				triggerErrorHappened(msg, new IllegalArgumentException(
@@ -184,7 +183,7 @@ public class Service {
 		}
 	}
 
-	private synchronized void trigger(TriggerMessage msg, Operation operation) {
+	private synchronized void trigger(TriggerMessage msg, AbstractOperation operation) {
 		var inputQ = getQueue(msg.to.queueName);
 
 		// most of the time the queue will not exist, unless the user wants to use the
@@ -198,7 +197,7 @@ public class Service {
 
 		Runnable r = () -> {
 			operation.nbCalls++;
-			double start = Date.time();
+			final double start = Date.time();
 
 			try {
 //				Cout.debug(operation);
@@ -225,10 +224,20 @@ public class Service {
 		}
 	}
 
-	public Operation lookupOperation(String name) {
+	public AbstractOperation lookupOperation(String name) {
 		for (var o : operations) {
 			if (o.getName().equals(name)) {
 				return o;
+			}
+		}
+
+		return null;
+	}
+	
+	public <C  extends InnerOperation> C lookupOperation(Class<C> c) {
+		for (var o : operations) {
+			if (o.getClass() == c) {
+				return (C) o;
 			}
 		}
 
@@ -256,7 +265,7 @@ public class Service {
 		if (name == null)
 			throw new NullPointerException("no name give for operation");
 
-		registerOperation(new Operation() {
+		registerOperation(new AbstractOperation() {
 
 			@Override
 			public String getName() {
@@ -283,7 +292,7 @@ public class Service {
 	public void registerOperation(String name, BiConsumer<Message, Consumer<Object>> userCode) {
 		Objects.requireNonNull(name);
 
-		registerOperation(new Operation() {
+		registerOperation(new AbstractOperation() {
 
 			@Override
 			public String getName() {
@@ -308,7 +317,7 @@ public class Service {
 		});
 	}
 
-	public void registerOperation(Operation o) {
+	public void registerOperation(AbstractOperation o) {
 		if (lookupOperation(o.getName()) != null) {
 			throw new IllegalStateException(
 					"in class: " + o.getDeclaringServiceClass() + ", operation name is already in use: " + o);
@@ -456,7 +465,7 @@ public class Service {
 
 		// asks the ServiceManager on all components in "to" if they they have that
 		// service
-		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.recv_sync(timeout, timeout, c -> {
+		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.collect(timeout, timeout, c -> {
 			var msg = c.messages.last();
 
 			// if this component claims he has

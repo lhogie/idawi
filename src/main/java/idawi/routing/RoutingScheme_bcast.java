@@ -1,11 +1,14 @@
 package idawi.routing;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.ComponentDescriptor;
+import idawi.RegistryService;
 import idawi.Route;
+import idawi.To;
 import idawi.map.NetworkMap;
 import idawi.net.NetworkingService;
 import idawi.net.TransportLayer;
@@ -29,13 +32,13 @@ public class RoutingScheme_bcast extends RoutingService {
 		if (neighbors.containsAll(to)) {
 			return to;
 		}
-		
+
 		return neighbors;
 	}
 
 	@Override
 	public String getAlgoName() {
-		return "broadcast";
+		return "default routing protocol";
 	}
 
 	@Override
@@ -48,6 +51,27 @@ public class RoutingScheme_bcast extends RoutingService {
 		m.add(component.descriptor());
 		component.lookup(NetworkingService.class).neighbors().forEach(n -> m.add(n));
 		return m;
+	}
+
+	@Override
+	public To decode(String s) {
+		if (s.isEmpty()) {
+			return new To();
+		}
+
+		Set<ComponentDescriptor> components = new HashSet<>();
+
+		for (String name : s.split(",")) {
+			var found = component.operation(RegistryService.lookUp.class).f(name);
+
+			if (found == null) {
+				components.add(ComponentDescriptor.fromCDL("name=" + name));
+			} else {
+				components.add(found);
+			}
+		}
+
+		return new To(components);
 	}
 
 }

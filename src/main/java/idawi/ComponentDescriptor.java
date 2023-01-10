@@ -33,7 +33,7 @@ public class ComponentDescriptor implements Descriptor {
 	}
 
 	public String name;
-	public SSHParms sshParameters = new SSHParms();
+	public SSHParms ssh = new SSHParms();
 	public final List<InetAddress> inetAddresses = new ArrayList<>();
 	public Integer tcpPort, udpPort;
 //	public Set<Class<? extends Service>> services = new HashSet<>();
@@ -65,16 +65,16 @@ public class ComponentDescriptor implements Descriptor {
 			props.put("udp_port", "" + udpPort);
 		}
 
-		if (sshParameters != null) {
-			if (sshParameters.hostname != null) {
-				props.put("ssh.host", sshParameters.hostname);
+		if (ssh != null) {
+			if (ssh.host != null) {
+				props.put("ssh.host", ssh.host);
 			}
 
-			if (sshParameters.username != null) {
-				props.put("ssh.user", sshParameters.username);
+			if (ssh.username != null) {
+				props.put("ssh.user", ssh.username);
 			}
 
-			props.put("ssh.port", "" + sshParameters.port);
+			props.put("ssh.port", "" + ssh.port);
 		}
 
 		StringWriter w = new StringWriter();
@@ -97,7 +97,7 @@ public class ComponentDescriptor implements Descriptor {
 		key2cdlHandler.put("name", (p, v) -> p.name = v);
 		key2cdlHandler.put("tcp_port", (p, v) -> p.tcpPort = Integer.valueOf(v));
 		key2cdlHandler.put("udp_port", (p, v) -> p.udpPort = Integer.valueOf(v));
-		key2cdlHandler.put("ssh", (p, v) -> p.sshParameters = SSHParms.fromSSHString(v));
+		key2cdlHandler.put("ssh", (p, v) -> p.ssh = SSHParms.fromSSHString(v));
 		key2cdlHandler.put("ip", (p, v) -> {
 			for (String i : v.split(",")) {
 				try {
@@ -140,7 +140,7 @@ public class ComponentDescriptor implements Descriptor {
 
 		// try to find an IP address
 		if (peer.inetAddresses.isEmpty()) {
-			if (peer.sshParameters.hostname == null) {
+			if (peer.ssh.host == null) {
 				try {
 					peer.inetAddresses.add(InetAddress.getLocalHost());
 				} catch (UnknownHostException e1) {
@@ -148,7 +148,7 @@ public class ComponentDescriptor implements Descriptor {
 				}
 			} else {
 				try {
-					peer.inetAddresses.add(InetAddress.getByName(peer.sshParameters.hostname));
+					peer.inetAddresses.add(InetAddress.getByName(peer.ssh.host));
 				} catch (UnknownHostException e) {
 					// the ssh host does not correspond to anything in the DNS
 				}
@@ -158,8 +158,8 @@ public class ComponentDescriptor implements Descriptor {
 		if (peer.name == null) {
 			if (!peer.inetAddresses.isEmpty()) {
 				peer.name = peer.inetAddresses.get(0).getHostName();
-			} else if (peer.sshParameters.hostname != null) {
-				peer.name = peer.sshParameters.hostname;
+			} else if (peer.ssh.host != null) {
+				peer.name = peer.ssh.host;
 			} else {
 				peer.name = "thing-" + ThreadLocalRandom.current().nextInt();
 			}

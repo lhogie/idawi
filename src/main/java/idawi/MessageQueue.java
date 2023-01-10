@@ -33,7 +33,7 @@ public class MessageQueue extends Q<Message> {
 		return (A) collectOneResult();
 	}
 
-	public MessageCollector recv_sync(final double initialDuration, final double initialTimeout,
+	public MessageCollector collect(final double initialDuration, final double initialTimeout,
 			Consumer<MessageCollector> collector) {
 		var c = new MessageCollector(this);
 		c.collect(initialDuration, initialTimeout, collector);
@@ -41,7 +41,7 @@ public class MessageQueue extends Q<Message> {
 	}
 
 	public MessageCollector collect(Consumer<MessageCollector> collector) {
-		return recv_sync(1, 1, collector);
+		return collect(1, 1, collector);
 	}
 
 	public MessageCollector recv_sync() {
@@ -49,13 +49,13 @@ public class MessageQueue extends Q<Message> {
 	}
 
 	public MessageCollector recv_sync(final double initialDuration) {
-		return recv_sync(initialDuration, initialDuration, c -> {
+		return collect(initialDuration, initialDuration, c -> {
 		});
 	}
 
 	public MessageCollector collectUntilAllHaveReplied(final double initialDuration,
 			Set<ComponentDescriptor> components) {
-		return recv_sync(initialDuration, initialDuration, c -> {
+		return collect(initialDuration, initialDuration, c -> {
 			c.stop = c.messages.senders().equals(components);
 		});
 	}
@@ -66,11 +66,11 @@ public class MessageQueue extends Q<Message> {
 	 * @return
 	 */
 	public MessageCollector collectUntilFirstEOT(double timeout) {
-		return recv_sync(timeout, timeout, c -> c.stop = c.messages.last().isEOT());
+		return collect(timeout, timeout, c -> c.stop = c.messages.last().isEOT());
 	}
 
 	public MessageCollector collectUntilNEOT(double timeout, int n) {
-		return recv_sync(timeout, timeout, c -> c.stop = c.messages.countEOT() == n);
+		return collect(timeout, timeout, c -> c.stop = c.messages.countEOT() == n);
 	}
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {

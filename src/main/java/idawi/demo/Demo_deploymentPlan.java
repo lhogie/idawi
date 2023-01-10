@@ -52,7 +52,7 @@ public class Demo_deploymentPlan {
 		InetAddress childHost = InetAddress.getByName(args[0]);
 		child.inetAddresses.add(childHost);
 		child.name = childHost.getHostName();
-		child.sshParameters.hostname = childHost.getHostName();
+		child.ssh.host = childHost.getHostName();
 
 		// deploy
 		t.lookup(DeployerService.class).deploy(Set.of(child), true, 10000,

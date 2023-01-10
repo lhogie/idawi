@@ -1,12 +1,13 @@
 package idawi;
 
-public abstract class Operation implements OperationFunctionalInterface {
+public abstract class AbstractOperation implements OperationFunctionalInterface {
 	int nbCalls, nbFailures;
 	double totalDuration;
 	protected final OperationDescriptor descriptor = createOperationDescriptor();
 	Service service;
+	InputDescription inputDescriptor;
 
-	public Operation() {
+	public AbstractOperation() {
 		this.descriptor.implementationClass = getClass().getName();
 		this.descriptor.name = getName();
 		this.descriptor.description = getDescription();
@@ -30,6 +31,9 @@ public abstract class Operation implements OperationFunctionalInterface {
 	}
 
 	public abstract String getDescription();
+	public  InputDescription getInputDescription() {
+		return inputDescriptor;
+	}
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;

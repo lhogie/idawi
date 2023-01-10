@@ -1,7 +1,5 @@
 package idawi.service.rest;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,31 +13,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.BiPredicate;
 
 import javax.crypto.SecretKey;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
 import idawi.InnerOperation;
-import idawi.Message;
 import idawi.MessageCollector;
-import idawi.OperationAddress;
 import idawi.OperationParameterList;
 import idawi.RegistryService;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.To;
 import idawi.TypedInnerOperation;
+import idawi.routing.RoutingService;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -59,27 +54,12 @@ import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
 public class WebServer extends Service {
+
 	public static int DEFAULT_PORT = 8081;
-	public static final Map<String, BiPredicate<OperationAddress, MessageCollector>> stoppers = new HashMap<>();
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
-	public static Map<String, WhatToSend> whatToSends = new HashMap<>();
-
-	static interface WhatToSend {
-		Object f(Message msg);
-	}
 
 	static {
-		whatToSends.put("msg", msg -> msg);
-		whatToSends.put("content", msg -> msg.content);
-		whatToSends.put("route", msg -> msg.route.components());
-		whatToSends.put("src", msg -> msg.route.source().component.name);
-
-		stoppers.put("aeot", (to, c) -> c.messages.filter(m -> m.isEOT()).senders().equals(to.sa.to.componentNames));
-		stoppers.put("1eot", (to, c) -> !c.messages.filter(m -> m.isEOT()).isEmpty());
-		stoppers.put("1m", (to, c) -> !c.messages.isEmpty());
-		stoppers.put("1r", (to, c) -> !c.messages.filter(m -> m.isResult()).isEmpty());
-
 		name2serializer.put("gson", new GSONSerializer<>());
 		name2serializer.put("json_jackson", new JacksonJSONSerializer<>());
 		name2serializer.put("jsonex", new JSONExSerializer<>());
@@ -173,11 +153,12 @@ public class WebServer extends Service {
 							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 							serveAPI(path, query, input, output, serializer);
 						} catch (Throwable err) {
-							sendEvent(output, new ChunkHeader("error", List.of(serializer.getMIMEType())),
+							err.printStackTrace();
+							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
 									serializer.toBytes(err), serializer.isBinary());
 						} finally {
-							sendEvent(output, new ChunkHeader("EOT", List.of(serializer.getMIMEType())),
-									"ok".getBytes(), false);
+							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())), "EOT".getBytes(),
+									false);
 						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
@@ -262,7 +243,7 @@ public class WebServer extends Service {
 	private static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64) {
 		try {
 			out.write("data: ".getBytes());
-			out.write(header.toJSON().getBytes());
+			out.write(header.toJSONNode().toString().getBytes());
 			out.write('\n');
 
 			if (base64) {
@@ -292,9 +273,7 @@ public class WebServer extends Service {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "no", Set.of("yes", "no")));
-		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "compress", "no", Set.of("yes", "no")));
-		String whatToSend = removeOrDefault(query, "whatToSend", "msg", whatToSends.keySet());
-		var stop = stoppers.get(removeOrDefault(query, "stop", "aeot", stoppers.keySet()));
+		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
@@ -305,7 +284,8 @@ public class WebServer extends Service {
 			path.add("");
 		}
 
-		Set<ComponentDescriptor> targets = componentsFromURL(path.remove(0));
+		RoutingService routing = component.lookup(RoutingService.class);
+		To to = routing.decode(path.remove(0));
 
 		// there's no service specified
 		if (path.isEmpty()) {
@@ -326,114 +306,101 @@ public class WebServer extends Service {
 		var parms = new OperationParameterList();
 		parms.addAll(path);
 
-		System.out.println("calling operation " + targets + "/" + serviceID.toString() + "/" + operation
+		System.out.println("calling operation " + to + "/" + serviceID.toString() + "/" + operation
 				+ " with parameters: " + parms);
-		var to = new To(targets).s(serviceID).o(operation);
+		var operationAddr = to.s(serviceID).o(operation);
 
-		RemotelyRunningOperation ro = exec(to, true, parms);
+		RemotelyRunningOperation ro = exec(operationAddr, true, parms);
 		var aes = new AESEncrypter();
 		SecretKey key = null;
 
-		if (postDataInputStream != null) {
+		ObjectMapper jsonParser = new ObjectMapper();
 
-			new Thread(() -> {
-				var r = new BufferedReader(new java.io.InputStreamReader(postDataInputStream));
-				ChunkHeader header = null;
-				ByteArrayOutputStream content = null;
-
-				while (true) {
-					String l = null;
-
-					try {
-						l = r.readLine();
-					} catch (IOException e) {
-						// l will remain null
-					}
-
-					if (l == null) { // EOF
-						send(ro, header, content, aes, key);
-						break;
-					} else if (l.isEmpty()) { // end of event
-						send(ro, header, content, aes, key);
-						header = null;
-						content = null;
-					} else if (header == null) { // new event
-						header = new Gson().fromJson(l, ChunkHeader.class);
-						content = new ByteArrayOutputStream();
-					} else { // some content for the current event
-						try {
-							content.write(l.getBytes());
-						} catch (IOException e) {
-							throw new IllegalStateException(e);
-						}
-					}
-				}
-
-				try {
-					r.close();
-				} catch (IOException e) {
-					throw new IllegalStateException(e);
-				}
-			}).start();
-		}
-
-		ro.returnQ.recv_sync(duration, timeout, c -> {
-			List<String> encodings = new ArrayList<>();
-			var bytes = serializer.toBytes(whatToSends.get(whatToSend).f(c.messages.last()));
-			encodings.add(serializer.getMIMEType());
+		ro.returnQ.collect(duration, timeout, collector -> {
+			List<String> encodingsToClient = new ArrayList<>();
+			var bytes = serializer.toBytes(collector.messages.last());
+			encodingsToClient.add(serializer.getMIMEType());
 			boolean base64 = serializer.isBinary();
 
 			if (compress) {
 				bytes = Utilities.gzip(bytes);
-				encodings.add("gzip");
+				encodingsToClient.add("gzip");
 				base64 = true;
 			}
 
 			if (encrypt) {
 				try {
 					bytes = aes.encrypt(bytes, key);
-					encodings.add("aes");
+					encodingsToClient.add("aes");
 					base64 = true;
 				} catch (Exception e) {
 					System.err.println(e.getMessage());
 				}
 			}
 
-			sendEvent(output, new ChunkHeader("message", encodings), bytes, base64);
+			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
 
-//			c.timeout = ?
+			if (postDataInputStream != null) {
+				try {
+					JsonNode header = jsonParser.readTree(postDataInputStream);
 
-			c.stop = stop.test(to, c);
+					if (header != null) { // EOF
+						// the header may carry control stuff for the collect process
+						controlCollect(header, collector);
+
+						int contentLength = header.get("contentLength").asInt();
+
+						var content = postDataInputStream.readNBytes(contentLength);
+						var encodingsFromClient = header.get("encodings").asText().split(",");
+						// restore the original data by reversing the encoding
+						for (int i = encodingsFromClient.length - 1; i > 0; --i) {
+							var encoding = encodingsFromClient[i];
+
+							if (encoding.equals("gzip")) {
+								content = Utilities.gunzip(content);
+							} else if (encoding.equals("base64")) {
+								content = unbase64(content);
+							} else if (encoding.equals("aes")) {
+								try {
+									content = aes.decrypt(content, key);
+								} catch (Exception e) {
+									throw new IllegalStateException(e);
+								}
+							}
+						}
+
+						String serializerName = encodingsFromClient[0];
+						var ser = name2serializer.get(serializerName);
+						Object o = ser.fromBytes(content);
+						ro.send(o);
+					}
+				} catch (IOException e1) {
+				}
+			}
 		});
 
 //			ro.dispose();
 
 	}
 
-	private void send(RemotelyRunningOperation ro, ChunkHeader header, ByteArrayOutputStream content, AESEncrypter aes,
-			SecretKey key) {
-		var bytes = content.toByteArray();
+	private void controlCollect(JsonNode header, MessageCollector collector) {
+		var newTimeout = header.get("timeout");
 
-		// restore the original data by reversing the encoding
-		for (int i = header.syntax.size() - 1; i > 0; --i) {
-			var deser = header.syntax.get(i);
-
-			if (deser.equals("gzip")) {
-				bytes = Utilities.gunzip(bytes);
-			} else if (deser.equals("base64")) {
-				bytes = unbase64(bytes);
-			} else if (deser.equals("aes")) {
-				try {
-					bytes = aes.decrypt(bytes, key);
-				} catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}
+		if (newTimeout != null) {
+			collector.timeout = newTimeout.asDouble();
 		}
 
-		String serializerName = header.syntax.get(0);
-		var ser = name2serializer.get(serializerName);
-		Object o = ser.fromBytes(bytes);
+		var newEndDate = header.get("endDate");
+
+		if (newEndDate != null) {
+			collector.endDate = newEndDate.asDouble();
+		}
+
+		var shouldStop = header.get("stop");
+
+		if (shouldStop != null) {
+			collector.stop = shouldStop.asBoolean();
+		}
 	}
 
 	private List<String> path(String s) {
@@ -464,26 +431,6 @@ public class WebServer extends Service {
 					r + " is not a valid value for '" + k + "'. Valid values are: " + validKeys);
 
 		return r;
-	}
-
-	private Set<ComponentDescriptor> componentsFromURL(String s) {
-		if (s.isEmpty()) {
-			return null;
-		}
-
-		Set<ComponentDescriptor> components = new HashSet<>();
-
-		for (String name : s.split(",")) {
-			var found = component.operation(RegistryService.lookUp.class).f(name);
-
-			if (found == null) {
-				components.add(ComponentDescriptor.fromCDL("name=" + name));
-			} else {
-				components.add(found);
-			}
-		}
-
-		return components;
 	}
 
 	private static Map<String, String> query(String s) {

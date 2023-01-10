@@ -7,6 +7,7 @@ import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Route;
 import idawi.Service;
+import idawi.To;
 import idawi.map.NetworkMap;
 import idawi.net.TransportLayer;
 
@@ -33,4 +34,6 @@ public abstract class RoutingService extends Service {
 	public abstract void feedWith(Route route);
 
 	public abstract NetworkMap map();
+
+	public abstract To decode(String s);
 }

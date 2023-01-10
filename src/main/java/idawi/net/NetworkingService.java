@@ -86,7 +86,7 @@ public class NetworkingService extends Service {
 			public void neighborLeft(ComponentDescriptor p, TransportLayer neighborhood) {
 			}
 		});
-
+	
 		registerOperation(new getNbMessagesReceived());
 		registerOperation(new neighbors());
 	}

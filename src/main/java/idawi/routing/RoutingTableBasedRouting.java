@@ -6,6 +6,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.ComponentDescriptor;
 import idawi.Route;
+import idawi.To;
 import idawi.map.NetworkMap;
 import idawi.net.TransportLayer;
 
@@ -59,5 +60,10 @@ public class RoutingTableBasedRouting<T extends RoutingTable> extends RoutingSer
 	@Override
 	public NetworkMap map() {
 		return routingTable.map();
+	}
+
+	@Override
+	public To decode(String s) {
+		return null;
 	}
 }

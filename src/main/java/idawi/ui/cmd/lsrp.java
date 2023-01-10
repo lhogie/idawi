@@ -26,7 +26,7 @@ public class lsrp extends Command {
 
 		for (String sshHost : cmdLine.findParameters()) {
 			SSHParms sshparms = new SSHParms();
-			sshparms.hostname = sshHost;
+			sshparms.host = sshHost;
 			SSHUtils.execShAndWait(sshparms,
 					"if [ ! -d $HOME/.pafadipo/running/ ]; then exit 0; fi; for FILENAME in $HOME/.pafadipo/running/*; do AGE=$(($(date +%s) - $(date +%s -r $FILENAME))); if [ $AGE -lt 1 ]; then echo $FILENAME; fi; done");
 		}

@@ -3,20 +3,19 @@ package idawi;
 public class ProgressRatio extends ProgressInformation {
 	long target, progress;
 
-	public ProgressRatio(long target, long progress) {
+	public ProgressRatio(long progress, long target) {
 		this.target = target;
 		this.progress = progress;
 	}
 
 	public ProgressRatio() {
-		this(1, 0);
+		this(0, 1);
 	}
 
 	public double ratio() {
 		if (completed()) {
 			return 1;
-		}
-		else {
+		} else {
 			return progress / (double) target;
 		}
 	}
@@ -29,8 +28,7 @@ public class ProgressRatio extends ProgressInformation {
 	public String toString() {
 		if (completed()) {
 			return "completed " + target + "/" + target;
-		}
-		else {
+		} else {
 			return (((int) (10000 * ratio())) / 100d) + "%";
 		}
 	}

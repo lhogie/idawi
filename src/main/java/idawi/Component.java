@@ -19,12 +19,12 @@ import idawi.routing.RoutingScheme_bcast;
 import idawi.service.Bencher;
 import idawi.service.DemoService;
 import idawi.service.ErrorLog;
-import idawi.service.ExternalCommandsService;
 import idawi.service.FileService;
 import idawi.service.JVMInfo;
 import idawi.service.PingService;
 import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
+import idawi.service.extern.ExternalCommandsService;
 import idawi.service.rest.WebServer;
 import toools.io.file.Directory;
 
@@ -34,7 +34,7 @@ public class Component {
 
 	public String name;
 	private ComponentDescriptor descriptor;
-	final Map<Class<? extends Service>, Service> services = new HashMap<>();
+	final Set<Service> services = new HashSet<>();
 	public final Set<ComponentDescriptor> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
 	public ComponentDescriptor parent;
@@ -83,15 +83,33 @@ public class Component {
 	}
 
 	public Collection<Service> services() {
-		return services.values();
+		return services;
 	}
 
 	public void forEachService(Consumer<Service> c) {
-		services.values().forEach(s -> c.accept(s));
+		services.forEach(s -> c.accept(s));
+	}
+
+	public <S extends Service> List<Service> lookupAll(Class<S> id) {
+		List<Service> l = new ArrayList<>();
+
+		for (var s : services) {
+			if (id.isAssignableFrom(s.getClass())) {
+				l.add(s);
+			}
+		}
+
+		return l;
 	}
 
 	public <S extends Service> S lookup(Class<S> id) {
-		return (S) services.get(id);
+		for (var s : services) {
+			if (id.isAssignableFrom(s.getClass())) {
+				return (S) s;
+			}
+		}
+
+		return null;
 	}
 
 	public <O extends InnerOperation> O operation(Class<O> id) {

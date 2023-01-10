@@ -43,7 +43,7 @@ public class TraceRouteService extends Service {
 
 	public Map<ComponentDescriptor, Route> traceRoute(Set<ComponentDescriptor> targets, double timeout) {
 		var map = new HashMap<ComponentDescriptor, Route>();
-		exec(new To(targets).o(TraceRouteService.traceroute.class), true, null).returnQ.recv_sync(timeout, timeout, c -> {
+		exec(new To(targets).o(TraceRouteService.traceroute.class), true, null).returnQ.collect(timeout, timeout, c -> {
 			var target = c.messages.last().route.source().component;
 			var route = (Route) c.messages.last().content;
 			map.put(target, route);

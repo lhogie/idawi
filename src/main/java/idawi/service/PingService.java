@@ -27,13 +27,13 @@ public class PingService extends Service {
 
 	public class ping extends InnerOperation {
 		@Override
-		public void impl(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in)  {
 			Cout.debugSuperVisible(in.poll_sync());
 		}
 
 		@Override
 		public String getDescription() {
-			return "simply replies to the requester (which stands as the pong)";
+			return "just sends EOT to the requester (which stands as the pong)";
 		}
 	}
 
@@ -59,7 +59,7 @@ public class PingService extends Service {
 	}
 
 	public MessageList ping(Set<ComponentDescriptor> targets, double timeout, Consumer<Message> realtimeHandler) {
-		return ping(targets).recv_sync(timeout, timeout, c -> {
+		return ping(targets).collect(timeout, timeout, c -> {
 			realtimeHandler.accept(c.messages.last());
 			c.stop = c.messages.senders().equals(targets);
 		}).messages;

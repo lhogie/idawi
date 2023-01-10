@@ -43,8 +43,8 @@ public class DeployerService extends Service {
 	private static String remoteClassDir = Service.class.getPackageName() + ".classpath/";
 	List<ComponentDescriptor> failed = new ArrayList<>();
 
-	public static class DeploymentRequest implements Serializable {
-		public Collection<ComponentDescriptor> peers = new HashSet<>();
+	public static class DeploymentParameters implements Serializable {
+		public Collection<ComponentDescriptor> targets = new HashSet<>();
 		public double timeoutInSecond;
 		public boolean suicideWhenParentDie;
 	}
@@ -75,9 +75,9 @@ public class DeployerService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_sync();
-			DeploymentRequest req = (DeploymentRequest) trigger.content;
-			System.err.println(req.peers);
-			deploy(req.peers, req.suicideWhenParentDie, req.timeoutInSecond, rsyncOut -> reply(trigger, rsyncOut),
+			DeploymentParameters req = (DeploymentParameters) trigger.content;
+			System.err.println(req.targets);
+			deploy(req.targets, req.suicideWhenParentDie, req.timeoutInSecond, rsyncOut -> reply(trigger, rsyncOut),
 					rsyncErr -> reply(trigger, rsyncErr), stdout -> reply(trigger, stdout),
 					peerOk -> reply(trigger, peerOk));
 			System.err.println("done");
@@ -300,10 +300,10 @@ public class DeployerService extends Service {
 				ComponentDescriptor n = nasGroup.iterator().next();
 
 				// sends the binaries there
-				rsyncBinaries(n.sshParameters, rsyncOut, rsyncErr);
+				rsyncBinaries(n.ssh, rsyncOut, rsyncErr);
 
 				// makes sure the JVM is okay for all the nodes in the group
-				ensureCompliantJVM(n.sshParameters);
+				ensureCompliantJVM(n.ssh);
 
 				// starts it on every nodes, in parallel
 				startJVM(nasGroup, feedback);
@@ -328,7 +328,7 @@ public class DeployerService extends Service {
 			private void rsyncBinaries(SSHParms ssh, Consumer<String> rsyncOut, Consumer<String> rsyncErr)
 					throws IOException {
 				LongProcess rsyncing = new LongProcess("rsync to " + ssh, null, -1, line -> feedback.accept(line));
-				int exitCode = ClassPath.retrieveSystemClassPath().rsyncTo(ssh, ssh.hostname, remoteClassDir,
+				int exitCode = ClassPath.retrieveSystemClassPath().rsyncTo(ssh, ssh.host, remoteClassDir,
 						l -> rsyncOut.accept(l), l -> rsyncErr.accept(l));
 				rsyncing.end();
 
@@ -358,7 +358,7 @@ public class DeployerService extends Service {
 				args.add("-v");
 
 				args.add(resourceDir.getPath() + "/");
-				args.add(sshParameters.hostname + ":" + remotePath + "/");
+				args.add(sshParameters.host + ":" + remotePath + "/");
 
 				try {
 					// System.out.println(args);
@@ -387,7 +387,7 @@ public class DeployerService extends Service {
 						try {
 							LongProcess startingNode = new LongProcess("starting node in JVM on " + peer + " via SSH",
 									null, -1, line -> feedback.accept(line));
-							Process p = SSHUtils.exec(peer.sshParameters, "jdk-14.0.1/bin/java", "-cp",
+							Process p = SSHUtils.exec(peer.ssh, "jdk-14.0.1/bin/java", "-cp",
 									remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)",
 									DeployerService.class.getName());
 
@@ -505,7 +505,7 @@ public class DeployerService extends Service {
 				String filename = dir + peer.name;
 
 				try {
-					SSHUtils.execShAndWait(peer.sshParameters, "mkdir -p " + filename);
+					SSHUtils.execShAndWait(peer.ssh, "mkdir -p " + filename);
 				} catch (ProcesException e) {
 					// e.printStackTrace();
 					feedback.accept("discarding peer " + peer);
@@ -523,7 +523,7 @@ public class DeployerService extends Service {
 				Set<ComponentDescriptor> s = new HashSet<>();
 
 				try {
-					List<String> stdout = SSHUtils.execShAndWait(peer.sshParameters, "ls " + dir);
+					List<String> stdout = SSHUtils.execShAndWait(peer.ssh, "ls " + dir);
 
 					for (var line : stdout) {
 						ComponentDescriptor c = findByName(line, nodes);
@@ -554,7 +554,7 @@ public class DeployerService extends Service {
 			protected void process(Set<ComponentDescriptor> group) {
 				for (ComponentDescriptor p : group) {
 					try {
-						SSHUtils.execShAndWait(p.sshParameters, "rm -rf " + dir);
+						SSHUtils.execShAndWait(p.ssh, "rm -rf " + dir);
 						return;
 					} catch (ProcesException e) {
 						feedback.accept("discarding peer " + p);

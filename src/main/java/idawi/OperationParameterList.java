@@ -1,9 +1,11 @@
 package idawi;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import toools.text.TextUtilities;
 import toools.util.Conversion;
+import toools.util.Conversion.Converter;
 
 public class OperationParameterList extends ArrayList {
 	public OperationParameterList(Object... parms) {
@@ -12,21 +14,23 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public void convertTo(Operation operation, Class<?>[] types) {
+	public void convertTo(AbstractOperation operation, Class<?>[] types) {
+//	public void convertTo(AbstractOperation operation, Class<?>[] types, Iterable<Converter<?, ?>> converters) {
 		if (types.length != size())
 			throw new IllegalArgumentException("operation " + operation + ": expecting types " + TextUtilities.toString(types) + " parameters but got " + TextUtilities.toString(this));
 
 		for (int i = 0; i < types.length; ++i) {
-			var from = get(i);
-			var to = types[i];
+			var initialObject = get(i);
+			var destinationClass = types[i];
 
-			if (!to.isAssignableFrom(from.getClass())) {
-				set(i, Conversion.convert(from, to));
+			if (!destinationClass.isAssignableFrom(initialObject.getClass())) {
+//				set(i, Conversion.convert(initialObject, destinationClass, converters));
+				set(i, Conversion.convert(initialObject, destinationClass));
 			}
 		}
 	}
 
-	public static OperationParameterList from(Operation operation, Object content, Class<?>[] types) {
+	public static OperationParameterList from(AbstractOperation operation, Object content, Class<?>[] types) {
 		if (content == null && types.length == 0) {
 			return new OperationParameterList();
 		}

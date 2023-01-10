@@ -18,9 +18,19 @@ public abstract class TypedInnerOperation extends InnerOperation {
 	public TypedInnerOperation() {
 		this.method = findMain();
 
+
+		this.inputDescriptor = new InputDescription();
+		inputDescriptor.re = "";
+		
 		for (var t : method.getParameterTypes()) {
 			((TypeOperationDescriptor) descriptor).parameterTypes.add(t.getName());
+			inputDescriptor.re += '(' + t.getName() + ')';
 		}
+	}
+
+	@Override
+	public InputDescription getInputDescription() {
+		return null;
 	}
 
 	@Override
