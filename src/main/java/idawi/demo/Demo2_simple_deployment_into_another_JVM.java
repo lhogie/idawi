@@ -19,15 +19,15 @@ public class Demo2_simple_deployment_into_another_JVM {
 
 // describes the child peer that will be deployed to
 		var childDeployment = new ExtraJVMDeploymentRequest();
-		childDeployment.target = new ComponentRef("child");
+		childDeployment.targetDescription.ref = new ComponentRef("child");
  
 // deploy
-		localComponent.lookup(DeployerService.class).deploy(Set.of(childDeployment),
+		localComponent.lookup(DeployerService.class).deployInNewJVMs(Set.of(childDeployment),
 				s -> System.out.println(s), ok -> System.out.println(ok));
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.bb().ping(childDeployment.target).poll_sync(3);
+		var pong = localComponent.bb().ping(childDeployment.targetDescription.ref).poll_sync(3);
 
 		if (pong == null) {
 			System.err.println("ping timeout");

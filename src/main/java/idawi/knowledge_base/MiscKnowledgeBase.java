@@ -42,10 +42,10 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 	}
 
 	public void considers(ComponentDescription d) {
-		var e = componentInfos.get(d.name);
+		var e = componentInfos.get(d.ref);
 
 		if (e == null || d.isNewerThan(e)) {
-			componentInfos.put(d.name, d);
+			componentInfos.put(d.ref, d);
 		}
 	}
 
@@ -66,7 +66,7 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 
 		if (d == null && create) {
 			componentInfos.put(id, d = new ComponentDescription(component.now()));
-			d.name = id;
+			d.ref = id;
 		}
 
 		return d;
@@ -84,7 +84,7 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 
 	public ComponentDescription createLocalComponentDescriptor() {
 		ComponentDescription d = new ComponentDescription(component.now());
-		d.name = component.ref();
+		d.ref = component.ref();
 		d.location = component.getLocation();
 		d.timeModel = component.lookup(TimeService.class).model;
 		d.systemInfo = component.lookup(SystemMonitor.class).info.get();
@@ -133,10 +133,10 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 		public void f(Info i) {
 			if (i instanceof ComponentDescription) {
 				var d = (ComponentDescription) i;
-				var alreadyHere = componentInfos.get(d.name);
+				var alreadyHere = componentInfos.get(d.ref);
 
 				if (alreadyHere == null) {
-					componentInfos.put(d.name, d);
+					componentInfos.put(d.ref, d);
 				} else if (d.isNewerThan(alreadyHere)) {
 					alreadyHere.consider(d);
 				}

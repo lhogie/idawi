@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.CDLException;
 import idawi.Component;
 import idawi.OperationParameterList;
 import idawi.Service;
@@ -58,7 +57,7 @@ public class LucTests {
 	}
 
 	@Test
-	public void twoComponentsConversation() throws CDLException {
+	public void twoComponentsConversation() {
 		Cout.debugSuperVisible("Starting test twoComponentsConversation");
 		// describes a component by its name only
 		ComponentRef me = new ComponentRef();
@@ -84,16 +83,16 @@ public class LucTests {
 	}
 
 	@Test
-	public void manyMessages() throws CDLException, IOException {
+	public void manyMessages() throws IOException {
 		Cout.debugSuperVisible("Starting test manyMessages");
 		Component c1 = new Component();
 
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new ComponentRef("c2d");
-		c1.lookup(DeployerService.class).deploy(req, msg -> System.out.println(msg));
+		req.targetDescription.ref = new ComponentRef("c2d");
+		c1.lookup(DeployerService.class).deployInNewJVM(req, msg -> System.out.println(msg));
 
 		for (int i = 0; i < 100; ++i) {
-			Message pong = c1.bb().ping(req.target).poll_sync();
+			Message pong = c1.bb().ping(req.targetDescription.ref).poll_sync();
 
 			// be sure c1 got an answer
 			assertNotEquals(null, pong);
@@ -130,7 +129,7 @@ public class LucTests {
 	}
 
 	@Test
-	public void waitingFirst() throws CDLException {
+	public void waitingFirst() {
 		Cout.debugSuperVisible("Starting test waitingFirst");
 		Component root = new Component(new ComponentRef("root"));
 		List<Component> others = root.lookup(DeployerService.class).deployInThisJVM("c1", "c2");
@@ -147,7 +146,7 @@ public class LucTests {
 	}
 
 	@Test
-	public void pingViaTCP() throws CDLException, IOException {
+	public void pingViaTCP() throws IOException {
 		Cout.debugSuperVisible("Starting test pingViaTCP");
 
 		// creates a component in this JVM
@@ -156,11 +155,11 @@ public class LucTests {
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new ComponentRef("other_peer");
-		master.lookup(DeployerService.class).deploy(req, fdbck -> System.out.println(fdbck));
+		req.targetDescription.ref = new ComponentRef("other_peer");
+		master.lookup(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
 
 		// asks the master to ping the other component
-		Message pong = new Service(master).component.bb().ping(req.target).poll_sync();
+		Message pong = new Service(master).component.bb().ping(req.targetDescription.ref).poll_sync();
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer

@@ -23,11 +23,11 @@ public class Demo1_multi_jvm {
 		Component t1 = new Component(new ComponentRef("c1"));
 
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new ComponentRef("c2");
+		req.targetDescription.ref = new ComponentRef("c2");
 
-		t1.lookup(DeployerService.class).deploy(req, fdbck -> System.out.println(fdbck));
+		t1.lookup(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
 
-		Message pong = t1.bb().ping(req.target).poll_sync();
+		Message pong = t1.bb().ping(req.targetDescription.ref).poll_sync();
 		System.out.println("pong duration: " + pong.route.duration());
 		System.out.println("pong message: " + pong);
 

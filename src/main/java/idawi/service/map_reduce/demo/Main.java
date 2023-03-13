@@ -33,12 +33,12 @@ public class Main {
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();
-			r.target = w;
+			r.targetDescription.ref = w;
 			return r;
 		}).toList();
 
 		// deploy JVMs
-		mapper.lookup(DeployerService.class).deploy(reqs, stdout -> System.out.println(stdout),
+		mapper.lookup(DeployerService.class).deployInNewJVMs(reqs, stdout -> System.out.println(stdout),
 				ok -> System.out.println("peer ok: " + ok));
 
 		// start Map/Reduce workers in them

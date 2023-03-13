@@ -14,8 +14,8 @@ public class DeployToAnotherJVM {
 
 		// we'll put another component in a different JVM
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new ComponentRef("b");
+		req.targetDescription.ref = new ComponentRef("b");
 
-		a.lookup(DeployerService.class).deploy(req, feedback -> System.out.println(feedback));
+		a.lookup(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 	}
 }

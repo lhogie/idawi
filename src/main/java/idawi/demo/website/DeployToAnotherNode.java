@@ -12,7 +12,7 @@ public class DeployToAnotherNode {
 		var a = new Component();
 
 		var req = new RemoteDeploymentRequest();
-		req.target = new ComponentRef("b@musclotte");
+		req.targetDescription.ref = new ComponentRef("b@musclotte");
 		req.ssh.host = "musclotte.inria.fr";
 
 		var ro = a.bb().exec(DeployerService.remote_deploy.class, req);

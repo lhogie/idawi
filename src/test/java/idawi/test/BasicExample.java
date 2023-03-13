@@ -25,12 +25,12 @@ public class BasicExample {
 
 // we'll put another component in a different JVM
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new ComponentRef("other component");
+		req.targetDescription.ref = new ComponentRef("other component");
 
-		c1.lookup(DeployerService.class).deploy(req, feedback -> System.out.println(feedback));
+		c1.lookup(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 
 // asks the other component to compute something
-		var l = c1.bb().exec_rpc(req.target, DemoService.stringLength.class, "Hello Idawi!");
+		var l = c1.bb().exec_rpc(req.targetDescription.ref, DemoService.stringLength.class, "Hello Idawi!");
 		System.out.println(l);
 	}
 }

@@ -25,9 +25,9 @@ public class deployBackend extends CommandBackend {
 
 		boolean suicideWhenParentDie = !cmdline.isOptionSpecified("--autonomous");
 		var reqs = RemoteDeploymentRequest.from(peers);
-		reqs.forEach(r -> r.suicideWhenParentDie = suicideWhenParentDie);
+		reqs.forEach(r -> r.targetDescription.suicideWhenParentDie = suicideWhenParentDie);
 
-		n.lookup(DeployerService.class).deploy(reqs, sdtout -> out.accept(sdtout),
+		n.lookup(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
 				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"));
 	}
 }

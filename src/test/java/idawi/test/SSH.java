@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import idawi.CDLException;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.RemoteDeploymentRequest;
@@ -21,7 +20,7 @@ public class SSH {
 	}
 
 	@Test
-	public void pingViaSSH() throws CDLException, IOException {
+	public void pingViaSSH() throws IOException {
 		Cout.debugSuperVisible("Starting test");
 
 		// creates a component in this JVM
@@ -33,7 +32,7 @@ public class SSH {
 		var deployReq = new RemoteDeploymentRequest();
 		deployReq.ssh.host = "musclotte.inria.fr";
 
-		c1.lookup(DeployerService.class).deploy(Set.of(deployReq),
+		c1.lookup(DeployerService.class).deployRemotely(Set.of(deployReq),
 				rsyncOut -> System.out.println("rsync: " + rsyncOut),
 				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"));
 

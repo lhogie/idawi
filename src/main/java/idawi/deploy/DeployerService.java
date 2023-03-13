@@ -22,6 +22,7 @@ import idawi.knowledge_base.ComponentRef;
 import idawi.knowledge_base.MapService;
 import idawi.messaging.MessageQueue;
 import idawi.transport.PipeFromToChildProcess;
+import idawi.transport.PipeFromToChildProcess.FirstResponse;
 import idawi.transport.PipeFromToParentProcess;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
@@ -41,15 +42,16 @@ public class DeployerService extends Service {
 	private static String remoteJREDir = "jre/";
 	List<ComponentRef> failed = new ArrayList<>();
 
-	public static class ExtraJVMDeploymentRequest implements Serializable {
-		public ComponentRef target;
-		public boolean suicideWhenParentDie = true;
-		public Class<? extends Component> componentClass = Component.class;
+	public static class DeploymentRequest implements Serializable {
+		public ComponentDescription targetDescription = new ComponentDescription(0);
 
 		@Override
 		public String toString() {
-			return "deploying " + target;
+			return "deploying " + targetDescription;
 		}
+	}
+
+	public static class ExtraJVMDeploymentRequest extends DeploymentRequest {
 	}
 
 	public static class RemoteDeploymentRequest extends ExtraJVMDeploymentRequest {
@@ -59,9 +61,8 @@ public class DeployerService extends Service {
 		public static List<RemoteDeploymentRequest> from(Collection<ComponentRef> a) {
 			return a.stream().map(p -> {
 				var r = new RemoteDeploymentRequest();
-				r.target = p;
+				r.targetDescription.ref = p;
 				return r;
-
 			}).toList();
 		}
 
@@ -94,7 +95,7 @@ public class DeployerService extends Service {
 			var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
 
 			System.err.println(reqs);
-			deploy(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
+			deployRemotely(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
 					peerOk -> reply(trigger, peerOk));
 
 			System.err.println("done");
@@ -135,20 +136,20 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
 			var reqs = (Collection<ExtraJVMDeploymentRequest>) trigger.content;
-			deploy(reqs, line -> reply(trigger, line), ok -> reply(trigger, ok));
+			deployInNewJVMs(reqs, line -> reply(trigger, line), ok -> reply(trigger, ok));
 		}
 
 	}
 
-	public void deploy(Collection<ExtraJVMDeploymentRequest> reqs, Consumer<String> feedback,
+	public void deployInNewJVMs(Collection<ExtraJVMDeploymentRequest> reqs, Consumer<String> feedback,
 			Consumer<ComponentRef> peerOk) throws IOException {
 		for (var req : reqs) {
-			deploy(req, feedback);
-			peerOk.accept(req.target);
+			deployInNewJVM(req, feedback);
+			peerOk.accept(req.targetDescription.ref);
 		}
 	}
 
-	public void deploy(ExtraJVMDeploymentRequest req, Consumer<String> feedback) throws IOException {
+	public void deployInNewJVM(ExtraJVMDeploymentRequest req, Consumer<String> feedback) throws IOException {
 		String java = System.getProperty("java.home") + "/bin/java";
 		String classpath = System.getProperty("java.class.path");
 		LongProcess startingNode = new LongProcess("starting new JVM", null, -1, line -> feedback.accept(line));
@@ -170,19 +171,19 @@ public class DeployerService extends Service {
 		out.flush();
 
 		var pipesToChildren = component.lookup(PipeFromToChildProcess.class);
-		var e = pipesToChildren.add(req.target, proc);
+		var e = pipesToChildren.add(req.targetDescription.ref, proc);
 
-		feedback.accept("waiting for " + req.target + " to be ready");
-		Object response = e.waitForChild.poll_sync(10);
+		feedback.accept("waiting for " + req.targetDescription + " to be ready");
+		FirstResponse response = e.waitForChild.poll_sync(10);
 
 		if (response == null) { // timeout :(
 			throw new IllegalStateException("timeout");
-		} else if (response instanceof ComponentDescription) { // deploy success
-			component.knowledgeBase().considers((ComponentDescription) response);
+		} else if (response.content instanceof ComponentDescription) { // deploy success
+			component.knowledgeBase().considers((ComponentDescription) response.content);
 			component.forEachServiceOfClass(MapService.class,
-					s -> s.bidi(component.ref(), deployInfo.req.target, pipesToChildren.getClass()));
-		} else if (response instanceof Throwable) { // deploy error
-			throw new IllegalStateException(req.target + " failed", (Throwable) response);
+					s -> s.bidi(component.ref(), deployInfo.req.targetDescription.ref, pipesToChildren.getClass()));
+		} else if (response.content instanceof Throwable) { // deploy error
+			throw new IllegalStateException(req.targetDescription + " failed", (Throwable) response.content);
 		} else {
 			throw new IllegalStateException("obtaining " + response);
 		}
@@ -216,8 +217,8 @@ public class DeployerService extends Service {
 		return r;
 	}
 
-	public void deploy(Collection<RemoteDeploymentRequest> peers, Consumer<String> feedback, Consumer<String> stderr,
-			Consumer<ComponentRef> peerOk) throws IOException {
+	public void deployRemotely(Collection<RemoteDeploymentRequest> peers, Consumer<String> feedback,
+			Consumer<String> stderr, Consumer<ComponentRef> peerOk) throws IOException {
 
 		// identifies the set of peers that have filesystem in common
 		var nasGroups = groupByNAS(peers, feedback);
@@ -251,8 +252,9 @@ public class DeployerService extends Service {
 
 			@Override
 			protected void process(RemoteDeploymentRequest req) throws IOException {
-				LongProcess startingNode = new LongProcess("starting node in JVM on " + req.target + " via SSH", null,
-						-1, line -> feedback.accept(line));
+				LongProcess startingNode = new LongProcess(
+						"starting node in JVM on " + req.targetDescription + " via SSH", null, -1,
+						line -> feedback.accept(line));
 				Process p = SSHUtils.exec(req.ssh, "jre/jdk-$(uname -s)-$(uname -m)/bin/java", "-cp",
 						remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)", DeployerService.class.getName(),
 						"run_by_a_node");
@@ -281,19 +283,20 @@ public class DeployerService extends Service {
 		}
 
 		try {
-
 			System.out.println("JVM " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")
 					+ " is running");
 			System.out.println("Now reading deployment information");
 			var deployInfo = (DeployInfo) TransportService.serializer.read(System.in);
 
 			System.out.println("instantiating component");
-			var child = Clazz.makeInstance(deployInfo.req.componentClass.getConstructor(ComponentRef.class),
-					deployInfo.req.target);
+			var child = Clazz.makeInstance(
+					deployInfo.req.targetDescription.componentClass.getConstructor(ComponentRef.class),
+					deployInfo.req.targetDescription.ref);
 			child.parent = deployInfo.parent;
 //			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
-			var pipe = new PipeFromToParentProcess(child, child.parent, deployInfo.req.suicideWhenParentDie);
+			var pipe = new PipeFromToParentProcess(child, child.parent,
+					deployInfo.req.targetDescription.suicideWhenParentDie);
 			child.forEachServiceOfClass(MapService.class, s -> s.bidi(child.ref(), deployInfo.parent, pipe.getClass()));
 
 			// tell the parent process that this node is ready for connections
@@ -317,17 +320,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public Set<ComponentRef> findNASGroupOf(Set<Set<ComponentRef>> nasGroups, ComponentRef n) {
-		for (Set<ComponentRef> g : nasGroups) {
-			if (g.contains(n)) {
-				return g;
-			}
-		}
-
-		return null;
-	}
-
-	public static Set<Set<RemoteDeploymentRequest>> groupByNAS(Collection<RemoteDeploymentRequest> nodes,
+	private static Set<Set<RemoteDeploymentRequest>> groupByNAS(Collection<RemoteDeploymentRequest> nodes,
 			Consumer<String> feedback) {
 
 		if (nodes.size() == 1) {
@@ -354,7 +347,7 @@ public class DeployerService extends Service {
 
 			@Override
 			protected void process(RemoteDeploymentRequest peer) {
-				String filename = dir + peer.target.toString();
+				String filename = dir + peer.targetDescription.toString();
 
 				try {
 					SSHUtils.execShAndWait(peer.ssh, "mkdir -p " + filename);
@@ -391,7 +384,7 @@ public class DeployerService extends Service {
 
 			private RemoteDeploymentRequest findByName(String name, Iterable<RemoteDeploymentRequest> nodes) {
 				for (RemoteDeploymentRequest p : nodes) {
-					if (p.target.ref.equals(name)) {
+					if (p.targetDescription.ref.ref.equals(name)) {
 						return p;
 					}
 				}

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,12 +20,16 @@ import toools.thread.Q;
 import toools.thread.Threads;
 
 public class PipeFromToChildProcess extends TransportService {
+	public static class FirstResponse implements Serializable{
+		public Object content;
+	}
+	
 	public static class Entry {
 		InputStream stdout, stderr;
 		OutputStream stdin;
 		public ComponentRef child;
 		boolean run;
-		public Q<Object> waitForChild = new Q<>(1);
+		public Q<FirstResponse> waitForChild = new Q<>(1);
 		public long base64Len;
 	}
 
@@ -109,7 +114,9 @@ public class PipeFromToChildProcess extends TransportService {
 				if (o instanceof Message) {
 					processIncomingMessage((Message) o);
 				} else {
-					e.waitForChild.add_sync(o);
+					var f = new FirstResponse();
+					f.content = o;
+					e.waitForChild.add_sync(f);
 				}
 			} else {
 				to.println(e.child + "> " + line);

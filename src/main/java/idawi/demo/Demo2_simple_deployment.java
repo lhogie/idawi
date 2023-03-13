@@ -27,16 +27,16 @@ public class Demo2_simple_deployment {
 
 // describes the child peer that will be deployed to
 		var childDeployment = new RemoteDeploymentRequest();
-		childDeployment.target = new ComponentRef("child");
+		childDeployment.targetDescription.ref = new ComponentRef("child");
 		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
-		localComponent.lookup(DeployerService.class).deploy(Set.of(childDeployment), out -> System.out.println(out),
+		localComponent.lookup(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
 				err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.bb().ping(childDeployment.target).poll_sync(3);
+		var pong = localComponent.bb().ping(childDeployment.targetDescription.ref).poll_sync(3);
 
 		if (pong == null) {
 			System.err.println("ping timeout");
