@@ -9,12 +9,9 @@ import idawi.service.Bencher;
 public class benchBackend extends CommandBackend {
 
 	@Override
-	public void runOnServer(Component thing, Consumer<Object> out)
-			throws Throwable {
+	public void runOnServer(Component thing, Consumer<Object> out) throws Throwable {
 		int size = Integer.valueOf(cmdline.getOptionValue("--size"));
-		
-		
-		
+
 		Bencher.localBench(size, fdbk -> {
 			if (fdbk instanceof Long) {
 				DecimalFormat formatter = new DecimalFormat();

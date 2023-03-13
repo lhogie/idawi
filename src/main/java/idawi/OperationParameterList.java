@@ -1,11 +1,10 @@
 package idawi;
 
 import java.util.ArrayList;
-import java.util.function.Function;
+import java.util.Arrays;
 
 import toools.text.TextUtilities;
 import toools.util.Conversion;
-import toools.util.Conversion.Converter;
 
 public class OperationParameterList extends ArrayList {
 	public OperationParameterList(Object... parms) {
@@ -14,10 +13,11 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public void convertTo(AbstractOperation operation, Class<?>[] types) {
+	public void convertTo(Class<?>[] types) {
 //	public void convertTo(AbstractOperation operation, Class<?>[] types, Iterable<Converter<?, ?>> converters) {
 		if (types.length != size())
-			throw new IllegalArgumentException("operation " + operation + ": expecting types " + TextUtilities.toString(types) + " parameters but got " + TextUtilities.toString(this));
+			throw new IllegalArgumentException("expecting types " + TextUtilities.toString(types)
+					+ " parameters but got " + TextUtilities.toString(this));
 
 		for (int i = 0; i < types.length; ++i) {
 			var initialObject = get(i);
@@ -30,19 +30,23 @@ public class OperationParameterList extends ArrayList {
 		}
 	}
 
-	public static OperationParameterList from(AbstractOperation operation, Object content, Class<?>[] types) {
+	public static OperationParameterList from(Object content, Class<?>[] types) {
+		// method without parameters
 		if (content == null && types.length == 0) {
 			return new OperationParameterList();
 		}
 
 		if (content instanceof OperationParameterList) {
-			var oarmList = (OperationParameterList) content;
-			oarmList.convertTo(operation, types);
-			return oarmList;
+			var parmList = (OperationParameterList) content;
+			parmList.convertTo(types);
+			return parmList;
+		} else if (types.length == 1) {
+			var parmList = new OperationParameterList();
+			parmList.add(content);
+			parmList.convertTo(types);
+			return parmList;
 		} else {
-			throw new IllegalArgumentException("when calling operation " + operation + ": an instance of "
-					+ OperationParameterList.class + " was expected, but we got " + TextUtilities.toString(content)
-					+ " of " + content.getClass());
+			throw new IllegalArgumentException("can't match " + content + " and " + Arrays.toString(types));
 		}
 	}
 

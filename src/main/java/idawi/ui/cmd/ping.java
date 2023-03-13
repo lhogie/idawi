@@ -2,10 +2,9 @@ package idawi.ui.cmd;
 
 import java.util.List;
 
-import idawi.ComponentDescriptor;
-import idawi.Message;
-import idawi.Service;
-import idawi.service.PingService;
+import idawi.Component;
+import idawi.knowledge_base.ComponentRef;
+import idawi.messaging.Message;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -24,14 +23,14 @@ public class ping extends CommunicatingCommand {
 	}
 
 	@Override
-	protected int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable {
+	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
 		int n = Integer.valueOf(getOptionValue(cmdLine, "--nbTimes"));
 		boolean printIndividualPings = !isOptionSpecified(cmdLine, "--hide");
 		boolean progress = isOptionSpecified(cmdLine, "--progress");
-		List<ComponentDescriptor> peers = ComponentDescriptor.fromPDL(cmdLine.findParameters());
+		List<ComponentRef> peers = cmdLine.findParameters().stream().map(s -> new ComponentRef(s)).toList();
 
-		for (ComponentDescriptor p : peers) {
-			Cout.info("pinging: " + p.toCDL());
+		for (ComponentRef p : peers) {
+			Cout.info("pinging: " + p);
 		}
 		int nbFailure = 0;
 
@@ -48,12 +47,12 @@ public class ping extends CommunicatingCommand {
 				lp.temporaryResult = nbFailure + " failures on " + i + " attempts";
 			}
 
-			for (ComponentDescriptor p : peers) {
+			for (ComponentRef p : peers) {
 				if (printIndividualPings) {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = localService.component.lookup(PingService.class).ping(p, timeout);
+				Message pong = c.bb().ping(p).poll_sync();
 
 				if (pong == null) {
 					if (printIndividualPings) {
@@ -64,10 +63,8 @@ public class ping extends CommunicatingCommand {
 					continue;
 				}
 
-				double duration = pong.receptionDate - ((Message) pong.content).route.last().emissionDate;
-
 				if (printIndividualPings) {
-					System.out.println("Pong after " + duration + "s");
+					System.out.println("Pong after " + pong.route.duration() + "s");
 				}
 			}
 		}

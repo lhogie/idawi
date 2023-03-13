@@ -2,8 +2,13 @@ package idawi;
 
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.Random;
+
+import toools.reflect.Clazz;
 
 public class Utils {
+	public static final Random random = new Random();
+
 	// Objects.equals() does not support arrays
 	public static boolean equals(Object a, Object b) {
 		if (a == null) {
@@ -29,4 +34,34 @@ public class Utils {
 		return ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage()
 				/ (double) Runtime.getRuntime().availableProcessors();
 	}
+
+	private static String innerClassName(Class c) {
+		var ec = c.getEnclosingClass();
+
+		if (ec == null)
+			throw new IllegalArgumentException(c + " is not an inner class");
+
+		return c.getName().substring(ec.getName().length() + 1);
+	}
+
+	private static Class enclosingClass(Object lambda) {
+		int i = lambda.getClass().getName().indexOf("$$Lambda$");
+
+		if (i < 0) {
+			throw new IllegalStateException("this is not a lambda");
+		}
+
+		return Clazz.findClass(lambda.getClass().getName().substring(0, i));
+	}
+
+	public static Class<? extends InnerClassOperation> innerClass(Class<? extends Service> clazz, String className) {
+		for (var ic : clazz.getDeclaredClasses()) {
+			if (ic.getName().equals(className)) {
+				return (Class<? extends InnerClassOperation>) ic;
+			}
+		}
+
+		return null;
+	}
+
 }

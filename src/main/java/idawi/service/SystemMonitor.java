@@ -2,23 +2,23 @@ package idawi.service;
 
 import java.io.Serializable;
 
+import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerOperation;
+import idawi.TypedInnerClassOperation;
 import idawi.Utils;
-import idawi.service.publish_subscribe.PublishSubscribe;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 
 public class SystemMonitor extends Service {
-	private Info lastInfo;
+	public Cache<SystemInfo> info = new Cache<>(1, () -> probe());
 
 	@Override
 	public String getFriendlyName() {
 		return "system monitor";
 	}
 
-	public static class Info implements Serializable {
+	public static class SystemInfo implements Serializable {
 		public DoubleList loadAvg = new DoubleArrayList();
 		public int nbCores;
 
@@ -32,39 +32,33 @@ public class SystemMonitor extends Service {
 		super(peer);
 		registerOperation(new get());
 		registerOperation(new loadAvg());
-
-		newThread_loop_periodic(20000, () -> {
-			Info i = new Info();
-			i.loadAvg.add(Utils.loadRatio());
-
-			if (i.loadAvg.size() > 100) {
-				i.loadAvg.removeElements(0, 1);
-			}
-
-			i.nbCores = Runtime.getRuntime().availableProcessors();
-			this.lastInfo = i;
-
-			var ps = component.lookup(PublishSubscribe.class);
-
-			if (ps != null) {
-				ps.publish(i, "system monitor");
-			}
-		});
 	}
 
-	public class get extends TypedInnerOperation {
+	public class get extends TypedInnerClassOperation {
 
 		@Override
 		public String getDescription() {
 			return "gets the lastest proble";
 		}
 
-		public Info f() {
-			return lastInfo;
+		public SystemInfo f() {
+			return info.get();
 		}
 	}
 
-	public class loadAvg extends TypedInnerOperation {
+	public SystemInfo probe() {
+		SystemInfo i = new SystemInfo();
+		i.loadAvg.add(Utils.loadRatio());
+
+		if (i.loadAvg.size() > 100) {
+			i.loadAvg.removeElements(0, 1);
+		}
+
+		i.nbCores = Runtime.getRuntime().availableProcessors();
+		return i;
+	}
+
+	public class loadAvg extends TypedInnerClassOperation {
 
 		@Override
 		public String getDescription() {

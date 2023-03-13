@@ -7,4 +7,11 @@ public class SettableTimeModel implements TimeModel {
 	public double getTime() {
 		return time;
 	}
+
+	public void setTime(double v) {
+		if (v < time)
+			throw new IllegalArgumentException("can't go backward in time");
+		
+		this.time += v;
+	}
 }

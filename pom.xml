@@ -9,7 +9,6 @@
 	<name>Idawi</name>
 	<description>A P2P middleware for distributed/parallel applications</description>
 	<url>https://github.com/lhogie/idawi</url>
-
 	<properties>
 		<maven.compiler.target>13</maven.compiler.target>
 		<maven.compiler.source>13</maven.compiler.source>
@@ -70,8 +69,12 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>31.0.1-jre</version>
+		</dependency>
 		<dependency>
 			<groupId>io.github.lhogie</groupId>
 			<artifactId>jaseto</artifactId>
@@ -135,7 +138,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 	<distributionManagement>
 		<repository>
 			<id>ossrh</id>
@@ -179,11 +181,11 @@
 									<doclint>none</doclint>
 									<source>8</source>
 								</configuration>
-
 							</execution>
 						</executions>
 					</plugin>
-					<plugin><!-- Plugin to publish on Maven Central -->
+					<plugin>
+						<!-- Plugin to publish on Maven Central -->
 						<groupId>org.sonatype.plugins</groupId>
 						<artifactId>nexus-staging-maven-plugin</artifactId>
 						<version>1.6.8</version>

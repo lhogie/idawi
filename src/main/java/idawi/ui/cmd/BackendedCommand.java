@@ -2,12 +2,11 @@ package idawi.ui.cmd;
 
 import java.util.Set;
 
-import idawi.ComponentDescriptor;
-import idawi.Message;
-import idawi.ProgressMessage;
-import idawi.Service;
-import idawi.To;
-import idawi.service.PingService;
+import idawi.Component;
+import idawi.knowledge_base.ComponentRef;
+import idawi.messaging.Message;
+import idawi.messaging.ProgressMessage;
+import idawi.routing.TargetComponents;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -22,34 +21,33 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 	}
 
 	@Override
-	protected int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable {
-		ComponentDescriptor hook = ComponentDescriptor.fromCDL(getOptionValue(cmdLine, "--hook"));
+	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
+		ComponentRef hook = new ComponentRef(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
-		if (localService.component.lookup(PingService.class).ping(hook, timeout) == null) {
+		if (c.bb().ping(hook) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
 
 		Cout.info("executing command");
-		var to = new To(
-				Command.targetPeers(localService.component, cmdLine.findParameters().get(0), msg -> Cout.warning(msg)))
-						.o(CommandsService.exec.class);
+		Set<ComponentRef> target = Command.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var c = localService.exec(to, true, backend).returnQ.collect(1, 1, c2 -> {
-			var msg = c2.messages.last();
-			if (msg.isError()) {
-				((Throwable) msg.content).printStackTrace();
-			} else if (msg.isProgress()) {
-				System.out.println("progress; " + msg.content);
-			} else {
-				System.out.println(msg.content);
-			}
-		});
+		var col = c.defaultRoutingProtocol().exec(CommandsService.exec.class, null,
+				new TargetComponents.Multicast(target), true, backend).returnQ.collect(1, 1, c2 -> {
+					var msg = c2.messages.last();
+					if (msg.isError()) {
+						((Throwable) msg.content).printStackTrace();
+					} else if (msg.isProgress()) {
+						System.out.println("progress; " + msg.content);
+					} else {
+						System.out.println(msg.content);
+					}
+				});
 
-		if (c.stop) {
+		if (col.stop) {
 			System.err.println("not enough results!");
 		}
 
@@ -62,12 +60,12 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		return Clazz.makeInstance(backendClass);
 	}
 
-	private void newReturn(Message feedback, Set<ComponentDescriptor> peers) {
+	private void newReturn(Message feedback, Set<ComponentRef> peers) {
 
 		if (feedback.content instanceof ProgressMessage) {
-			progress(feedback.route.source().component, (ProgressMessage) feedback.content);
+			progress(feedback.route.initialEmission().component, (ProgressMessage) feedback.content);
 		} else if (feedback.content instanceof Throwable) {
-			System.err.println("the following error occured on " + feedback.route.source());
+			System.err.println("the following error occured on " + feedback.route.initialEmission());
 			((Throwable) feedback.content).printStackTrace();
 		} else {
 			String text = feedback.content.toString();
@@ -77,9 +75,9 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 			if (peers == null || peers.size() > 1) {
 				// if it's a multiline message
 				if (text.contains("\n")) {
-					System.out.println(feedback.route.source() + " says:");
+					System.out.println(feedback.route.initialEmission() + " says:");
 				} else {
-					System.out.print(feedback.route.source() + " says: \t");
+					System.out.print(feedback.route.initialEmission() + " says: \t");
 				}
 			}
 
@@ -88,7 +86,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	}
 
-	protected void progress(ComponentDescriptor peer, ProgressMessage progress) {
+	protected void progress(ComponentRef peer, ProgressMessage progress) {
 		System.out.println("..." + peer + "\t..." + progress);
 	}
 }

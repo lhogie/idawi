@@ -1,6 +1,6 @@
 package idawi.service.map_reduce;
 
-import idawi.Message;
+import idawi.messaging.Message;
 
 public interface ResultHandler<R> {
 	void newResult(Result<R> newResult);

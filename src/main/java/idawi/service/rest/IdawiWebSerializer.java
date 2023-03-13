@@ -1,7 +1,5 @@
 package idawi.service.rest;
 
-import idawi.EOT;
-import idawi.Message;
 import jaseto.DefaultCustomizer;
 import jaseto.ObjectNode;
 

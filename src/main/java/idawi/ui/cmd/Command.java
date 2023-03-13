@@ -5,8 +5,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.RegistryService;
+import idawi.knowledge_base.ComponentRef;
+import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.MiscKnowledgeBase;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;
@@ -16,7 +17,7 @@ import toools.reflect.Clazz;
 public abstract class Command extends CommandLineApplication {
 
 	static {
-		Cout.activate();
+		Cout.timestamp();
 	}
 
 	public Command(RegularFile launcher) {
@@ -47,14 +48,14 @@ public abstract class Command extends CommandLineApplication {
 		return "2019-2020";
 	}
 
-	public static Set<ComponentDescriptor> targetPeers(Component n, String list, Consumer<Object> out) {
-		Set<ComponentDescriptor> peers = new HashSet<>();
+	public static Set<ComponentRef> targetPeers(Component n, String list, Consumer<Object> out) {
+		Set<ComponentRef> peers = new HashSet<>();
 
 		for (String p : list.split(" *, *")) {
 			if (p.equals("_")) {
-				peers.add(n.descriptor());
+				peers.add(n.ref());
 			} else {
-				var pp = n.lookupOperation(RegistryService.lookUp.class).f(p);
+				var pp = n.lookup(MapService.class).map.lookup(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

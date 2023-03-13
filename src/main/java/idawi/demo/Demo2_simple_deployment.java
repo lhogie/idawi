@@ -1,14 +1,13 @@
 package idawi.demo;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.Message;
 import idawi.deploy.DeployerService;
-import idawi.service.PingService;
+import idawi.deploy.DeployerService.RemoteDeploymentRequest;
+import idawi.knowledge_base.ComponentRef;
+import idawi.messaging.Message;
 
 /**
  * 
@@ -24,30 +23,26 @@ public class Demo2_simple_deployment {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 // creates a *local* peer that will drive the deployment
-		Component t = new Component(ComponentDescriptor.fromCDL("name=parent"));
+		var localComponent = new Component(new ComponentRef("a"));
 
 // describes the child peer that will be deployed to
-		ComponentDescriptor child = new ComponentDescriptor();
-		InetAddress childHost = InetAddress.getByName(args[0]);
-		child.inetAddresses.add(childHost);
-		child.name = childHost.getHostName();
-		child.ssh.host = childHost.getHostName();
+		var childDeployment = new RemoteDeploymentRequest();
+		childDeployment.target = new ComponentRef("child");
+		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
-		t.lookup(DeployerService.class).deploy(Set.of(child), true, 10000,
-				rsyncOut -> System.out.println("rsync: " + rsyncOut),
-				rsyncErr -> System.err.println("rsync: " + rsyncErr),
-				feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+		localComponent.lookup(DeployerService.class).deploy(Set.of(childDeployment), out -> System.out.println(out),
+				err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		long pingTime = System.currentTimeMillis();
-		Message pong = t.lookup(PingService.class).ping(child, 1);
+		var pong = localComponent.bb().ping(childDeployment.target).poll_sync(3);
 
 		if (pong == null) {
 			System.err.println("ping timeout");
 		} else {
-			long pongDuration = System.currentTimeMillis() - pingTime;
+			var ping = (Message) pong.content;
+			double pongDuration = pong.route.last().date() - ping.route.initialEmission.date();
 			System.out.println("pong received after " + pongDuration + "ms");
 		}
 	}

@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import idawi.Component;
-import idawi.InnerOperation;
-import idawi.TypedInnerOperation;
-import idawi.MessageQueue;
+import idawi.InnerClassOperation;
 import idawi.Service;
+import idawi.TypedInnerClassOperation;
 import idawi.Utils;
+import idawi.messaging.MessageQueue;
+import idawi.routing.TargetComponents;
 
 public class ErrorLog extends Service {
 	public final List<Throwable> errors = new ArrayList<>();
@@ -21,7 +22,7 @@ public class ErrorLog extends Service {
 
 	public static registerError registerError;
 
-	public class registerError extends InnerOperation {
+	public class registerError extends InnerClassOperation {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			errors.add((Throwable) in.poll_sync().content);
@@ -29,20 +30,18 @@ public class ErrorLog extends Service {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "register a new error";
 		}
 	}
 
-	public class listError extends TypedInnerOperation {
+	public class listError extends TypedInnerClassOperation {
 		public List<Throwable> f() {
 			return errors;
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "gets the errors stored in this component";
 		}
 	}
 
@@ -50,14 +49,14 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		exec(ca().o(registerError.class), false, error);
+		component.	bb().exec(registerError.class, null, TargetComponents.all, false, error);
 	}
 
 	public void report(String msg) {
 		report(new Error(msg));
 	}
 
-	public class list extends TypedInnerOperation {
+	public class list extends TypedInnerClassOperation {
 		public List<Throwable> f() {
 			return errors;
 		}

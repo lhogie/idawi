@@ -2,84 +2,101 @@ package idawi;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import javax.crypto.SecretKey;
+
 import idawi.deploy.DeployerService;
-import idawi.net.LMI;
-import idawi.net.NetworkingService;
-import idawi.net.TransportLayer;
-import idawi.routing.RoutingScheme_bcast;
+import idawi.knowledge_base.ComponentDescription;
+import idawi.knowledge_base.ComponentRef;
+import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.MiscKnowledgeBase;
+import idawi.routing.BlindBroadcasting;
+import idawi.routing.FloodingWithSelfPruning;
+import idawi.routing.FloodingWithSelfPruning_UsingBloomFilter;
+import idawi.routing.RoutingService;
+import idawi.routing.irp.IRP;
 import idawi.service.Bencher;
 import idawi.service.DemoService;
+import idawi.service.DirectorySharingService;
 import idawi.service.ErrorLog;
-import idawi.service.FileService;
-import idawi.service.JVMInfo;
-import idawi.service.PingService;
+import idawi.service.LocationService2;
+import idawi.service.LocationService2.Location;
 import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
 import idawi.service.extern.ExternalCommandsService;
-import idawi.service.rest.WebServer;
+import idawi.service.rest.AESEncrypter;
+import idawi.service.rest.WebService;
+import idawi.service.time.TimeService;
+import idawi.transport.PipeFromToChildProcess;
 import toools.io.file.Directory;
+import toools.util.Date;
 
 public class Component {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
-	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<ComponentRef, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
-	public String name;
-	private ComponentDescriptor descriptor;
+	static AESEncrypter aes = new AESEncrypter();
+	SecretKey key = null;
+
 	final Set<Service> services = new HashSet<>();
-	public final Set<ComponentDescriptor> otherComponentsSharingFilesystem = new HashSet<>();
+//	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> killOnDeath = new HashSet<>();
-	public ComponentDescriptor parent;
+	public ComponentRef parent;
+	private ComponentRef ref;
 
 	public Component() {
-		this("c" + componentsInThisJVM.size());
+		this(new ComponentRef("c" + componentsInThisJVM.size()));
 	}
 
-	public Component(String name) {
-		this(ComponentDescriptor.fromName(name));
-	}
-
-	public Component(ComponentDescriptor descriptor) {
-		if (componentsInThisJVM.containsKey(descriptor.name)) {
-			throw new IllegalStateException(descriptor.name + " is already in use in this JVM");
+	public Component(ComponentRef ref) {
+		if (componentsInThisJVM.containsKey(ref)) {
+			throw new IllegalStateException(ref + " is already in use in this JVM");
 		}
 
-		this.name = descriptor.name;
+		this.ref = ref;
+		this.ref.component = this;
 
-		// start basic services
+		new MiscKnowledgeBase(this);
+		new MapService(this);
+		new TimeService(this);
+
+		// start network services
+//		new SharedMemoryTransport(this, "shared memory");
+//		new TCPDriver(this);
+//		new UDPDriver(this);
+		new PipeFromToChildProcess(this);
+
+		// routing
+		new BlindBroadcasting(this);
+		new FloodingWithSelfPruning(this);
+		new FloodingWithSelfPruning_UsingBloomFilter(this);
+		new IRP(this);
+
+		// start system services
+		new DeployerService(this);
 		new ServiceManager(this);
 		new SystemMonitor(this);
-		new DeployerService(this);
-		new PingService(this);
 		new Bencher(this);
-//		new RoutingScheme1(this);
-		new RoutingScheme_bcast(this);
 		new ErrorLog(this);
-		new DemoService(this);
-		new WebServer(this);
+		new WebService(this);
 		new ExternalCommandsService(this);
-		new FileService(this);
-		new RegistryService(this);
-		new NetworkingService(this);
-		new JVMInfo(this);
-
-		this.descriptor = createDescriptor();
+		new DirectorySharingService(this);
+		new DemoService(this);
 
 		// descriptorRegistry.add(descriptor());
-		componentsInThisJVM.put(descriptor.name, this);
+		componentsInThisJVM.put(ref, this);
 	}
 
 	public void dispose() {
-		killOnDeath.forEach(t -> t.dispose());
 		componentsInThisJVM.remove(this);
+		services.forEach(s -> s.dispose());
+		killOnDeath.forEach(t -> t.dispose());
 	}
 
 	public Collection<Service> services() {
@@ -90,12 +107,12 @@ public class Component {
 		services.forEach(s -> c.accept(s));
 	}
 
-	public <S extends Service> List<Service> lookupAll(Class<S> id) {
-		List<Service> l = new ArrayList<>();
+	public <S extends Service> List<S> services(Class<S> id) {
+		List<S> l = new ArrayList<>();
 
 		for (var s : services) {
 			if (id.isAssignableFrom(s.getClass())) {
-				l.add(s);
+				l.add((S) s);
 			}
 		}
 
@@ -112,8 +129,8 @@ public class Component {
 		return null;
 	}
 
-	public <O extends InnerOperation> O operation(Class<O> id) {
-		var serviceClass = InnerOperation.serviceClass(id);
+	public <O extends InnerClassOperation> O operation(Class<O> id) {
+		var serviceClass = InnerClassOperation.serviceClass(id);
 		var service = lookup(serviceClass);
 		return service.lookup(id);
 	}
@@ -130,7 +147,7 @@ public class Component {
 		forEachService(s -> serviceID.isInstance(s), s -> h.accept((S) s));
 	}
 
-	public <S extends InnerOperation> S lookupOperation(Class<? extends S> c) {
+	public <S extends InnerClassOperation> S lookupOperation(Class<? extends S> c) {
 		var sc = (Class<? extends Service>) c.getDeclaringClass();
 		var service = lookup(sc);
 
@@ -145,53 +162,13 @@ public class Component {
 		return new Service(this);
 	}
 
-	public ComponentDescriptor descriptor(String id, boolean create) {
-		var d = lookupOperation(RegistryService.lookUp.class).f(id);
-
-		if (d == null && create) {
-			lookupOperation(RegistryService.add.class).f(d = new ComponentDescriptor());
-			d.name = id;
-		}
-
-		return d;
-	}
-
-	public ComponentDescriptor descriptor() {
-		// outdates after 1 second
-		if (descriptor == null || !descriptor.valid || descriptor.isOutOfDate()) {
-			this.descriptor = createDescriptor();
-		}
-
-		return descriptor;
-	}
-
-	public ComponentDescriptor createDescriptor() {
-		ComponentDescriptor d = new ComponentDescriptor();
-		d.name = name;
-		d.systemInfo = lookupOperation(SystemMonitor.get.class).f();
-		forEachService(s -> d.services.add(s.descriptor()));
-//		lookupService(NetworkingService.class).neighbors().forEach(n -> d.neighbors.add(n.friendlyName));
-
-		for (TransportLayer protocol : lookup(NetworkingService.class).transport.transports()) {
-			for (ComponentDescriptor peer : protocol.neighbors()) {
-				var l = new ComponentDescriptor.Link();
-				l.neighbor = peer.name;
-				l.protocol = protocol.getName();
-				d.links.add(l);
-			}
-		}
-
-		return d;
-	}
-
 	@Override
 	public String toString() {
-		return descriptor.toString();
+		return ref().toString();
 	}
 
 	public static void stopPlatformThreads() {
 		Service.threadPool.shutdown();
-		LMI.executorService.shutdown();
 	}
 
 	public void removeService(Service s) {
@@ -199,17 +176,45 @@ public class Component {
 		services.remove(s.id);
 	}
 
-	public To getAddress() {
-		return new To(Set.of(descriptor));
+	public ComponentDescription descriptor() {
+		return lookup(MiscKnowledgeBase.class).componentDescriptor();
 	}
 
-	public List<ComponentDescriptor> descriptors(String... names) {
-		List<ComponentDescriptor> r = new ArrayList<>();
-
-		for (var n : names) {
-			r.add(descriptor(n, true));
-		}
-		return r;
+	public ComponentRef ref() {
+		return ref;
 	}
 
+	public double now() {
+		var ts = lookup(TimeService.class);
+		return ts == null ? Date.time() : ts.now();
+	}
+
+	public MapService mapService() {
+		return lookup(MapService.class);
+	}
+
+	public MiscKnowledgeBase knowledgeBase() {
+		return lookup(MiscKnowledgeBase.class);
+	}
+
+	public RoutingService defaultRoutingProtocol() {
+		return lookup(BlindBroadcasting.class);
+	}
+
+	public FloodingWithSelfPruning fwsp() {
+		return lookup(FloodingWithSelfPruning.class);
+	}
+
+	public BlindBroadcasting bb() {
+		return lookup(BlindBroadcasting.class);
+	}
+
+	public IRP irp() {
+		return lookup(IRP.class);
+	}
+
+	public Location getLocation() {
+		var locationService = lookup(LocationService2.class);
+		return locationService == null ? null : locationService.location;
+	}
 }

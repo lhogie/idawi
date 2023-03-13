@@ -7,4 +7,9 @@ public class ComputerClockTimeModel implements TimeModel {
 	public double getTime() {
 		return Date.time();
 	}
+	
+	public Time getTimeValue() {
+		return new Time(getTime(), this);
+	}
+
 }

@@ -1,12 +1,13 @@
 package idawi.service.time;
 
 import idawi.Component;
-import idawi.TypedInnerOperation;
 import idawi.Service;
+import idawi.TypedInnerClassOperation;
+import idawi.messaging.Message;
+import idawi.routing.BlindBroadcasting;
 
 public class TimeService extends Service {
-
-	TimeModel tm = new ComputerClockTimeModel();
+	public TimeModel model = new ComputerClockTimeModel();
 
 	public TimeService(Component peer) {
 		super(peer);
@@ -15,40 +16,52 @@ public class TimeService extends Service {
 		registerOperation(new getModel());
 	}
 
-	public class getTime extends TypedInnerOperation {
-		public double f() {
-			return tm.getTime();
+	public class getTime extends TypedInnerClassOperation {
+		public Time f() {
+			return now2();
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "gets the current time";
 		}
 	}
 
-	public class setTime extends TypedInnerOperation {
-		public void f(double newTime) {
-			((SettableTimeModel) tm).time = newTime;
+	public class setTime extends TypedInnerClassOperation {
+		public void f(double newTime, boolean bcast) {
+			if (!(model instanceof SettableTimeModel))
+				throw new IllegalStateException("use a settable time model");
+
+			((SettableTimeModel) model).setTime(newTime);
+
+			if (bcast) {
+				component.bb().send(now2(), null);
+			}
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "force the time in this component";
 		}
 	}
 
-	public class getModel extends TypedInnerOperation {
+	public class getModel extends TypedInnerClassOperation {
 		public TimeModel f() {
-			return tm;
+			return model;
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "get the time model";
 		}
+	}
+
+	public double now() {
+		return model.getTime();
+	}
+
+	public Time now2() {
+		return new Time(model.getTime(), model);
 	}
 
 }

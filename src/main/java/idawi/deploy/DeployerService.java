@@ -5,31 +5,28 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.InnerOperation;
-import idawi.MessageQueue;
-import idawi.RegistryService;
+import idawi.InnerClassOperation;
 import idawi.Service;
-import idawi.net.LMI;
-import idawi.net.NetworkingService;
-import idawi.net.PipeFromToChildProcess;
-import idawi.net.PipeFromToParentProcess;
-import idawi.net.TransportLayer;
-import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
+import idawi.knowledge_base.ComponentDescription;
+import idawi.knowledge_base.ComponentRef;
+import idawi.knowledge_base.MapService;
+import idawi.messaging.MessageQueue;
+import idawi.transport.PipeFromToChildProcess;
+import idawi.transport.PipeFromToParentProcess;
+import idawi.transport.SharedMemoryTransport;
+import idawi.transport.TransportService;
 import toools.extern.ProcesException;
-import toools.io.Cout;
-import toools.io.Utilities;
+import toools.io.RSync;
 import toools.io.file.Directory;
 import toools.net.SSHParms;
 import toools.net.SSHUtils;
@@ -41,17 +38,37 @@ import toools.thread.Threads;
 
 public class DeployerService extends Service {
 	private static String remoteClassDir = Service.class.getPackageName() + ".classpath/";
-	List<ComponentDescriptor> failed = new ArrayList<>();
+	private static String remoteJREDir = "jre/";
+	List<ComponentRef> failed = new ArrayList<>();
 
-	public static class DeploymentParameters implements Serializable {
-		public Collection<ComponentDescriptor> targets = new HashSet<>();
-		public double timeoutInSecond;
-		public boolean suicideWhenParentDie;
+	public static class ExtraJVMDeploymentRequest implements Serializable {
+		public ComponentRef target;
+		public boolean suicideWhenParentDie = true;
+		public Class<? extends Component> componentClass = Component.class;
+
+		@Override
+		public String toString() {
+			return "deploying " + target;
+		}
 	}
 
-	public static class LocalDeploymentRequest implements Serializable {
-		public int n;
-		public boolean suicideWhenParentDie;
+	public static class RemoteDeploymentRequest extends ExtraJVMDeploymentRequest {
+		public SSHParms ssh = new SSHParms();
+		public double timeoutInSecond;
+
+		public static List<RemoteDeploymentRequest> from(Collection<ComponentRef> a) {
+			return a.stream().map(p -> {
+				var r = new RemoteDeploymentRequest();
+				r.target = p;
+				return r;
+
+			}).toList();
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + " via " + ssh;
+		}
 	}
 
 	public DeployerService(Component peer) {
@@ -60,9 +77,9 @@ public class DeployerService extends Service {
 		if (!remoteClassDir.endsWith("/"))
 			throw new IllegalStateException("class dir should end with a '/': " + remoteClassDir);
 
-		registerOperation(new deploy());
+		registerOperation(new remote_deploy());
 		registerOperation(new local_deploy());
-		registerOperation(new deploy_in_other_jvm());
+		registerOperation(new deploy_in_other_jvms());
 	}
 
 	@Override
@@ -70,35 +87,35 @@ public class DeployerService extends Service {
 		return "deployer";
 	}
 
-	public class deploy extends InnerOperation {
-
+	public class remote_deploy extends InnerClassOperation {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_sync();
-			DeploymentParameters req = (DeploymentParameters) trigger.content;
-			System.err.println(req.targets);
-			deploy(req.targets, req.suicideWhenParentDie, req.timeoutInSecond, rsyncOut -> reply(trigger, rsyncOut),
-					rsyncErr -> reply(trigger, rsyncErr), stdout -> reply(trigger, stdout),
+			var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
+
+			System.err.println(reqs);
+			deploy(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
 					peerOk -> reply(trigger, peerOk));
+
 			System.err.println("done");
 		}
 
 		@Override
 		public String getDescription() {
-			return "deploy";
+			return "deploy components using SSH";
 		}
 	}
 
-	public class local_deploy extends InnerOperation {
+	public class local_deploy extends InnerClassOperation {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			LocalDeploymentRequest req = (LocalDeploymentRequest) msg.content;
+			var req = (Collection<ComponentRef>) msg.content;
 			List<Component> compoennts = new ArrayList<>();
-			deployInThisJVM(req.n, i -> "component-" + i, req.suicideWhenParentDie, peerOk -> compoennts.add(peerOk));
-			reply(msg, req.n + " compoennts created");
-			LMI.chain(compoennts);
+			deployInThisJVM(req, peerOk -> compoennts.add(peerOk));
+			reply(msg, req.size() + " compoennts created");
+			SharedMemoryTransport.chain(compoennts, SharedMemoryTransport.class);
 			reply(msg, "chained");
 		}
 
@@ -108,24 +125,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public class deploy_in_other_jvm extends InnerOperation {
-
-		@Override
-		public void impl(MessageQueue in) throws Throwable {
-			var msg = in.poll_sync();
-			var deploymentGraph = (DeploymentPlan) msg.content;
-			apply(deploymentGraph, 1, rsyncOut -> reply(msg, rsyncOut), rsyncErr -> reply(msg, rsyncErr),
-					stdout -> reply(msg, stdout), peerOk -> reply(msg, peerOk));
-		}
-
-		@Override
-		public String getDescription() {
-			return "deploy";
-		}
-	}
-
-	public class deploy_in_other_jvms extends InnerOperation {
-
+	public class deploy_in_other_jvms extends InnerClassOperation {
 		@Override
 		public String getDescription() {
 			return "deploy in new JVMs";
@@ -134,339 +134,191 @@ public class DeployerService extends Service {
 		@Override
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
-			var dd = (List<ComponentDescriptor>) trigger.content;
-			deployInNewJVMs(dd, line -> reply(trigger, line), ok -> reply(trigger, ok));
+			var reqs = (Collection<ExtraJVMDeploymentRequest>) trigger.content;
+			deploy(reqs, line -> reply(trigger, line), ok -> reply(trigger, ok));
+		}
+
+	}
+
+	public void deploy(Collection<ExtraJVMDeploymentRequest> reqs, Consumer<String> feedback,
+			Consumer<ComponentRef> peerOk) throws IOException {
+		for (var req : reqs) {
+			deploy(req, feedback);
+			peerOk.accept(req.target);
 		}
 	}
 
-	public void apply(DeploymentPlan deploymentGraph, double timeoutInSecond, Consumer<String> rsyncOut,
-			Consumer<String> rsyncErr, Consumer<Object> feedback, Consumer<ComponentDescriptor> peerOk)
-			throws IOException {
-		Set<ComponentDescriptor> toDeploy = deploymentGraph.g.getSuccessors(component.descriptor());
-		deploy(toDeploy, true, timeoutInSecond, rsyncOut, rsyncErr, feedback, peerOk);
-
-		// var to = new OperationAddress(toDeploy, DeployerService.d3);
-		// start(to, true, deploymentPlan).returnQ.collect();
-	}
-
-	public List<Component> deploy(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
-			double timeoutInSecond, Consumer<String> rsyncOut, Consumer<String> rsyncErr, Consumer<Object> feedback,
-			Consumer<ComponentDescriptor> peerOk) throws IOException {
-
-		Collection<ComponentDescriptor> inThisJVM = findLocalhosts(peers);
-		List<Component> localThings = new ArrayList<>();
-		deployInThisJVM(inThisJVM, suicideWhenParentDie, okThing -> {
-			localThings.add(okThing);
-
-			if (peerOk != null) {
-				peerOk.accept(okThing.descriptor());
-			}
-		});
-
-		Set<ComponentDescriptor> remotePeers = toools.collections.Collections.difference(peers, inThisJVM);
-
-		if (!remotePeers.isEmpty()) {
-			deployRemote(remotePeers, suicideWhenParentDie, timeoutInSecond, rsyncOut, rsyncErr, feedback, peerOk);
-		}
-
-		return localThings;
-	}
-
-	public void deployInNewJVMs(Collection<ComponentDescriptor> dd, Consumer<Object> messages,
-			Consumer<ComponentDescriptor> ok) throws IOException {
-		var threads = new ArrayList<Thread>();
-
-		for (var d : dd) {
-			threads.add(new Thread(() -> {
-				try {
-					deployOtherJVM(d, true, messages, ok);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}));
-		}
-
-		threads.forEach(t -> t.start());
-		threads.forEach(t -> {
-			try {
-				t.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		});
-	}
-
-	public void deployOtherJVM(ComponentDescriptor d, boolean suicideWhenParentDie, Consumer<Object> feedback,
-			Consumer<ComponentDescriptor> peerOk) throws IOException {
+	public void deploy(ExtraJVMDeploymentRequest req, Consumer<String> feedback) throws IOException {
 		String java = System.getProperty("java.home") + "/bin/java";
 		String classpath = System.getProperty("java.class.path");
-
 		LongProcess startingNode = new LongProcess("starting new JVM", null, -1, line -> feedback.accept(line));
-
-		Process p = Runtime.getRuntime().exec(new String[] { java, "-cp", classpath, DeployerService.class.getName() });
-
+		Process p = Runtime.getRuntime()
+				.exec(new String[] { java, "-cp", classpath, DeployerService.class.getName(), "run_by_a_node" });
 		feedback.accept("sending node startup info");
-		initChildProcess(p, d, Set.of(component.descriptor()), suicideWhenParentDie, feedback);
-		peerOk.accept(d);
+		initChildProcess(p, req, feedback);
 		startingNode.end();
 	}
 
-	private void initChildProcess(Process proc, ComponentDescriptor childDescriptor,
-			Set<ComponentDescriptor> peersSharingFS, boolean suicideWhenParentDie, Consumer<Object> feedback)
+	private void initChildProcess(Process proc, ExtraJVMDeploymentRequest req, Consumer<String> feedback)
 			throws IOException {
 		DeployInfo deployInfo = new DeployInfo();
-		deployInfo.id = childDescriptor;
-		deployInfo.suicideWhenParentDies = suicideWhenParentDie;
-		deployInfo.parent = component.descriptor();
-		deployInfo.peersSharingFileSystem = peersSharingFS;
+		deployInfo.req = req;
+		deployInfo.parent = component.ref();
 
 		OutputStream out = proc.getOutputStream();
-		TransportLayer.serializer.write(deployInfo, out);
+		TransportService.serializer.write(deployInfo, out);
 		out.flush();
 
-		PipeFromToChildProcess childPipe = new PipeFromToChildProcess(component, childDescriptor, proc);
-		var network = component.lookup(NetworkingService.class);
-		network.transport.addTransport(childPipe);
-		network.transport.add(childDescriptor, childPipe);
+		var pipesToChildren = component.lookup(PipeFromToChildProcess.class);
+		var e = pipesToChildren.add(req.target, proc);
 
-		feedback.accept("waiting for " + childDescriptor + " to be ready");
-		String response = (String) childPipe.waitForChild.poll_sync(10000);
+		feedback.accept("waiting for " + req.target + " to be ready");
+		Object response = e.waitForChild.poll_sync(10);
 
-		if (response == null) {
+		if (response == null) { // timeout :(
 			throw new IllegalStateException("timeout");
-		} else if (response.equals(PipeFromToChildProcess.started)) {
-			return;
-		} else if (response.equals(PipeFromToChildProcess.failed)) {
-			throw new IllegalStateException(childDescriptor + " failed");
+		} else if (response instanceof ComponentDescription) { // deploy success
+			component.knowledgeBase().considers((ComponentDescription) response);
+			component.forEachServiceOfClass(MapService.class,
+					s -> s.bidi(component.ref(), deployInfo.req.target, pipesToChildren.getClass()));
+		} else if (response instanceof Throwable) { // deploy error
+			throw new IllegalStateException(req.target + " failed", (Throwable) response);
 		} else {
-			throw new IllegalStateException();
+			throw new IllegalStateException("obtaining " + response);
 		}
 	}
 
-	public Set<Component> deployInThisJVM(int n, Int2ObjectFunction<String> i2name, boolean suicideWhenParentDie,
-			Consumer<Component> peerOk) {
-		Set<Component> s = new HashSet<>();
+	public List<Component> deployInThisJVM(Collection<ComponentRef> reqs) {
+		return deployInThisJVM(reqs, c -> {
+		});
+	}
 
-		for (int i = 0; i < n; ++i) {
-			Component t = new Component(i2name.apply(i));
-			deployInThisJVM(t, suicideWhenParentDie);
+	public List<Component> deployInThisJVM(Object... ids) {
+		var l = Arrays.stream(ids).map(i -> new ComponentRef(i)).toList();
+		return deployInThisJVM(l);
+	}
+
+	public List<Component> deployInThisJVM(Collection<ComponentRef> reqs, Consumer<Component> peerOk) {
+		var r = new ArrayList<Component>();
+
+		for (var req : reqs) {
+			Component t = new Component(req);
+			t.parent = component.ref();
+			component.lookup(SharedMemoryTransport.class).connectTo(t);
 
 			if (peerOk != null) {
 				peerOk.accept(t);
 			}
 
-			s.add(t);
-		}
-
-		return s;
-	}
-
-	public void deployInThisJVM(Collection<ComponentDescriptor> localPeers, boolean suicideWhenParentDie,
-			Consumer<Component> peerOk) {
-		for (ComponentDescriptor d : localPeers) {
-			Component t = new Component(d);
-			deployInThisJVM(t, suicideWhenParentDie);
-
-			if (peerOk != null) {
-				peerOk.accept(t);
-			}
-		}
-	}
-
-	private void deployInThisJVM(Component newThing, boolean suicideWhenParentDie) {
-		newThing.parent = component.descriptor();
-
-		if (suicideWhenParentDie) {
-			component.killOnDeath.add(newThing);
-		}
-
-		LMI.connect(component, newThing);
-	}
-
-	public void deployRemote(Collection<ComponentDescriptor> peers, boolean suicideWhenParentDie,
-			double timeoutInSecond, Consumer<String> rsyncOut, Consumer<String> rsyncErr, Consumer<Object> feedback,
-			Consumer<ComponentDescriptor> peerOk) throws IOException {
-
-		// identifies the set of peers that have filesystem in common
-		Set<Set<ComponentDescriptor>> nasGroups = groupByNAS(peers, feedback);
-		feedback.accept("found NAS groups: " + nasGroups);
-
-		// rsync the classes to the remote groups and start the nodes
-		new OneElementOneThreadProcessing<Set<ComponentDescriptor>>(nasGroups) {
-
-			@Override
-			protected void process(Set<ComponentDescriptor> nasGroup) throws Throwable {
-				// picks a random peer in the group
-				ComponentDescriptor n = nasGroup.iterator().next();
-
-				// sends the binaries there
-				rsyncBinaries(n.ssh, rsyncOut, rsyncErr);
-
-				// makes sure the JVM is okay for all the nodes in the group
-				ensureCompliantJVM(n.ssh);
-
-				// starts it on every nodes, in parallel
-				startJVM(nasGroup, feedback);
-			}
-
-			private void ensureCompliantJVM(SSHParms n) {
-				feedback.accept("Local JRE is " + System.getProperty("java.version"));
-				feedback.accept("test if JDK 14 is installed on " + n);
-				List<String> stdout = SSHUtils.execShAndWait(n,
-						"if test -f jdk-14.0.1/bin/java; then echo yes; else echo no; fi");
-				final AtomicBoolean jdk14 = new AtomicBoolean(stdout.get(0).equals("yes"));
-
-				if (!jdk14.get()) {
-					Threads.newThread_loop(1000, () -> !jdk14.get(),
-							() -> feedback.accept("Downloading and installing JDK 14 on " + n));
-					SSHUtils.execShAndWait(n,
-							"wget https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_linux-x64_bin.tar.gz && tar xzf openjdk-14.0.1_linux-x64_bin.tar.gz && rm -f openjdk-14.0.1_linux-x64_bin.tar.gz");
-					jdk14.set(true);
-				}
-			}
-
-			private void rsyncBinaries(SSHParms ssh, Consumer<String> rsyncOut, Consumer<String> rsyncErr)
-					throws IOException {
-				LongProcess rsyncing = new LongProcess("rsync to " + ssh, null, -1, line -> feedback.accept(line));
-				int exitCode = ClassPath.retrieveSystemClassPath().rsyncTo(ssh, ssh.host, remoteClassDir,
-						l -> rsyncOut.accept(l), l -> rsyncErr.accept(l));
-				rsyncing.end();
-
-				if (exitCode != 0) {
-					feedback.accept("Error: rsync to " + ssh + " exited with value " + exitCode);
-				}
-			}
-
-			private int rsyncResources(Directory resourceDir, SSHParms sshParameters, String remotePath,
-					Consumer<String> stdout, Consumer<String> stderr) throws IOException {
-				LongProcess rsyncing = new LongProcess("rsync to " + sshParameters, null, -1,
-						line -> feedback.accept(line));
-				List<String> args = new ArrayList<>();
-				args.add("rsync");
-
-				if (sshParameters != null) {
-					args.add("-e");
-					List<String> ssh = new ArrayList<>();
-					ssh.add(SSHUtils.sshCmd());
-					SSHUtils.addSSHOptions(ssh, sshParameters);
-					args.add(toools.collections.Collections.toString(ssh, " "));
-				}
-
-				args.add("-a");
-				args.add("--delete");
-				args.add("--copy-links");
-				args.add("-v");
-
-				args.add(resourceDir.getPath() + "/");
-				args.add(sshParameters.host + ":" + remotePath + "/");
-
-				try {
-					// System.out.println(args);
-					Process rsync = Runtime.getRuntime().exec(args.toArray(new String[0]));
-					Utilities.grabLines(rsync.getInputStream(), stdout, err -> {
-					});
-					Utilities.grabLines(rsync.getErrorStream(), stderr, err -> {
-					});
-					rsync.waitFor();
-					rsyncing.end();
-					return rsync.exitValue();
-				} catch (InterruptedException e1) {
-					throw new IllegalStateException(e1);
-				}
-			}
-
-			private void startJVM(Set<ComponentDescriptor> nasGroup, Consumer<Object> feedback) {
-				new OneElementOneThreadProcessing<ComponentDescriptor>(peers) {
-
-					@Override
-					protected void process(ComponentDescriptor peer) {
-
-						// sends the resouces there
-						// rsyncResources(n.sshParameters);
-
-						try {
-							LongProcess startingNode = new LongProcess("starting node in JVM on " + peer + " via SSH",
-									null, -1, line -> feedback.accept(line));
-							Process p = SSHUtils.exec(peer.ssh, "jdk-14.0.1/bin/java", "-cp",
-									remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)",
-									DeployerService.class.getName());
-
-							feedback.accept("sending node startup info to " + peer);
-
-							initChildProcess(p, peer, nasGroup, suicideWhenParentDie, feedback);
-							startingNode.end();
-						} catch (Exception e) {
-							feedback.accept(e);
-						}
-					}
-				};
-			}
-		};
-	}
-
-	private static Collection<ComponentDescriptor> findLocalhosts(Collection<ComponentDescriptor> peers) {
-		Collection<ComponentDescriptor> r = new HashSet<>();
-
-		for (ComponentDescriptor p : peers) {
-			if (p.isLocalhost()) {
-				r.add(p);
-			}
+			r.add(t);
 		}
 
 		return r;
 	}
 
-	public static class DeployInfo implements Serializable {
-		ComponentDescriptor id;
-		boolean suicideWhenParentDies;
-		ComponentDescriptor parent;
-		Set<ComponentDescriptor> peersSharingFileSystem;
+	public void deploy(Collection<RemoteDeploymentRequest> peers, Consumer<String> feedback, Consumer<String> stderr,
+			Consumer<ComponentRef> peerOk) throws IOException {
+
+		// identifies the set of peers that have filesystem in common
+		var nasGroups = groupByNAS(peers, feedback);
+		feedback.accept("found NAS groups: " + nasGroups);
+
+		new OneElementOneThreadProcessing<Set<RemoteDeploymentRequest>>(nasGroups) {
+
+			@Override
+			protected void process(Set<RemoteDeploymentRequest> nasGroup) throws IOException {
+				// picks a random peer in the group
+				RemoteDeploymentRequest n = nasGroup.iterator().next();
+
+				// sends the binaries there using rsync over SSH
+				rsyncBinaries(n.ssh, feedback, stderr);
+
+				// starts it on every nodes, in parallel
+				startJVMs(nasGroup, feedback);
+			}
+		};
+
+	}
+
+	private void rsyncBinaries(SSHParms ssh, Consumer<String> rsyncOut, Consumer<String> rsyncErr) throws IOException {
+		ClassPath.retrieveSystemClassPath().rsyncTo(ssh, remoteClassDir, rsyncOut, rsyncErr);
+		RSync.rsyncTo(ssh, List.of(Directory.getHomeDirectory().getChildDirectory("jre")), remoteJREDir, rsyncOut,
+				rsyncErr);
+	}
+
+	private void startJVMs(Set<RemoteDeploymentRequest> nasGroup, Consumer<String> feedback) {
+		new OneElementOneThreadProcessing<RemoteDeploymentRequest>(nasGroup) {
+
+			@Override
+			protected void process(RemoteDeploymentRequest req) throws IOException {
+				LongProcess startingNode = new LongProcess("starting node in JVM on " + req.target + " via SSH", null,
+						-1, line -> feedback.accept(line));
+				Process p = SSHUtils.exec(req.ssh, "jre/jdk-$(uname -s)-$(uname -m)/bin/java", "-cp",
+						remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)", DeployerService.class.getName(),
+						"run_by_a_node");
+
+				feedback.accept("sending node startup info to " + req);
+
+				initChildProcess(p, req, feedback);
+				startingNode.end();
+			}
+		};
+	}
+
+	private static class DeployInfo implements Serializable {
+		ExtraJVMDeploymentRequest req;
+		ComponentRef parent;
+//		Set<CR> peersSharingFileSystem;
 	}
 
 	// this method should be called only by this class
 	public static void main(String[] args)
 			throws IOException, ClassNotFoundException, NoSuchMethodException, SecurityException {
+		if (args.length != 1 || !args[0].equals("run_by_a_node")) {
+			System.err.println(
+					"this main class is not intended to be run  by a user: it has to called by the deployment service");
+			System.exit(1);
+		}
+
 		try {
-			Cout.raw_stdout.println("JVM started, now reading deployment information");
-			Object o = null;
 
-			while (!((o = TransportLayer.serializer.read(System.in)) instanceof DeployInfo)) {
-				Cout.warning("ignoring object of class " + o.getClass().getName());
-			}
+			System.out.println("JVM " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")
+					+ " is running");
+			System.out.println("Now reading deployment information");
+			var deployInfo = (DeployInfo) TransportService.serializer.read(System.in);
 
-			// Cout.raw_stdout.println("deployment info: " + o);
-			var deployInfo = (DeployInfo) o;
-
-			Cout.raw_stdout.println("instantiating component");
-			var child = (Component) Clazz.makeInstance(Component.class.getConstructor(ComponentDescriptor.class),
-					deployInfo.id);
+			System.out.println("instantiating component");
+			var child = Clazz.makeInstance(deployInfo.req.componentClass.getConstructor(ComponentRef.class),
+					deployInfo.req.target);
 			child.parent = deployInfo.parent;
+//			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
-			child.lookupOperation(RegistryService.add.class).f(child.parent);
-			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
-
-			var network = child.lookup(NetworkingService.class);
-			var pipe = new PipeFromToParentProcess(child, child.parent, deployInfo.suicideWhenParentDies);
-			network.transport.addTransport(pipe);
-			network.transport.add(child.parent, pipe);
+			var pipe = new PipeFromToParentProcess(child, child.parent, deployInfo.req.suicideWhenParentDie);
+			child.forEachServiceOfClass(MapService.class, s -> s.bidi(child.ref(), deployInfo.parent, pipe.getClass()));
 
 			// tell the parent process that this node is ready for connections
-			Cout.raw_stdout.println("ready, notifying parent");
-			Cout.raw_stdout.println(PipeFromToChildProcess.started);
-			Cout.raw_stdout.flush();
+			System.out.println("ready, notifying parent");
+			PipeFromToParentProcess.sysout(child.descriptor());
+			System.out.flush();
 
 			// prevents the JVM to quit
-			Threads.sleepForever();
+			while (true) {
+				Threads.sleep(1);
+//				PipeFromToParentProcess.sysout(child.descriptor());
+			}
 		} catch (Throwable t) {
-			t.printStackTrace(Cout.raw_stdout);
-			Cout.raw_stdout.println(PipeFromToChildProcess.failed);
-			Cout.raw_stdout.flush();
+			t.printStackTrace(System.err);
+			System.err.println("Stopping JVM");
+			PipeFromToParentProcess.sysout(t);
+			System.out.flush();
+			System.err.flush();
+			Threads.sleep(1);
 			System.exit(1);
 		}
 	}
 
-	public Set<ComponentDescriptor> findNASGroupOf(Set<Set<ComponentDescriptor>> nasGroups, ComponentDescriptor n) {
-		for (Set<ComponentDescriptor> g : nasGroups) {
+	public Set<ComponentRef> findNASGroupOf(Set<Set<ComponentRef>> nasGroups, ComponentRef n) {
+		for (Set<ComponentRef> g : nasGroups) {
 			if (g.contains(n)) {
 				return g;
 			}
@@ -475,11 +327,11 @@ public class DeployerService extends Service {
 		return null;
 	}
 
-	public static Set<Set<ComponentDescriptor>> groupByNAS(Collection<ComponentDescriptor> nodes,
-			Consumer<Object> feedback) {
+	public static Set<Set<RemoteDeploymentRequest>> groupByNAS(Collection<RemoteDeploymentRequest> nodes,
+			Consumer<String> feedback) {
 
 		if (nodes.size() == 1) {
-			Set<Set<ComponentDescriptor>> r = new HashSet<>();
+			Set<Set<RemoteDeploymentRequest>> r = new HashSet<>();
 			r.add(new HashSet<>(nodes));
 			return r;
 		}
@@ -494,15 +346,15 @@ public class DeployerService extends Service {
 			localDir.deleteRecursively();
 		}
 
-		Vector<ComponentDescriptor> syncPeerList = new Vector<>(nodes);
+		Vector<RemoteDeploymentRequest> syncPeerList = new Vector<>(nodes);
 
 		localDir.mkdirs();
 		feedback.accept("marking NAS");
-		new OneElementOneThreadProcessing<ComponentDescriptor>(new ArrayList<>(syncPeerList)) {
+		new OneElementOneThreadProcessing<RemoteDeploymentRequest>(new ArrayList<>(syncPeerList)) {
 
 			@Override
-			protected void process(ComponentDescriptor peer) {
-				String filename = dir + peer.name;
+			protected void process(RemoteDeploymentRequest peer) {
+				String filename = dir + peer.target.toString();
 
 				try {
 					SSHUtils.execShAndWait(peer.ssh, "mkdir -p " + filename);
@@ -514,20 +366,20 @@ public class DeployerService extends Service {
 			}
 		};
 
-		Set<Set<ComponentDescriptor>> nasGroups = Collections.synchronizedSet(new HashSet<Set<ComponentDescriptor>>());
+		Set<Set<RemoteDeploymentRequest>> nasGroups = Collections
+				.synchronizedSet(new HashSet<Set<RemoteDeploymentRequest>>());
 
 		feedback.accept("fetching marks");
-		new OneElementOneThreadProcessing<ComponentDescriptor>(new ArrayList<>(syncPeerList)) {
+		new OneElementOneThreadProcessing<RemoteDeploymentRequest>(new ArrayList<>(syncPeerList)) {
 			@Override
-			protected void process(ComponentDescriptor peer) {
-				Set<ComponentDescriptor> s = new HashSet<>();
+			protected void process(RemoteDeploymentRequest peer) {
+				Set<RemoteDeploymentRequest> s = new HashSet<>();
 
 				try {
 					List<String> stdout = SSHUtils.execShAndWait(peer.ssh, "ls " + dir);
 
 					for (var line : stdout) {
-						ComponentDescriptor c = findByName(line, nodes);
-						s.add(c);
+						s.add(findByName(line, nodes));
 					}
 
 					nasGroups.add(s);
@@ -537,9 +389,9 @@ public class DeployerService extends Service {
 				}
 			}
 
-			private ComponentDescriptor findByName(String name, Iterable<ComponentDescriptor> nodes) {
-				for (ComponentDescriptor p : nodes) {
-					if (p.name.equals(name)) {
+			private RemoteDeploymentRequest findByName(String name, Iterable<RemoteDeploymentRequest> nodes) {
+				for (RemoteDeploymentRequest p : nodes) {
+					if (p.target.ref.equals(name)) {
 						return p;
 					}
 				}
@@ -549,10 +401,10 @@ public class DeployerService extends Service {
 		};
 
 		feedback.accept("removing marks");
-		new OneElementOneThreadProcessing<Set<ComponentDescriptor>>(nasGroups) {
+		new OneElementOneThreadProcessing<Set<RemoteDeploymentRequest>>(nasGroups) {
 			@Override
-			protected void process(Set<ComponentDescriptor> group) {
-				for (ComponentDescriptor p : group) {
+			protected void process(Set<RemoteDeploymentRequest> group) {
+				for (var p : group) {
 					try {
 						SSHUtils.execShAndWait(p.ssh, "rm -rf " + dir);
 						return;
@@ -570,16 +422,6 @@ public class DeployerService extends Service {
 		}
 
 		return nasGroups;
-	}
-
-	public Set<ComponentDescriptor> pickOneNodeInEveryNASGroup(Set<Set<ComponentDescriptor>> nasGroups, Random r) {
-		Set<ComponentDescriptor> s = new HashSet<>();
-
-		for (Set<ComponentDescriptor> g : nasGroups) {
-			s.add(g.iterator().next());
-		}
-
-		return s;
 	}
 
 }

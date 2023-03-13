@@ -1,11 +1,12 @@
 package idawi;
 
-public abstract class AbstractOperation implements OperationFunctionalInterface {
+import idawi.knowledge_base.OperationDescriptor;
+
+public abstract class AbstractOperation implements Operation {
 	int nbCalls, nbFailures;
 	double totalDuration;
-	protected final OperationDescriptor descriptor = createOperationDescriptor();
+	protected final OperationDescriptor descriptor = createDescriptor();
 	Service service;
-	InputDescription inputDescriptor;
 
 	public AbstractOperation() {
 		this.descriptor.implementationClass = getClass().getName();
@@ -13,7 +14,7 @@ public abstract class AbstractOperation implements OperationFunctionalInterface 
 		this.descriptor.description = getDescription();
 	}
 
-	protected OperationDescriptor createOperationDescriptor() {
+	protected OperationDescriptor createDescriptor() {
 		return new OperationDescriptor();
 	}
 
@@ -31,9 +32,6 @@ public abstract class AbstractOperation implements OperationFunctionalInterface 
 	}
 
 	public abstract String getDescription();
-	public  InputDescription getInputDescription() {
-		return inputDescriptor;
-	}
 
 	public double avgDuration() {
 		return totalDuration / nbCalls;
@@ -44,10 +42,7 @@ public abstract class AbstractOperation implements OperationFunctionalInterface 
 	}
 
 	public OperationDescriptor descriptor() {
-		if (descriptor == null || descriptor.isOutOfDate()) {
-			updateDescriptor();
-		}
-
+		updateDescriptor();
 		return descriptor;
 	}
 
@@ -55,14 +50,5 @@ public abstract class AbstractOperation implements OperationFunctionalInterface 
 		this.descriptor.nbCalls = this.nbCalls;
 		this.descriptor.totalDuration = this.totalDuration;
 	}
-
-	public RemotelyRunningOperation exec(To to, boolean createQ, Object initialData) {
-		Class operationClass = getClass();
-		return service.exec(to.o(operationClass), createQ, initialData);
-	}
-	public RemotelyRunningOperation execfd(Object initialData) {
-		return exec(new To(service.component), true, initialData);
-	}
-
 
 }

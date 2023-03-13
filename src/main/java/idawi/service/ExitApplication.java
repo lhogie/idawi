@@ -1,33 +1,14 @@
 package idawi.service;
 
-import java.awt.GridBagLayout;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-
 import idawi.Component;
-import idawi.TypedInnerOperation;
-import idawi.QueueAddress;
 import idawi.Service;
-import idawi.To;
-import toools.gui.Swingable;
+import idawi.TypedInnerClassOperation;
+import idawi.routing.TargetComponents;
 
-public class ExitApplication extends Service implements Swingable {
-	JPanel buttons = new JPanel(new GridBagLayout());
+public class ExitApplication extends Service {
 
 	public ExitApplication(Component peer) {
 		super(peer);
-
-		JButton shutdownButton = new JButton("Shutdown");
-		shutdownButton.addActionListener(e -> trigger(SHUTDOWN));
-
-		JButton restartButton = new JButton("Restart");
-		restartButton.addActionListener(e -> trigger(RESTART));
-
-		buttons.add(shutdownButton);
-		buttons.add(restartButton);
-
 		registerOperation(new exit());
 	}
 
@@ -39,28 +20,20 @@ public class ExitApplication extends Service implements Swingable {
 		return "exit";
 	}
 
-	public class exit extends TypedInnerOperation {
+	public class exit extends TypedInnerClassOperation {
 		public void f(int code) {
-			trigger(code);
+			exit(code);
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "terminates that JVM";
 		}
-
 	}
 
-	public void trigger(int exitCode) {
-		QueueAddress to = new To().s(id).q(null);
-		send(exitCode, to);
+	public void exit(int exitCode) {
+		component.fwsp().exec(ExitApplication.exit.class, null, TargetComponents.all, false, exitCode);
 		component.forEachService(s -> s.dispose());
 		System.exit(exitCode);
-	}
-
-	@Override
-	public JComponent getComponent() {
-		return buttons;
 	}
 }

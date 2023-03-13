@@ -7,12 +7,13 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.Message;
 import idawi.OperationParameterList;
 import idawi.Service;
-import idawi.To;
 import idawi.deploy.DeployerService;
+import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
+import idawi.knowledge_base.ComponentRef;
+import idawi.messaging.Message;
+import idawi.routing.TargetComponents;
 import idawi.service.ServiceManager;
 import idawi.service.map_reduce.MapReduceService;
 import idawi.service.map_reduce.Result;
@@ -23,22 +24,28 @@ import toools.thread.AtomicDouble;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
-		Component mapper = new Component("mapper");
+		Component mapper = new Component(new ComponentRef("mapper"));
 		var clientService = new Service(mapper);
 
 		// create workers
-		var workers = new HashSet<ComponentDescriptor>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.descriptor("w" + i, true)));
+		var workers = new HashSet<ComponentRef>();
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.mapService().map.lookup("w" + i)));
+
+		var reqs = workers.stream().map(w -> {
+			var r = new ExtraJVMDeploymentRequest();
+			r.target = w;
+			return r;
+		}).toList();
 
 		// deploy JVMs
-		mapper.lookup(DeployerService.class).deployInNewJVMs(workers, stdout -> System.out.println(stdout),
+		mapper.lookup(DeployerService.class).deploy(reqs, stdout -> System.out.println(stdout),
 				ok -> System.out.println("peer ok: " + ok));
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
-		var ro = clientService.exec(new To(workers).o(ServiceManager.ensureStarted.class), true,
-				new OperationParameterList(MapReduceService.class));
-		ro.returnQ.collectUntilNEOT(1, workers.size());
+		var ro = mapper.defaultRoutingProtocol().exec(ServiceManager.ensureStarted.class, null,
+				new TargetComponents.Multicast(workers), true, new OperationParameterList(MapReduceService.class));
+		ro.returnQ.c().collectUntilNEOT(1, workers.size());
 
 		// create tasks
 		List<Task<Integer>> tasks = new ArrayList<>();

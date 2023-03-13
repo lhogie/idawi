@@ -2,9 +2,9 @@ package idawi.deploy;
 
 import java.io.Serializable;
 
-import idawi.ComponentDescriptor;
+import idawi.knowledge_base.ComponentRef;
 
 public class DeploymentPlan implements Serializable {
-	 public final DiGraph<ComponentDescriptor> g = new DiGraph<>();
+	 public final DiGraph<ComponentRef> g = new DiGraph<>();
 
 }

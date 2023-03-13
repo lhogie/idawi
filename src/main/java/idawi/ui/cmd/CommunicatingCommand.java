@@ -1,13 +1,7 @@
 package idawi.ui.cmd;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
-
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.RegistryService;
-import idawi.Service;
+import idawi.knowledge_base.ComponentRef;
 import j4u.CommandLine;
 import j4u.License;
 import toools.io.Cout;
@@ -17,7 +11,7 @@ import toools.reflect.Clazz;
 public abstract class CommunicatingCommand extends Command {
 
 	static {
-		Cout.activate();
+		Cout.timestamp();
 	}
 
 	public CommunicatingCommand(RegularFile launcher) {
@@ -35,13 +29,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(ComponentDescriptor.fromCDL("name=" + getCommandName()));
-		Service localService = new Service(localNode) {
-			@Override
-			public String getFriendlyName() {
-				return "local service";
-			}
-		};
+		Component localNode = new Component(new ComponentRef(getCommandName()));
 
 		int repeat = Integer.valueOf(cmdLine.getOptionValue("--repeat"));
 
@@ -51,7 +39,7 @@ public abstract class CommunicatingCommand extends Command {
 				Cout.debugSuperVisible("run #" + (i + 1));
 			}
 
-			int exitCode = work(localService, cmdLine, timeout);
+			int exitCode = work(localNode, cmdLine, timeout);
 
 			if (exitCode != 0) {
 				return exitCode;
@@ -65,7 +53,7 @@ public abstract class CommunicatingCommand extends Command {
 		return 0;
 	}
 
-	protected abstract int work(Service localService, CommandLine cmdLine, double timeout) throws Throwable;
+	protected abstract int work(Component c, CommandLine cmdLine, double timeout) throws Throwable;
 
 	@Override
 	public String getAuthor() {
@@ -85,29 +73,5 @@ public abstract class CommunicatingCommand extends Command {
 	@Override
 	public String getYear() {
 		return "2019-2020";
-	}
-
-	public static Set<ComponentDescriptor> targetPeers(Component n, String list, Consumer<Object> out) {
-		Set<ComponentDescriptor> peers = new HashSet<>();
-
-		for (String p : list.split(" *, *")) {
-			if (p.equals("_")) {
-				peers.add(n.descriptor());
-			} else {
-				var pp = n.lookupOperation(RegistryService.lookUp.class).f(p);
-
-				if (pp == null) {
-					out.accept("no peer with name: " + p);
-				} else {
-					peers.add(pp);
-				}
-			}
-		}
-
-		if (peers.isEmpty()) {
-			out.accept("no such peer");
-		}
-
-		return peers;
 	}
 }

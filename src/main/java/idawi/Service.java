@@ -14,8 +14,15 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import idawi.knowledge_base.OperationDescriptor;
+import idawi.knowledge_base.ServiceDescriptor;
+import idawi.messaging.EOT;
+import idawi.messaging.Message;
+import idawi.messaging.MessageQueue;
+import idawi.routing.MessageODestination;
+import idawi.routing.MessageQDestination;
+import idawi.routing.TargetComponents;
 import idawi.service.ErrorLog;
-import idawi.service.ServiceManager;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.io.Cout;
@@ -49,7 +56,7 @@ public class Service {
 		this.component = component;
 		component.services.add(this);
 		this.id = getClass();
-		registerOperation(new DescriptorOperation());
+		registerOperation(new descriptor());
 		registerOperation(new listNativeOperations());
 		registerOperation(new listOperationNames());
 		registerOperation(new nbMessagesReceived());
@@ -59,11 +66,7 @@ public class Service {
 		registerOperation("friendlyName", q -> getFriendlyName());
 	}
 
-	protected To ca() {
-		return new To(component.descriptor());
-	}
-
-	public class getFriendlyName extends TypedInnerOperation {
+	public class getFriendlyName extends TypedInnerClassOperation {
 
 		public String f() {
 			return getFriendlyName();
@@ -76,7 +79,7 @@ public class Service {
 
 	}
 
-	public class sec2nbMessages extends TypedInnerOperation {
+	public class sec2nbMessages extends TypedInnerClassOperation {
 		@Override
 		public String getDescription() {
 			return "gets a map associating a number a message received during seconds";
@@ -95,10 +98,6 @@ public class Service {
 		return null;
 	}
 
-	public void reply(Message msg, Object r) {
-		send(r, msg.replyTo);
-	}
-
 	public Directory directory() {
 		if (this.directory == null) {
 			this.directory = new Directory(Component.directory, "/services/" + id);
@@ -107,7 +106,7 @@ public class Service {
 		return this.directory;
 	}
 
-	public class nbMessagesReceived extends TypedInnerOperation {
+	public class nbMessagesReceived extends TypedInnerClassOperation {
 		public long f() {
 			return nbMsgsReceived;
 		}
@@ -118,7 +117,7 @@ public class Service {
 		}
 	}
 
-	public class listOperationNames extends TypedInnerOperation {
+	public class listOperationNames extends TypedInnerClassOperation {
 		@Override
 		public String getDescription() {
 			return "returns the name of available operations";
@@ -129,7 +128,7 @@ public class Service {
 		}
 	}
 
-	public class listNativeOperations extends TypedInnerOperation {
+	public class listNativeOperations extends TypedInnerClassOperation {
 		public Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
 		}
@@ -145,23 +144,23 @@ public class Service {
 	}
 
 	public void considerNewMessage(Message msg) {
-		// Cout.debug(msg);
 		int sec = (int) Date.time();
 		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
 
-		if (msg instanceof TriggerMessage) {
-			var operationName = ((TriggerMessage) msg).operationName;
+		if (msg.destination instanceof MessageODestination) {
+			var dest = (MessageODestination) msg.destination;
+			var operationName = dest.operationID;
 			AbstractOperation operation = lookupOperation(operationName);
 
 			if (operation == null) {
-				triggerErrorHappened(msg, new IllegalArgumentException(
+				triggerErrorHappened(dest.replyTo, new IllegalArgumentException(
 						"can't find operation '" + operationName + "' in service " + getClass().getName()));
 			} else {
-				trigger((TriggerMessage) msg, operation);
+				trigger(msg, operation, dest);
 			}
 		} else {
-			MessageQueue q = name2queue.get(msg.to.queueName);
+			MessageQueue q = name2queue.get(msg.destination.queueID());
 
 			if (q == null) {
 //				System.out.println("ERERROEORO");
@@ -171,53 +170,53 @@ public class Service {
 		}
 	}
 
-	private void triggerErrorHappened(Message triggerMsg, Throwable s) {
+	private void triggerErrorHappened(MessageQDestination replyTo, Throwable s) {
 //		System.out.println(msg);
 		RemoteException err = new RemoteException(s);
 		logError(s);
 
 		// report the error to the guy who asked
-		if (triggerMsg.replyTo != null) {
-			send(err, triggerMsg.replyTo);
-			send(EOT.instance, triggerMsg.replyTo);
+		if (replyTo != null) {
+			component.bb().send(err, replyTo);
+			component.bb().send(EOT.instance, replyTo);
 		}
 	}
 
-	private synchronized void trigger(TriggerMessage msg, AbstractOperation operation) {
-		var inputQ = getQueue(msg.to.queueName);
+	private synchronized void trigger(Message msg, AbstractOperation operation, MessageODestination dest) {
+		var inputQ = getQueue(dest.queueID());
 
 		// most of the time the queue will not exist, unless the user wants to use the
 		// input queue of another running operation
 		if (inputQ == null) {
-			inputQ = createQueue(msg.to.queueName);
+			inputQ = createQueue(dest.queueID());
 		}
 
 		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
 		Runnable r = () -> {
-			operation.nbCalls++;
-			final double start = Date.time();
-
 			try {
-//				Cout.debug(operation);
+				final double start = Date.time();
+				operation.nbCalls++;
+//				Cout.debug("CALLING " + operation);
 				operation.impl(inputQ_final);
+//				Cout.debug("REUTNED " + operation);
 
 				// tells the client the processing has completed
-				if (msg.replyTo != null) {
-					send(EOT.instance, msg.replyTo);
+				if (dest.replyTo != null) {
+					component.bb().send(EOT.instance, dest.replyTo);
 				}
-			} catch (Throwable exception) {
-				operation.nbFailures++;
-				triggerErrorHappened(msg, exception);
-			} finally {
 				operation.totalDuration += Date.time() - start;
+			} catch (Throwable exception) {
+				exception.printStackTrace();
+				operation.nbFailures++;
+				triggerErrorHappened(dest.replyTo, exception);
 			}
 
 			detachQueue(inputQ_final);
 		};
 
-		if (msg.premptive) {
+		if (dest.premptive) {
 			r.run();
 		} else if (!threadPool.isShutdown()) {
 			threadPool.submit(r);
@@ -233,8 +232,8 @@ public class Service {
 
 		return null;
 	}
-	
-	public <C  extends InnerOperation> C lookupOperation(Class<C> c) {
+
+	public <C extends InnerClassOperation> C lookupOperation(Class<C> c) {
 		for (var o : operations) {
 			if (o.getClass() == c) {
 				return (C) o;
@@ -244,10 +243,10 @@ public class Service {
 		return null;
 	}
 
-	public <O extends InnerOperation> O lookup(Class<O> oc) {
+	public <O extends InnerClassOperation> O lookup(Class<O> oc) {
 //		Cout.debug(InnerOperation.serviceClass(oc));
 //		Cout.debug(getClass());
-		if (!InnerOperation.serviceClass(oc).isAssignableFrom(getClass()))
+		if (!InnerClassOperation.serviceClass(oc).isAssignableFrom(getClass()))
 			throw new IllegalStateException(
 					"searching operation " + oc.getName() + " in service class " + getClass().getName());
 
@@ -260,7 +259,7 @@ public class Service {
 		return null;
 	}
 
-	public void registerOperation(String name, OperationFunctionalInterface userCode) {
+	public void registerOperation(String name, Operation userCode) {
 
 		if (name == null)
 			throw new NullPointerException("no name give for operation");
@@ -317,14 +316,22 @@ public class Service {
 		});
 	}
 
+	protected void reply(Message m, Object o) {
+		var replyTo = m.destination.replyTo;
+		replyTo.componentTarget = new TargetComponents.Unicast(m.route.initialEmission.component);
+//		Cout.debugSuperVisible("reply " + o);
+//		Cout.debugSuperVisible("to " + replyTo);
+		component.bb().send(o, replyTo.componentTarget, replyTo.service, replyTo.queueID);
+	}
+
 	public void registerOperation(AbstractOperation o) {
 		if (lookupOperation(o.getName()) != null) {
 			throw new IllegalStateException(
 					"in class: " + o.getDeclaringServiceClass() + ", operation name is already in use: " + o);
 		}
 
-		if (o instanceof TypedInnerOperation) {
-			((TypedInnerOperation) o).service = this;
+		if (o instanceof TypedInnerClassOperation) {
+			((TypedInnerClassOperation) o).service = this;
 		}
 
 		operations.add(o);
@@ -364,7 +371,7 @@ public class Service {
 		return askToRun;
 	}
 
-	public class shutdown extends TypedInnerOperation {
+	public class shutdown extends TypedInnerClassOperation {
 		public void f() {
 			dispose();
 		}
@@ -390,7 +397,7 @@ public class Service {
 
 	@Override
 	public String toString() {
-		return component.name + "/" + id;
+		return component + "/" + id;
 	}
 
 	protected MessageQueue createQueue(String qid) {
@@ -399,8 +406,8 @@ public class Service {
 		return q;
 	}
 
-	protected MessageQueue createQueue() {
-		String qid = "q" + returnQueueID.getAndIncrement();
+	protected MessageQueue createAutoQueue(String prefix) {
+		String qid = prefix + returnQueueID.getAndIncrement();
 		return createQueue(qid);
 	}
 
@@ -408,7 +415,7 @@ public class Service {
 		return name2queue.get(qid);
 	}
 
-	protected void detachQueue(MessageQueue q) {
+	public void detachQueue(MessageQueue q) {
 		name2queue.remove(q.name);
 		detachedQueues.add(q.name);
 		q.cancelEventisation();
@@ -418,28 +425,7 @@ public class Service {
 		return new OperationParameterList(parms);
 	}
 
-	public void send(Object o, QueueAddress to) {
-		var m = new Message(o, to, null);
-		m.originService = this.getClass().getName();
-		m.send(component);
-	}
-
-	public RemotelyRunningOperation exec(OperationAddress target, MessageQueue rq, Object initialInputData) {
-		String remoteInputQid = target.operationID + "@" + Long.toHexString(Date.timeNs());
-		var remoteInputQaddr = new QueueAddress(target.sa, remoteInputQid);
-		return new RemotelyRunningOperation(this, remoteInputQaddr, target.operationID, rq, initialInputData);
-	}
-
-	public RemotelyRunningOperation exec(OperationAddress target, boolean createQueue, Object initialInputData) {
-		return exec(target, createQueue ? createQueue() : null, initialInputData);
-	}
-
-	public List<Object> execf(OperationAddress target, double timeout, int nbResults, Object... parms) {
-		return exec(target, createQueue(), new OperationParameterList(parms)).returnQ.recv_sync(timeout).messages
-				.throwAnyError_Runtime().resultMessages(nbResults).contents();
-	}
-
-	public class DescriptorOperation extends TypedInnerOperation {
+	public class descriptor extends TypedInnerClassOperation {
 		public ServiceDescriptor f() {
 			return Service.this.descriptor();
 		}
@@ -457,24 +443,6 @@ public class Service {
 		operations.forEach(o -> d.operations.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;
 		return d;
-	}
-
-	public Set<ComponentDescriptor> whoHasService(double timeout, To to, Class<? extends Service> serviceID) {
-		// we'll store herein the components that expose the given service
-		Set<ComponentDescriptor> r = new HashSet<>();
-
-		// asks the ServiceManager on all components in "to" if they they have that
-		// service
-		exec(to.o(ServiceManager.has.class), true, serviceID).returnQ.collect(timeout, timeout, c -> {
-			var msg = c.messages.last();
-
-			// if this component claims he has
-			if ((boolean) msg.content) {
-				r.add(msg.route.source().component);
-			}
-		});
-
-		return r;
 	}
 
 }

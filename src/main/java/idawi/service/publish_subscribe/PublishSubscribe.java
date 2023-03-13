@@ -9,15 +9,15 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.TypedInnerOperation;
-import idawi.QueueAddress;
 import idawi.Service;
+import idawi.TypedInnerClassOperation;
+import idawi.routing.MessageQDestination;
 
 public class PublishSubscribe extends Service {
 	public static class Publication implements Serializable {
 		public String topic;
 		public Object content;
-		public long date;
+		public double date;
 
 		@Override
 		public String toString() {
@@ -30,7 +30,7 @@ public class PublishSubscribe extends Service {
 		return "publish/subscribe";
 	}
 
-	private final Map<String, Set<QueueAddress>> topic_subscribers = new HashMap<>();
+	private final Map<String, Set<MessageQDestination>> topic_subscribers = new HashMap<>();
 	public final Map<String, List<Publication>> topic_history = new HashMap<>();
 
 	public PublishSubscribe(Component peer) {
@@ -43,8 +43,8 @@ public class PublishSubscribe extends Service {
 		registerOperation(new unsubscribe());
 	}
 
-	public class subscribe extends TypedInnerOperation {
-		public void exec(String topic, QueueAddress subscriber) throws Throwable {
+	public class subscribe extends TypedInnerClassOperation {
+		public void exec(String topic, MessageQDestination subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).add(subscriber);
 		}
@@ -56,8 +56,8 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class unsubscribe extends TypedInnerOperation {
-		public void exec(String topic, QueueAddress subscriber) throws Throwable {
+	public class unsubscribe extends TypedInnerClassOperation {
+		public void exec(String topic, MessageQDestination subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
 		}
@@ -69,7 +69,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListTopics extends TypedInnerOperation {
+	public class ListTopics extends TypedInnerClassOperation {
 		public List<String> exec() throws Throwable {
 			return new ArrayList(topic_history.keySet());
 		}
@@ -81,7 +81,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class ListSubscribers extends TypedInnerOperation {
+	public class ListSubscribers extends TypedInnerClassOperation {
 		public List<String> exec(String topic) throws Throwable {
 			return new ArrayList(topic_subscribers.values());
 		}
@@ -93,7 +93,7 @@ public class PublishSubscribe extends Service {
 		}
 	}
 
-	public class Publish extends TypedInnerOperation {
+	public class Publish extends TypedInnerClassOperation {
 		public void exec(String topic, Object publication) throws Throwable {
 			publish(publication, topic);
 		}
@@ -107,15 +107,16 @@ public class PublishSubscribe extends Service {
 
 	public void publish(Object o, String topic) {
 		ensureTopicExists(topic);
-		Publication p = new Publication();
-		p.content = o;
-		p.topic = topic;
+		Publication publication = new Publication();
+		publication.content = o;
+		publication.topic = topic;
+		publication.date = component.now();
 
 		// store publication
-		topic_history.get(topic).add(p);
+		topic_history.get(topic).add(publication);
 
 		// notify subscribers
-		topic_subscribers.get(topic).forEach(s -> send(p, s));
+		topic_subscribers.get(topic).forEach(subscriber -> component.bb().send(publication, subscriber));
 	}
 
 	private void ensureTopicExists(String topic) {

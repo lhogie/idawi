@@ -1,6 +1,6 @@
 package idawi.ui.cmd;
 
-import idawi.Service;
+import idawi.Component;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -20,9 +20,9 @@ public class deploy extends BackendedCommand {
 	}
 
 	@Override
-	protected int work(Service localService, CommandLine cmdLine, double timeout)
+	protected int work(Component c, CommandLine cmdLine, double timeout)
 			throws Throwable {
-		int exitCode = super.work(localService, cmdLine, timeout);
+		int exitCode = super.work(c, cmdLine, timeout);
 
 		if (cmdLine.isOptionSpecified("--autonomous")) {
 			Cout.info("Children are left running.");

@@ -5,34 +5,33 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import idawi.ComponentDescriptor;
-import idawi.RegistryService;
-import idawi.Route;
-import idawi.map.NetworkMap;
+import idawi.knowledge_base.ComponentRef;
+import idawi.knowledge_base.KnowledgeBase;
+import idawi.knowledge_base.NetworkMap;
 
 public abstract class RoutingTable<E> implements Serializable {
-	protected final Map<ComponentDescriptor, E> map = new HashMap<>();
+	protected final Map<ComponentRef, E> map = new HashMap<>();
 
 	public int getNbTargets() {
 		return map.size();
 	}
 
-	public Set<ComponentDescriptor> getTargets() {
+	public Set<ComponentRef> getTargets() {
 		return map.keySet();
 	}
 
-	public abstract void discard(ComponentDescriptor c);
+	public abstract void discard(ComponentRef c);
 
 	public abstract NetworkMap map();
 
-	public E get(ComponentDescriptor destination) {
+	public E get(ComponentRef destination) {
 		return map.get(destination);
 	}
 
 
 
-	public abstract void feedWith(Route r, ComponentDescriptor me);
+	public abstract void feedWith(Route r, ComponentRef me);
 
-	public abstract void feedWith(ComponentDescriptor d, RegistryService registry);
+	public abstract void feedWith(ComponentRef d, KnowledgeBase registry);
 
 }

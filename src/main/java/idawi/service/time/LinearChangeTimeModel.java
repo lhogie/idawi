@@ -1,9 +1,13 @@
 package idawi.service.time;
 
-public class LinearChangeTimeModel extends ChangingTimeModel {
-	double ratio = 1, bias = 0;
+import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
 
-	public double change(double time) {
-		return time * ratio + bias;
+public class LinearChangeTimeModel<M extends TimeModel> implements TimeModel {
+	public M model;
+	public Double2DoubleFunction f;
+
+	@Override
+	public double getTime() {
+		return f.applyAsDouble(model.getTime());
 	}
 }

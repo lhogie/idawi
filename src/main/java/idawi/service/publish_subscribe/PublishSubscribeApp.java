@@ -9,11 +9,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.NeighborhoodListener;
 import idawi.Service;
-import idawi.net.NetworkingService;
-import idawi.net.TransportLayer;
+import idawi.knowledge_base.ComponentRef;
+import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.NetworkTopologyListener;
+import idawi.knowledge_base.info.DirectedLink;
 import toools.gui.Swingable;
 
 public class PublishSubscribeApp extends Service implements Swingable {
@@ -32,16 +32,27 @@ public class PublishSubscribeApp extends Service implements Swingable {
 
 		c.add(browser);
 		c.add(renderer);
-		peer.lookup(NetworkingService.class).transport.listeners.add(new NeighborhoodListener() {
+		peer.lookup(MapService.class).map.listeners.add(new NetworkTopologyListener() {
+
 			@Override
-			public void neighborLeft(ComponentDescriptor peer, TransportLayer protocol) {
+			public void newComponent(ComponentRef p) {
 				((DefaultListModel) nodeList.getModel()).removeElement(peer);
 			}
 
 			@Override
-			public void newNeighbor(ComponentDescriptor peer, TransportLayer protocol) {
-				((DefaultListModel) nodeList.getModel()).addElement(peer);
+			public void interactionStopped(DirectedLink l) {
+				((DefaultListModel) nodeList.getModel()).removeElement(peer);
 			}
+
+			@Override
+			public void newInteraction(DirectedLink l) {
+				((DefaultListModel) nodeList.getModel()).removeElement(peer);
+			}
+
+			@Override
+			public void componentHasGone(ComponentRef a) {
+			}
+		
 		});
 	}
 	@Override

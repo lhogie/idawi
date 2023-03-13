@@ -1,10 +1,10 @@
 package idawi.ui.cmd;
 
 import idawi.Component;
-import idawi.InnerOperation;
-import idawi.Message;
-import idawi.MessageQueue;
+import idawi.InnerClassOperation;
 import idawi.Service;
+import idawi.messaging.Message;
+import idawi.messaging.MessageQueue;
 
 public class CommandsService extends Service {
 
@@ -13,7 +13,7 @@ public class CommandsService extends Service {
 		registerOperation(new exec());
 	}
 
-	public class exec extends InnerOperation {
+	public class exec extends InnerClassOperation {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {

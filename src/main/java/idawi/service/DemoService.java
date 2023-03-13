@@ -3,22 +3,21 @@ package idawi.service;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Random;
-import java.util.Set;
 
 import idawi.Component;
-import idawi.EOT;
-import idawi.InnerOperation;
-import idawi.MessageQueue;
+import idawi.InnerClassOperation;
 import idawi.OperationParameterList;
-import idawi.ProgressMessage;
-import idawi.ProgressRatio;
-import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.To;
-import idawi.TypedInnerOperation;
-import idawi.net.LMI;
+import idawi.TypedInnerClassOperation;
+import idawi.messaging.EOT;
+import idawi.messaging.MessageQueue;
+import idawi.messaging.ProgressMessage;
+import idawi.messaging.ProgressRatio;
+import idawi.routing.BlindBroadcasting;
+import idawi.routing.TargetComponents;
 import idawi.service.rest.Chart;
 import idawi.service.rest.Graph;
+import idawi.transport.SharedMemoryTransport;
 import toools.math.MathsUtilities;
 import toools.net.NetUtilities;
 import toools.thread.Threads;
@@ -42,7 +41,7 @@ public class DemoService extends Service {
 
 	}
 
-	public class multipleRandomMessages extends InnerOperation {
+	public class multipleRandomMessages extends InnerClassOperation {
 
 		@Override
 		public String getDescription() {
@@ -62,7 +61,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class waiting extends TypedInnerOperation {
+	public class waiting extends TypedInnerClassOperation {
 		public double waiting(double maxSeconds) {
 			double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 			Threads.sleepMs((long) (seconds * 1000));
@@ -76,10 +75,11 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class grep extends InnerOperation {
+	public class grep extends InnerClassOperation {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-			String re = (String) in.poll_async().content;
+			var trigger = in.poll_async();
+			String re = (String) trigger.content;
 
 			while (true) {
 				var msg = in.poll_async();
@@ -91,7 +91,7 @@ public class DemoService extends Service {
 				String line = (String) msg.content;
 
 				if (line.matches(re)) {
-					reply(msg, line);
+					reply(trigger, line);
 				}
 			}
 		}
@@ -106,20 +106,16 @@ public class DemoService extends Service {
 	public static void main(String[] args) {
 		Component a = new Component();
 		Component b = new Component();
-		LMI.connect(a, b);
+		a.lookup(SharedMemoryTransport.class).connectTo(b);
 
-		Service s = new Service(a);
-		var to = new To(Set.of(b.descriptor())).o(DemoService.stringLength.class);
-		RemotelyRunningOperation stub = s.exec(to, true, new OperationParameterList(""));
+		var s = new BlindBroadcasting(a);
+		var o = s.exec(DemoService.stringLength.class, null, new TargetComponents.Unicast(b.ref()), true, "");
 
 		for (int i = 0; i < 50; ++i) {
-			stub.send("" + i);
+			s.send("" + i, o);
 		}
 
-		stub.returnQ.collect(c -> c.messages.last().getClass());
-
-		stub.dispose();
-
+		o.returnQ.c().collect(c -> c.messages.last().getClass());
 	}
 
 //	public static interface stringLength extends Operation2 {
@@ -142,7 +138,7 @@ public class DemoService extends Service {
 //		}
 //	}
 
-	public class stringLength extends TypedInnerOperation {
+	public class stringLength extends TypedInnerClassOperation {
 		public int f(String s) {
 			return s.length();
 		}
@@ -153,11 +149,10 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class countFrom1toN extends InnerOperation {
+	public class countFrom1toN extends InnerClassOperation {
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "replies n messages";
 		}
 
 		@Override
@@ -179,7 +174,7 @@ public class DemoService extends Service {
 		int a, b;
 	}
 
-	public class countFromAtoB extends InnerOperation {
+	public class countFromAtoB extends InnerClassOperation {
 		@Override
 		public String getDescription() {
 			return null;
@@ -195,7 +190,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class loremPicsum extends TypedInnerOperation {
+	public class loremPicsum extends TypedInnerClassOperation {
 		@Override
 		public String getDescription() {
 			return "returns a random image";
@@ -208,7 +203,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class throwError extends InnerOperation {
+	public class throwError extends InnerClassOperation {
 		@Override
 		public String getDescription() {
 			return null;
@@ -220,7 +215,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class sendProgressInformation extends InnerOperation {
+	public class sendProgressInformation extends InnerClassOperation {
 		@Override
 		public String getDescription() {
 			return null;
@@ -238,7 +233,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class complexResponse extends InnerOperation {
+	public class complexResponse extends InnerClassOperation {
 		@Override
 		public String getDescription() {
 			return "simulate a complex output";

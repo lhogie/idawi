@@ -8,13 +8,12 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
-import idawi.InnerOperation;
-import idawi.TypedInnerOperation;
-import idawi.MessageQueue;
+import idawi.InnerClassOperation;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.To;
+import idawi.TypedInnerClassOperation;
+import idawi.knowledge_base.ComponentRef;
+import idawi.messaging.MessageQueue;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
 
@@ -29,7 +28,7 @@ public class ExternalCommandsService extends Service {
 		registerOperation(new has());
 	}
 
-	public class has extends TypedInnerOperation {
+	public class has extends TypedInnerClassOperation {
 		public boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
 			return f != null && f.exists();
@@ -42,7 +41,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class commands extends TypedInnerOperation {
+	public class commands extends TypedInnerClassOperation {
 		public Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
@@ -54,7 +53,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class exec extends InnerOperation {
+	public class exec extends InnerClassOperation {
 		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
@@ -89,8 +88,7 @@ public class ExternalCommandsService extends Service {
 				// if the command is explicitly fed with binary data
 				if (msg.content instanceof byte[]) {
 					stdin.write((byte[]) msg.content);
-				}
-				else  {
+				} else {
 					stdin.write(msg.content.toString().getBytes());
 				}
 			}
@@ -111,10 +109,9 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public static void exec(Service service, ComponentDescriptor b, InputStream in, OutputStream out, String... cmdLine)
-			throws IOException {
-		var to = new To(Set.of(b)).o(ExternalCommandsService.exec.class);
-		RemotelyRunningOperation s = service.exec(to, true, cmdLine);
+	public void exec(ComponentRef to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
+		RemotelyRunningOperation s = component.defaultRoutingProtocol().exec(ExternalCommandsService.exec.class, null,
+				null, true, cmdLine);
 		boolean eofIN = false;
 
 		while (true) {
@@ -134,7 +131,7 @@ public class ExternalCommandsService extends Service {
 				if (wav.length == 0) {
 					eofIN = true;
 				} else {
-					s.send(wav);
+					component.defaultRoutingProtocol().send(wav, s.getOperationInputQueueDestination());
 				}
 			}
 		}

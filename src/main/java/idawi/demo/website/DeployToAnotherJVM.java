@@ -3,8 +3,9 @@ package idawi.demo.website;
 import java.io.IOException;
 
 import idawi.Component;
-import idawi.ComponentDescriptor;
 import idawi.deploy.DeployerService;
+import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
+import idawi.knowledge_base.ComponentRef;
 
 public class DeployToAnotherJVM {
 	public static void main(String[] args) throws IOException {
@@ -12,8 +13,9 @@ public class DeployToAnotherJVM {
 		var a = new Component();
 
 		// we'll put another component in a different JVM
-		var bd = new ComponentDescriptor();
-		bd.name = "b";
-		a.lookup(DeployerService.class).deployOtherJVM(bd, true, feedback -> {}, ok -> {});
+		var req = new ExtraJVMDeploymentRequest();
+		req.target = new ComponentRef("b");
+
+		a.lookup(DeployerService.class).deploy(req, feedback -> System.out.println(feedback));
 	}
 }
