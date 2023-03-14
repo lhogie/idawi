@@ -11,26 +11,35 @@ import idawi.TypedInnerClassOperation;
  * to bench.
  */
 
-public class LocationService2 extends Service {
+public class LocationService extends Service {
 
 	public static class Location implements Serializable {
-		public double x, y;
+		public double x, y, z;
 
 		public double distanceFrom(Location o) {
 			double dx = x - o.x;
 			double dy = y - o.y;
-			return Math.sqrt(dx * dx + dy * dy);
+			double dz = z - o.z;
+			return Math.sqrt(dx * dx + dy * dy + dz * dz);
 		}
 
 		@Override
 		public String toString() {
+			return toString3D();
+		}
+
+		public String toString3D() {
+			return "(" + x + ", " + y + ", " + z + ")";
+		}
+
+		public String toString2D() {
 			return "(" + x + ", " + y + ")";
 		}
 	}
 
 	public Location location = new Location();
 
-	public LocationService2(Component node) {
+	public LocationService(Component node) {
 		super(node);
 	}
 

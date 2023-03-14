@@ -15,7 +15,7 @@ import idawi.knowledge_base.ComponentRef;
 import idawi.knowledge_base.NetworkMap;
 import idawi.knowledge_base.info.DirectedLink;
 import idawi.messaging.Message;
-import idawi.service.LocationService2;
+import idawi.service.LocationService;
 import idawi.service.SimulatedLocationService;
 import toools.io.ser.JavaSerializer;
 import toools.math.Interval;
@@ -213,7 +213,7 @@ public class SharedMemoryTransport extends TransportService {
 	}
 
 	private static double distance(Component a, Component b) {
-		return a.lookup(LocationService2.class).getLocation()
+		return a.lookup(LocationService.class).getLocation()
 				.distanceFrom(b.lookup(SimulatedLocationService.class).getLocation());
 	}
 

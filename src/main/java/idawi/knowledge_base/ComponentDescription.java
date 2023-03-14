@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.service.LocationService2.Location;
+import idawi.service.LocationService.Location;
 import idawi.service.SystemMonitor.SystemInfo;
 import idawi.service.time.TimeModel;
 import toools.net.NetUtilities;

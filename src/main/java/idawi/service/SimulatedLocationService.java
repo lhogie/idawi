@@ -9,7 +9,7 @@ import idawi.service.time.TimeService;
  * to bench.
  */
 
-public class SimulatedLocationService extends LocationService2 {
+public class SimulatedLocationService extends LocationService {
 	public double angle;
 	public double speed;
 	public Time lastMoveDate;

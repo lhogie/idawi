@@ -25,8 +25,8 @@ import idawi.service.Bencher;
 import idawi.service.DemoService;
 import idawi.service.DirectorySharingService;
 import idawi.service.ErrorLog;
-import idawi.service.LocationService2;
-import idawi.service.LocationService2.Location;
+import idawi.service.LocationService;
+import idawi.service.LocationService.Location;
 import idawi.service.ServiceManager;
 import idawi.service.SystemMonitor;
 import idawi.service.extern.ExternalCommandsService;
@@ -214,7 +214,7 @@ public class Component {
 	}
 
 	public Location getLocation() {
-		var locationService = lookup(LocationService2.class);
+		var locationService = lookup(LocationService.class);
 		return locationService == null ? null : locationService.location;
 	}
 }

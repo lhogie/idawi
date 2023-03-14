@@ -438,11 +438,14 @@ public class Service {
 
 	public ServiceDescriptor descriptor() {
 		var d = new ServiceDescriptor();
-		d.name = id.getName();
+		d.clazz = id;
 		d.description = getDescription();
 		operations.forEach(o -> d.operations.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;
 		return d;
+	}
+
+	public void apply(ServiceDescriptor sd) {
 	}
 
 }

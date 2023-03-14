@@ -3,6 +3,7 @@ package idawi.deploy;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import idawi.Service;
 import idawi.knowledge_base.ComponentDescription;
 import idawi.knowledge_base.ComponentRef;
 import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.ServiceDescriptor;
 import idawi.messaging.MessageQueue;
 import idawi.transport.PipeFromToChildProcess;
 import idawi.transport.PipeFromToChildProcess.FirstResponse;
@@ -415,6 +417,17 @@ public class DeployerService extends Service {
 		}
 
 		return nasGroups;
+	}
+
+	public void apply(ComponentDescription d) throws InstantiationException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+
+		for (ServiceDescriptor sd : d.services) {
+			if (component.lookup(sd.clazz) == null) {
+				var s = sd.clazz.getConstructor(Component.class).newInstance(component);
+				s.apply(sd);
+			}
+		}
 	}
 
 }
