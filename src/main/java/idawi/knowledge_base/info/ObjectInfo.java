@@ -1,8 +1,5 @@
 package idawi.knowledge_base.info;
 
-import java.util.function.Consumer;
-
-import idawi.knowledge_base.ComponentRef;
 import idawi.knowledge_base.Info;
 
 public abstract class ObjectInfo<E> extends Info {
@@ -12,5 +9,4 @@ public abstract class ObjectInfo<E> extends Info {
 		super(date);
 		this.value = v;
 	}
-
 }

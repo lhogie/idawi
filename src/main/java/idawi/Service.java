@@ -25,12 +25,12 @@ import idawi.routing.TargetComponents;
 import idawi.service.ErrorLog;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
-import toools.io.Cout;
+import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
 
-public class Service {
+public class Service implements SizeOf {
 
 	// creates the threads that will process the messages
 //	public static ExecutorService threadPool = Executors.newFixedThreadPool(1);
@@ -50,7 +50,8 @@ public class Service {
 
 	private long nbMsgsReceived;
 
-	private Directory directory;
+	private transient Directory directory;
+//	transient SD data;
 
 	public Service(Component component) {
 		this.component = component;
@@ -65,6 +66,7 @@ public class Service {
 		registerOperation(new getFriendlyName());
 		registerOperation("friendlyName", q -> getFriendlyName());
 	}
+
 
 	public class getFriendlyName extends TypedInnerClassOperation {
 
@@ -318,7 +320,7 @@ public class Service {
 
 	protected void reply(Message m, Object o) {
 		var replyTo = m.destination.replyTo;
-		replyTo.componentTarget = new TargetComponents.Unicast(m.route.initialEmission.component);
+		replyTo.componentTarget = new TargetComponents.Unicast(m.route.initialEmission.transport.component);
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
 		component.bb().send(o, replyTo.componentTarget, replyTo.service, replyTo.queueID);
@@ -446,6 +448,28 @@ public class Service {
 	}
 
 	public void apply(ServiceDescriptor sd) {
+	}
+
+	@Override
+	public long sizeOf() {
+		long size = 8; // component
+		size += detachedQueues.size() * 8 + 8;
+		size += 8; // id
+		size += name2queue.size();
+
+		for (var e : name2queue.entrySet()) {
+			size += 8 + e.getKey().length() * 2 + 16;
+			size += 8 + e.getValue().size() * 8 + 16;
+		}
+
+		size += 8;
+		size += operations.size() * 8 + 16;
+
+		for (var o : operations) {
+			size += o.sizeOf();
+		}
+
+		return size;
 	}
 
 }

@@ -5,7 +5,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import toools.io.Cout;
 import toools.net.NetUtilities;
 import toools.thread.Q;
@@ -45,14 +44,14 @@ public abstract class IPDriver extends TransportService {
 
 			// and waits that the server actually listens
 			if (waitReady.pollOrFail_sync(10) == null) {
-				Cout.debug(this +  "'s server not started");
+				Cout.debug(this + "'s server not started");
 			}
 		}
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
-		return !c.description.inetAddresses.isEmpty();
+	public boolean canContact(Component c) {
+		return !c.info.inetAddresses.isEmpty();
 	}
 
 	private void stop() {
@@ -86,8 +85,6 @@ public abstract class IPDriver extends TransportService {
 	protected abstract void stopServer();
 
 	protected abstract void startServer();
-
-
 
 	public static boolean isThisMyIpAddress(InetAddress addr) {
 		// Check if the address is a valid special local or loop back

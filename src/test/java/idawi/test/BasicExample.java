@@ -6,7 +6,6 @@ import idawi.Component;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 import idawi.service.DemoService;
 
 public class BasicExample {
@@ -25,12 +24,12 @@ public class BasicExample {
 
 // we'll put another component in a different JVM
 		var req = new ExtraJVMDeploymentRequest();
-		req.targetDescription.ref = new ComponentRef("other component");
+		req.target = new Component("other component");
 
 		c1.lookup(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 
 // asks the other component to compute something
-		var l = c1.bb().exec_rpc(req.targetDescription.ref, DemoService.stringLength.class, "Hello Idawi!");
+		var l = c1.bb().exec_rpc(req.target, DemoService.stringLength.class, "Hello Idawi!");
 		System.out.println(l);
 	}
 }

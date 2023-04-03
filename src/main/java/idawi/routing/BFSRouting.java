@@ -1,7 +1,5 @@
 package idawi.routing;
 
-import java.util.HashSet;
-
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
@@ -22,19 +20,8 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public BFSRoutingParms decode(String s) {
-		BFSRoutingParms to = new BFSRoutingParms();
-		to.recipients = new HashSet<>();
-
-		for (var n : s.split(" *, *")) {
-			var c = component.mapService().map.lookup(n);
-
-			if (c != null) {
-				to.recipients.add(c);
-			}
-		}
-
-		return to;
+	public long sizeOf() {
+		return super.sizeOf() + alreadyReceivedMsgs.size() * 8 + 8;
 	}
 
 	@Override
@@ -44,7 +31,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var recipients = p.recipients;
-			var relays = component.mapService().bfsResult.get().predecessors.successors(component.ref(), recipients);
+			var relays = component.digitalTwinService().bfsResult.get().predecessors.successors(component, recipients);
 
 			for (var t : component.services(TransportService.class)) {
 				t.multicast(msg, relays, this, parms);

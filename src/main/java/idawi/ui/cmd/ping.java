@@ -1,9 +1,6 @@
 package idawi.ui.cmd;
 
-import java.util.List;
-
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import j4u.CommandLine;
 import toools.io.Cout;
@@ -27,9 +24,9 @@ public class ping extends CommunicatingCommand {
 		int n = Integer.valueOf(getOptionValue(cmdLine, "--nbTimes"));
 		boolean printIndividualPings = !isOptionSpecified(cmdLine, "--hide");
 		boolean progress = isOptionSpecified(cmdLine, "--progress");
-		List<ComponentRef> peers = cmdLine.findParameters().stream().map(s -> new ComponentRef(s)).toList();
+		var peers = cmdLine.findParameters().stream().map(s -> new Component(s)).toList();
 
-		for (ComponentRef p : peers) {
+		for (var p : peers) {
 			Cout.info("pinging: " + p);
 		}
 		int nbFailure = 0;
@@ -47,7 +44,7 @@ public class ping extends CommunicatingCommand {
 				lp.temporaryResult = nbFailure + " failures on " + i + " attempts";
 			}
 
-			for (ComponentRef p : peers) {
+			for (var p : peers) {
 				if (printIndividualPings) {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}

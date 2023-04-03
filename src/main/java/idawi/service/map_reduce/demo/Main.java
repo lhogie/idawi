@@ -11,7 +11,6 @@ import idawi.OperationParameterList;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import idawi.routing.TargetComponents;
 import idawi.service.ServiceManager;
@@ -24,16 +23,16 @@ import toools.thread.AtomicDouble;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
-		Component mapper = new Component(new ComponentRef("mapper"));
+		Component mapper = new Component("mapper");
 		var clientService = new Service(mapper);
 
 		// create workers
-		var workers = new HashSet<ComponentRef>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.mapService().map.lookup("w" + i)));
+		var workers = new HashSet<Component>();
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.digitalTwinService().lookup("w" + i)));
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();
-			r.targetDescription.ref = w;
+			r.target = w;
 			return r;
 		}).toList();
 

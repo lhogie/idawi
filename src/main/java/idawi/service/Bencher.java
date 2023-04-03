@@ -14,7 +14,6 @@ import idawi.Component;
 import idawi.InnerClassOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.TargetComponents;
@@ -55,18 +54,18 @@ public class Bencher extends Service {
 	}
 
 	// client
-	public Map<ComponentRef, Results> bench(Set<ComponentRef> peers, int size, BiConsumer<ComponentRef, String> msg) {
+	public Map<Component, Results> bench(Set<Component> peers, int size, BiConsumer<Component, String> msg) {
 		Arguments parms = new Arguments();
 		parms.size = size;
-		Map<ComponentRef, Results> map = new HashMap<>();
+		Map<Component, Results> map = new HashMap<>();
 
 		component.bb().exec(localBench.class, null, TargetComponents.all, true, parms).returnQ.c().collect(c -> {
 			var r = c.messages.last();
 
 			if (r.content instanceof String) {
-				msg.accept(r.route.initialEmission().component, (String) r.content);
+				msg.accept(r.route.initialEmission().transport.component, (String) r.content);
 			} else if (r.content instanceof Results) {
-				map.put(r.route.initialEmission().component, (Results) r.content);
+				map.put(r.route.initialEmission().transport.component, (Results) r.content);
 			}
 		});
 

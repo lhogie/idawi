@@ -5,9 +5,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.MapService;
-import idawi.knowledge_base.MiscKnowledgeBase;
+import idawi.knowledge_base.DigitalTwinService;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;
@@ -48,14 +46,14 @@ public abstract class Command extends CommandLineApplication {
 		return "2019-2020";
 	}
 
-	public static Set<ComponentRef> targetPeers(Component n, String list, Consumer<Object> out) {
-		Set<ComponentRef> peers = new HashSet<>();
+	public static Set<Component> targetPeers(Component n, String list, Consumer<Object> out) {
+		Set<Component> peers = new HashSet<>();
 
 		for (String p : list.split(" *, *")) {
 			if (p.equals("_")) {
-				peers.add(n.ref());
+				peers.add(n);
 			} else {
-				var pp = n.lookup(MapService.class).map.lookup(p);
+				var pp = n.lookup(DigitalTwinService.class).lookup(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

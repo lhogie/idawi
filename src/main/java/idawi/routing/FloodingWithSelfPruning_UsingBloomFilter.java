@@ -16,6 +16,11 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
+	public long sizeOf() {
+		return 8 + alreadyReceivedMsgs.size() * 8;
+	}
+
+	@Override
 	public String getAlgoName() {
 		return "Flooding With Self Pruning";
 	}
@@ -25,12 +30,12 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
-			var myNeighbors = component.mapService().map.outNeighbors(component.ref());
+			var myNeighbors = component.neighbors();
 			var routingParms = convert(msg.currentRoutingParameters());
 
 			// if I have neighbors that the source doesn't know
 			for (var n : myNeighbors) {
-				if (!routingParms.neighbors.mightContain(n.longHash())) {
+				if (!routingParms.neighbors.mightContain(n.transport.component.longHash())) {
 					component.services(TransportService.class).forEach(t -> t.bcast(msg, this, parms));
 					break;
 				}
@@ -40,18 +45,18 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 
 	@Override
 	public FloodingWithSelfPruning_UsingBloomFilterParm createDefaultRoutingParms() {
-		var neighbors = component.mapService().map.outNeighbors(component.ref());
+		var neighbors = component.neighbors();
 		var p = new FloodingWithSelfPruning_UsingBloomFilterParm(bloomSize(neighbors.size()));
 
 		for (var n : neighbors) {
-			p.neighbors.put(n.longHash());
+			p.neighbors.put(n.transport.component.longHash());
 		}
 
 		return p;
 	}
 
 	protected int bloomSize(int size) {
-		return component.mapService().map.outNeighbors(component.ref()).size();
+		return component.nbNeighbors();
 	}
 
 	@Override
@@ -59,11 +64,4 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 		return TargetComponents.all;
 	}
 
-	@Override
-	public FloodingWithSelfPruning_UsingBloomFilterParm decode(String s) {
-		if (!s.trim().isEmpty())
-			throw new IllegalArgumentException(getAlgoName() + " accepts no parameters");
-
-		return null;
-	}
 }

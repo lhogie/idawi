@@ -7,6 +7,8 @@ public class MessageODestination extends Destination {
 	public Class<? extends InnerClassOperation> operationID;
 	public boolean premptive;
 	public long invocationDate;
+	public long instanceID;
+
 
 	@Override
 	public Class<? extends Service> service() {

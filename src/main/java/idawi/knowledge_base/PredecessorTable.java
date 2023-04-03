@@ -1,24 +1,25 @@
 package idawi.knowledge_base;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-public class PredecessorTable extends HashMap<ComponentRef, ComponentRef> {
-	public List<ComponentRef> path(ComponentRef source, ComponentRef dest) {
-		var r = new ArrayList<ComponentRef>();
-		r.add(dest);
+import idawi.Component;
+import idawi.knowledge_base.BFS.RRoute;
+import idawi.transport.OutNeighbor;
+
+public class PredecessorTable extends HashMap<OutNeighbor, OutNeighbor> {
+	public RRoute path(Component source, Component dest) {
+		var r = new RRoute();
+		r.add(find(dest));
 
 		while (true) {
 			var p = get(r.get(r.size() - 1));
 
 			if (p == null) {
 				return null;
-			} else if (p.equals(source)) {
-				Collections.reverse(r);
+			} else if (p.transport.component.equals(source)) {
+				r.reverse();
 				return r;
 			}
 
@@ -26,8 +27,18 @@ public class PredecessorTable extends HashMap<ComponentRef, ComponentRef> {
 		}
 	}
 
-	public Set<ComponentRef> successors(ComponentRef source, Set<ComponentRef> dest) {
-		var r = new HashSet<ComponentRef>();
+	private OutNeighbor find(Component c) {
+		for (var on : keySet()) {
+			if (on.transport.component.equals(c)) {
+				return on;
+			}
+		}
+
+		return null;
+	}
+
+	public Set<OutNeighbor> successors(Component source, Set<Component> dest) {
+		var r = new HashSet<OutNeighbor>();
 
 		for (var d : dest) {
 			var p = path(source, d);
@@ -40,7 +51,7 @@ public class PredecessorTable extends HashMap<ComponentRef, ComponentRef> {
 		return r;
 	}
 
-	public int distance(ComponentRef from, ComponentRef to) {
+	public int distance(Component from, Component to) {
 		return path(from, to).size();
 	}
 

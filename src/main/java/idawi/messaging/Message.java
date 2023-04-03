@@ -3,11 +3,13 @@ package idawi.messaging;
 import java.io.Serializable;
 import java.util.concurrent.ThreadLocalRandom;
 
+import idawi.Component;
 import idawi.RemoteException;
 import idawi.Utils;
 import idawi.routing.Destination;
 import idawi.routing.Route;
-import idawi.routing.RoutingParms;
+import idawi.routing.RoutingData;
+import toools.io.ser.JavaSerializer;
 import toools.text.TextUtilities;
 
 public class Message implements Serializable {
@@ -28,6 +30,12 @@ public class Message implements Serializable {
 		this.content = value;
 	}
 
+	private static final JavaSerializer ser = new JavaSerializer<>();
+
+	public Message clone() {
+		return (Message) ser.clone(this);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Message) {
@@ -43,7 +51,7 @@ public class Message implements Serializable {
 		throw new IllegalStateException("32-bit int hash code is not precise enough. Use the 64-bit ID instead");
 	}
 
-	public RoutingParms currentRoutingParameters() {
+	public RoutingData currentRoutingParameters() {
 		return route.last().routingParms();
 	}
 
@@ -78,6 +86,10 @@ public class Message implements Serializable {
 
 	public boolean isResult() {
 		return !isError() && !isProgress() && !isEOT();
+	}
+
+	public Component sender() {
+		return route.initialEmission().transport.component;
 	}
 
 }

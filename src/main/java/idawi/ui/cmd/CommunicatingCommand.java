@@ -1,7 +1,6 @@
 package idawi.ui.cmd;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import j4u.CommandLine;
 import j4u.License;
 import toools.io.Cout;
@@ -29,7 +28,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(new ComponentRef(getCommandName()));
+		Component localNode = new Component(getCommandName());
 
 		int repeat = Integer.valueOf(cmdLine.getOptionValue("--repeat"));
 

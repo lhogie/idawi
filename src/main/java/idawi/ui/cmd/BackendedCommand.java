@@ -3,7 +3,6 @@ package idawi.ui.cmd;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.TargetComponents;
@@ -22,7 +21,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	@Override
 	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
-		ComponentRef hook = new ComponentRef(getOptionValue(cmdLine, "--hook"));
+		var hook = new Component(getOptionValue(cmdLine, "--hook"));
 		Cout.info("connecting to overlay via " + hook);
 
 		if (c.bb().ping(hook) == null) {
@@ -31,7 +30,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		}
 
 		Cout.info("executing command");
-		Set<ComponentRef> target = Command.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
+		var target = Command.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
@@ -60,10 +59,10 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		return Clazz.makeInstance(backendClass);
 	}
 
-	private void newReturn(Message feedback, Set<ComponentRef> peers) {
+	private void newReturn(Message feedback, Set<Component> peers) {
 
 		if (feedback.content instanceof ProgressMessage) {
-			progress(feedback.route.initialEmission().component, (ProgressMessage) feedback.content);
+			progress(feedback.route.initialEmission().transport.component, (ProgressMessage) feedback.content);
 		} else if (feedback.content instanceof Throwable) {
 			System.err.println("the following error occured on " + feedback.route.initialEmission());
 			((Throwable) feedback.content).printStackTrace();
@@ -86,7 +85,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 	}
 
-	protected void progress(ComponentRef peer, ProgressMessage progress) {
+	protected void progress(Component peer, ProgressMessage progress) {
 		System.out.println("..." + peer + "\t..." + progress);
 	}
 }

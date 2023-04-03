@@ -12,7 +12,7 @@ public class RemotelyRunningOperation {
 
 	public MessageQDestination getOperationInputQueueDestination() {
 		var d = new MessageQDestination();
-		d.componentTarget = new TargetComponents.Unicast(returnQ.service.component.ref());
+		d.componentTarget = new TargetComponents.Unicast(returnQ.service.component);
 		d.queueID = destination.queueID();
 		d.service = destination.service();
 		return d;

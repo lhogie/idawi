@@ -7,7 +7,6 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import idawi.transport.SharedMemoryTransport;
 
@@ -24,7 +23,7 @@ public class PingPong {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		things.add(new Component(new ComponentRef("root")));
+		things.add(new Component("root"));
 
 		for (int i = 1; i < 350; ++i) {
 			// Thing t = things.get(ThreadLocalRandom.current().nextInt(things.size()));
@@ -33,7 +32,7 @@ public class PingPong {
 			// gets the deployment service
 			DeployerService deployer = t.lookup(DeployerService.class);
 
-			var c = new ComponentRef("t" + i);
+			var c = new Component("t" + i);
 
 			// and asks it to deploy a new thing within the JVM
 			List<Component> newThings = deployer.deployInThisJVM(Set.of(c), ok -> System.out.println(ok + " is ready"));
@@ -48,9 +47,9 @@ public class PingPong {
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);
 
-		Message pong = first.bb().ping(last.ref()).poll_sync();
+		Message pong = first.bb().ping(last).poll_sync();
 
-		assert pong.route.initialEmission().component.equals(last.ref());
+		assert pong.sender().equals(last);
 		System.out.println("***  " + pong.route);
 
 	}

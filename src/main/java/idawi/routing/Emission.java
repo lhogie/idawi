@@ -6,10 +6,10 @@ public class Emission extends RouteEvent {
 	Reception previousReception;
 	Reception subsequentReception;
 	private Class<? extends RoutingService> routingProtocol;
-	private RoutingParms routingParms;
+	private RoutingData routingParms;
 
-	public Emission(RoutingService routingProtocol, RoutingParms routingParms, TransportService t) {
-		super(routingProtocol.component, t);
+	public Emission(RoutingService routingProtocol, RoutingData routingParms, TransportService t) {
+		super(t);
 		this.routingProtocol = routingProtocol.getClass();
 		this.routingParms = routingParms;
 	}
@@ -20,7 +20,7 @@ public class Emission extends RouteEvent {
 	}
 
 	@Override
-	public RoutingParms routingParms() {
+	public RoutingData routingParms() {
 		return routingParms;
 	}
 

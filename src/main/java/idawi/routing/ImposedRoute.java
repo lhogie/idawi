@@ -5,6 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.messaging.Message;
+import idawi.transport.OutNeighbor;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -22,17 +23,6 @@ public class ImposedRoute extends RoutingService<IRTo> {
 		return "P2P routing";
 	}
 
-	@Override
-	public IRTo decode(String s) {
-		IRTo to = new IRTo();
-		to.route = new ArrayList<>();
-
-		for (var n : s.split(" *, *")) {
-			to.route.add(component.mapService().map.lookup(n));
-		}
-
-		return to;
-	}
 
 	@Override
 	public void accept(Message msg, IRTo p) {
@@ -44,10 +34,11 @@ public class ImposedRoute extends RoutingService<IRTo> {
 			var relay = remainingRoute == null ? null : remainingRoute.remove(0);
 
 			for (var t : component.services(TransportService.class)) {
-				t.multicast(msg, relay == null ? null : Set.of(relay), this, p);
+				t.multicast(msg, relay == null ? null : Set.of(t.find(relay)), this, p);
 			}
 		}
 	}
+
 
 	@Override
 	public IRTo createDefaultRoutingParms() {

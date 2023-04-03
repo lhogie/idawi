@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.RemoteDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import toools.io.Cout;
 
@@ -28,7 +27,7 @@ public class SSH {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		ComponentRef c2 = new ComponentRef("c2");
+		var c2 = new Component("c2");
 		var deployReq = new RemoteDeploymentRequest();
 		deployReq.ssh.host = "musclotte.inria.fr";
 

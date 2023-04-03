@@ -5,7 +5,6 @@ import java.io.IOException;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 
 public class DeployToAnotherJVM {
 	public static void main(String[] args) throws IOException {
@@ -14,7 +13,7 @@ public class DeployToAnotherJVM {
 
 		// we'll put another component in a different JVM
 		var req = new ExtraJVMDeploymentRequest();
-		req.targetDescription.ref = new ComponentRef("b");
+		req.target = new Component("b");
 
 		a.lookup(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 	}

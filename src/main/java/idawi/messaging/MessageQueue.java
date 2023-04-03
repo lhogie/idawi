@@ -2,12 +2,10 @@ package idawi.messaging;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import idawi.Service;
-import idawi.knowledge_base.ComponentRef;
 import toools.thread.Q;
 
 public class MessageQueue extends Q<Message> {

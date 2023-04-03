@@ -7,7 +7,7 @@ import java.util.Random;
 import idawi.Component;
 import idawi.messaging.Message;
 
-public class RandomWalk extends RoutingService<RandomWalkParms> {
+public class RandomWalk extends RoutingService<RandomWalkData> {
 	private final static Random r = new Random();
 
 	public RandomWalk(Component component) {
@@ -19,16 +19,11 @@ public class RandomWalk extends RoutingService<RandomWalkParms> {
 		return "random";
 	}
 
-	@Override
-	public RandomWalkParms decode(String s) {
-		var p = new RandomWalkParms();
-		p.n = Integer.valueOf(s);
-		return p;
-	}
+
 
 	@Override
-	public void accept(Message msg, RandomWalkParms p) {
-		var relays = new ArrayList<>(component.mapService().map.outNeighbors(component.ref()));
+	public void accept(Message msg, RandomWalkData p) {
+		var relays = new ArrayList<>(component.neighbors().infos());
 		Collections.shuffle(relays);
 		var randomRelays = p.n < relays.size() ? relays.subList(0, p.n) : relays;
 
@@ -38,12 +33,12 @@ public class RandomWalk extends RoutingService<RandomWalkParms> {
 	}
 
 	@Override
-	public RandomWalkParms createDefaultRoutingParms() {
-		return new RandomWalkParms();
+	public RandomWalkData createDefaultRoutingParms() {
+		return new RandomWalkData();
 	}
 
 	@Override
-	public TargetComponents naturalTarget(RandomWalkParms parms) {
+	public TargetComponents naturalTarget(RandomWalkData parms) {
 		return c -> true;
 	}
 }

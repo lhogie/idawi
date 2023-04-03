@@ -1,6 +1,5 @@
 package idawi;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -9,10 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import idawi.knowledge_base.TypeOperationDescriptor;
-import idawi.messaging.EOT;
-import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
-import idawi.routing.MessageQDestination;
 import toools.io.Cout;
 import toools.reflect.Clazz;
 

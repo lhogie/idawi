@@ -1,11 +1,9 @@
 package idawi.ui.cmd;
 
-import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.Message;
 import idawi.routing.Route;
 
@@ -14,9 +12,9 @@ public class tracerouteBackend extends CommandBackend {
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 		var parms = cmdline.findParameters();
-		Set<ComponentRef> to = n.lookup(MapService.class).lookupByRegexp(parms.get(0));
+		var to = n.lookup(DigitalTwinService.class).lookupByRegexp(parms.get(0));
 
-		for (ComponentRef t : to) {
+		for (var t : to) {
 			out.accept("ping " + t);
 			Message pong = new Component().bb().ping(t).poll_sync();
 

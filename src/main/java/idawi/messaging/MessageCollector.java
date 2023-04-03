@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
 import toools.util.Date;
 
 public class MessageCollector {
@@ -15,7 +15,7 @@ public class MessageCollector {
 	public double timeout;
 	public final MessageList messages = new MessageList();
 	public boolean stop;
-	public final Set<ComponentRef> blacklist = new HashSet<>();
+	public final Set<Component> blacklist = new HashSet<>();
 	public boolean deliverProgress = true;
 	public boolean deliverEOT = true;
 	public boolean deliverError = true;
@@ -44,7 +44,7 @@ public class MessageCollector {
 		while (remainingTime() > 0 && !stop) {
 			var msg = q.poll_sync(Math.min(remainingTime(), initialTimeout));
 
-			if (msg != null && !blacklist.contains(msg.route.initialEmission().component)) {
+			if (msg != null && !blacklist.contains(msg.route.initialEmission().transport.component)) {
 				if (msg.isProgress()) {
 					if (deliverProgress) {
 						messages.add(msg);
@@ -104,7 +104,7 @@ public class MessageCollector {
 		collect(d, d, collector);
 	}
 
-	public void collectUntilAllHaveReplied(final double initialDuration, Set<ComponentRef> expectedRepliers) {
+	public void collectUntilAllHaveReplied(final double initialDuration, Set<Component> expectedRepliers) {
 		collect(initialDuration, initialDuration, c -> c.stop = expectedRepliers.containsAll(c.messages.senders()));
 	}
 

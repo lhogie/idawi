@@ -1,19 +1,15 @@
 package idawi.knowledge_base;
 
-import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import idawi.Component;
 
 public class TrustInfo extends Info {
-	ComponentRef component;
+	Component component;
 	double trustValue;
 
 	@Override
-	public boolean involves(ComponentRef d) {
-		return d.equals(component);
+	public void exposeComponent(Predicate<Component> p) {
+		p.test(component);
 	}
-
-	@Override
-	public void forEachComponent(Consumer<ComponentRef> c) {
-		c.accept(component);
-	}
-
 }

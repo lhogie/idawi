@@ -1,22 +1,20 @@
 package idawi.ui.cmd;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.RemoteDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 
 public class deployBackend extends CommandBackend {
 
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 
-		List<ComponentRef> peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream()
-				.map(s -> new ComponentRef(s)).toList();
-		peers.remove(n.ref());
+		var peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream().map(s -> new Component(s))
+				.toList();
+		peers.remove(n);
 
 		if (peers.isEmpty()) {
 			out.accept("no peer");
@@ -25,7 +23,7 @@ public class deployBackend extends CommandBackend {
 
 		boolean suicideWhenParentDie = !cmdline.isOptionSpecified("--autonomous");
 		var reqs = RemoteDeploymentRequest.from(peers);
-		reqs.forEach(r -> r.targetDescription.suicideWhenParentDie = suicideWhenParentDie);
+		reqs.forEach(r -> r.target.info.suicideWhenParentDie = suicideWhenParentDie);
 
 		n.lookup(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
 				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"));

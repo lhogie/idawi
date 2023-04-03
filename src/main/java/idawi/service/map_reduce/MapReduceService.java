@@ -10,7 +10,6 @@ import java.util.stream.IntStream;
 import idawi.Component;
 import idawi.InnerClassOperation;
 import idawi.Service;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
@@ -49,7 +48,7 @@ public class MapReduceService extends Service {
 		}
 	}
 
-	public <R> R map(List<Task<R>> tasks, List<ComponentRef> workers, BiFunction<R, R, R> f) {
+	public <R> R map(List<Task<R>> tasks, List<Component> workers, BiFunction<R, R, R> f) {
 		class ResultHolder {
 			R result;
 		}
@@ -65,7 +64,7 @@ public class MapReduceService extends Service {
 		return h.result;
 	}
 
-	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentRef> workers, Allocator<R> assigner,
+	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<Component> workers, Allocator<R> assigner,
 			Consumer<Result<R>> newResult, Consumer<String> progressMessages, Consumer<Double> progressRatio,
 			Consumer<Message> otherMessages) {
 		return map(tasks, workers, assigner, new ResultHandler<R>() {
@@ -92,7 +91,7 @@ public class MapReduceService extends Service {
 		});
 	}
 
-	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<ComponentRef> workers, Allocator<R> allocator,
+	public <R> Collection<Task<R>> map(List<Task<R>> tasks, List<Component> workers, Allocator<R> allocator,
 			ResultHandler<R> h) {
 		var unprocessedTasks = new ArrayList<>(tasks);
 
@@ -121,12 +120,12 @@ public class MapReduceService extends Service {
 				var msg = c.messages.last();
 				if (msg.content instanceof Result) {
 					var workerResponse = (Result<R>) msg.content;
-					workerResponse.worker = msg.route.initialEmission().component;
+					workerResponse.worker = msg.route.initialEmission().transport.component;
 					unprocessedTasks.removeIf(t -> t.id == workerResponse.taskID);
 					h.newResult(workerResponse);
 					h.newProgressRatio(100 * (tasks.size() - unprocessedTasks.size()) / (double) tasks.size());
 				} else if (msg.content instanceof ProgressMessage) {
-					h.newProgressMessage(msg.route.initialEmission().component + ": " + msg.content);
+					h.newProgressMessage(msg.route.initialEmission().transport.component + ": " + msg.content);
 				} else {
 					h.newMessage(msg);
 				}

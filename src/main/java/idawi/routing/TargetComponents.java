@@ -5,16 +5,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
+import idawi.knowledge_base.DigitalTwinService;
 
-public interface TargetComponents extends Predicate<ComponentRef>, Serializable {
+public interface TargetComponents extends Predicate<Component>, Serializable {
 
 	public static final TargetComponents all = c -> true;
 
 	public static final class Unicast implements TargetComponents {
-		public ComponentRef target;
+		public Component target;
 
-		public Unicast(ComponentRef b) {
+		public Unicast(Component b) {
 			if (b == null)
 				throw new NullPointerException();
 
@@ -22,7 +23,7 @@ public interface TargetComponents extends Predicate<ComponentRef>, Serializable 
 		}
 
 		@Override
-		public boolean test(ComponentRef c) {
+		public boolean test(Component c) {
 			return c.equals(target);
 		}
 
@@ -34,9 +35,9 @@ public interface TargetComponents extends Predicate<ComponentRef>, Serializable 
 	};
 
 	public static final class Multicast implements TargetComponents {
-		Set<ComponentRef> target;
+		Set<Component> target;
 
-		public Multicast(Set<ComponentRef> targets) {
+		public Multicast(Set<Component> targets) {
 			if (targets == null)
 				throw new NullPointerException();
 
@@ -44,7 +45,7 @@ public interface TargetComponents extends Predicate<ComponentRef>, Serializable 
 		}
 
 		@Override
-		public boolean test(ComponentRef c) {
+		public boolean test(Component c) {
 			return target.contains(c);
 		}
 
@@ -54,13 +55,25 @@ public interface TargetComponents extends Predicate<ComponentRef>, Serializable 
 		}
 	}
 
-	static TargetComponents fromString(String s) {
-		var r = new Multicast(new HashSet<>());
+	static TargetComponents fromString(String s, DigitalTwinService lookup) {
+		s = s.trim();
 
-		for (var a : s.split(" *, *")) {
-			r.target.add(new ComponentRef(a));
+		if (s.isEmpty()) {
+			return TargetComponents.all;
+		} else {
+			var r = new Multicast(new HashSet<>());
+
+			for (var a : s.split(" *, *")) {
+				var c = lookup.lookup(a);
+
+				if (c == null) {
+					lookup.add(c = new Component(a));
+				}
+
+				r.target.add(c);
+			}
+
+			return r;
 		}
-
-		return r;
 	};
 }

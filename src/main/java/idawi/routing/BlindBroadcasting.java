@@ -6,7 +6,7 @@ import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
-public class BlindBroadcasting extends RoutingService<RoutingParms> {
+public class BlindBroadcasting extends RoutingService<RoutingData> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 
 	public BlindBroadcasting(Component node) {
@@ -19,7 +19,11 @@ public class BlindBroadcasting extends RoutingService<RoutingParms> {
 	}
 
 	@Override
-	public void accept(Message msg, RoutingParms parms) {
+	public long sizeOf() {
+		return super.sizeOf() + alreadyReceivedMsgs.size() * 8 + 8;
+	}
+	@Override
+	public void accept(Message msg, RoutingData parms) {
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
@@ -28,20 +32,12 @@ public class BlindBroadcasting extends RoutingService<RoutingParms> {
 	}
 
 	@Override
-	public RoutingParms createDefaultRoutingParms() {
-		return new RoutingParms();
+	public RoutingData createDefaultRoutingParms() {
+		return new EmptyRoutingParms();
 	}
 
 	@Override
-	public TargetComponents naturalTarget(RoutingParms parms) {
+	public TargetComponents naturalTarget(RoutingData parms) {
 		return TargetComponents.all;
-	}
-
-	@Override
-	public RoutingParms decode(String s) {
-		if (!s.trim().isEmpty())
-			throw new IllegalArgumentException(getAlgoName() + " accepts no parameters");
-
-		return null;
 	}
 }

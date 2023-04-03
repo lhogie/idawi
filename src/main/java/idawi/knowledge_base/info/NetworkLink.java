@@ -4,17 +4,17 @@ import idawi.knowledge_base.Info;
 import idawi.transport.TransportService;
 
 public abstract class NetworkLink extends Info {
-	public Class<? extends TransportService> transport;
+	public TransportService transport;
 	double latency = -1;
 	int throughput = -1;
 
-	public NetworkLink(double date, Class<? extends TransportService> transport) {
+	public NetworkLink(double date, TransportService c) {
 		super(date);
 
-		if (transport == null)
+		if (c == null)
 			throw new NullPointerException();
 
-		this.transport = transport;
+		this.transport = c;
 	}
 
 }

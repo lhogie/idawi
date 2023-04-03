@@ -6,7 +6,7 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.service.ServiceManager;
-import idawi.service.rest.WebService;
+import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
 import toools.thread.Threads;
 

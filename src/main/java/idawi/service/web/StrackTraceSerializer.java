@@ -1,4 +1,4 @@
-package idawi.service.rest;
+package idawi.service.web;
 
 import java.io.IOException;
 import java.io.InputStream;

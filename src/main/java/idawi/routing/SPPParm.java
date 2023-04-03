@@ -2,8 +2,8 @@ package idawi.routing;
 
 import java.util.Collection;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
 
-public class SPPParm extends RoutingParms {
-	Collection<ComponentRef> neighbors;
+public class SPPParm extends EmptyRoutingParms {
+	Collection<Component> neighbors;
 }

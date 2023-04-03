@@ -1,8 +1,11 @@
 package idawi.knowledge_base;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
+import idawi.Component;
 import toools.util.Date;
 
 public abstract class Info implements Serializable {
@@ -28,11 +31,27 @@ public abstract class Info implements Serializable {
 		return date > b.date;
 	}
 
-	public abstract boolean involves(ComponentRef d);
+	public final boolean involves(Component d) {
+		AtomicBoolean found = new AtomicBoolean();
 
-	public abstract void forEachComponent(Consumer<ComponentRef> c);
+		exposeComponent(c -> {
+			found.set(c.equals(d));
+			return found.get();
+		});
 
-	public int distanceFrom(ComponentRef c, PredecessorTable predecessors) {
+		return found.get();
+	}
+
+	public abstract void exposeComponent(Predicate<Component> p);
+
+	public final void forEachComponent(Consumer<Component> consumer) {
+		exposeComponent(c -> {
+			consumer.accept(c);
+			return false;
+		});
+	}
+
+	public int distanceFrom(Component c, PredecessorTable predecessors) {
 		class A {
 			int d = Integer.MAX_VALUE;
 		}
@@ -42,7 +61,7 @@ public abstract class Info implements Serializable {
 		return a.d;
 	}
 
-	public double relevance(ComponentRef c, double now, PredecessorTable predecessors) {
+	public double relevance(Component c, double now, PredecessorTable predecessors) {
 		return reliability(now) * 1 / (1 + distanceFrom(c, predecessors));
 	}
 

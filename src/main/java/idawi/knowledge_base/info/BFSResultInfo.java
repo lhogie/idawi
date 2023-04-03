@@ -1,9 +1,9 @@
 package idawi.knowledge_base.info;
 
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
+import idawi.Component;
 import idawi.knowledge_base.BFS.BFSResult;
-import idawi.knowledge_base.ComponentRef;
 
 public class BFSResultInfo extends ObjectInfo<BFSResult> {
 
@@ -17,13 +17,12 @@ public class BFSResultInfo extends ObjectInfo<BFSResult> {
 	}
 
 	@Override
-	public boolean involves(ComponentRef d) {
-		return value.distances.containsKey(d);
-	}
-
-	@Override
-	public void forEachComponent(Consumer<ComponentRef> c) {
-		value.distances.keySet().forEach(ref -> c.accept(ref));
+	public void exposeComponent(Predicate<Component> p) {
+		for (var c : value.distances.keySet()) {
+			if (p.test(c)) {
+				return;
+			}
+		}
 	}
 
 }

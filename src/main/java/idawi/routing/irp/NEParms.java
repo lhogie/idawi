@@ -4,34 +4,37 @@ import java.util.Objects;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.routing.RoutingParms;
+import idawi.routing.RoutingData;
+import idawi.routing.RoutingService;
+import toools.SizeOf;
+import toools.io.Utilities;
 
-public class NEParms extends RoutingParms {
+public class NEParms extends RoutingData {
 	private static final long serialVersionUID = 1L;
 
-	public Set<ComponentRef> componentNames;
+	public Set<Component> componentNames;
 	public int coverage;
 	public double validityDuration = 10;// Double.MAX_VALUE;
+
+	@Override
+	public long sizeOf() {
+		return 8 + SizeOf.sizeOf(componentNames);
+	}
 
 	public NEParms() {
 		this(null, Integer.MAX_VALUE);
 	}
 
-	public NEParms(Set<ComponentRef> peers, int maxDistance) {
+	public NEParms(Set<Component> peers, int maxDistance) {
 		this.componentNames = peers;
 		this.coverage = maxDistance;
 	}
 
 	public NEParms(Component p) {
-		this(p.ref());
-	}
-
-	public NEParms(ComponentRef p) {
 		this(Set.of(p));
 	}
 
-	public NEParms(Set<ComponentRef> peers) {
+	public NEParms(Set<Component> peers) {
 		this(peers, Integer.MAX_VALUE);
 	}
 
@@ -94,11 +97,27 @@ public class NEParms extends RoutingParms {
 		return validityDuration;
 	}
 
-	public Set<ComponentRef> getNotYetReachedExplicitRecipients() {
+	public Set<Component> getNotYetReachedExplicitRecipients() {
 		return componentNames;
 	}
 
 	public int getMaxDistance() {
 		return coverage;
+	}
+
+	@Override
+	public void fromString(String s, RoutingService service) {
+		var m = Utilities.csv2map(s);
+		coverage = Integer.valueOf(m.get("coverage"));
+		validityDuration = Double.valueOf(m.get("validityDuration"));
+		var names = m.get("names");
+
+		if (names == null) {
+			componentNames = null;
+		} else {
+			for (var n : names.split(" *, *")) {
+				componentNames.add(service.component.digitalTwinService().lookup(n));
+			}
+		}
 	}
 }

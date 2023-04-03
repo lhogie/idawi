@@ -25,7 +25,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
-			var myNeighbors = component.mapService().map.outNeighbors(component.ref());
+			var myNeighbors = component.neighbors().stream().map(n -> n.transport.component).toList();
 			var routingParms = convert(msg.currentRoutingParameters());
 			var srcNeighbors = routingParms.neighbors;
 
@@ -39,7 +39,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	@Override
 	public SPPParm createDefaultRoutingParms() {
 		var p = new SPPParm();
-		p.neighbors = component.mapService().map.outNeighbors(component.ref());
+		p.neighbors = component.neighbors().stream().map(i -> i.transport.component).toList();
 		return p;
 	}
 
@@ -48,11 +48,4 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 		return TargetComponents.all;
 	}
 
-	@Override
-	public SPPParm decode(String s) {
-		if (!s.trim().isEmpty())
-			throw new IllegalArgumentException(getAlgoName() + " accepts no parameters");
-
-		return null;
-	}
 }

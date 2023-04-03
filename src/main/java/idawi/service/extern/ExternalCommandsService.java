@@ -12,7 +12,6 @@ import idawi.InnerClassOperation;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.MessageQueue;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
@@ -109,7 +108,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public void exec(ComponentRef to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
+	public void exec(Component to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
 		RemotelyRunningOperation s = component.defaultRoutingProtocol().exec(ExternalCommandsService.exec.class, null,
 				null, true, cmdLine);
 		boolean eofIN = false;

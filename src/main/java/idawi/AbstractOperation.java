@@ -1,8 +1,9 @@
 package idawi;
 
 import idawi.knowledge_base.OperationDescriptor;
+import toools.SizeOf;
 
-public abstract class AbstractOperation implements Operation {
+public abstract class AbstractOperation implements Operation, SizeOf {
 	int nbCalls, nbFailures;
 	double totalDuration;
 	protected final OperationDescriptor descriptor = createDescriptor();
@@ -13,6 +14,7 @@ public abstract class AbstractOperation implements Operation {
 		this.descriptor.name = getName();
 		this.descriptor.description = getDescription();
 	}
+
 
 	protected OperationDescriptor createDescriptor() {
 		return new OperationDescriptor();
@@ -49,6 +51,11 @@ public abstract class AbstractOperation implements Operation {
 	protected void updateDescriptor() {
 		this.descriptor.nbCalls = this.nbCalls;
 		this.descriptor.totalDuration = this.totalDuration;
+	}
+
+	@Override
+	public long sizeOf() {
+		return 0;
 	}
 
 }

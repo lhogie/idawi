@@ -3,8 +3,23 @@ package idawi.routing;
 import java.util.ArrayList;
 import java.util.List;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
+import toools.SizeOf;
 
-public class IRTo extends RoutingParms {
-	List<ComponentRef> route = new ArrayList<>();
+public class IRTo extends RoutingData {
+	List<Component> route = new ArrayList<>();
+
+	@Override
+	public void fromString(String s, RoutingService r) {
+		route = new ArrayList<>();
+
+		for (var n : s.split(" *, *")) {
+			route.add(r.component.digitalTwinService().lookup(n));
+		}
+	}
+
+	@Override
+	public long sizeOf() {
+		return 8 + SizeOf.sizeOf(route);
+	}
 }

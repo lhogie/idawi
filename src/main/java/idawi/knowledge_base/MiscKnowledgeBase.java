@@ -2,11 +2,9 @@ package idawi.knowledge_base;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -14,11 +12,10 @@ import idawi.Component;
 import idawi.TypedInnerClassOperation;
 import idawi.service.SystemMonitor;
 import idawi.service.time.TimeService;
+import toools.exceptions.NotYetImplementedException;
 
 public class MiscKnowledgeBase extends KnowledgeBase {
 
-	private Map<ComponentRef, ComponentDescription> componentInfos = new HashMap<>();
-	public Map<ComponentRef, Component> localComponents = new HashMap<>();
 	private Set<TrustInfo> trustInfos = new HashSet<>();
 	public Set<Info> misc = new HashSet<>();
 
@@ -27,7 +24,7 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 
 		registerOperation(new add());
 		registerOperation(new local());
-		registerOperation(new getDescription());
+		registerOperation(new getInfo());
 	}
 
 	public class addAll extends TypedInnerClassOperation {
@@ -36,55 +33,39 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 			return null;
 		}
 
-		public void addAll(Collection<ComponentDescription> s) {
+		public void addAll(Collection<ComponentInfo> s) {
 			s.forEach(i -> considers(i));
 		}
 	}
 
-	public void considers(ComponentDescription d) {
-		var e = componentInfos.get(d.ref);
-
-		if (e == null || d.isNewerThan(e)) {
-			componentInfos.put(d.ref, d);
-		}
+	public void considers(ComponentInfo d) {
+		var c = component.digitalTwinService().localTwin(d.component);
+		c.info = d;
 	}
 
-	public ComponentDescription componentDescriptor() {
-		var d = componentInfos.get(component.ref());
-
-		if (d == null) {
-			componentInfos.put(component.ref(), d = createLocalComponentDescriptor());
-		} else if (d.reliability(component.now()) < 0.1) {
-			d.update(createLocalComponentDescriptor());
+	public ComponentInfo componentInfo() {
+		if (component.info == null) {
+			component.info = createLocalComponentDescriptor();
+		} else if (component.info.reliability(component.now()) < 0.1) {
+			component.info.update(createLocalComponentDescriptor());
 		}
 
-		return d;
+		return component.info;
 	}
 
-	public ComponentDescription descriptor(ComponentRef id, boolean create) {
-		var d = componentInfos.get(id);
-
-		if (d == null && create) {
-			componentInfos.put(id, d = new ComponentDescription(component.now()));
-			d.ref = id;
-		}
-
-		return d;
-	}
-
-	public List<ComponentDescription> descriptors(ComponentRef... names) {
-		List<ComponentDescription> r = new ArrayList<>();
+	public List<ComponentInfo> descriptors(Component... names) {
+		List<ComponentInfo> r = new ArrayList<>();
 
 		for (var n : names) {
-			r.add(descriptor(n, true));
+			r.add(n.info);
 		}
 
 		return r;
 	}
 
-	public ComponentDescription createLocalComponentDescriptor() {
-		ComponentDescription d = new ComponentDescription(component.now());
-		d.ref = component.ref();
+	public ComponentInfo createLocalComponentDescriptor() {
+		ComponentInfo d = new ComponentInfo(component.now());
+		d.component = component;
 		d.location = component.getLocation();
 		d.timeModel = component.lookup(TimeService.class).model;
 		d.systemInfo = component.lookup(SystemMonitor.class).info.get();
@@ -109,8 +90,8 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 	}
 
 	public class local extends TypedInnerClassOperation {
-		public ComponentDescription get() {
-			return componentDescriptor();
+		public ComponentInfo get() {
+			return componentInfo();
 		}
 
 		@Override
@@ -131,14 +112,14 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 		}
 
 		public void f(Info i) {
-			if (i instanceof ComponentDescription) {
-				var d = (ComponentDescription) i;
-				var alreadyHere = componentInfos.get(d.ref);
+			if (i instanceof ComponentInfo) {
+				var d = (ComponentInfo) i;
+				var c = component.digitalTwinService().localTwin(d.component);
 
-				if (alreadyHere == null) {
-					componentInfos.put(d.ref, d);
-				} else if (d.isNewerThan(alreadyHere)) {
-					alreadyHere.consider(d);
+				if (c.info == null) {
+					c.info = d;
+				} else if (d.isNewerThan(c.info)) {
+					c.info.update(i);
 				}
 			} else {
 				misc.add(i);
@@ -146,9 +127,9 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 		}
 	}
 
-	public class getDescription extends TypedInnerClassOperation {
-		public ComponentDescription f(ComponentRef c) {
-			return componentInfos.get(c);
+	public class getInfo extends TypedInnerClassOperation {
+		public ComponentInfo f(Component c) {
+			return component.digitalTwinService().localTwin(c).info;
 		}
 
 		@Override
@@ -159,8 +140,7 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 
 	@Override
 	protected void forEachInfo(Predicate<Info> c) {
-		// TODO Auto-generated method stub
-
+		throw new NotYetImplementedException();
 	}
 
 }

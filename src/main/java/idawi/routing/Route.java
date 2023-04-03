@@ -5,13 +5,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
 import idawi.transport.TransportService;
 
 public class Route implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-//	public String srcService;
 	public Emission initialEmission;
 
 	public void add(Reception r) {
@@ -50,21 +49,21 @@ public class Route implements Serializable {
 		return emissions().stream().filter(e -> e.subsequentReception != null).map(e -> e.subsequentReception).toList();
 	}
 
-	public List<ComponentRef> components() {
-		var r = new ArrayList<ComponentRef>();
-		r.add(initialEmission.component);
-		Reception e = initialEmission.subsequentReception;
+	public List<Component> components() {
+		var components = new ArrayList<Component>();
+		components.add(initialEmission.transport.component);
+		Reception r = initialEmission.subsequentReception;
 
-		while (e != null) {
-			r.add(e.component);
-			e = e.nextReception();
+		while (r != null) {
+			components.add(r.transport.component);
+			r = r.nextReception();
 		}
 
-		return r;
+		return components;
 	}
 
-	public List<Class<? extends TransportService>> transports() {
-		return (List<Class<? extends TransportService>>) (List) emissions().stream().map(e -> e.transport()).toList();
+	public List<TransportService> transports() {
+		return emissions().stream().map(e -> e.transport()).toList();
 	}
 
 	public Emission initialEmission() {

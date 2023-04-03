@@ -7,7 +7,6 @@ import java.util.Set;
 import idawi.Component;
 import idawi.InnerClassOperation;
 import idawi.Service;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.MessageQueue;
 import idawi.routing.Route;
 import idawi.routing.TargetComponents;
@@ -36,15 +35,15 @@ public class TraceRouteService extends Service {
 		}
 	}
 
-	public Route traceRoute(ComponentRef t, double timeout) {
+	public Route traceRoute(Component t, double timeout) {
 		return (Route) component.bb().exec_rpc(t, TraceRouteService.traceroute.class, null);
 	}
 
-	public Map<ComponentRef, Route> traceRoute(Set<ComponentRef> targets, double timeout) {
-		var map = new HashMap<ComponentRef, Route>();
+	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
+		var map = new HashMap<Component, Route>();
 		component.bb().exec(TraceRouteService.traceroute.class, null, new TargetComponents.Multicast(targets), true,
 				null).returnQ.collect(timeout, timeout, c -> {
-					var target = c.messages.last().route.initialEmission().component;
+					var target = c.messages.last().route.initialEmission().transport.component;
 					var route = (Route) c.messages.last().content;
 					map.put(target, route);
 					c.stop = c.messages.senders().equals(targets);

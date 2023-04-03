@@ -1,4 +1,4 @@
-package idawi.service.rest;
+package idawi.service.web;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +31,10 @@ import idawi.OperationParameterList;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
+import idawi.knowledge_base.DigitalTwinService;
 import idawi.knowledge_base.MiscKnowledgeBase;
 import idawi.messaging.MessageCollector;
-import idawi.routing.BlindBroadcasting;
-import idawi.routing.RoutingParms;
+import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
 import toools.io.JavaResource;
@@ -281,49 +281,37 @@ public class WebService extends Service {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		// no routing specified
-		if (path.isEmpty()) {
-			path.add("");
+		RoutingService routing = component.defaultRoutingProtocol();
+		var routingDescr = path.isEmpty() ? "" : path.remove(0);
+
+		if (!routingDescr.isEmpty()) {
+			var routingClass = Clazz.findClass(routingDescr);
+			routing = (RoutingService) Clazz.makeInstance(routingClass);
 		}
 
-		String routingDescr = path.remove(0);
-		int pos = routingDescr.indexOf(':');
-		RoutingService routing;
-		RoutingParms routingParms;
+		RoutingData routingParms = routing.createDefaultRoutingParms();
+		var routingDataDescr = path.isEmpty() ? "" : path.remove(0);
 
-		if (pos == -1) {
-			routing = component.lookup(BlindBroadcasting.class);
-			routingParms = routing.createDefaultRoutingParms();
-		} else {
-			try {
-				var routingAbbrv = routingDescr.substring(0, pos);
-				routing = (RoutingService) component.getClass().getMethod(routingAbbrv).invoke(component);
-			} catch (Exception e) {
-				routing = component.defaultRoutingProtocol();
-			}
-
-			routingParms = routing.decode(routingDescr.substring(pos + 1));
+		if (!routingDataDescr.isEmpty()) {
+			routingParms.fromString(routingDataDescr, routing);
 		}
 
-		// no target components specified
-		if (path.isEmpty()) {
-			path.add("");
+		TargetComponents target = TargetComponents.all;
+		var targetString = path.isEmpty() ? "" : path.remove(0);
+
+		if (!targetString.isEmpty()) {
+			TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
 		}
 
-		TargetComponents target = TargetComponents.fromString(path.remove(0));
+		Class<? extends InnerClassOperation> operationID = Service.descriptor.class;
 
-		// there's no service specified
-		if (path.isEmpty()) {
-			path.add(MiscKnowledgeBase.class.getName());
-			path.add(InnerClassOperation.name(MiscKnowledgeBase.local.class));
-		} // there no operation specified, let's describe the service
-		else if (path.size() == 1) {
-			path.add(InnerClassOperation.name(Service.descriptor.class));
+		var serviceString = path.isEmpty() ? "" : path.remove(0);
+		var operationString = path.isEmpty() ? "" : path.remove(0);
+
+		if (!operationString.isEmpty()) {
+			operationID = (Class<? extends InnerClassOperation>) Clazz
+					.findClassOrFail(serviceID.getName() + "$" + path.remove(0));
 		}
-
-		var serviceID = (Class<? extends Service>) Clazz.findClassOrFail(path.remove(0));
-		var operationID = (Class<? extends InnerClassOperation>) Clazz
-				.findClassOrFail(serviceID.getName() + "$" + path.remove(0));
 
 		var parms = new OperationParameterList();
 		parms.addAll(path);

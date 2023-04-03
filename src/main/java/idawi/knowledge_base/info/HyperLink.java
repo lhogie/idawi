@@ -2,27 +2,26 @@ package idawi.knowledge_base.info;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
 import idawi.transport.TransportService;
 
 public class HyperLink extends NetworkLink {
-	public Set<ComponentRef> components = new HashSet<>();
+	public Set<TransportService> components = new HashSet<>();
 
-	public HyperLink(double date, Class<? extends TransportService> protocol, Set<ComponentRef> components) {
-		super(date, protocol);
+	public HyperLink(double date, TransportService c, Set<TransportService> components) {
+		super(date, c);
 		this.components = components;
 	}
 
 	@Override
-	public boolean involves(ComponentRef d) {
-		return components.contains(d);
-	}
-
-	@Override
-	public void forEachComponent(Consumer<ComponentRef> l) {
-		components.forEach(c -> l.accept(c));
+	public void exposeComponent(Predicate<Component> p) {
+		for (var c : components) {
+			if (p.test(c.component)) {
+				return;
+			}
+		}
 	}
 
 }

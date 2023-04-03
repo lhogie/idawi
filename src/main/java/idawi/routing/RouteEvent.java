@@ -3,8 +3,6 @@ package idawi.routing;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.transport.TransportService;
 
 /**
@@ -15,14 +13,12 @@ import idawi.transport.TransportService;
  */
 
 public abstract class RouteEvent implements Serializable, Iterator<RouteEvent> {
-	public ComponentRef component;
 	private double date = -1;
-	private Class<? extends TransportService> transport;
+	public TransportService transport;
 
-	public RouteEvent(Component c, TransportService transportService) {
-		this.component = c.ref();
-		this.date = c.now();
-		this.transport = transportService.getClass();
+	public RouteEvent( TransportService transportService) {
+		this.date = transportService.component.now();
+		this.transport = transportService;
 	}
 
 	public int remaining() {
@@ -41,11 +37,10 @@ public abstract class RouteEvent implements Serializable, Iterator<RouteEvent> {
 
 	public abstract Class<? extends RoutingService> routingProtocol();
 
-	public abstract RoutingParms routingParms();
+	public abstract RoutingData routingParms();
 
-	public final Class<? extends TransportService> transport() {
+	public final TransportService transport() {
 		return transport;
 	}
-
 
 }

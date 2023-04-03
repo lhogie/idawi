@@ -3,9 +3,9 @@ package idawi.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 import toools.io.Cout;
@@ -44,8 +44,8 @@ public class SharedFileSystemTransport extends TransportService {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> neighbors) {
-		for (ComponentRef n : neighbors) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
+		for (var n : neighbors) {
 			String filename = String.valueOf(Math.abs(new Random().nextLong()));
 			Directory toDir = new Directory(baseDirectory, n.toString());
 			toDir.ensureExists();
@@ -66,8 +66,8 @@ public class SharedFileSystemTransport extends TransportService {
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
-		return c.ref != null;
+	public boolean canContact(Component c) {
+		return c != null;
 	}
 
 	protected Message extract(RegularFile f) {
@@ -80,7 +80,7 @@ public class SharedFileSystemTransport extends TransportService {
 	}
 
 	@Override
-	public Collection<ComponentRef> actualNeighbors() {
-		throw new NotYetImplementedException();
+	public Set<Component> actualNeighbors() {
+		return null;
 	}
 }

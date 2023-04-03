@@ -13,7 +13,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-import idawi.service.rest.AESEncrypter;
+import idawi.service.web.AESEncrypter;
 
 public class Block {
 	static final AESEncrypter aes = new AESEncrypter();

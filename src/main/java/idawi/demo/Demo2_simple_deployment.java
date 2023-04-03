@@ -6,7 +6,6 @@ import java.util.Set;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.RemoteDeploymentRequest;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 
 /**
@@ -23,11 +22,11 @@ public class Demo2_simple_deployment {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 // creates a *local* peer that will drive the deployment
-		var localComponent = new Component(new ComponentRef("a"));
+		var localComponent = new Component("a");
 
 // describes the child peer that will be deployed to
 		var childDeployment = new RemoteDeploymentRequest();
-		childDeployment.targetDescription.ref = new ComponentRef("child");
+		childDeployment.target = new Component("child");
 		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
@@ -36,7 +35,7 @@ public class Demo2_simple_deployment {
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.bb().ping(childDeployment.targetDescription.ref).poll_sync(3);
+		var pong = localComponent.bb().ping(childDeployment.target).poll_sync(3);
 
 		if (pong == null) {
 			System.err.println("ping timeout");

@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import toools.io.Utilities;
 import toools.io.Utilities.ReadUntilResult;
@@ -27,7 +26,7 @@ public class PipeFromToChildProcess extends TransportService {
 	public static class Entry {
 		InputStream stdout, stderr;
 		OutputStream stdin;
-		public ComponentRef child;
+		public Component child;
 		boolean run;
 		public Q<FirstResponse> waitForChild = new Q<>(1);
 		public long base64Len;
@@ -36,13 +35,13 @@ public class PipeFromToChildProcess extends TransportService {
 	// the mark that announces a binary message coming from child stdout
 	public static final String base64ObjectMark = "--- BASE64 OBJECT --> ";
 
-	private final Map<ComponentRef, Entry> child_entry = new HashMap<>();
+	private final Map<Component, Entry> child_entry = new HashMap<>();
 
 	public PipeFromToChildProcess(Component c) {
 		super(c);
 	}
 
-	public Entry add(ComponentRef child, Process p) throws IOException {
+	public Entry add(Component child, Process p) throws IOException {
 		var e = new Entry();
 		e.stdout = p.getInputStream();
 		e.stderr = p.getErrorStream();
@@ -58,14 +57,14 @@ public class PipeFromToChildProcess extends TransportService {
 	}
 
 	@Override
-	public Set<ComponentRef> actualNeighbors() {
+	public Collection<Component> actualNeighbors() {
 		return child_entry.keySet();
 	}
 
 	static int nbW = 0;
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> neighbors) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
 		for (var n : neighbors) {
 			var e = child_entry.get(n);
 
@@ -96,7 +95,7 @@ public class PipeFromToChildProcess extends TransportService {
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
+	public boolean canContact(Component c) {
 		return child_entry.containsKey(c);
 	}
 

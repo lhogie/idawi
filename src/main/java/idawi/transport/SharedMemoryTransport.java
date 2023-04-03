@@ -11,43 +11,36 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.NetworkMap;
-import idawi.knowledge_base.info.DirectedLink;
 import idawi.messaging.Message;
 import idawi.service.LocationService;
 import idawi.service.SimulatedLocationService;
-import toools.io.ser.JavaSerializer;
-import toools.math.Interval;
+import jdotgen.EdgeProps;
+import jdotgen.GraphvizDriver;
+import jdotgen.VertexProps;
 
 public class SharedMemoryTransport extends TransportService {
 
-	private String name;
-	private Interval latency = new Interval(0, 0);
 	public double emissionRange = Double.MAX_VALUE;
-	private static final JavaSerializer ser = new JavaSerializer<>();
 	public Set<SharedMemoryTransport> outs = new HashSet<>();
 
-	public SharedMemoryTransport(Component c, String name) {
+	public SharedMemoryTransport(Component c) {
 		super(c);
-		this.name = name;
 	}
 
 	@Override
 	public String getName() {
-		return name;
+		return "shared mem";
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
-		return c.component != null;
+	public boolean canContact(Component c) {
+		return c != null;
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> throughSpecificNeighbors) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> throughSpecificNeighbors) {
 		for (var n : throughSpecificNeighbors) {
-			var otherSide = n.component.lookup(getClass());
-			f(msg, otherSide);
+			f(msg, n.transport);
 		}
 	}
 
@@ -56,19 +49,15 @@ public class SharedMemoryTransport extends TransportService {
 		outs.forEach(out -> f(msg, out));
 	}
 
-	private void f(Message msg, SharedMemoryTransport out) {
+	private void f(Message msg, TransportService out) {
 //		new Exception().printStackTrace();
 		Service.threadPool.submit(() -> {
 			try {
-				out.processIncomingMessage(clone(msg));
+				out.processIncomingMessage(msg.clone());
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		});
-	}
-
-	private Message clone(Message msg) {
-		return (Message) ser.clone(msg);
 	}
 
 	public void connectTo(Component dest) {
@@ -82,9 +71,9 @@ public class SharedMemoryTransport extends TransportService {
 
 	public void connectTo(SharedMemoryTransport networkInterfaceOnDestination) {
 		outs.add(networkInterfaceOnDestination);
-		var dest = networkInterfaceOnDestination.component;
-		component.knowledgeBase().localComponents.put(dest.ref(), dest);
-		component.mapService().map.add(new DirectedLink(component.now(), component.ref(), getClass(), dest.ref()));
+		var dest = networkInterfaceOnDestination;
+		component.digitalTwinService().add(dest.component);
+		component.digitalTwinService().add(component.now(), this, 0, dest);
 	}
 
 	public void disconnectFrom(Component b) {
@@ -97,11 +86,10 @@ public class SharedMemoryTransport extends TransportService {
 			throw new IllegalStateException("component " + b + " is not out of " + component);
 
 		outs.remove(t);
-		component.mapService().map.remove(component.ref(), getClass(), b.ref());
 	}
 
 	public boolean isConnectedTo(Component c) {
-		return component.mapService().map.searchEdge(component.ref(), null, c.ref()) != null;
+		return actualNeighbors().contains(c);
 	}
 
 	public static void chain(List<Component> l, Class<? extends SharedMemoryTransport> t) {
@@ -218,23 +206,37 @@ public class SharedMemoryTransport extends TransportService {
 	}
 
 	@Override
-	public Collection<ComponentRef> actualNeighbors() {
-		return outs.stream().map(t -> t.component.ref()).toList();
+	public Collection<Component> actualNeighbors() {
+		return outs.stream().map(t -> t.component).toList();
 	}
 
-	public static NetworkMap createMap(Class<? extends SharedMemoryTransport> t, Iterable<Component> components) {
-		var m = new NetworkMap();
+	public static GraphvizDriver toDot(List<Component> components) {
+		return new GraphvizDriver() {
 
-		for (var c : components) {
-			for (var ct : c.lookup(t).outs) {
-				var i = new DirectedLink(0, c.ref(), t, ct.component.ref());
-				m.add(i);
+			@Override
+			protected void findVertices(VertexProps v, Validator f) {
+				for (var c : components) {
+					v.id = c;
+					f.f();
+				}
+
 			}
-		}
-		return m;
+
+			@Override
+			protected void findEdges(EdgeProps e, Validator f) {
+				for (var c : components) {
+					for (var t : c.services(TransportService.class)) {
+						for (var n : t.actualNeighbors()) {
+							e.from = c;
+							e.to = n;
+							e.directed = true;
+							e.label = t.getFriendlyName();
+							f.f();
+						}
+					}
+				}
+			}
+		};
 	}
 
-	public static NetworkMap createLocalMap(Class<? extends SharedMemoryTransport> t, Component c) {
-		return createMap(t, Set.of(c));
-	}
 }

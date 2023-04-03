@@ -8,10 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
+import idawi.Component;
 import idawi.RemoteException;
-import idawi.knowledge_base.ComponentRef;
 import idawi.routing.Route;
 
 public class MessageList extends ArrayList<Message> {
@@ -26,18 +25,18 @@ public class MessageList extends ArrayList<Message> {
 		return filter(m -> m.isEOT());
 	}
 
-	public Set<ComponentRef> completedPeers() {
+	public Set<Component> completedPeers() {
 		return eots().senders();
 	}
 
-	public Set<ComponentRef> uncompletedPeers() {
-		var r = new HashSet<ComponentRef>();
+	public Set<Component> uncompletedPeers() {
+		var r = new HashSet<Component>();
 
 		for (var m : this) {
 			if (m.isEOT()) {
-				r.remove(m.route.initialEmission().component);
+				r.remove(m.route.initialEmission().transport.component);
 			} else {
-				r.add(m.route.initialEmission().component);
+				r.add(m.route.initialEmission().transport.component);
 			}
 		}
 
@@ -57,8 +56,8 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList retainFirstCompleted() {
-		var firstCompleted = eots().first().route.initialEmission().component;
-		return filter(m -> m.route.initialEmission().component.equals(firstCompleted) && !m.isEOT());
+		var firstCompleted = eots().first().route.initialEmission().transport.component;
+		return filter(m -> m.route.initialEmission().transport.component.equals(firstCompleted) && !m.isEOT());
 	}
 
 	public Message first() {
@@ -119,37 +118,17 @@ public class MessageList extends ArrayList<Message> {
 		}).toList();
 	}
 
-	public Map<ComponentRef, MessageList> sender2message() {
-		Map<ComponentRef, MessageList> r = new HashMap<>();
+	public Map<Component, MessageList> sender2message() {
+		Map<Component, MessageList> r = new HashMap<>();
 
 		for (Message m : this) {
-			MessageList l = r.get(m.route.initialEmission().component);
+			MessageList l = r.get(m.route.initialEmission().transport.component);
 
 			if (l == null) {
-				r.put(m.route.initialEmission().component, l = new MessageList());
+				r.put(m.route.initialEmission().transport.component, l = new MessageList());
 			}
 
 			l.add(m);
-		}
-
-		return r;
-	}
-
-	public Map<String, MessageList> senderName2messages() {
-		Map<String, MessageList> r = new HashMap<>();
-
-		for (var e : sender2message().entrySet()) {
-			r.put(e.getKey().ref, e.getValue());
-		}
-
-		return r;
-	}
-
-	public Map<String, List<Object>> senderName2contents() {
-		Map<String, List<Object>> r = new HashMap<>();
-
-		for (var e : sender2message().entrySet()) {
-			r.put(e.getKey().ref, e.getValue().contents());
 		}
 
 		return r;
@@ -207,9 +186,9 @@ public class MessageList extends ArrayList<Message> {
 		return count(m -> m.isProgress());
 	}
 
-	public Set<ComponentRef> senders() {
-		var r = new HashSet<ComponentRef>();
-		forEach(msg -> r.add(msg.route.initialEmission().component));
+	public Set<Component> senders() {
+		var r = new HashSet<Component>();
+		forEach(msg -> r.add(msg.route.initialEmission().transport.component));
 		return r;
 	}
 
@@ -219,8 +198,8 @@ public class MessageList extends ArrayList<Message> {
 		return r;
 	}
 
-	public Set<ComponentRef> components() {
-		var r = new HashSet<ComponentRef>();
+	public Set<Component> components() {
+		var r = new HashSet<Component>();
 		forEach(msg -> msg.route.components().forEach(c -> r.add(c)));
 		return r;
 	}

@@ -6,14 +6,13 @@ import java.util.Collections;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 
 public class PipeFromToParentProcess extends TransportService {
 	private final boolean suicideIfLoseParent;
-	private final Set<ComponentRef> parent;
+	private final Set<Component> parent;
 
-	public PipeFromToParentProcess(Component me, ComponentRef parent, boolean suicideWhenParentDies) {
+	public PipeFromToParentProcess(Component me, Component parent, boolean suicideWhenParentDies) {
 		super(me);
 		this.suicideIfLoseParent = suicideWhenParentDies;
 		this.parent = Collections.singleton(parent);
@@ -32,12 +31,12 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
-	public Set<ComponentRef> actualNeighbors() {
+	public Set<Component> actualNeighbors() {
 		return parent;
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> neighbors) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
 		if (!neighbors.equals(actualNeighbors()))
 			throw new IllegalStateException();
 
@@ -62,7 +61,7 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
+	public boolean canContact(Component c) {
 		return parent.contains(c);
 	}
 

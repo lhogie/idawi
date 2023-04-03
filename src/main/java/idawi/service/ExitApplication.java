@@ -12,9 +12,6 @@ public class ExitApplication extends Service {
 		registerOperation(new exit());
 	}
 
-	private final static int SHUTDOWN = 56;
-	private final static int RESTART = 57;
-
 	@Override
 	public String getFriendlyName() {
 		return "exit";
@@ -32,7 +29,7 @@ public class ExitApplication extends Service {
 	}
 
 	public void exit(int exitCode) {
-		component.fwsp().exec(ExitApplication.exit.class, null, TargetComponents.all, false, exitCode);
+		component.bb().exec(ExitApplication.exit.class, null, TargetComponents.all, false, exitCode);
 		component.forEachService(s -> s.dispose());
 		System.exit(exitCode);
 	}

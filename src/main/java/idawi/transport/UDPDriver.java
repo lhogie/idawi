@@ -6,8 +6,7 @@ import java.net.DatagramSocket;
 import java.util.Collection;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.Message;
 
 public class UDPDriver extends IPDriver {
@@ -24,24 +23,24 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> relays) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> relays) {
 		if (socket == null)
 			return;
 
 		byte[] buf = serializer.toBytes(msg);
 		// Cout.debugSuperVisible("sending to " + neighbors);
 
-		for (ComponentRef relay : relays) {
+		for (var relay : relays) {
 			// System.out.println(n.toHTML());
 
 			if (msg.route.isEmpty())
 				throw new IllegalStateException("empty route");
 
 			DatagramPacket p = new DatagramPacket(buf, buf.length);
-			p.setAddress(relay.description.inetAddresses.get(0));
+			p.setAddress(relay.transport.component.info.inetAddresses.get(0));
 			// System.out.println(relay.inetAddresses.get(0) + ":" +
 			// relay.udpPort);
-			p.setPort(relay.description.udpPort);
+			p.setPort(relay.transport.component.info.udpPort);
 
 			try {
 				socket.send(p);
@@ -57,12 +56,12 @@ public class UDPDriver extends IPDriver {
 		if (socket == null)
 			return;
 
-		multicastImpl(msg, believedNeighbors());
+		multicastImpl(msg, neighborhood().infos());
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
-		return super.canContact(c) && c.description.udpPort != null;
+	public boolean canContact(Component c) {
+		return super.canContact(c) && c.info.udpPort != null;
 	}
 
 	@Override
@@ -87,7 +86,7 @@ public class UDPDriver extends IPDriver {
 						Message msg = (Message) serializer.fromBytes(p.getData());
 						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
-						component.services(MapService.class).forEach(s -> s.map.feedWith(msg.route));
+						component.services(DigitalTwinService.class).forEach(s -> s.feedWith(msg.route));
 						processIncomingMessage(msg);
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -112,8 +111,7 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	public Collection<ComponentRef> actualNeighbors() {
-		// TODO Auto-generated method stub
+	public Collection<Component> actualNeighbors() {
 		return null;
 	}
 }

@@ -10,11 +10,9 @@ import idawi.InnerClassOperation;
 import idawi.OperationParameterList;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
-import idawi.knowledge_base.ComponentRef;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.transport.TransportService;
-import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -22,7 +20,7 @@ import toools.util.Date;
  * to bench.
  */
 
-public abstract class RoutingService<P extends RoutingParms> extends Service implements BiConsumer<Message, P> {
+public abstract class RoutingService<P extends RoutingData> extends Service implements BiConsumer<Message, P> {
 	protected final AtomicLong nbMsgReceived = new AtomicLong();
 
 	public RoutingService(Component node) {
@@ -43,15 +41,13 @@ public abstract class RoutingService<P extends RoutingParms> extends Service imp
 		return component.services(TransportService.class);
 	}
 
-	protected P convert(RoutingParms p) {
+	protected P convert(RoutingData p) {
 		return (P) p;
 	}
 
 	public abstract TargetComponents naturalTarget(P parms);
 
 	public abstract String getAlgoName();
-
-	public abstract P decode(String s);
 
 	public abstract P createDefaultRoutingParms();
 
@@ -83,12 +79,12 @@ public abstract class RoutingService<P extends RoutingParms> extends Service imp
 		return exec(o, parms, re, returnQ ? createAutoQueue("returnQ") : null, initialInputData);
 	}
 
-	public RemotelyRunningOperation exec(ComponentRef to, Class<? extends InnerClassOperation> o,
+	public RemotelyRunningOperation exec(Component to, Class<? extends InnerClassOperation> o,
 			Object initialInputData) {
 		return exec(o, null, new TargetComponents.Unicast(to), true, initialInputData);
 	}
 
-	public RemotelyRunningOperation exec(ComponentRef to, Class<? extends InnerClassOperation> o, P parms,
+	public RemotelyRunningOperation exec(Component to, Class<? extends InnerClassOperation> o, P parms,
 			Object initialInputData) {
 		return exec(o, parms, new TargetComponents.Unicast(to), true, initialInputData);
 	}
@@ -109,7 +105,7 @@ public abstract class RoutingService<P extends RoutingParms> extends Service imp
 		if (returnQ != null) {
 			r.returnQ = returnQ;
 			dest.replyTo = new MessageQDestination();
-			dest.replyTo.componentTarget = new TargetComponents.Unicast(component.ref());
+			dest.replyTo.componentTarget = new TargetComponents.Unicast(component);
 			dest.replyTo.queueID = r.returnQ.name;
 			dest.replyTo.service = r.returnQ.service.getClass();
 		}
@@ -119,7 +115,7 @@ public abstract class RoutingService<P extends RoutingParms> extends Service imp
 		return r;
 	}
 
-	public Object exec_rpc(ComponentRef to, Class<? extends InnerClassOperation> o, Object parms) {
+	public Object exec_rpc(Component to, Class<? extends InnerClassOperation> o, Object parms) {
 		var rec = new TargetComponents.Unicast(to);
 		var rq = exec(o, createDefaultRoutingParms(), rec, createAutoQueue("returnQ"),
 				new OperationParameterList(parms)).returnQ;
@@ -141,15 +137,15 @@ public abstract class RoutingService<P extends RoutingParms> extends Service imp
 		}
 	}
 
-	public MessageQueue ping(Set<ComponentRef> targets, P parms) {
+	public MessageQueue ping(Set<Component> targets, P parms) {
 		return exec(ping.class, parms, new TargetComponents.Multicast(targets), true, "ping").returnQ;
 	}
 
-	public MessageQueue ping(Set<ComponentRef> targets) {
+	public MessageQueue ping(Set<Component> targets) {
 		return ping(targets, createDefaultRoutingParms());
 	}
 
-	public MessageQueue ping(ComponentRef target) {
+	public MessageQueue ping(Component target) {
 		return ping(Set.of(target), createDefaultRoutingParms());
 	}
 

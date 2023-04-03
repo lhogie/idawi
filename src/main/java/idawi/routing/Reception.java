@@ -1,14 +1,13 @@
 package idawi.routing;
 
-import idawi.Component;
 import idawi.transport.TransportService;
 
 public class Reception extends RouteEvent {
 	Emission previousEmission;
 	Emission forward;
 
-	public Reception(Component c, TransportService transportService) {
-		super(c, transportService);
+	public Reception(TransportService transportService) {
+		super(transportService);
 	}
 
 	public Emission previousEmission() {
@@ -39,7 +38,7 @@ public class Reception extends RouteEvent {
 	}
 
 	@Override
-	public RoutingParms routingParms() {
+	public RoutingData routingParms() {
 		return previousEmission().routingParms();
 	}
 }

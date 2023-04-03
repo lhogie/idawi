@@ -1,5 +1,6 @@
 package idawi;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,83 +12,59 @@ import java.util.function.Predicate;
 
 import javax.crypto.SecretKey;
 
-import idawi.deploy.DeployerService;
-import idawi.knowledge_base.ComponentDescription;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.ComponentInfo;
+import idawi.knowledge_base.DigitalTwinService;
 import idawi.knowledge_base.MiscKnowledgeBase;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.FloodingWithSelfPruning;
-import idawi.routing.FloodingWithSelfPruning_UsingBloomFilter;
 import idawi.routing.RoutingService;
 import idawi.routing.irp.IRP;
-import idawi.service.Bencher;
-import idawi.service.DemoService;
-import idawi.service.DirectorySharingService;
-import idawi.service.ErrorLog;
+import idawi.service.Location;
 import idawi.service.LocationService;
-import idawi.service.LocationService.Location;
-import idawi.service.ServiceManager;
-import idawi.service.SystemMonitor;
-import idawi.service.extern.ExternalCommandsService;
-import idawi.service.rest.AESEncrypter;
-import idawi.service.rest.WebService;
 import idawi.service.time.TimeService;
-import idawi.transport.PipeFromToChildProcess;
+import idawi.service.web.AESEncrypter;
+import idawi.transport.Neighborhood;
+import idawi.transport.TransportService;
+import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
 
-public class Component {
+public class Component implements SizeOf, Serializable {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
-	public static final ConcurrentHashMap<ComponentRef, Component> componentsInThisJVM = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
 	static AESEncrypter aes = new AESEncrypter();
-	SecretKey key = null;
 
-	final Set<Service> services = new HashSet<>();
-//	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
-	public final Set<Component> killOnDeath = new HashSet<>();
-	public ComponentRef parent;
-	private ComponentRef ref;
+	public static List<Component> create(String prefix, int n) {
+		var r = new ArrayList<Component>();
 
-	public Component() {
-		this(new ComponentRef("c" + componentsInThisJVM.size()));
+		for (int i = 0; i < n; ++i) {
+			r.add(new Component(prefix + i));
+		}
+
+		return r;
 	}
 
-	public Component(ComponentRef ref) {
+	public transient ComponentInfo info;
+
+	transient SecretKey key = null;
+
+	transient final Set<Service> services = new HashSet<>();
+//	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
+	transient public final Set<Component> dependantChildren = new HashSet<>();
+	transient public Component parent;
+	public String ref;
+
+	public Component() {
+		this("c" + componentsInThisJVM.size());
+	}
+
+	public Component(String ref) {
 		if (componentsInThisJVM.containsKey(ref)) {
 			throw new IllegalStateException(ref + " is already in use in this JVM");
 		}
 
 		this.ref = ref;
-		this.ref.component = this;
-
-		new MiscKnowledgeBase(this);
-		new MapService(this);
-		new TimeService(this);
-
-		// start network services
-//		new SharedMemoryTransport(this, "shared memory");
-//		new TCPDriver(this);
-//		new UDPDriver(this);
-		new PipeFromToChildProcess(this);
-
-		// routing
-		new BlindBroadcasting(this);
-		new FloodingWithSelfPruning(this);
-		new FloodingWithSelfPruning_UsingBloomFilter(this);
-		new IRP(this);
-
-		// start system services
-		new DeployerService(this);
-		new ServiceManager(this);
-		new SystemMonitor(this);
-		new Bencher(this);
-		new ErrorLog(this);
-		new WebService(this);
-		new ExternalCommandsService(this);
-		new DirectorySharingService(this);
-		new DemoService(this);
 
 		// descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(ref, this);
@@ -96,7 +73,7 @@ public class Component {
 	public void dispose() {
 		componentsInThisJVM.remove(this);
 		services.forEach(s -> s.dispose());
-		killOnDeath.forEach(t -> t.dispose());
+		dependantChildren.forEach(t -> t.dispose());
 	}
 
 	public Collection<Service> services() {
@@ -158,13 +135,14 @@ public class Component {
 		return o;
 	}
 
-	public Service newService() {
-		return new Service(this);
+	@Override
+	public String toString() {
+		return ref.toString();
 	}
 
 	@Override
-	public String toString() {
-		return ref().toString();
+	public int hashCode() {
+		return ref.hashCode();
 	}
 
 	public static void stopPlatformThreads() {
@@ -176,12 +154,8 @@ public class Component {
 		services.remove(s.id);
 	}
 
-	public ComponentDescription descriptor() {
-		return lookup(MiscKnowledgeBase.class).componentDescriptor();
-	}
-
-	public ComponentRef ref() {
-		return ref;
+	public ComponentInfo descriptor() {
+		return lookup(MiscKnowledgeBase.class).componentInfo();
 	}
 
 	public double now() {
@@ -189,8 +163,8 @@ public class Component {
 		return ts == null ? Date.time() : ts.now();
 	}
 
-	public MapService mapService() {
-		return lookup(MapService.class);
+	public DigitalTwinService digitalTwinService() {
+		return lookup(DigitalTwinService.class);
 	}
 
 	public MiscKnowledgeBase knowledgeBase() {
@@ -216,5 +190,57 @@ public class Component {
 	public Location getLocation() {
 		var locationService = lookup(LocationService.class);
 		return locationService == null ? null : locationService.location;
+	}
+
+	@Override
+	public long sizeOf() {
+		long sum = 8; // dts
+		sum += key == null ? 0 : key.getEncoded().length;
+		sum += 8;
+		sum += SizeOf.sizeOf(ref);
+		sum += 8;
+
+		for (var s : services) {
+			sum += 8 + s.sizeOf();
+		}
+
+		return sum;
+	}
+
+	public Long longHash() {
+		long h = 1125899906842597L;
+		int len = ref.length();
+
+		for (int i = 0; i < len; i++) {
+			h = 31 * h + ref.charAt(i);
+		}
+
+		return h;
+	}
+
+	public int nbNeighbors() {
+		return services(TransportService.class).stream().map(s -> s.neighborhood().size()).reduce((t, u) -> t + u)
+				.get();
+	}
+
+	public Neighborhood neighbors() {
+		return Neighborhood.merge(services(TransportService.class).stream().map(t -> t.neighborhood()).toList()
+				.toArray(new Neighborhood[0]));
+	}
+
+	public Collection<TransportService> ins() {
+		var r = new HashSet<TransportService>();
+
+		for (var c : lookup(DigitalTwinService.class).components) {
+			for (var t : c.services(TransportService.class)) {
+				for (var n : t.neighborhood().infos()) {
+					if (n.transport.equals(this)) {
+						r.add(t);
+					}
+				}
+			}
+		}
+
+		return r;
 	}
 }

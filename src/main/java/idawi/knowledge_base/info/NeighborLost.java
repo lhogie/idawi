@@ -1,27 +1,20 @@
 package idawi.knowledge_base.info;
 
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-import idawi.knowledge_base.ComponentRef;
+import idawi.Component;
 import idawi.transport.TransportService;
 
 public class NeighborLost extends NetworkLink {
-	public ComponentRef c, lostNeighbor;
+	public TransportService  lostNeighbor;
 
-	public NeighborLost(double date, Class<? extends TransportService> protocol, ComponentRef c, ComponentRef neighbor) {
-		super(date, protocol);
-		this.c = c;
+	public NeighborLost(double date, TransportService c, TransportService neighbor) {
+		super(date, c);
 		this.lostNeighbor = neighbor;
 	}
 
 	@Override
-	public boolean involves(ComponentRef d) {
-		return d.equals(c) || d.equals(lostNeighbor);
-	}
-
-	@Override
-	public void forEachComponent(Consumer<ComponentRef> c) {
-		c.accept(this.c);
-		c.accept(lostNeighbor);
+	public void exposeComponent(Predicate<Component> p) {
+		var b = p.test(transport.component) || p.test(lostNeighbor.component);
 	}
 }

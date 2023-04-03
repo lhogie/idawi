@@ -4,9 +4,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.NetworkTopologyListener;
-import idawi.knowledge_base.info.DirectedLink;
+import idawi.knowledge_base.DigitalTwinListener;
 import idawi.messaging.Message;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
@@ -21,31 +19,31 @@ public class IRP extends RoutingService<NEParms> {
 	public IRP(Component node) {
 		super(node);
 
-		component.mapService().map.listeners.add(new NetworkTopologyListener() {
+		component.digitalTwinService().listeners.add(new DigitalTwinListener() {
 
 			@Override
-			public void newInteraction(DirectedLink l) {
-				if (component.ref().equals(l.src)) {
-					var tt = component.lookup(l.transport);
+			public void newComponent(Component p) {
+			}
+
+			@Override
+			public void componentHasGone(Component a) {
+			}
+
+			@Override
+			public void newInteraction(TransportService from, TransportService to) {
+				if (component.equals(from.component)) {
+					var tt = component.lookup(from.getClass());
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.multicast(msg, Set.of(l.dest), IRP.this, msg.route.last().routingParms());
+							tt.multicast(msg, Set.of(to.find(to.component)), IRP.this, msg.route.last().routingParms());
 						}
 					}
 				}
 			}
 
 			@Override
-			public void newComponent(ComponentRef p) {
-			}
-
-			@Override
-			public void interactionStopped(DirectedLink l) {
-			}
-
-			@Override
-			public void componentHasGone(ComponentRef a) {
+			public void interactionStopped(TransportService from, TransportService to) {
 			}
 		});
 	}
@@ -84,17 +82,6 @@ public class IRP extends RoutingService<NEParms> {
 
 	public boolean isExpired(Message msg) {
 		return remainingTime(msg) <= 0;
-	}
-
-	@Override
-	public NEParms decode(String s) {
-		var to = new NEParms();
-
-		for (var n : s.split(" *, *")) {
-			to.componentNames.add(component.mapService().map.lookup(n));
-		}
-
-		return to;
 	}
 
 	@Override

@@ -3,7 +3,6 @@ package idawi.transport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
@@ -12,8 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import idawi.Component;
-import idawi.knowledge_base.ComponentRef;
-import idawi.knowledge_base.MapService;
+import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.Message;
 import toools.thread.Threads;
 
@@ -30,7 +28,7 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	private final Map<ComponentRef, Entry> neighbor_socket = new HashMap<>();
+	private final Map<Component, Entry> neighbor_socket = new HashMap<>();
 	private ServerSocket ss;
 
 	public TCPDriver(Component c) {
@@ -43,8 +41,8 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public boolean canContact(ComponentRef c) {
-		return super.canContact(c) && c.description.tcpPort != null;
+	public boolean canContact(Component c) {
+		return super.canContact(c) && c.info.tcpPort != null;
 	}
 
 	@Override
@@ -73,7 +71,7 @@ public class TCPDriver extends IPDriver {
 			try {
 				while (true) {
 					Message msg = (Message) serializer.read(is);
-					ComponentRef from = msg.route.last().component;
+					var from = msg.route.last().transport().component;
 
 					synchronized (neighbor_socket) {
 						Entry e = neighbor_socket.get(from);
@@ -95,16 +93,13 @@ public class TCPDriver extends IPDriver {
 	private void errorOn(Socket s) {
 		// new Exception().printStackTrace();
 		synchronized (neighbor_socket) {
-			Iterator<java.util.Map.Entry<ComponentRef, Entry>> i = neighbor_socket.entrySet().iterator();
+			Iterator<java.util.Map.Entry<Component, Entry>> i = neighbor_socket.entrySet().iterator();
 
 			while (i.hasNext()) {
-				java.util.Map.Entry<ComponentRef, Entry> e = i.next();
+				java.util.Map.Entry<Component, Entry> e = i.next();
 
 				if (e.getValue().socket == s) {
 					i.remove();
-					ComponentRef peer = e.getKey();
-					component.forEachServiceOfClass(MapService.class,
-							map -> map.neighborLeft(component.ref(), this, peer));
 				}
 			}
 		}
@@ -116,8 +111,8 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<ComponentRef> neighbors) {
-		for (ComponentRef n : neighbors) {
+	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
+		for (var n : neighbors) {
 			Entry entry = null;
 
 			synchronized (neighbor_socket) {
@@ -126,7 +121,7 @@ public class TCPDriver extends IPDriver {
 				// there is no connection to this peer yet
 				// try to establish one
 				if (entry == null) {
-					entry = createSocket(n);
+					entry = createSocket(n.transport.component);
 				}
 			}
 
@@ -152,34 +147,32 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	protected Entry createSocket(ComponentRef to) {
-		component.knowledgeBase().descriptor(to, true);
-		InetAddress ip = to.description.inetAddresses.get(0);
-		Entry entry = null;
+	protected Entry createSocket(Component to) {
+		for (var ip : to.info.inetAddresses) {
+			Entry entry = null;
 
-		try {
-			var socket = new Socket(ip, to.description.tcpPort);
-
-			if (socket != null) {
+			try {
+				var socket = new Socket(ip, to.info.tcpPort);
 				neighbor_socket.put(to, entry = new Entry(socket));
 				newSocket(socket);
+				return entry;
+
+			} catch (IOException e) {
+				/*
+				 * int localPort = NetUtilities.findAvailablePort(1000);
+				 * Cout.debug("creating SSH tunnel to " + ip + ":" + port + " using local port "
+				 * + localPort);
+				 * 
+				 * SSHUtils.createSSHTunnelTo(to.sshParameters, ip, port, localPort);
+				 * 
+				 * try { return new Socket("localhost", localPort); } catch (IOException e1) {
+				 * return null; }
+				 */
+				return null;
 			}
-
-			return entry;
-
-		} catch (IOException e) {
-			/*
-			 * int localPort = NetUtilities.findAvailablePort(1000);
-			 * Cout.debug("creating SSH tunnel to " + ip + ":" + port + " using local port "
-			 * + localPort);
-			 * 
-			 * SSHUtils.createSSHTunnelTo(to.sshParameters, ip, port, localPort);
-			 * 
-			 * try { return new Socket("localhost", localPort); } catch (IOException e1) {
-			 * return null; }
-			 */
-			return null;
 		}
+
+		return null;
 	}
 
 	@Override
@@ -198,7 +191,7 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public Collection<ComponentRef> actualNeighbors() {
+	public Collection<Component> actualNeighbors() {
 		return neighbor_socket.keySet();
 	}
 }
