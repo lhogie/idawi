@@ -34,9 +34,13 @@ import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.DigitalTwinService;
 import idawi.knowledge_base.MiscKnowledgeBase;
 import idawi.messaging.MessageCollector;
+import idawi.routing.BlindBroadcasting;
+import idawi.routing.FloodingWithSelfPruning;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
+import idawi.service.DemoService;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -52,7 +56,6 @@ import toools.io.ser.ToStringSerializer;
 import toools.io.ser.XMLSerializer;
 import toools.io.ser.YAMLSerializer;
 import toools.net.NetUtilities;
-import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
 public class WebService extends Service {
@@ -79,8 +82,15 @@ public class WebService extends Service {
 	private HttpServer httpServer;
 	private int port;
 
+	public Map<String, String> serviceShortcuts = new HashMap<>();
+
 	public WebService(Component t) {
 		super(t);
+
+		serviceShortcuts.put("bb", BlindBroadcasting.class.getName());
+		serviceShortcuts.put("dt", DigitalTwinService.class.getName());
+		serviceShortcuts.put("fwsp", FloodingWithSelfPruning.class.getName());
+		serviceShortcuts.put("demo", DemoService.class.getName());
 	}
 
 	public class Base64URL extends TypedInnerClassOperation {
@@ -274,7 +284,8 @@ public class WebService extends Service {
 			OutputStream output, Serializer serializer) throws IOException {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
-		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "no", Set.of("yes", "no")));
+		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "false", Set.of("true", "false")));
+		Cout.debugSuperVisible(compress);
 		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
 
 		if (!query.isEmpty()) {
@@ -282,11 +293,17 @@ public class WebService extends Service {
 		}
 
 		RoutingService routing = component.defaultRoutingProtocol();
-		var routingDescr = path.isEmpty() ? "" : path.remove(0);
+		var routingString = path.isEmpty() ? "" : path.remove(0);
 
-		if (!routingDescr.isEmpty()) {
-			var routingClass = Clazz.findClass(routingDescr);
-			routing = (RoutingService) Clazz.makeInstance(routingClass);
+		if (!routingString.isEmpty()) {
+			routingString = serviceShortcuts.getOrDefault(routingString, routingString);
+
+			try {
+				var routingClass = Class.forName(routingString);
+				routing = (RoutingService) routingClass.getConstructor(Component.class).newInstance(component);
+			} catch (Exception err) {
+				throw new RuntimeException(err);
+			}
 		}
 
 		RoutingData routingParms = routing.createDefaultRoutingParms();
@@ -303,20 +320,56 @@ public class WebService extends Service {
 			TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
 		}
 
-		Class<? extends InnerClassOperation> operationID = Service.descriptor.class;
+		Class<? extends InnerClassOperation> operationID = MiscKnowledgeBase.descriptor.class;
+		var serviceOperationString = path.isEmpty() ? "" : path.remove(0);
 
-		var serviceString = path.isEmpty() ? "" : path.remove(0);
-		var operationString = path.isEmpty() ? "" : path.remove(0);
+		if (!serviceOperationString.isEmpty()) {
+			int p = serviceOperationString.indexOf('$');
+			String serviceString;
+			String operationString;
 
-		if (!operationString.isEmpty()) {
-			operationID = (Class<? extends InnerClassOperation>) Clazz
-					.findClassOrFail(serviceID.getName() + "$" + path.remove(0));
+			if (p == -1) {
+				serviceString = serviceOperationString;
+				operationString = InnerClassOperation.name(operationID);
+			} else {
+				serviceString = serviceOperationString.substring(0, p);
+				operationString = serviceOperationString.substring(p + 1);
+			}
+
+			serviceString = serviceShortcuts.getOrDefault(serviceString, serviceString);
+
+			try {
+				var serviceClass = (Class<? extends Service>) Class.forName(serviceString);
+
+				while (true) {
+					var operationClassName = serviceClass.getName() + "$" + operationString;
+
+					try {
+//						System.err.println("trying " + operationClassName);
+						operationID = (Class<? extends InnerClassOperation>) Class.forName(operationClassName);
+						break;
+					} catch (Exception e) {
+						// e.printStackTrace();
+						// System.err.println("can't instantiate " + operationClassName);
+
+						if (Service.class.isAssignableFrom(serviceClass.getSuperclass())) {
+							serviceClass = (Class<? extends Service>) serviceClass.getSuperclass();
+						} else {
+							throw new RuntimeException(
+									"can find operation " + operationString + " in the hierarchy of " + serviceString);
+						}
+					}
+				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		var parms = new OperationParameterList();
 		parms.addAll(path);
 
-		System.out.println(routing.getAlgoName() + "/" + routingParms + "/" + target + "/" + operationID + parms);
+		System.out.println(routing.getClass().getName() + "/" + routingParms + "/" + target + "/"
+				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?" + query);
 
 		RemotelyRunningOperation ro = routing.exec(operationID, routingParms, target, true, parms);
 		var aes = new AESEncrypter();
@@ -325,23 +378,24 @@ public class WebService extends Service {
 		ObjectMapper jsonParser = new ObjectMapper();
 		final var routing2 = routing;
 
+		//Cout.debugSuperVisible("collecting...");
+
 		ro.returnQ.collect(duration, timeout, collector -> {
+			// Cout.debugSuperVisible("result: " + collector.messages.last());
 			List<String> encodingsToClient = new ArrayList<>();
 			var bytes = serializer.toBytes(collector.messages.last());
 			encodingsToClient.add(serializer.getMIMEType());
-			boolean base64 = serializer.isBinary();
+			boolean base64 = serializer.isBinary() || compress || encrypt;
 
 			if (compress) {
 				bytes = Utilities.gzip(bytes);
 				encodingsToClient.add("gzip");
-				base64 = true;
 			}
 
 			if (encrypt) {
 				try {
 					bytes = aes.encrypt(bytes, key);
 					encodingsToClient.add("aes");
-					base64 = true;
 				} catch (Exception e) {
 					System.err.println(e.getMessage());
 				}

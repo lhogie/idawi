@@ -18,7 +18,7 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 	@Override
 	public void exposeComponent(Predicate<Component> c) {
 		for (var i : s) {
-			if (c.test(i.transport.component)) {
+			if (c.test(i.dest.component)) {
 				return;
 			}
 		}
@@ -29,7 +29,7 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 	}
 
 	public List<Component> components() {
-		return s.stream().map(i -> i.transport.component).toList();
+		return s.stream().map(i -> i.dest.component).toList();
 	}
 
 	public int size() {
@@ -52,7 +52,7 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 
 	public OutNeighbor search(Component to) {
 		for (var t : s) {
-			if (t.transport.component.equals(to)) {
+			if (t.dest.component.equals(to)) {
 				return t;
 			}
 		}
@@ -66,7 +66,7 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 
 	public OutNeighbor search(TransportService to) {
 		for (var t : s) {
-			if (t.transport.equals(to)) {
+			if (t.dest.equals(to)) {
 				return t;
 			}
 		}
@@ -75,7 +75,7 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 	}
 
 	public void remove(TransportService lostNeighbor) {
-		s.removeIf(n -> n.transport.equals(lostNeighbor));
+		s.removeIf(n -> n.dest.equals(lostNeighbor));
 	}
 
 	@Override
@@ -94,5 +94,12 @@ public class Neighborhood extends Info implements Serializable, Iterable<OutNeig
 		}
 		
 		return r;
+	}
+	
+	@Override
+	public String toString() {
+		String s = super.toString();
+		s += ", out neighbors: " + this.s;
+		return s;
 	}
 }

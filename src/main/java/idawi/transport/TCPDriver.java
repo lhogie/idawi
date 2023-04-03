@@ -121,7 +121,7 @@ public class TCPDriver extends IPDriver {
 				// there is no connection to this peer yet
 				// try to establish one
 				if (entry == null) {
-					entry = createSocket(n.transport.component);
+					entry = createSocket(n.dest.component);
 				}
 			}
 

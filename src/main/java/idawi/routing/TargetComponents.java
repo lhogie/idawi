@@ -7,10 +7,23 @@ import java.util.function.Predicate;
 
 import idawi.Component;
 import idawi.knowledge_base.DigitalTwinService;
+import toools.text.TextUtilities;
 
 public interface TargetComponents extends Predicate<Component>, Serializable {
 
-	public static final TargetComponents all = c -> true;
+	public static final TargetComponents all = new TargetComponents() {
+
+		@Override
+		public boolean test(Component t) {
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "*";
+		}
+
+	};
 
 	public static final class Unicast implements TargetComponents {
 		public Component target;
@@ -51,7 +64,7 @@ public interface TargetComponents extends Predicate<Component>, Serializable {
 
 		@Override
 		public String toString() {
-			return target.toString();
+			return TextUtilities.concat(",", target);
 		}
 	}
 

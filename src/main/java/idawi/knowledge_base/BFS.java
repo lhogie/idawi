@@ -29,7 +29,7 @@ public class BFS {
 		@Override
 		public void exposeComponent(Predicate<Component> p) {
 			for (var c : l) {
-				if (p.test(c.transport.component)) {
+				if (p.test(c.dest.component)) {
 					return;
 				}
 			}
@@ -109,7 +109,7 @@ public class BFS {
 
 		for (var n : source.neighbors()) {
 			q.add(n);
-			r.distances.put(n.transport.component, 1L);
+			r.distances.put(n.dest.component, 1L);
 		}
 
 		long nbVerticesVisited = 1;
@@ -121,12 +121,12 @@ public class BFS {
 			var n = q.remove(0);
 			
 			if (!ignore.test(n)) {
-				for (var transport : n.transport.component.services(TransportService.class)) {
+				for (var transport : n.dest.component.services(TransportService.class)) {
 					for (var outNeighbor : transport.neighborhood()) {
 						var d = r.distances.getLong(n);
 
 						if (!r.distances.containsKey(outNeighbor)) {
-							r.distances.put(outNeighbor.transport.component, d + 1);
+							r.distances.put(outNeighbor.dest.component, d + 1);
 							r.predecessors.put(n, outNeighbor);
 
 							if (nbVerticesVisited++ >= maxNbVerticesVisited)

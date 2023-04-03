@@ -18,7 +18,7 @@ public class PredecessorTable extends HashMap<OutNeighbor, OutNeighbor> {
 
 			if (p == null) {
 				return null;
-			} else if (p.transport.component.equals(source)) {
+			} else if (p.dest.component.equals(source)) {
 				r.reverse();
 				return r;
 			}
@@ -29,7 +29,7 @@ public class PredecessorTable extends HashMap<OutNeighbor, OutNeighbor> {
 
 	private OutNeighbor find(Component c) {
 		for (var on : keySet()) {
-			if (on.transport.component.equals(c)) {
+			if (on.dest.component.equals(c)) {
 				return on;
 			}
 		}

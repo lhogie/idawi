@@ -7,6 +7,7 @@ public abstract class InnerClassOperation extends AbstractOperation {
 		return name(getClass());
 	}
 	
+
 	public static <S extends Service> Class<S> serviceClass(Class<? extends InnerClassOperation> c) {
 		return (Class<S>) c.getEnclosingClass();
 	}

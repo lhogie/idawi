@@ -303,7 +303,7 @@ public class DeployerService extends Service {
 					deployInfo.req.target.info.suicideWhenParentDie);
 			var parentInterface = child.parent.lookup(PipeFromToChildProcess.class);
 			var i = new OutNeighbor();
-			i.transport = parentInterface;
+			i.dest = parentInterface;
 			
 			parentInterface.neighborhood().add(i);
 

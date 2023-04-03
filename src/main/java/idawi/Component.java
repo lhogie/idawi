@@ -1,6 +1,9 @@
 package idawi;
 
-import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,12 +27,13 @@ import idawi.service.LocationService;
 import idawi.service.time.TimeService;
 import idawi.service.web.AESEncrypter;
 import idawi.transport.Neighborhood;
+import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
 
-public class Component implements SizeOf, Serializable {
+public class Component implements SizeOf, Externalizable {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
@@ -65,6 +69,10 @@ public class Component implements SizeOf, Serializable {
 		}
 
 		this.ref = ref;
+
+		new SharedMemoryTransport(this);
+		new DigitalTwinService(this);
+		new BlindBroadcasting(this);
 
 		// descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(ref, this);
@@ -234,7 +242,7 @@ public class Component implements SizeOf, Serializable {
 		for (var c : lookup(DigitalTwinService.class).components) {
 			for (var t : c.services(TransportService.class)) {
 				for (var n : t.neighborhood().infos()) {
-					if (n.transport.equals(this)) {
+					if (n.dest.equals(this)) {
 						r.add(t);
 					}
 				}
@@ -242,5 +250,20 @@ public class Component implements SizeOf, Serializable {
 		}
 
 		return r;
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeUTF(ref);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		ref = in.readUTF();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		return o instanceof Component && o.hashCode() == hashCode();
 	}
 }

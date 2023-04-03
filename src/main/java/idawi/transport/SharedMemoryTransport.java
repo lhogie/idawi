@@ -40,7 +40,7 @@ public class SharedMemoryTransport extends TransportService {
 	@Override
 	protected void multicastImpl(Message msg, Collection<OutNeighbor> throughSpecificNeighbors) {
 		for (var n : throughSpecificNeighbors) {
-			f(msg, n.transport);
+			f(msg, n.dest);
 		}
 	}
 
@@ -51,9 +51,11 @@ public class SharedMemoryTransport extends TransportService {
 
 	private void f(Message msg, TransportService out) {
 //		new Exception().printStackTrace();
+		final var clone = msg.clone();
+		
 		Service.threadPool.submit(() -> {
 			try {
-				out.processIncomingMessage(msg.clone());
+				out.processIncomingMessage(clone);
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
@@ -140,7 +142,10 @@ public class SharedMemoryTransport extends TransportService {
 		int n = l.size();
 
 		for (int i = 1; i < n; ++i) {
-			l.get(i).lookup(t).connectTo(l.get(ThreadLocalRandom.current().nextInt(i)));
+			var from = l.get(i).lookup(t);
+			var to = l.get(ThreadLocalRandom.current().nextInt(i));
+			from.connectTo(to);
+			to.lookup(t).connectTo(from);
 		}
 	}
 

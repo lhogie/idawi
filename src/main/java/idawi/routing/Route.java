@@ -23,8 +23,8 @@ public class Route implements Serializable {
 	}
 
 	public void add(Emission e) {
-		if (isEmpty()) {
-			this.initialEmission = e;
+		if (initialEmission == null) {
+			initialEmission = e;
 			e.previousReception = e.subsequentReception = null;
 		} else {
 			var r = ((Reception) last());

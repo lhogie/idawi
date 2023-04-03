@@ -11,12 +11,12 @@ import idawi.routing.Emission;
 import idawi.routing.Reception;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
+import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 
 public abstract class TransportService extends Service {
 	public static Serializer serializer = new JavaSerializer();
-
 	public long nbOfMsgReceived = 0;
 
 	private Neighborhood neighborhood = new Neighborhood();
@@ -29,26 +29,25 @@ public abstract class TransportService extends Service {
 
 	public OutNeighbor find(Component c) {
 		for (var neighbor : neighborhood) {
-			if (neighbor.transport.component.equals(c)) {
+			if (neighbor.dest.component.equals(c)) {
 				return neighbor;
 			}
 		}
-		
+
 		return null;
 	}
 
-	
 	// this is called by transport implementations
 	protected final void processIncomingMessage(Message msg) {
+//		Cout.debug("received: " + msg);
 		++nbOfMsgReceived;
-//		Cout.debug(component + " receives from " + msg.route.components() + ": " + msg.content);
 		var reception = new Reception(this);
 		msg.route.add(reception);
 
 		var kb = component.lookup(DigitalTwinService.class);
 
 		for (var e : msg.route.events()) {
-			e.transport = kb.f(e.transport);
+			e.transport = kb.twinTransport(e.transport);
 		}
 
 		component.forEachServiceOfClass(DigitalTwinService.class, s -> s.feedWith(msg.route));
@@ -72,11 +71,6 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	// called just before emission by transport implementations
-	protected void addEmissionEvent(Message msg, RoutingService r, RoutingData parms) {
-		msg.route.add(new Emission(r, parms, this));
-	}
-
 	public abstract String getName();
 
 	public abstract boolean canContact(Component c);
@@ -90,14 +84,17 @@ public abstract class TransportService extends Service {
 	protected abstract void bcastImpl(Message msg);
 
 	public final void multicast(Message msg, Collection<OutNeighbor> throughSpecificNeighbors, RoutingService r,
-			RoutingData p) {
-		addEmissionEvent(msg, r, p);
+			RoutingData parms) {
+//		Cout.debug("multicast: " + msg);
+		msg.route.add(new Emission(r, parms, this));
 		multicastImpl(msg, throughSpecificNeighbors);
 		msg.route.removeLast();
 	}
 
-	public final void bcast(Message msg, RoutingService r, RoutingData p) {
-		addEmissionEvent(msg, r, p);
+	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
+//		Cout.debug("bcast: " + msg);
+
+		msg.route.add(new Emission(r, parms, this));
 		bcastImpl(msg);
 		msg.route.removeLast();
 	}
@@ -135,4 +132,8 @@ public abstract class TransportService extends Service {
 
 	public abstract Collection<Component> actualNeighbors();
 
+	@Override
+	public String toString() {
+		return getName();
+	}
 }

@@ -35,7 +35,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 
 			// if I have neighbors that the source doesn't know
 			for (var n : myNeighbors) {
-				if (!routingParms.neighbors.mightContain(n.transport.component.longHash())) {
+				if (!routingParms.neighbors.mightContain(n.dest.component.longHash())) {
 					component.services(TransportService.class).forEach(t -> t.bcast(msg, this, parms));
 					break;
 				}
@@ -49,7 +49,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 		var p = new FloodingWithSelfPruning_UsingBloomFilterParm(bloomSize(neighbors.size()));
 
 		for (var n : neighbors) {
-			p.neighbors.put(n.transport.component.longHash());
+			p.neighbors.put(n.dest.component.longHash());
 		}
 
 		return p;

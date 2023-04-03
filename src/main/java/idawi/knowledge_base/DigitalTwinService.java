@@ -40,13 +40,13 @@ public class DigitalTwinService extends KnowledgeBase {
 		registerOperation(new size());
 	}
 
-	public TransportService f(TransportService s) {
-		var twin = localTwin(s.component);
-		var twinTransport = twin.lookup(s.getClass());
+	public TransportService twinTransport(TransportService t) {
+		var twinComponent = localTwin(t.component);
+		var twinTransport = twinComponent.lookup(t.getClass());
 
 		if (twinTransport == null) {
 			try {
-				twinTransport = Clazz.makeInstance(s.getClass().getConstructor(), twin);
+				twinTransport = Clazz.makeInstance(t.getClass().getConstructor(), twinComponent);
 			} catch (NoSuchMethodException | SecurityException err) {
 				throw new RuntimeException(err);
 			}
@@ -56,14 +56,14 @@ public class DigitalTwinService extends KnowledgeBase {
 	}
 
 	public void consider(NeighborLost l) {
-		l.transport = f(l.transport);
-		l.lostNeighbor = f(l.lostNeighbor);
+		l.transport = twinTransport(l.transport);
+		l.lostNeighbor = twinTransport(l.lostNeighbor);
 		l.transport.neighborhood().remove(l.lostNeighbor);
 	}
 
 	public void consider(DirectedLink l) {
-		l.transport = f(l.transport);
-		l.dest.transport = f(l.dest.transport);
+		l.transport = twinTransport(l.transport);
+		l.dest.dest = twinTransport(l.dest.dest);
 		l.transport.neighborhood().add(l.dest);
 	}
 
@@ -89,7 +89,7 @@ public class DigitalTwinService extends KnowledgeBase {
 		}
 
 		public void f(Collection<DirectedLink> newLinks) {
-			newLinks.forEach(l -> add(l.date, l.transport, 0, l.dest.transport));
+			newLinks.forEach(l -> add(l.date, l.transport, 0, l.dest.dest));
 		}
 	}
 
@@ -171,7 +171,7 @@ public class DigitalTwinService extends KnowledgeBase {
 
 		if (toNeighbor == null) {
 			from.neighborhood().add(toNeighbor = new OutNeighbor());
-			toNeighbor.transport = to;
+			toNeighbor.dest = to;
 		}
 
 		toNeighbor.duration = d;
@@ -226,7 +226,7 @@ public class DigitalTwinService extends KnowledgeBase {
 					for (var t : c.services(TransportService.class)) {
 						for (var neighbor : t.neighborhood().infos()) {
 							v.from = t.component.ref;
-							v.to = neighbor.transport;
+							v.to = neighbor.dest;
 							v.label = t.getFriendlyName();
 							v.directed = true;
 							v.style = Style.dotted;

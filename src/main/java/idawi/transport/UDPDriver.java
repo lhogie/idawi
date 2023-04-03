@@ -37,10 +37,10 @@ public class UDPDriver extends IPDriver {
 				throw new IllegalStateException("empty route");
 
 			DatagramPacket p = new DatagramPacket(buf, buf.length);
-			p.setAddress(relay.transport.component.info.inetAddresses.get(0));
+			p.setAddress(relay.dest.component.info.inetAddresses.get(0));
 			// System.out.println(relay.inetAddresses.get(0) + ":" +
 			// relay.udpPort);
-			p.setPort(relay.transport.component.info.udpPort);
+			p.setPort(relay.dest.component.info.udpPort);
 
 			try {
 				socket.send(p);

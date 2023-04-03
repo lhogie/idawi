@@ -1,2943 +1,1014 @@
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 7696868931932177884,
-data: 	"content": 0.7776834189685569,
-data: 	"creationDate": 1.6488191599806232E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191599855394E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819159980781E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -5720232021736316782,
-data: 	"content": 0.5887800316025641,
-data: 	"creationDate": 1.6488191599821692E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819159985642E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191599823897E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 5102235885165361631,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": -4141859657731992665,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 0,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819159982794E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819159985725E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191599829378E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 		"#class": "idawi.knowledge_base.ServiceDescriptor",
+data: 		"clazz": {"#link_to": .route.initialEmission.routingProtocol},
+data: 		"description": null,
+data: 		"nbMessagesReceived": 1,
+data: 		"operations": {
+data: 			"#class": "java.util.TreeSet",
+data: 			"elements": [
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gives a descriptor on this service",
+data: 					"implementationClass": "idawi.Service$descriptor",
+data: 					"name": "descriptor",
+data: 					"nbCalls": 1,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -5301428894852851885,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 0,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191599831307E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191599885519E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191599832504E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "operation friendlyName has been added programmatically (it can hence be removed)",
+data: 					"implementationClass": "idawi.Service$1",
+data: 					"name": "friendlyName",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$getFriendlyName",
+data: 					"name": "getFriendlyName",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "list native operations",
+data: 					"implementationClass": "idawi.Service$listNativeOperations",
+data: 					"name": "listNativeOperations",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "returns the name of available operations",
+data: 					"implementationClass": "idawi.Service$listOperationNames",
+data: 					"name": "listOperationNames",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$nbMessagesReceived",
+data: 					"name": "nbMessagesReceived",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "just sends EOT to the requester (which stands as the pong)",
+data: 					"implementationClass": "idawi.routing.RoutingService$ping",
+data: 					"name": "ping",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gets a map associating a number a message received during seconds",
+data: 					"implementationClass": "idawi.Service$sec2nbMessages",
+data: 					"name": "sec2nbMessages",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$shutdown",
+data: 					"name": "shutdown",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				}
+data: 			],
+data: 			"size": 9
 data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 7252624243785254674,
-data: 	"content": 0.677368071395933,
-data: 	"creationDate": 1.648819159985968E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191599904363E9,
-data: 	"replyTo": null,
+data: 	},
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191599861956E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161015227E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {
+data: 				"#class": "idawi.routing.EmptyRoutingParms"
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191599896202E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -8231153785989791867,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 0,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191599899058E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191599920294E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191599900382E9,
-data: 				"protocolName": "LMI"
+data: 			"routingProtocol": {
+data: 				"#class": "java.lang.Class"
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819159991085E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 7699716215311109931,
-data: 	"content": 0.2770681765309815,
-data: 	"creationDate": 1.6488191609877236E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191609893928E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191609880555E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -2490525512151478120,
-data: 	"content": 0.573562879294056,
-data: 	"creationDate": 1.6488191609879591E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191609895709E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191609882257E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3112933626460309549,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 1,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191609893236E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191609906404E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191609895487E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 6636717633186721929,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 1,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191609893289E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819160990799E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191609896083E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3440118111516556689,
-data: 	"content": 0.862139855333309,
-data: 	"creationDate": 1.6488191609949968E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819160997565E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.648819160995209E9,
-data: 				"protocolName": "LMI"
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.6805307161095407E9,
+data: 				"forward": null,
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {
+data: 					"#class": "idawi.transport.SharedMemoryTransport",
+data: 					"askToRun": true,
+data: 					"component": {
+data: 						"#class": "idawi.Component",
+data: 						"ref": "gw"
+data: 					},
+data: 					"emissionRange": 1.7976931348623157E308,
+data: 					"nbOfMsgReceived": 0,
+data: 					"neighborhood": {
+data: 						"#class": "idawi.transport.Neighborhood",
+data: 						"date": 1.680530716103854E9,
+data: 						"decreaseRatio": 0.9,
+data: 						"s": {
+data: 							"#class": "java.util.HashSet",
+data: 							"elements": [
+data: 								{
+data: 									"#class": "idawi.transport.OutNeighbor",
+data: 									"date": 1.6805307161243997E9,
+data: 									"decreaseRatio": 0.9,
+data: 									"dest": {
+data: 										"#class": "idawi.transport.SharedMemoryTransport",
+data: 										"askToRun": true,
+data: 										"component": {
+data: 											"#class": "idawi.Component",
+data: 											"ref": 0
+data: 										},
+data: 										"emissionRange": 1.7976931348623157E308,
+data: 										"nbOfMsgReceived": 8,
+data: 										"neighborhood": {
+data: 											"#class": "idawi.transport.Neighborhood",
+data: 											"date": 1.6805306861475987E9,
+data: 											"decreaseRatio": 0.9,
+data: 											"s": {
+data: 												"#class": "java.util.HashSet",
+data: 												"elements": [
+data: 													{
+data: 														"#class": "idawi.transport.OutNeighbor",
+data: 														"date": 1.680530716118031E9,
+data: 														"decreaseRatio": 0.9,
+data: 														"dest": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest.outs.outs.0},
+data: 														"duration": 0.008018016815185547
+data: 													},
+data: 													{
+data: 														"#class": "idawi.transport.OutNeighbor",
+data: 														"date": 1.6805307161301577E9,
+data: 														"decreaseRatio": 0.9,
+data: 														"dest": {"#link_to": .route.initialEmission.subsequentReception.transport},
+data: 														"duration": 0.007578849792480469
+data: 													},
+data: 													{
+data: 														"#class": "idawi.transport.OutNeighbor",
+data: 														"date": 1.6805307161300123E9,
+data: 														"decreaseRatio": 0.9,
+data: 														"dest": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest.outs.outs.1},
+data: 														"duration": 0.012544631958007812
+data: 													}
+data: 												],
+data: 												"size": 3
+data: 											}
+data: 										},
+data: 										"outs": {
+data: 											"#class": "java.util.HashSet",
+data: 											"elements": [
+data: 												{
+data: 													"#class": "idawi.transport.SharedMemoryTransport",
+data: 													"askToRun": true,
+data: 													"component": {
+data: 														"#class": "idawi.Component",
+data: 														"ref": "gw"
+data: 													},
+data: 													"emissionRange": 1.7976931348623157E308,
+data: 													"nbOfMsgReceived": 4,
+data: 													"neighborhood": {
+data: 														"#class": "idawi.transport.Neighborhood",
+data: 														"date": 1.6805306861250105E9,
+data: 														"decreaseRatio": 0.9,
+data: 														"s": {
+data: 															"#class": "java.util.HashSet",
+data: 															"elements": [
+data: 																{
+data: 																	"#class": "idawi.transport.OutNeighbor",
+data: 																	"date": 1.6805307161234922E9,
+data: 																	"decreaseRatio": 0.9,
+data: 																	"dest": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest},
+data: 																	"duration": 0.0076236724853515625
+data: 																}
+data: 															],
+data: 															"size": 1
+data: 														}
+data: 													},
+data: 													"outs": {
+data: 														"#class": "java.util.HashSet",
+data: 														"elements": [
+data: 															{"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
+data: 														],
+data: 														"size": 1
+data: 													}
+data: 												},
+data: 												{
+data: 													"#class": "idawi.transport.SharedMemoryTransport",
+data: 													"askToRun": true,
+data: 													"component": {
+data: 														"#class": "idawi.Component",
+data: 														"ref": 1
+data: 													},
+data: 													"emissionRange": 1.7976931348623157E308,
+data: 													"nbOfMsgReceived": 2,
+data: 													"neighborhood": {
+data: 														"#class": "idawi.transport.Neighborhood",
+data: 														"date": 1.6805306861490128E9,
+data: 														"decreaseRatio": 0.9,
+data: 														"s": {
+data: 															"#class": "java.util.HashSet",
+data: 															"elements": [
+data: 																{
+data: 																	"#class": "idawi.transport.OutNeighbor",
+data: 																	"date": 1.6805307161297455E9,
+data: 																	"decreaseRatio": 0.9,
+data: 																	"dest": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest},
+data: 																	"duration": 0.008289337158203125
+data: 																}
+data: 															],
+data: 															"size": 1
+data: 														}
+data: 													},
+data: 													"outs": {
+data: 														"#class": "java.util.HashSet",
+data: 														"elements": [
+data: 															{"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
+data: 														],
+data: 														"size": 1
+data: 													}
+data: 												}
+data: 											],
+data: 											"size": 2
+data: 										}
+data: 									},
+data: 									"duration": 0.009160518646240234
+data: 								}
+data: 							],
+data: 							"size": 1
+data: 						}
+data: 					},
+data: 					"outs": {
+data: 						"#class": "java.util.HashSet",
+data: 						"size": 0
+data: 					}
+data: 				}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819160996516E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -2655417716601322122,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": -1356720896476790677,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 1,
-data: 		"target": 10
+data: 		"#class": "idawi.messaging.EOT"
 data: 	},
-data: 	"creationDate": 1.6488191609970906E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191609995313E9,
-data: 	"replyTo": null,
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191609973288E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161174347E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {
+data: 				"#class": "idawi.routing.EmptyRoutingParms"
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191609985433E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 5487726523528465215,
-data: 	"content": 0.8160959356473512,
-data: 	"creationDate": 1.6488191619949481E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191619964278E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819161995256E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -954808877708620714,
-data: 	"content": 0.22383082358003525,
-data: 	"creationDate": 1.648819161994937E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191619965801E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191619952633E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 1803595712060293040,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 2,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191619963613E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191619978383E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191619965572E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -560957925167478525,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 2,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191619963737E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191619979942E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191619966877E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -7849365345762199342,
-data: 	"content": 0.7168408050459447,
-data: 	"creationDate": 1.648819162003296E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191620061066E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.648819162003658E9,
-data: 				"protocolName": "LMI"
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.680530716123202E9,
+data: 				"forward": null,
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191620050888E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -4820239701831508874,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": 3754223060755125427,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 2,
-data: 		"target": 10
+data: 		"#class": "idawi.knowledge_base.ServiceDescriptor",
+data: 		"clazz": {
+data: 			"#class": "java.lang.Class"
+data: 		},
+data: 		"description": null,
+data: 		"nbMessagesReceived": 1,
+data: 		"operations": {
+data: 			"#class": "java.util.TreeSet",
+data: 			"elements": [
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gives a descriptor on this service",
+data: 					"implementationClass": "idawi.Service$descriptor",
+data: 					"name": "descriptor",
+data: 					"nbCalls": 1,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "operation friendlyName has been added programmatically (it can hence be removed)",
+data: 					"implementationClass": "idawi.Service$1",
+data: 					"name": "friendlyName",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$getFriendlyName",
+data: 					"name": "getFriendlyName",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "list native operations",
+data: 					"implementationClass": "idawi.Service$listNativeOperations",
+data: 					"name": "listNativeOperations",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "returns the name of available operations",
+data: 					"implementationClass": "idawi.Service$listOperationNames",
+data: 					"name": "listOperationNames",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$nbMessagesReceived",
+data: 					"name": "nbMessagesReceived",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gets a map associating a number a message received during seconds",
+data: 					"implementationClass": "idawi.Service$sec2nbMessages",
+data: 					"name": "sec2nbMessages",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$shutdown",
+data: 					"name": "shutdown",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				}
+data: 			],
+data: 			"size": 8
+data: 		}
 data: 	},
-data: 	"creationDate": 1.6488191620054908E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191620077505E9,
-data: 	"replyTo": null,
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191620056334E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161067114E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {"#link_to": .route.initialEmission.subsequentReception.forward.routingParms},
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.680530716115872E9,
+data: 				"forward": {
+data: 					"#class": "idawi.routing.Emission",
+data: 					"date": 1.680530716115919E9,
+data: 					"previousReception": {"#link_to": .route.initialEmission.subsequentReception},
+data: 					"routingParms": {
+data: 						"#class": "idawi.routing.EmptyRoutingParms"
+data: 					},
+data: 					"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 					"subsequentReception": {
+data: 						"#class": "idawi.routing.Reception",
+data: 						"date": 1.6805307161243663E9,
+data: 						"forward": null,
+data: 						"previousEmission": {"#link_to": .route.initialEmission.subsequentReception.forward},
+data: 						"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
+data: 					},
+data: 					"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
+data: 				},
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.64881916200681E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3935918834735039337,
-data: 	"content": 0.4356274982152448,
-data: 	"creationDate": 1.6488191630005817E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630022206E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819163000918E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -939660388469003399,
-data: 	"content": 0.8026116165258298,
-data: 	"creationDate": 1.6488191630006187E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630023685E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819163000974E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -3093662650111604851,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": 1025728619226734125,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 3,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191630021915E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630033886E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191630023935E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 		"#class": "idawi.knowledge_base.ServiceDescriptor",
+data: 		"clazz": {"#link_to": .route.initialEmission.routingProtocol},
+data: 		"description": null,
+data: 		"nbMessagesReceived": 2,
+data: 		"operations": {
+data: 			"#class": "java.util.TreeSet",
+data: 			"elements": [
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gives a descriptor on this service",
+data: 					"implementationClass": "idawi.Service$descriptor",
+data: 					"name": "descriptor",
+data: 					"nbCalls": 2,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 8871720182113278841,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 3,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819163002196E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630035248E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819163002482E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "operation friendlyName has been added programmatically (it can hence be removed)",
+data: 					"implementationClass": "idawi.Service$1",
+data: 					"name": "friendlyName",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$getFriendlyName",
+data: 					"name": "getFriendlyName",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "list native operations",
+data: 					"implementationClass": "idawi.Service$listNativeOperations",
+data: 					"name": "listNativeOperations",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "returns the name of available operations",
+data: 					"implementationClass": "idawi.Service$listOperationNames",
+data: 					"name": "listOperationNames",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$nbMessagesReceived",
+data: 					"name": "nbMessagesReceived",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "just sends EOT to the requester (which stands as the pong)",
+data: 					"implementationClass": "idawi.routing.RoutingService$ping",
+data: 					"name": "ping",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gets a map associating a number a message received during seconds",
+data: 					"implementationClass": "idawi.Service$sec2nbMessages",
+data: 					"name": "sec2nbMessages",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$shutdown",
+data: 					"name": "shutdown",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				}
+data: 			],
+data: 			"size": 9
 data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -6453382131480598838,
-data: 	"content": 0.7515826269114573,
-data: 	"creationDate": 1.6488191630099132E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630126846E9,
-data: 	"replyTo": null,
+data: 	},
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.648819163010193E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161225495E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {
+data: 				"#class": "idawi.routing.EmptyRoutingParms"
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.64881916301164E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -7037121625515200587,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 3,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819163012163E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191630145884E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191630123246E9,
-data: 				"protocolName": "LMI"
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.6805307161301284E9,
+data: 				"forward": null,
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191630135162E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 7443565762169767929,
-data: 	"content": 0.4590434029322691,
-data: 	"creationDate": 1.6488191640051026E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191640065095E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191640053685E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 1912953361308044757,
-data: 	"content": 0.42652737900105986,
-data: 	"creationDate": 1.6488191640051026E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191640066552E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191640053887E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -5689770355749130421,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": 5008207997498350426,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 4,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819164006435E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191640124223E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191640066028E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 		"#class": "idawi.knowledge_base.ServiceDescriptor",
+data: 		"clazz": {"#link_to": .route.initialEmission.routingProtocol},
+data: 		"description": null,
+data: 		"nbMessagesReceived": 1,
+data: 		"operations": {
+data: 			"#class": "java.util.TreeSet",
+data: 			"elements": [
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gives a descriptor on this service",
+data: 					"implementationClass": "idawi.Service$descriptor",
+data: 					"name": "descriptor",
+data: 					"nbCalls": 1,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4789127949536517916,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 4,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191640064433E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191640125456E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191640066702E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "operation friendlyName has been added programmatically (it can hence be removed)",
+data: 					"implementationClass": "idawi.Service$1",
+data: 					"name": "friendlyName",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$getFriendlyName",
+data: 					"name": "getFriendlyName",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "list native operations",
+data: 					"implementationClass": "idawi.Service$listNativeOperations",
+data: 					"name": "listNativeOperations",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "returns the name of available operations",
+data: 					"implementationClass": "idawi.Service$listOperationNames",
+data: 					"name": "listOperationNames",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$nbMessagesReceived",
+data: 					"name": "nbMessagesReceived",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.OperationDescriptor",
+data: 					"description": "just sends EOT to the requester (which stands as the pong)",
+data: 					"implementationClass": "idawi.routing.RoutingService$ping",
+data: 					"name": "ping",
+data: 					"nbCalls": 0,
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": "gets a map associating a number a message received during seconds",
+data: 					"implementationClass": "idawi.Service$sec2nbMessages",
+data: 					"name": "sec2nbMessages",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				},
+data: 				{
+data: 					"#class": "idawi.knowledge_base.TypeOperationDescriptor",
+data: 					"description": null,
+data: 					"implementationClass": "idawi.Service$shutdown",
+data: 					"name": "shutdown",
+data: 					"nbCalls": 0,
+data: 					"parameterTypes": {
+data: 						"#class": "java.util.ArrayList",
+data: 						"size": 0
+data: 					},
+data: 					"totalDuration": 0.0
+data: 				}
+data: 			],
+data: 			"size": 9
 data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 783634504958381961,
-data: 	"content": 0.2054888071596741,
-data: 	"creationDate": 1.648819164017927E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819164020371E9,
-data: 	"replyTo": null,
+data: 	},
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191640181246E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.680530716114327E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {"#link_to": .route.initialEmission.subsequentReception.forward.routingParms},
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.680530716122889E9,
+data: 				"forward": {
+data: 					"#class": "idawi.routing.Emission",
+data: 					"date": 1.6805307161229324E9,
+data: 					"previousReception": {"#link_to": .route.initialEmission.subsequentReception},
+data: 					"routingParms": {
+data: 						"#class": "idawi.routing.EmptyRoutingParms"
+data: 					},
+data: 					"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 					"subsequentReception": {
+data: 						"#class": "idawi.routing.Reception",
+data: 						"date": 1.6805307161310322E9,
+data: 						"forward": null,
+data: 						"previousEmission": {"#link_to": .route.initialEmission.subsequentReception.forward},
+data: 						"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
+data: 					},
+data: 					"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
+data: 				},
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819164019256E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 			"transport": {
+data: 				"#class": "idawi.transport.SharedMemoryTransport",
+data: 				"askToRun": true,
+data: 				"component": {
+data: 					"#class": "idawi.Component",
+data: 					"ref": 1
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
+data: 				"emissionRange": 1.7976931348623157E308,
+data: 				"nbOfMsgReceived": 0,
+data: 				"neighborhood": {
+data: 					"#class": "idawi.transport.Neighborhood",
+data: 					"date": 1.6805307161269724E9,
+data: 					"decreaseRatio": 0.9,
+data: 					"s": {
+data: 						"#class": "java.util.HashSet",
+data: 						"elements": [
+data: 							{
+data: 								"#class": "idawi.transport.OutNeighbor",
+data: 								"date": 1.6805307161386554E9,
+data: 								"decreaseRatio": 0.9,
+data: 								"dest": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest},
+data: 								"duration": 0.006833791732788086
+data: 							}
+data: 						],
+data: 						"size": 1
+data: 					}
+data: 				},
+data: 				"outs": {
+data: 					"#class": "java.util.HashSet",
+data: 					"size": 0
+data: 				}
 data: 			}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -2356715299568874567,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": -6872704913142827963,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 4,
-data: 		"target": 10
+data: 		"#class": "idawi.messaging.EOT"
 data: 	},
-data: 	"creationDate": 1.6488191640196812E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191640216267E9,
-data: 	"replyTo": null,
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191640198085E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161158442E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {"#link_to": .route.initialEmission.subsequentReception.forward.routingParms},
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.680530716123468E9,
+data: 				"forward": {
+data: 					"#class": "idawi.routing.Emission",
+data: 					"date": 1.6805307161235046E9,
+data: 					"previousReception": {"#link_to": .route.initialEmission.subsequentReception},
+data: 					"routingParms": {
+data: 						"#class": "idawi.routing.EmptyRoutingParms"
+data: 					},
+data: 					"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 					"subsequentReception": {
+data: 						"#class": "idawi.routing.Reception",
+data: 						"date": 1.6805307161310713E9,
+data: 						"forward": null,
+data: 						"previousEmission": {"#link_to": .route.initialEmission.subsequentReception.forward},
+data: 						"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
+data: 					},
+data: 					"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
+data: 				},
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191640208127E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -3186415417187094325,
-data: 	"content": 0.07936908634363649,
-data: 	"creationDate": 1.6488191650172822E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191650183306E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191650174582E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -834164922916704101,
-data: 	"content": 0.5602625684827643,
-data: 	"creationDate": 1.6488191650172515E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191650184505E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191650174794E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -7230483330903445593,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": -8583837999076876716,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 5,
-data: 		"target": 10
+data: 		"#class": "idawi.messaging.EOT"
 data: 	},
-data: 	"creationDate": 1.6488191650182538E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191650191462E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191650183718E9,
-data: 				"protocolName": "LMI"
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
 data: 			}
-data: 		]
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
 data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
+data: 	"route": {
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.680530716122884E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {"#link_to": .route.initialEmission.subsequentReception.forward.routingParms},
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.6805307161297178E9,
+data: 				"forward": {
+data: 					"#class": "idawi.routing.Emission",
+data: 					"date": 1.6805307161297565E9,
+data: 					"previousReception": {"#link_to": .route.initialEmission.subsequentReception},
+data: 					"routingParms": {
+data: 						"#class": "idawi.routing.EmptyRoutingParms"
+data: 					},
+data: 					"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 					"subsequentReception": {
+data: 						"#class": "idawi.routing.Reception",
+data: 						"date": 1.6805307161377442E9,
+data: 						"forward": null,
+data: 						"previousEmission": {"#link_to": .route.initialEmission.subsequentReception.forward},
+data: 						"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
+data: 					},
+data: 					"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 6731673084763496621,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 5,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191650182571E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191650192332E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191650184042E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 2291746001539814762,
-data: 	"content": 0.3619976373212541,
-data: 	"creationDate": 1.6488191650259879E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819165028019E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191650261698E9,
-data: 				"protocolName": "LMI"
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191650272503E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.transport}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
+data: {"encodings":"jaseto"}
 data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -709751451555817705,
+data: 	"#class": "idawi.messaging.Message",
+data: 	"ID": 5649373876875030337,
 data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 5,
-data: 		"target": 10
+data: 		"#class": "idawi.messaging.EOT"
 data: 	},
-data: 	"creationDate": 1.6488191650275126E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191650293586E9,
-data: 	"replyTo": null,
+data: 	"destination": {
+data: 		"#class": "idawi.routing.MessageQDestination",
+data: 		"componentTarget": {
+data: 			"#class": "idawi.routing.TargetComponents$Unicast",
+data: 			"target": {
+data: 				"#class": "idawi.Component",
+data: 				"ref": "gw"
+data: 			}
+data: 		},
+data: 		"dropIfRecipientQueueIsFull": false,
+data: 		"queueID": "returnQ0",
+data: 		"replyTo": null,
+data: 		"service": {"#link_to": .route.initialEmission.routingProtocol}
+data: 	},
 data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.648819165027624E9,
-data: 				"protocolName": "LMI"
+data: 		"#class": "idawi.routing.Route",
+data: 		"initialEmission": {
+data: 			"#class": "idawi.routing.Emission",
+data: 			"date": 1.6805307161378908E9,
+data: 			"previousReception": null,
+data: 			"routingParms": {
+data: 				"#class": "idawi.routing.EmptyRoutingParms"
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819165028522E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -4818839102360439370,
-data: 	"content": 0.2201042709029598,
-data: 	"creationDate": 1.6488191660233035E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819166024386E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191660235257E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3725992047624873392,
-data: 	"content": 0.36518597459931346,
-data: 	"creationDate": 1.6488191660232973E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819166024526E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191660235415E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4671367434395656807,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 6,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191660243022E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819166025153E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191660244577E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -7775921109250208935,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 6,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191660243104E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819166025268E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191660244818E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -3385735111642182818,
-data: 	"content": 0.0037430353255141213,
-data: 	"creationDate": 1.6488191660331292E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191660356872E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191660335326E9,
-data: 				"protocolName": "LMI"
+data: 			"routingProtocol": {"#link_to": .route.initialEmission.routingProtocol},
+data: 			"subsequentReception": {
+data: 				"#class": "idawi.routing.Reception",
+data: 				"date": 1.6805307161430595E9,
+data: 				"forward": null,
+data: 				"previousEmission": {"#link_to": .route.initialEmission},
+data: 				"transport": {"#link_to": .route.initialEmission.subsequentReception.transport}
 data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191660348804E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
+data: 			"transport": {"#link_to": .route.initialEmission.subsequentReception.transport.neighborhood.s.s.0.dest}
 data: 		}
 data: 	}
 data: }
 
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4912274859423310346,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 6,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191660351877E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819166037353E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191660353048E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819166036174E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -4108998536897111183,
-data: 	"content": 0.8512924736074247,
-data: 	"creationDate": 1.6488191670288558E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191670300732E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191670290973E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -3371462352157802196,
-data: 	"content": 0.6742527705284964,
-data: 	"creationDate": 1.6488191670288625E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191670302064E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819167029146E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3910071501821067085,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 7,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191670299938E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191670310323E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.64881916703015E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 8010682498501775014,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 7,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191670300016E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819167031116E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191670301304E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -2862631949333968024,
-data: 	"content": 0.1763413491696979,
-data: 	"creationDate": 1.6488191670396657E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191670417154E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191670398452E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191670409021E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 3874225229953345110,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 7,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819167041219E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191670429983E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191670413258E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191670421312E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4481788367748889948,
-data: 	"content": 0.4856873859496492,
-data: 	"creationDate": 1.6488191680354197E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191680366747E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191680356257E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4784794413675386897,
-data: 	"content": 0.6550194898213884,
-data: 	"creationDate": 1.6488191680354347E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191680368166E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191680357025E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 431401104087532107,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 8,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191680366092E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191680374992E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191680367417E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 6489583942937605095,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 8,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819168036705E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819168037588E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819168036883E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -5387815368997452875,
-data: 	"content": 0.8884565096209942,
-data: 	"creationDate": 1.6488191680438552E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191680461326E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191680440853E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191680453079E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 8948647284032725306,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 8,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191680455682E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191680473742E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191680457287E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191680466332E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 4702466291113168593,
-data: 	"content": 0.516195859181266,
-data: 	"creationDate": 1.648819169037852E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191690391088E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819169038163E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -4640084930079973780,
-data: 	"content": 0.3503585077857665,
-data: 	"creationDate": 1.6488191690378618E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819169039261E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.648819169038168E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": -429053188187729151,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 9,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.6488191690390332E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191690398962E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.6488191690391886E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 8846822801752565773,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 9,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819169039026E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.648819169039973E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "a",
-data: 				"emissionDate": 1.6488191690392015E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 2827108705167148065,
-data: 	"content": 0.9195896721580503,
-data: 	"creationDate": 1.648819169049705E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191690524373E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191690499318E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819169051534E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "component message", "syntax": "jaseto"}
-data: {
-data: 	"#class": "idawi.Message",
-data: 	"ID": 1664082132446562006,
-data: 	"content": {
-data: 		"#class": "idawi.ProgressRatio",
-data: 		"progress": 9,
-data: 		"target": 10
-data: 	},
-data: 	"creationDate": 1.648819169051982E9,
-data: 	"dropIfRecipientQueueIsFull": false,
-data: 	"originService": "idawi.service.DemoService",
-data: 	"receptionDate": 1.6488191690545146E9,
-data: 	"replyTo": null,
-data: 	"route": {
-data: 		"#class": "idawi.Route",
-data: 		"elements": [
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "c",
-data: 				"emissionDate": 1.6488191690521464E9,
-data: 				"protocolName": "LMI"
-data: 			},
-data: 			{
-data: 				"#class": "idawi.RouteEntry",
-data: 				"componentID": "b",
-data: 				"emissionDate": 1.648819169053364E9,
-data: 				"protocolName": "LMI"
-data: 			}
-data: 		]
-data: 	},
-data: 	"routingData": null,
-data: 	"suggestedRoute": null,
-data: 	"to": {
-data: 		"#class": "idawi.QueueAddress",
-data: 		"queueName": "q1",
-data: 		"serviceAddress": {
-data: 			"#class": "idawi.ServiceAddress",
-data: 			"serviceName": "idawi.service.rest.WebServer",
-data: 			"to": {
-data: 				"#class": "idawi.To",
-data: 				"componentIDs": {
-data: 					"#class": "java.util.HashSet",
-data: 					"elements": [
-data: 
-data: 					]
-data: 				},
-data: 				"coverage": 2147483647,
-data: 				"forwardProbability": 1.0,
-data: 				"validityDuration": 10.0
-data: 			}
-data: 		}
-data: 	}
-data: }
-
-data: {"semantic": "EOT", "syntax": "jaseto"}
-data: 60
+data: {"encodings":"jaseto"}
+data: EOT
 

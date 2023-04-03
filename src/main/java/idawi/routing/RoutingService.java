@@ -13,6 +13,7 @@ import idawi.Service;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.transport.TransportService;
+import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -131,6 +132,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
+//			Cout.debugSuperVisible("PING");
 			var m = in.poll_sync();
 			// sends back the ping message to the caller
 			reply(m, m);

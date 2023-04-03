@@ -1,5 +1,6 @@
 package idawi;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,27 +31,27 @@ import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
 
-public class Service implements SizeOf {
+public class Service implements SizeOf, Serializable {
 
 	// creates the threads that will process the messages
 //	public static ExecutorService threadPool = Executors.newFixedThreadPool(1);
 	public static ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-	public final Class<? extends Service> id;
+	transient public final Class<? extends Service> id;
 	public final Component component;
 	private boolean askToRun = true;
-	protected final List<Thread> threads = new ArrayList<>();
-	protected final Set<AbstractOperation> operations = new HashSet<>();
-	private final Map<String, MessageQueue> name2queue = new HashMap<>();
-	private final Set<String> detachedQueues = new HashSet<>();
-	final AtomicLong returnQueueID = new AtomicLong();
+	transient protected final List<Thread> threads = new ArrayList<>();
+	transient protected final Set<AbstractOperation> operations = new HashSet<>();
+	transient private final Map<String, MessageQueue> name2queue = new HashMap<>();
+	transient private final Set<String> detachedQueues = new HashSet<>();
+	transient final AtomicLong returnQueueID = new AtomicLong();
 
 	// stores the number of messages received at each second
-	final Int2LongMap second2nbMessages = new Int2LongAVLTreeMap();
+	transient final Int2LongMap second2nbMessages = new Int2LongAVLTreeMap();
 
-	private long nbMsgsReceived;
+	transient private long nbMsgsReceived;
 
-	private transient Directory directory;
+	transient private Directory directory;
 //	transient SD data;
 
 	public Service(Component component) {

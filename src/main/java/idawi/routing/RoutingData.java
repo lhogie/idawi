@@ -17,7 +17,7 @@ public abstract class RoutingData implements Serializable, SizeOf {
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
-		}));
+		}).toList());
 	}
 
 	public abstract void fromString(String s, RoutingService service);

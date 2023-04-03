@@ -22,7 +22,7 @@ public class DirectedLink extends NetworkLink {
 	@Override
 	public void exposeComponent(Predicate<Component> p) {
 		if (!p.test(transport.component)) {
-			p.test(dest.transport.component);
+			p.test(dest.dest.component);
 		}
 	}
 
