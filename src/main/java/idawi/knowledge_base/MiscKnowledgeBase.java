@@ -12,6 +12,7 @@ import idawi.Component;
 import idawi.TypedInnerClassOperation;
 import idawi.service.SystemMonitor;
 import idawi.service.time.TimeService;
+import idawi.transport.PipeFromToParentProcess;
 import toools.exceptions.NotYetImplementedException;
 
 public class MiscKnowledgeBase extends KnowledgeBase {
@@ -141,6 +142,10 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 	@Override
 	protected void forEachInfo(Predicate<Info> c) {
 		throw new NotYetImplementedException();
+	}
+
+	public void considers(PipeFromToParentProcess descr) {
+		
 	}
 
 }

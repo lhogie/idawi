@@ -180,12 +180,15 @@ public class DeployerService extends Service {
 
 		if (response == null) { // timeout :(
 			throw new IllegalStateException("timeout");
-		} else if (response.content instanceof ComponentInfo) { // deploy success
-			var descr = (ComponentInfo) response.content;
-			var child = descr.component;
-			component.knowledgeBase().considers(descr);
-			component.forEachServiceOfClass(DigitalTwinService.class,
-					s -> s.bidi(component, child, pipesToChildren.getClass()));
+		} else if (response.content instanceof PipeFromToParentProcess) { // deploy success
+			var connectionToParent = (PipeFromToParentProcess) response.content;
+			var child = connectionToParent.component;
+			component.knowledgeBase().considers(connectionToParent);
+			component.forEachServiceOfClass(DigitalTwinService.class, s -> {
+				var t = component.digitalTwinService().twinTransport(connectionToParent);
+				s.add(component.now(), pipesToChildren, 0, t);
+				s.add(component.now(), t, 0, pipesToChildren);
+			});
 		} else if (response.content instanceof Throwable) { // deploy error
 			throw new IllegalStateException(req.target + " failed", (Throwable) response.content);
 		} else {
@@ -304,7 +307,7 @@ public class DeployerService extends Service {
 			var parentInterface = child.parent.lookup(PipeFromToChildProcess.class);
 			var i = new OutNeighbor();
 			i.dest = parentInterface;
-			
+
 			parentInterface.neighborhood().add(i);
 
 			// tell the parent process that this node is ready for connections
