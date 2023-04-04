@@ -32,7 +32,7 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	public RoutingData createDefaultRoutingParms() {
+	public RoutingData defaultData() {
 		return new EmptyRoutingParms();
 	}
 

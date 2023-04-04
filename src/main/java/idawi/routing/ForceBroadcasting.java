@@ -50,7 +50,7 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 	}
 
 	@Override
-	public EvaporatingRoutingjavaParm createDefaultRoutingParms() {
+	public EvaporatingRoutingjavaParm defaultData() {
 		return new EvaporatingRoutingjavaParm();
 	}
 

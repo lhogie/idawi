@@ -27,6 +27,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	public SharedMemoryTransport(Component c) {
 		super(c);
+		outs.add(this); //loopback
 	}
 
 	@Override

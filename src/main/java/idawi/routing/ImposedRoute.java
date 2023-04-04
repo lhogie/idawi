@@ -41,7 +41,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 
 
 	@Override
-	public IRTo createDefaultRoutingParms() {
+	public IRTo defaultData() {
 		// TODO Auto-generated method stub
 		return null;
 	}

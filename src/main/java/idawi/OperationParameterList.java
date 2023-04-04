@@ -25,7 +25,11 @@ public class OperationParameterList extends ArrayList {
 
 			if (!destinationClass.isAssignableFrom(initialObject.getClass())) {
 //				set(i, Conversion.convert(initialObject, destinationClass, converters));
-				set(i, Conversion.convert(initialObject, destinationClass));
+				try {
+					set(i, Conversion.convert(initialObject, destinationClass));
+				} catch (Exception err) {
+					throw new RuntimeException("conversion error", err);
+				}
 			}
 		}
 	}

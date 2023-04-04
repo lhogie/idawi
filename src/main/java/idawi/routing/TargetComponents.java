@@ -2,6 +2,7 @@ package idawi.routing;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -64,7 +65,7 @@ public interface TargetComponents extends Predicate<Component>, Serializable {
 
 		@Override
 		public String toString() {
-			return TextUtilities.concat(",", target);
+			return TextUtilities.concat(",", List.of(target));
 		}
 	}
 
@@ -76,11 +77,11 @@ public interface TargetComponents extends Predicate<Component>, Serializable {
 		} else {
 			var r = new Multicast(new HashSet<>());
 
-			for (var a : s.split(" *, *")) {
-				var c = lookup.lookup(a);
+			for (var componentName : s.split(" *, *")) {
+				var c = lookup.lookup(componentName);
 
 				if (c == null) {
-					lookup.add(c = new Component(a));
+					lookup.add(c = new Component(componentName));
 				}
 
 				r.target.add(c);
@@ -88,5 +89,9 @@ public interface TargetComponents extends Predicate<Component>, Serializable {
 
 			return r;
 		}
+	}
+
+	static TargetComponents unicast(Component component) {
+		return new Unicast(component);
 	};
 }

@@ -33,7 +33,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public RandomWalkData createDefaultRoutingParms() {
+	public RandomWalkData defaultData() {
 		return new RandomWalkData();
 	}
 

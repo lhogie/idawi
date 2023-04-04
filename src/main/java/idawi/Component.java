@@ -24,6 +24,7 @@ import idawi.routing.RoutingService;
 import idawi.routing.irp.IRP;
 import idawi.service.Location;
 import idawi.service.LocationService;
+import idawi.service.ServiceManager;
 import idawi.service.graph.ThreeDRendering;
 import idawi.service.time.TimeService;
 import idawi.service.web.AESEncrypter;
@@ -62,28 +63,26 @@ public class Component implements SizeOf, Externalizable {
 	public String ref;
 
 	public Component() {
-		this("c" + componentsInThisJVM.size());
+		this(null);
 	}
 
 	public Component(String ref) {
-		if (componentsInThisJVM.containsKey(ref)) {
-			throw new IllegalStateException(ref + " is already in use in this JVM");
-		}
-
 		this.ref = ref;
 
 		new SharedMemoryTransport(this);
 		new WebService(this);
 		new DigitalTwinService(this);
 		new BlindBroadcasting(this);
+		new IRP(this);
+		new ServiceManager(this);
 		new ThreeDRendering(this);
 
 		// descriptorRegistry.add(descriptor());
-		componentsInThisJVM.put(ref, this);
+//		componentsInThisJVM.put(ref, this);
 	}
 
 	public void dispose() {
-		componentsInThisJVM.remove(this);
+		//componentsInThisJVM.remove(this);
 		services.forEach(s -> s.dispose());
 		dependantChildren.forEach(t -> t.dispose());
 	}
@@ -246,7 +245,7 @@ public class Component implements SizeOf, Externalizable {
 		for (var c : lookup(DigitalTwinService.class).components) {
 			for (var t : c.services(TransportService.class)) {
 				for (var n : t.neighborhood().infos()) {
-					if (n.dest.equals(this)) {
+					if (n.dest.component.equals(this)) {
 						r.add(t);
 					}
 				}

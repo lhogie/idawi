@@ -1,12 +1,15 @@
 package idawi.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.ServiceDescriptor;
+import idawi.routing.RoutingService;
 import toools.reflect.Clazz;
 
 public class ServiceManager extends Service {
@@ -18,8 +21,48 @@ public class ServiceManager extends Service {
 		registerOperation(new list());
 		registerOperation(new start());
 		registerOperation(new stop());
+		registerOperation(new listRoutingServices());
+		registerOperation(new listServices());
+		registerOperation(new listOperations());
 	}
+	
+	
+	public class listRoutingServices extends TypedInnerClassOperation {
+		public List<String> f() {
+			return component.services(RoutingService.class).stream().map(s -> s.getClass().getName()).toList();
+		}
 
+		@Override
+		public String getDescription() {
+			return "listRoutingServices";
+		}
+	}
+	
+	public class listServices extends TypedInnerClassOperation {
+		public List<String> f() {
+			return component.services().stream().map(s -> s.getClass().getName()).toList();
+		}
+
+		@Override
+		public String getDescription() {
+			return "listServices";
+		}
+	}
+	
+	public class listOperations extends TypedInnerClassOperation {
+		public List<String> f(Class<? extends Service> serviceName) {
+			Service s = component.lookup(serviceName);
+			var l= new ArrayList<>(s.operations().stream().map(o -> o.getName()).toList());
+			l.sort((a, b)->a.compareTo(b));
+			return l;
+		}
+
+		@Override
+		public String getDescription() {
+			return "listServices";
+		}
+	}
+	
 	public class start extends TypedInnerClassOperation {
 		public ServiceDescriptor f(Class<? extends Service> serviceID) {
 			if (component.lookup(serviceID) != null) {

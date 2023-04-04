@@ -85,7 +85,7 @@ public class IRP extends RoutingService<NEParms> {
 	}
 
 	@Override
-	public NEParms createDefaultRoutingParms() {
+	public NEParms defaultData() {
 		return new NEParms();
 	}
 

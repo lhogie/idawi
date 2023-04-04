@@ -55,6 +55,11 @@ public abstract class TransportService extends Service {
 		// if the message was target to this component
 		if (msg.destination.componentTarget.test(component)) {
 			var s = component.lookup(msg.destination.service());
+
+			if (s == null)
+				Cout.debugSuperVisible(
+						"component " + component + " does not have service " + msg.destination.service());
+			else
 			s.considerNewMessage(msg);
 		}
 

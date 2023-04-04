@@ -40,7 +40,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public BFSRoutingParms createDefaultRoutingParms() {
+	public BFSRoutingParms defaultData() {
 		return new BFSRoutingParms();
 	}
 

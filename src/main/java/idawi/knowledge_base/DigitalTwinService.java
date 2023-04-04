@@ -110,7 +110,7 @@ public class DigitalTwinService extends KnowledgeBase {
 
 	public class components extends TypedInnerClassOperation {
 		public Set<Component> components() {
-			Cout.debug("running on " +  component);
+			Cout.debug("running on " +  component +": " + components);
 			return components;
 		}
 
@@ -324,9 +324,9 @@ public class DigitalTwinService extends KnowledgeBase {
 		components.clear();
 	}
 
-	public Component lookup(String n) {
+	public Component lookup(String name) {
 		for (var c : components) {
-			if (c.ref.equals(n)) {
+			if (c.ref.equals(name)) {
 				return c;
 			}
 		}

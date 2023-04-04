@@ -44,7 +44,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
-	public FloodingWithSelfPruning_UsingBloomFilterParm createDefaultRoutingParms() {
+	public FloodingWithSelfPruning_UsingBloomFilterParm defaultData() {
 		var neighbors = component.neighbors();
 		var p = new FloodingWithSelfPruning_UsingBloomFilterParm(bloomSize(neighbors.size()));
 

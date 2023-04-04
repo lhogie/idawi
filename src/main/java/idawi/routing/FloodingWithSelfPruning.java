@@ -37,7 +37,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	}
 
 	@Override
-	public SPPParm createDefaultRoutingParms() {
+	public SPPParm defaultData() {
 		var p = new SPPParm();
 		p.neighbors = component.neighbors().stream().map(i -> i.dest.component).toList();
 		return p;

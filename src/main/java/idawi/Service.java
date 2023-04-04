@@ -58,6 +58,10 @@ public class Service implements SizeOf, Serializable {
 
 	public Service(Component component) {
 		this.component = component;
+		
+		if(component.lookup(getClass()) != null)
+			throw new IllegalStateException("component already has service " + getClass());
+		
 		component.services.add(this);
 		this.id = getClass();
 		registerOperation(new descriptor());
@@ -141,6 +145,10 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
+	public Set<AbstractOperation> operations() {
+		return operations;
+	}
+	
 	public class listNativeOperations extends TypedInnerClassOperation {
 		public Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());

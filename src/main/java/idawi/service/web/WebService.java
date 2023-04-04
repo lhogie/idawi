@@ -27,7 +27,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.Operation;
 import idawi.OperationParameterList;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
@@ -40,7 +40,7 @@ import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
 import idawi.service.DemoService;
-import toools.io.Cout;
+import idawi.service.ServiceManager;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -83,6 +83,7 @@ public class WebService extends Service {
 	private int port;
 
 	public Map<String, String> serviceShortcuts = new HashMap<>();
+	Map<String, Function<MessageCollector, Object>> whatToSendMap = new HashMap<>();
 
 	public WebService(Component t) {
 		super(t);
@@ -91,6 +92,13 @@ public class WebService extends Service {
 		serviceShortcuts.put("dt", DigitalTwinService.class.getName());
 		serviceShortcuts.put("fwsp", FloodingWithSelfPruning.class.getName());
 		serviceShortcuts.put("demo", DemoService.class.getName());
+
+		whatToSendMap.put("msg", c -> c.messages.last());
+		whatToSendMap.put("content", c -> c.messages.last().content);
+		whatToSendMap.put("route", c -> c.messages.last().route);
+		whatToSendMap.put("source", c -> c.messages.last().route.initialEmission.transport.component);
+		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.initialEmission.transport.component,
+				c.messages.last().content });
 	}
 
 	public class Base64URL extends TypedInnerClassOperation {
@@ -281,144 +289,115 @@ public class WebService extends Service {
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
-			OutputStream output, Serializer serializer) throws IOException {
+			OutputStream output, Serializer serializer) throws IOException, ClassNotFoundException {
+
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "false", Set.of("true", "false")));
 		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
-
-		Map<String, Function<MessageCollector, Object>> whatToSendMap = new HashMap<>();
-		whatToSendMap.put("msg", c -> c.messages.last());
-		whatToSendMap.put("content", c -> c.messages.last().content);
-		whatToSendMap.put("route", c -> c.messages.last().route);
-		whatToSendMap.put("source", c -> c.messages.last().route.initialEmission.transport.component);
-		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.initialEmission.transport.component,
-				c.messages.last().content });
-
-		String whatToSendString = String.valueOf(removeOrDefault(query, "what", "msg", whatToSendMap.keySet()));
-		var whatToSendF = whatToSendMap.get(whatToSendString);
+		var whatToSendF = whatToSendMap
+				.get(String.valueOf(removeOrDefault(query, "what", "msg", whatToSendMap.keySet())));
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		RoutingService routing = component.defaultRoutingProtocol();
-		var routingString = path.isEmpty() ? "" : path.remove(0);
-
-		if (!routingString.isEmpty()) {
-			routingString = serviceShortcuts.getOrDefault(routingString, routingString);
-
-			try {
-				var routingClass = Class.forName(routingString);
-				routing = (RoutingService) routingClass.getConstructor(Component.class).newInstance(component);
-			} catch (Exception err) {
-				throw new RuntimeException(err);
-			}
+		if (path.isEmpty()) {
+			var r = component.defaultRoutingProtocol();
+			var rp = r.defaultData();
+			var t = TargetComponents.unicast(component);
+			var s = ServiceManager.class;
+			var o = ServiceManager.listRoutingServices.class;
+			var op = new OperationParameterList();
+			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+					postDataInputStream);
+			return;
 		}
 
-		RoutingData routingParms = routing.createDefaultRoutingParms();
-		var routingDataDescr = path.isEmpty() ? "" : path.remove(0);
+		var routing = routing(path.remove(0));
+		var routingParms = path.isEmpty() ? routing.defaultData() : routingsParms(routing, path.remove(0));
 
-		if (!routingDataDescr.isEmpty()) {
-			routingParms.fromString(routingDataDescr, routing);
+		if (path.isEmpty()) {
+			var r = routing;
+			var rp = routingParms;
+			var t = TargetComponents.unicast(component);
+			var s = DigitalTwinService.class;
+			var o = DigitalTwinService.components.class;
+			var op = new OperationParameterList();
+			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+					postDataInputStream);
+			return;
 		}
 
-		TargetComponents target = TargetComponents.all;
-		var targetString = path.isEmpty() ? "" : path.remove(0);
+		var target = path.isEmpty() ? TargetComponents.unicast(component) : target(path.remove(0));
+		Class<? extends Service> actualServiceID;
+		Class<? extends Operation> operationID;
 
-		if (!targetString.isEmpty()) {
-			target = TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
-		}
-
-		Class<? extends Service> actualServiceID = DigitalTwinService.class;
-		Class<? extends InnerClassOperation> operationID = DigitalTwinService.components.class;
-		var serviceOperationString = path.isEmpty() ? "" : path.remove(0);
-
-		if (!serviceOperationString.isEmpty()) {
-			int p = serviceOperationString.indexOf('$');
-			String serviceString;
-			String operationString;
-
-			if (p == -1) {
-				serviceString = serviceOperationString;
-				operationString = InnerClassOperation.name(operationID);
-			} else {
-				serviceString = serviceOperationString.substring(0, p);
-				operationString = serviceOperationString.substring(p + 1);
-			}
-
-			Cout.debug(serviceShortcuts);
-			serviceString = serviceShortcuts.getOrDefault(serviceString, serviceString);
-
-			try {
-				actualServiceID = (Class<? extends Service>) Class.forName(serviceString);
-				var declaringServiceClass = actualServiceID;
-
-				while (true) {
-					try {
-						var operationClassName = declaringServiceClass.getName() + "$" + operationString;
-//						System.err.println("trying " + operationClassName);
-						operationID = (Class<? extends InnerClassOperation>) Class.forName(operationClassName);
-						break;
-					} catch (Exception e) {
-						// e.printStackTrace();
-						// System.err.println("can't instantiate " + operationClassName);
-
-						if (Service.class.isAssignableFrom(declaringServiceClass.getSuperclass())) {
-							declaringServiceClass = (Class<? extends Service>) declaringServiceClass.getSuperclass();
-						} else {
-							throw new RuntimeException(
-									"can find operation " + operationString + " in the hierarchy of " + serviceString);
-						}
-					}
-				}
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+		if (path.isEmpty()) {
+			var r = routing;
+			var rp = routingParms;
+			var t = target;
+			var s = ServiceManager.class;
+			var o = ServiceManager.listServices.class;
+			var op = new OperationParameterList();
+			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+					postDataInputStream);
+			return;
+		} else if (path.size() == 1) {
+			var r = routing;
+			var rp = routingParms;
+			var t = target;
+			var s = service(path.remove(0));
+			var o = ServiceManager.listOperations.class;
+			var op = new OperationParameterList();
+			op.add(s);
+			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+					postDataInputStream);
+			return;
+		} else {
+			actualServiceID = service(path.remove(0));
+			operationID = operation(actualServiceID.getName(), path.remove(0));
 		}
 
 		var parms = new OperationParameterList();
 		parms.addAll(path);
 
+		exec(routing, routingParms, target, actualServiceID, operationID, parms, compress, encrypt, duration, timeout,
+				whatToSendF, serializer, output, postDataInputStream);
+	}
+
+	private Class<? extends Operation> operation(String service, String o) throws ClassNotFoundException {
+		return (Class<? extends Operation>) Class.forName(service + "$" + o);
+	}
+
+	private Class<? extends Service> service(String s) throws ClassNotFoundException {
+		s = serviceShortcuts.getOrDefault(s, s);
+		return (Class<? extends Service>) Class.forName(s);
+	}
+
+	public void exec(RoutingService routing, RoutingData routingParms, TargetComponents target,
+			Class<? extends Service> actualServiceID, Class<? extends Operation> operationID,
+			OperationParameterList parms, boolean compress, boolean encrypt, double duration, double timeout,
+			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
+			InputStream postDataInputStream) {
+
 		System.out.println(routing.getClass().getName() + "/" + routingParms + "/" + target + "/"
-				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?" + query);
+				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt="
+				+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
+				+ serializer.getMIMEType());
 
 		RemotelyRunningOperation ro = routing.exec(operationID, routingParms, target, true, parms);
 		var aes = new AESEncrypter();
 		SecretKey key = null;
 
-		ObjectMapper jsonParser = new ObjectMapper();
-		final var routing2 = routing;
-
 		// Cout.debugSuperVisible("collecting...");
 
-		ro.returnQ.collect(duration, timeout, collector -> {
-			// Cout.debugSuperVisible("result: " + collector.messages.last());
-			List<String> encodingsToClient = new ArrayList<>();
-			Object what2send = whatToSendF.apply(collector);
-			Cout.debug("JSONizing " + what2send);
+		var collector = new MessageCollector(ro.returnQ);
 
-			var bytes = serializer.toBytes(what2send);
-			encodingsToClient.add(serializer.getMIMEType());
-			boolean base64 = serializer.isBinary() || compress || encrypt;
+		if (postDataInputStream != null) {
+			new Thread(() -> {
+				ObjectMapper jsonParser = new ObjectMapper();
 
-			if (compress) {
-				bytes = Utilities.gzip(bytes);
-				encodingsToClient.add("gzip");
-			}
-
-			if (encrypt) {
-				try {
-					bytes = aes.encrypt(bytes, key);
-					encodingsToClient.add("aes");
-				} catch (Exception e) {
-					System.err.println(e.getMessage());
-				}
-			}
-
-			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
-
-			if (postDataInputStream != null) {
 				try {
 					JsonNode header = jsonParser.readTree(postDataInputStream);
 
@@ -450,15 +429,89 @@ public class WebService extends Service {
 						String serializerName = encodingsFromClient[0];
 						var ser = name2serializer.get(serializerName);
 						Object o = ser.fromBytes(content);
-						routing2.send(o, ro.getOperationInputQueueDestination());
+						routing.send(o, ro.getOperationInputQueueDestination());
 					}
 				} catch (IOException e1) {
 				}
+			}).start();
+		}
+
+		collector.collect(duration, timeout, c -> {
+			// Cout.debugSuperVisible("result: " + collector.messages.last());
+			List<String> encodingsToClient = new ArrayList<>();
+			Object what2send = whatToSendF.apply(c);
+
+			var bytes = serializer.toBytes(what2send);
+			encodingsToClient.add(serializer.getMIMEType());
+			boolean base64 = serializer.isBinary() || compress || encrypt;
+
+			if (compress) {
+				bytes = Utilities.gzip(bytes);
+				encodingsToClient.add("gzip");
 			}
+
+			if (encrypt) {
+				try {
+					bytes = aes.encrypt(bytes, key);
+					encodingsToClient.add("aes");
+				} catch (Exception e) {
+					System.err.println(e.getMessage());
+				}
+			}
+
+			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
+
 		});
 
 //			ro.dispose();
 
+	}
+
+	private String name(Function<MessageCollector, Object> whatToSendF) {
+		for (var e : whatToSendMap.entrySet()) {
+			if (e.getValue() == whatToSendF) {
+				return e.getKey();
+			}
+		}
+
+		throw new IllegalStateException();
+	}
+
+	private TargetComponents target(String targetString) {
+		var t = TargetComponents.all;
+
+		if (!targetString.isEmpty()) {
+			t = TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
+		}
+
+		return t;
+	}
+
+	private RoutingData routingsParms(RoutingService routing, String routingDataDescr) {
+		var p = routing.defaultData();
+
+		if (!routingDataDescr.isEmpty()) {
+			p.fromString(routingDataDescr, routing);
+		}
+
+		return p;
+	}
+
+	private RoutingService routing(String routingString) {
+		RoutingService routing = component.defaultRoutingProtocol();
+
+		if (!routingString.isEmpty()) {
+			routingString = serviceShortcuts.getOrDefault(routingString, routingString);
+
+			try {
+				var routingClass = (Class<? extends RoutingService>) Class.forName(routingString);
+				routing = component.lookup(routingClass);
+			} catch (Exception err) {
+				throw new RuntimeException(err);
+			}
+		}
+
+		return routing;
 	}
 
 	private void controlCollect(JsonNode header, MessageCollector collector) {

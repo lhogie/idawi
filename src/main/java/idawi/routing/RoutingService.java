@@ -30,7 +30,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public void accept(Message msg) {
-		accept(msg, createDefaultRoutingParms());
+		accept(msg, defaultData());
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 	public abstract String getAlgoName();
 
-	public abstract P createDefaultRoutingParms();
+	public abstract P defaultData();
 
 	public void send(Object value, TargetComponents r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
@@ -60,7 +60,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		dest.service = s;
 		dest.componentTarget = r;
 
-		send(value, dest, createDefaultRoutingParms());
+		send(value, dest, defaultData());
 	}
 
 	public void send(Object value, Destination dest, P parms) {
@@ -68,7 +68,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public void send(Object value, MessageQDestination dest) {
-		send(value, dest, createDefaultRoutingParms());
+		send(value, dest, defaultData());
 	}
 
 	public void send(String value, RemotelyRunningOperation o) {
@@ -91,7 +91,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, Object initialInputData) {
-		var parms = createDefaultRoutingParms();
+		var parms = defaultData();
 		return exec(o, parms, naturalTarget(parms), true, initialInputData);
 	}
 
@@ -118,7 +118,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 	public Object exec_rpc(Component to, Class<? extends InnerClassOperation> o, Object parms) {
 		var rec = new TargetComponents.Unicast(to);
-		var rq = exec(o, createDefaultRoutingParms(), rec, createAutoQueue("returnQ"),
+		var rq = exec(o, defaultData(), rec, createAutoQueue("returnQ"),
 				new OperationParameterList(parms)).returnQ;
 		return rq.toList().throwAnyError_Runtime().getContentOrNull(0);
 	}
@@ -144,11 +144,11 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public MessageQueue ping(Set<Component> targets) {
-		return ping(targets, createDefaultRoutingParms());
+		return ping(targets, defaultData());
 	}
 
 	public MessageQueue ping(Component target) {
-		return ping(Set.of(target), createDefaultRoutingParms());
+		return ping(Set.of(target), defaultData());
 	}
 
 	public MessageQueue ping(P parms) {
@@ -156,7 +156,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public MessageQueue ping() {
-		return ping(createDefaultRoutingParms());
+		return ping(defaultData());
 	}
 
 }
