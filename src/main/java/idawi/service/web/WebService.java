@@ -140,7 +140,7 @@ public class WebService extends Service {
 			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
 			Map<String, String> query = query(uri.getQuery());
-			e.getResponseHeaders().add("Access-Control-Allow-Origin:", "*");
+			e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 			OutputStream output = e.getResponseBody();
 
 			try {
