@@ -302,52 +302,43 @@ public class WebService extends Service {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		RoutingService r = component.defaultRoutingProtocol();
-		RoutingData rp = r.defaultData();
-		TargetComponents t = TargetComponents.unicast(component);
+		RoutingService r;
+		RoutingData rp;
+		TargetComponents t;
 		Class<? extends Service> s;
 		Class<? extends Operation> o;
 		OperationParameterList op = new OperationParameterList();
 
-		if (path.isEmpty()) {// nothing
+		if (path.isEmpty()) {// show available routing protocols
 			r = component.defaultRoutingProtocol();
 			rp = r.defaultData();
 			t = TargetComponents.unicast(component);
 			s = ServiceManager.class;
 			o = ServiceManager.listRoutingServices.class;
-			op = new OperationParameterList();
-			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-					postDataInputStream);
-			return;
-		} else if (path.size() == 1) { // no routing parms
+		} else if (path.size() == 1) { // show examples of routing parms
 			r = routing(path.get(0));
-			rp = r.defaultData(); // guess them
+			rp = r.defaultData();
 			t = TargetComponents.unicast(component);
 			s = r.getClass();
 			o = RoutingService.suggestParms.class;
-			op = new OperationParameterList();
-
 		} else if (path.size() == 2) { // no target, show possible ones
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
 			t = TargetComponents.unicast(component);
 			s = DigitalTwinService.class;
 			o = DigitalTwinService.components.class;
-			op = new OperationParameterList();
-		} else if (path.size() == 3) { // no service
+		} else if (path.size() == 3) { // show available services in the targets
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
 			t = target(path.get(2));
-			s = ServiceManager.class; // list services
+			s = ServiceManager.class; 
 			o = ServiceManager.listServices.class;
-			op = new OperationParameterList();
-		} else if (path.size() == 4) { // no operations
+		} else if (path.size() == 4) { // show operations available in services
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
 			t = target(path.get(2));
 			s = service(path.get(3));
-			o = ServiceManager.listOperations.class; // list operations
-			op = new OperationParameterList();
+			o = ServiceManager.listOperations.class;
 			op.add(s);
 		} else { // all ok
 			r = routing(path.get(0));
@@ -355,7 +346,6 @@ public class WebService extends Service {
 			t = target(path.get(2));
 			s = service(path.get(3));
 			o = operation(s.getName(), path.get(4));
-			op = new OperationParameterList();
 			op.addAll(path.subList(5, path.size()));
 		}
 
