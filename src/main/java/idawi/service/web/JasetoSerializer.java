@@ -18,6 +18,7 @@ public class JasetoSerializer<E> extends Serializer<E> {
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
+		j.registry.map.clear();
 		os.write(j.toJSON(o).getBytes());
 	}
 

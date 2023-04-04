@@ -31,13 +31,16 @@ public class DigitalTwinService extends KnowledgeBase {
 	public final Cache<BFSResult> bfsResult = new Cache<>(5,
 			() -> BFS.bfs(component, 10, Integer.MAX_VALUE, avoid -> false));
 
-	List<Info> infos = new ArrayList<>();
+	public final Set<Component> components = new HashSet<>();
+	public final List<DigitalTwinListener> listeners = new ArrayList<>();
+	public double minimumAccuracyTolerated = 0.1;
 
 	public DigitalTwinService(Component component) {
 		super(component);
 		registerOperation(new addLink());
 		registerOperation(new clear());
 		registerOperation(new size());
+		registerOperation(new components());
 	}
 
 	public TransportService twinTransport(TransportService t) {
@@ -104,6 +107,17 @@ public class DigitalTwinService extends KnowledgeBase {
 		}
 	}
 
+	public class components extends TypedInnerClassOperation {
+		public Set<Component> components() {
+			return components;
+		}
+
+		@Override
+		public String getDescription() {
+			return "get all known components";
+		}
+	}
+
 	public class clear extends TypedInnerClassOperation {
 		public void f() {
 			clear();
@@ -143,10 +157,6 @@ public class DigitalTwinService extends KnowledgeBase {
 		components.forEach(c -> p.test(c.info));
 	}
 
-	public final Set<Component> components = new HashSet<>();
-	public final List<DigitalTwinListener> listeners = new ArrayList<>();
-	public double minimumAccuracyTolerated = 0.1;
-
 	public Component pickRandomPeer() {
 		if (components.size() == 0) {
 			return null;
@@ -167,6 +177,8 @@ public class DigitalTwinService extends KnowledgeBase {
 	}
 
 	public void add(double now, TransportService from, double d, TransportService to) {
+		add(from.component);
+		add(to.component);
 		var toNeighbor = from.neighborhood().search(to);
 
 		if (toNeighbor == null) {
@@ -305,7 +317,6 @@ public class DigitalTwinService extends KnowledgeBase {
 		listeners.forEach(l -> l.newComponent(a));
 		return true;
 	}
-
 
 	public void clear() {
 		components.clear();

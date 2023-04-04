@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
@@ -32,7 +33,6 @@ import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.DigitalTwinService;
-import idawi.knowledge_base.MiscKnowledgeBase;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.FloodingWithSelfPruning;
@@ -40,7 +40,6 @@ import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
 import idawi.service.DemoService;
-import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -285,8 +284,18 @@ public class WebService extends Service {
 		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
 		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
 		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "false", Set.of("true", "false")));
-		Cout.debugSuperVisible(compress);
 		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
+
+		Map<String, Function<MessageCollector, Object>> whatToSendMap = new HashMap<>();
+		whatToSendMap.put("msg", c -> c.messages.last());
+		whatToSendMap.put("content", c -> c.messages.last().content);
+		whatToSendMap.put("route", c -> c.messages.last().route);
+		whatToSendMap.put("source", c -> c.messages.last().route.initialEmission.transport.component);
+		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.initialEmission.transport.component,
+				c.messages.last().content });
+
+		String whatToSendString = String.valueOf(removeOrDefault(query, "what", "msg", whatToSendMap.keySet()));
+		var whatToSendF = whatToSendMap.get(whatToSendString);
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
@@ -317,10 +326,11 @@ public class WebService extends Service {
 		var targetString = path.isEmpty() ? "" : path.remove(0);
 
 		if (!targetString.isEmpty()) {
-			TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
+			target = TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
 		}
 
-		Class<? extends InnerClassOperation> operationID = MiscKnowledgeBase.descriptor.class;
+		Class<? extends Service> actualServiceID = DigitalTwinService.class;
+		Class<? extends InnerClassOperation> operationID = DigitalTwinService.components.class;
 		var serviceOperationString = path.isEmpty() ? "" : path.remove(0);
 
 		if (!serviceOperationString.isEmpty()) {
@@ -339,12 +349,12 @@ public class WebService extends Service {
 			serviceString = serviceShortcuts.getOrDefault(serviceString, serviceString);
 
 			try {
-				var serviceClass = (Class<? extends Service>) Class.forName(serviceString);
+				actualServiceID = (Class<? extends Service>) Class.forName(serviceString);
+				var declaringServiceClass = actualServiceID;
 
 				while (true) {
-					var operationClassName = serviceClass.getName() + "$" + operationString;
-
 					try {
+						var operationClassName = declaringServiceClass.getName() + "$" + operationString;
 //						System.err.println("trying " + operationClassName);
 						operationID = (Class<? extends InnerClassOperation>) Class.forName(operationClassName);
 						break;
@@ -352,8 +362,8 @@ public class WebService extends Service {
 						// e.printStackTrace();
 						// System.err.println("can't instantiate " + operationClassName);
 
-						if (Service.class.isAssignableFrom(serviceClass.getSuperclass())) {
-							serviceClass = (Class<? extends Service>) serviceClass.getSuperclass();
+						if (Service.class.isAssignableFrom(declaringServiceClass.getSuperclass())) {
+							declaringServiceClass = (Class<? extends Service>) declaringServiceClass.getSuperclass();
 						} else {
 							throw new RuntimeException(
 									"can find operation " + operationString + " in the hierarchy of " + serviceString);
@@ -378,12 +388,14 @@ public class WebService extends Service {
 		ObjectMapper jsonParser = new ObjectMapper();
 		final var routing2 = routing;
 
-		//Cout.debugSuperVisible("collecting...");
+		// Cout.debugSuperVisible("collecting...");
 
 		ro.returnQ.collect(duration, timeout, collector -> {
 			// Cout.debugSuperVisible("result: " + collector.messages.last());
 			List<String> encodingsToClient = new ArrayList<>();
-			var bytes = serializer.toBytes(collector.messages.last());
+			Object what2send = whatToSendF.apply(collector);
+
+			var bytes = serializer.toBytes(what2send);
 			encodingsToClient.add(serializer.getMIMEType());
 			boolean base64 = serializer.isBinary() || compress || encrypt;
 
