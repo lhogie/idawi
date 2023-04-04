@@ -24,9 +24,11 @@ import idawi.routing.MessageODestination;
 import idawi.routing.MessageQDestination;
 import idawi.routing.TargetComponents;
 import idawi.service.ErrorLog;
+import idawi.service.web.WebService;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.SizeOf;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
@@ -68,6 +70,14 @@ public class Service implements SizeOf, Serializable {
 		registerOperation("friendlyName", q -> getFriendlyName());
 	}
 
+	protected void webShortCut(String shortcut) {
+		var map = component.lookup(WebService.class).serviceShortcuts;
+
+		if (map.containsKey(shortcut))
+			throw new IllegalArgumentException("shortcut already in use: " + shortcut);
+
+		map.put(shortcut, getClass().getName());
+	}
 
 	public class getFriendlyName extends TypedInnerClassOperation {
 

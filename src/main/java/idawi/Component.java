@@ -27,6 +27,7 @@ import idawi.service.LocationService;
 import idawi.service.graph.ThreeDRendering;
 import idawi.service.time.TimeService;
 import idawi.service.web.AESEncrypter;
+import idawi.service.web.WebService;
 import idawi.transport.Neighborhood;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
@@ -72,6 +73,7 @@ public class Component implements SizeOf, Externalizable {
 		this.ref = ref;
 
 		new SharedMemoryTransport(this);
+		new WebService(this);
 		new DigitalTwinService(this);
 		new BlindBroadcasting(this);
 		new ThreeDRendering(this);

@@ -347,6 +347,7 @@ public class WebService extends Service {
 				operationString = serviceOperationString.substring(p + 1);
 			}
 
+			Cout.debug(serviceShortcuts);
 			serviceString = serviceShortcuts.getOrDefault(serviceString, serviceString);
 
 			try {

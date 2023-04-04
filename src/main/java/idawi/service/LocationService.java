@@ -14,6 +14,7 @@ public class LocationService extends Service {
 
 	public LocationService(Component node) {
 		super(node);
+		registerOperation(new location());
 	}
 
 	public Location getLocation() {
