@@ -87,11 +87,6 @@
 		</dependency>
 		<dependency>
 			<groupId>io.github.lhogie</groupId>
-			<artifactId>xycharter</artifactId>
-			<version>0.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>io.github.lhogie</groupId>
 			<artifactId>toools</artifactId>
 			<version>0.0.9-SNAPSHOT</version>
 		</dependency>
@@ -119,28 +114,6 @@
 			<groupId>de.ruedigermoeller</groupId>
 			<artifactId>fst</artifactId>
 			<version>3.0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jfree</groupId>
-			<artifactId>jfreesvg</artifactId>
-			<version>3.4</version>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.7.0</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.java-websocket</groupId>
-			<artifactId>Java-WebSocket</artifactId>
-			<version>1.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.7.0</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<distributionManagement>
