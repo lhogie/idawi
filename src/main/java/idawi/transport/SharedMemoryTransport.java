@@ -9,6 +9,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.xml.validation.Validator;
+
 import idawi.Component;
 import idawi.Service;
 import idawi.messaging.Message;
@@ -52,7 +54,7 @@ public class SharedMemoryTransport extends TransportService {
 	private void f(Message msg, TransportService out) {
 //		new Exception().printStackTrace();
 		final var clone = msg.clone();
-		
+
 		Service.threadPool.submit(() -> {
 			try {
 				out.processIncomingMessage(clone);

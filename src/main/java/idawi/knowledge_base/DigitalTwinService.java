@@ -24,6 +24,7 @@ import jdotgen.EdgeProps;
 import jdotgen.GraphvizDriver;
 import jdotgen.Props.Style;
 import jdotgen.VertexProps;
+import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public class DigitalTwinService extends KnowledgeBase {
@@ -109,6 +110,7 @@ public class DigitalTwinService extends KnowledgeBase {
 
 	public class components extends TypedInnerClassOperation {
 		public Set<Component> components() {
+			Cout.debug("running on " +  component);
 			return components;
 		}
 

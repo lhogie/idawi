@@ -40,6 +40,7 @@ import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
 import idawi.service.DemoService;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -394,6 +395,7 @@ public class WebService extends Service {
 			// Cout.debugSuperVisible("result: " + collector.messages.last());
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(collector);
+			Cout.debug("JSONizing " + what2send);
 
 			var bytes = serializer.toBytes(what2send);
 			encodingsToClient.add(serializer.getMIMEType());

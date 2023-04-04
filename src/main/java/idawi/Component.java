@@ -24,6 +24,7 @@ import idawi.routing.RoutingService;
 import idawi.routing.irp.IRP;
 import idawi.service.Location;
 import idawi.service.LocationService;
+import idawi.service.graph.ThreeDRendering;
 import idawi.service.time.TimeService;
 import idawi.service.web.AESEncrypter;
 import idawi.transport.Neighborhood;
@@ -73,6 +74,7 @@ public class Component implements SizeOf, Externalizable {
 		new SharedMemoryTransport(this);
 		new DigitalTwinService(this);
 		new BlindBroadcasting(this);
+		new ThreeDRendering(this);
 
 		// descriptorRegistry.add(descriptor());
 		componentsInThisJVM.put(ref, this);

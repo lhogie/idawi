@@ -1,11 +1,11 @@
 package idawi.test;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.io.IOException;
 import java.util.Set;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;

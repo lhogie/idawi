@@ -10,7 +10,7 @@ import idawi.transport.SharedMemoryTransport;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 2;
+		int n = 1;
 		var components = new ArrayList<Component>();
 		components.add(new Component("gw"));
 

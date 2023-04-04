@@ -1,7 +1,7 @@
 package idawi.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import idawi.Component;
 import idawi.OperationParameterList;
@@ -52,7 +52,7 @@ public class LucTests {
 		Component.stopPlatformThreads();
 	}
 
-	@Test
+	@org.junit.Test
 	public void twoComponentsConversation() {
 		Cout.debugSuperVisible("Starting test twoComponentsConversation");
 		// trigger the creation of a component from its description
