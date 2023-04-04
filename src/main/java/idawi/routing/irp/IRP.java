@@ -1,5 +1,7 @@
 package idawi.routing.irp;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -85,8 +87,26 @@ public class IRP extends RoutingService<NEParms> {
 	}
 
 	@Override
-	public NEParms defaultData() {
-		return new NEParms();
+	public List<NEParms> dataSuggestions() {
+		var l = new ArrayList<NEParms>();
+
+		{
+			var p = new NEParms();
+			p.componentNames = component.digitalTwinService().components;
+			p.coverage = 1000;
+			p.validityDuration = 1;
+			l.add(p);
+		}
+
+		{
+			var p = new NEParms();
+			p.componentNames = null;
+			p.coverage = 3;
+			p.validityDuration = 2;
+			l.add(p);
+		}
+
+		return l;
 	}
 
 	@Override

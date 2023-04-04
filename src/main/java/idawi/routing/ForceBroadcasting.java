@@ -1,6 +1,7 @@
 package idawi.routing;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import idawi.Component;
 import idawi.messaging.Message;
@@ -49,9 +50,13 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 		}
 	}
 
+
+	
 	@Override
-	public EvaporatingRoutingjavaParm defaultData() {
-		return new EvaporatingRoutingjavaParm();
+	public List<EvaporatingRoutingjavaParm> dataSuggestions() {
+		var l = new ArrayList<EvaporatingRoutingjavaParm>();
+		l.add(new EvaporatingRoutingjavaParm());
+		return l;
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 package idawi.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
@@ -53,6 +56,13 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 		}
 
 		return p;
+	}
+
+	@Override
+	public List<FloodingWithSelfPruning_UsingBloomFilterParm> dataSuggestions() {
+		var l = new ArrayList<FloodingWithSelfPruning_UsingBloomFilterParm>();
+		l.add(new FloodingWithSelfPruning_UsingBloomFilterParm(1));
+		return l;
 	}
 
 	protected int bloomSize(int size) {

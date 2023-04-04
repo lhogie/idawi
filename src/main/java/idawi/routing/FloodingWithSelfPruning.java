@@ -1,5 +1,8 @@
 package idawi.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
@@ -41,6 +44,13 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 		var p = new SPPParm();
 		p.neighbors = component.neighbors().stream().map(i -> i.dest.component).toList();
 		return p;
+	}
+
+	@Override
+	public List<SPPParm> dataSuggestions() {
+		var l = new ArrayList<SPPParm>();
+		l.add(new SPPParm());
+		return l;
 	}
 
 	@Override

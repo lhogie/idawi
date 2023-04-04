@@ -2,6 +2,7 @@ package idawi.routing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import idawi.Component;
@@ -19,8 +20,6 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 		return "random";
 	}
 
-
-
 	@Override
 	public void accept(Message msg, RandomWalkData p) {
 		var relays = new ArrayList<>(component.neighbors().infos());
@@ -33,8 +32,10 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public RandomWalkData defaultData() {
-		return new RandomWalkData();
+	public List<RandomWalkData> dataSuggestions() {
+		var l = new ArrayList<RandomWalkData>();
+		l.add(new RandomWalkData());
+		return l;
 	}
 
 	@Override

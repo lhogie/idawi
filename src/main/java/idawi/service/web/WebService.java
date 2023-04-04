@@ -302,68 +302,65 @@ public class WebService extends Service {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		if (path.isEmpty()) {
-			var r = component.defaultRoutingProtocol();
-			var rp = r.defaultData();
-			var t = TargetComponents.unicast(component);
-			var s = ServiceManager.class;
-			var o = ServiceManager.listRoutingServices.class;
-			var op = new OperationParameterList();
+		RoutingService r = component.defaultRoutingProtocol();
+		RoutingData rp = r.defaultData();
+		TargetComponents t = TargetComponents.unicast(component);
+		Class<? extends Service> s;
+		Class<? extends Operation> o;
+		OperationParameterList op = new OperationParameterList();
+
+		if (path.isEmpty()) {// nothing
+			r = component.defaultRoutingProtocol();
+			rp = r.defaultData();
+			t = TargetComponents.unicast(component);
+			s = ServiceManager.class;
+			o = ServiceManager.listRoutingServices.class;
+			op = new OperationParameterList();
 			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
 					postDataInputStream);
 			return;
-		}
+		} else if (path.size() == 1) { // no routing parms
+			r = routing(path.get(0));
+			rp = r.defaultData(); // guess them
+			t = TargetComponents.unicast(component);
+			s = r.getClass();
+			o = RoutingService.suggestParms.class;
+			op = new OperationParameterList();
 
-		var routing = routing(path.remove(0));
-		var routingParms = path.isEmpty() ? routing.defaultData() : routingsParms(routing, path.remove(0));
-
-		if (path.isEmpty()) {
-			var r = routing;
-			var rp = routingParms;
-			var t = TargetComponents.unicast(component);
-			var s = DigitalTwinService.class;
-			var o = DigitalTwinService.components.class;
-			var op = new OperationParameterList();
-			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-					postDataInputStream);
-			return;
-		}
-
-		var target = path.isEmpty() ? TargetComponents.unicast(component) : target(path.remove(0));
-		Class<? extends Service> actualServiceID;
-		Class<? extends Operation> operationID;
-
-		if (path.isEmpty()) {
-			var r = routing;
-			var rp = routingParms;
-			var t = target;
-			var s = ServiceManager.class;
-			var o = ServiceManager.listServices.class;
-			var op = new OperationParameterList();
-			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-					postDataInputStream);
-			return;
-		} else if (path.size() == 1) {
-			var r = routing;
-			var rp = routingParms;
-			var t = target;
-			var s = service(path.remove(0));
-			var o = ServiceManager.listOperations.class;
-			var op = new OperationParameterList();
+		} else if (path.size() == 2) { // no target, show possible ones
+			r = routing(path.get(0));
+			rp = routingsParms(r, path.get(1));
+			t = TargetComponents.unicast(component);
+			s = DigitalTwinService.class;
+			o = DigitalTwinService.components.class;
+			op = new OperationParameterList();
+		} else if (path.size() == 3) { // no service
+			r = routing(path.get(0));
+			rp = routingsParms(r, path.get(1));
+			t = target(path.get(2));
+			s = ServiceManager.class; // list services
+			o = ServiceManager.listServices.class;
+			op = new OperationParameterList();
+		} else if (path.size() == 4) { // no operations
+			r = routing(path.get(0));
+			rp = routingsParms(r, path.get(1));
+			t = target(path.get(2));
+			s = service(path.get(3));
+			o = ServiceManager.listOperations.class; // list operations
+			op = new OperationParameterList();
 			op.add(s);
-			exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-					postDataInputStream);
-			return;
-		} else {
-			actualServiceID = service(path.remove(0));
-			operationID = operation(actualServiceID.getName(), path.remove(0));
+		} else { // all ok
+			r = routing(path.get(0));
+			rp = routingsParms(r, path.get(1));
+			t = target(path.get(2));
+			s = service(path.get(3));
+			o = operation(s.getName(), path.get(4));
+			op = new OperationParameterList();
+			op.addAll(path.subList(5, path.size()));
 		}
 
-		var parms = new OperationParameterList();
-		parms.addAll(path);
-
-		exec(routing, routingParms, target, actualServiceID, operationID, parms, compress, encrypt, duration, timeout,
-				whatToSendF, serializer, output, postDataInputStream);
+		exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+				postDataInputStream);
 	}
 
 	private Class<? extends Operation> operation(String service, String o) throws ClassNotFoundException {

@@ -1,11 +1,11 @@
 package idawi.routing;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.messaging.Message;
-import idawi.transport.OutNeighbor;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -23,7 +23,6 @@ public class ImposedRoute extends RoutingService<IRTo> {
 		return "P2P routing";
 	}
 
-
 	@Override
 	public void accept(Message msg, IRTo p) {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
@@ -39,11 +38,17 @@ public class ImposedRoute extends RoutingService<IRTo> {
 		}
 	}
 
-
 	@Override
-	public IRTo defaultData() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<IRTo> dataSuggestions() {
+		var l = new ArrayList<IRTo>();
+		l.add(new IRTo());
+		{
+			var t = new IRTo();
+			t.route.addAll(component.digitalTwinService().components);
+			l.add(t);
+
+		}
+		return l;
 	}
 
 	@Override

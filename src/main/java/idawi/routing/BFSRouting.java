@@ -1,5 +1,8 @@
 package idawi.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
@@ -40,8 +43,26 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public BFSRoutingParms defaultData() {
-		return new BFSRoutingParms();
+	public List<BFSRoutingParms> dataSuggestions() {
+		var l = new ArrayList<BFSRoutingParms>();
+		{
+			var p = new BFSRoutingParms();
+			p.recipients.add(component);
+			l.add(p);
+		}
+		{
+			var p = new BFSRoutingParms();
+			p.recipients.add(component);
+			p.recipients.addAll(component.digitalTwinService().components);
+			l.add(p);
+		}
+
+		{
+			var p = new BFSRoutingParms();
+			l.add(p);
+		}
+		
+		return l;
 	}
 
 	@Override

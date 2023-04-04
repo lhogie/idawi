@@ -1,5 +1,8 @@
 package idawi.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
@@ -22,6 +25,7 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	public long sizeOf() {
 		return super.sizeOf() + alreadyReceivedMsgs.size() * 8 + 8;
 	}
+
 	@Override
 	public void accept(Message msg, RoutingData parms) {
 		// the message was never received
@@ -32,8 +36,10 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	public RoutingData defaultData() {
-		return new EmptyRoutingParms();
+	public List<RoutingData> dataSuggestions() {
+		var l = new ArrayList<RoutingData>();
+		l.add(new EmptyRoutingParms());
+		return l;
 	}
 
 	@Override

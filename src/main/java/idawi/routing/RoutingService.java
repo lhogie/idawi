@@ -10,10 +10,10 @@ import idawi.InnerClassOperation;
 import idawi.OperationParameterList;
 import idawi.RemotelyRunningOperation;
 import idawi.Service;
+import idawi.TypedInnerClassOperation;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.transport.TransportService;
-import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -27,6 +27,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	public RoutingService(Component node) {
 		super(node);
 		registerOperation(new ping());
+		registerOperation(new suggestParms());
 	}
 
 	public void accept(Message msg) {
@@ -50,7 +51,11 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 	public abstract String getAlgoName();
 
-	public abstract P defaultData();
+	public abstract List<P> dataSuggestions();
+
+	public P defaultData() {
+		return dataSuggestions().get(0);
+	}
 
 	public void send(Object value, TargetComponents r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
@@ -118,8 +123,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 	public Object exec_rpc(Component to, Class<? extends InnerClassOperation> o, Object parms) {
 		var rec = new TargetComponents.Unicast(to);
-		var rq = exec(o, defaultData(), rec, createAutoQueue("returnQ"),
-				new OperationParameterList(parms)).returnQ;
+		var rq = exec(o, defaultData(), rec, createAutoQueue("returnQ"), new OperationParameterList(parms)).returnQ;
 		return rq.toList().throwAnyError_Runtime().getContentOrNull(0);
 	}
 
@@ -136,6 +140,18 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 			var m = in.poll_sync();
 			// sends back the ping message to the caller
 			reply(m, m);
+		}
+	}
+
+	public class suggestParms extends TypedInnerClassOperation {
+
+		@Override
+		public String getDescription() {
+			return "suggestParms";
+		}
+
+		public List<P> impl() {
+			return dataSuggestions();
 		}
 	}
 
