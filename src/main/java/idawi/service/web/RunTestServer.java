@@ -1,5 +1,7 @@
 package idawi.service.web;
 
+import java.awt.Desktop;
+import java.net.URI;
 import java.util.ArrayList;
 
 import idawi.Component;
@@ -23,6 +25,6 @@ public class RunTestServer {
 		SharedMemoryTransport.randomTree(components, SharedMemoryTransport.class);
 		System.out.println("gw reaches: " + gateway.neighbors());
 
-		// Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
+		 Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}
 }
