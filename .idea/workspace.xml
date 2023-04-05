@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e5b72562-619a-45fa-8ab7-d691a3d03302" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="RunTestServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="idawi.service.web.RunTestServer" />
+      <module name="idawi" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="idawi.service.web.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.RunTestServer" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TaskManager">
+    <servers />
+  </component>
+</project>
