@@ -25,7 +25,7 @@ Here are some of his features of interest:
 Team members:
 - [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
 - Paul Gros (Engineering & Master2 degree intern in srping 2023)
--  (Engineering & Master2 degree intern in srping 2023)
+- [Lidaou Denis ASSOTI](https://www.linkedin.com/in/denisassoti/) (Engineering & Master2 degree intern in srping 2023)
 -  (Engineering & Master2 degree intern in srping 2023)
 -  (Engineering & Master2 degree intern in srping 2023)
 -  (Engineering & Master2 degree intern in srping 2023)
