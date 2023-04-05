@@ -8,8 +8,8 @@ import idawi.Component;
 import idawi.InnerClassOperation;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.Route;
-import idawi.routing.TargetComponents;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -41,7 +41,7 @@ public class TraceRouteService extends Service {
 
 	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
 		var map = new HashMap<Component, Route>();
-		component.bb().exec(TraceRouteService.traceroute.class, null, new TargetComponents.Multicast(targets), true,
+		component.bb().exec(TraceRouteService.traceroute.class, null, ComponentMatcher.among(targets), true,
 				null).returnQ.collect(timeout, timeout, c -> {
 					var target = c.messages.last().route.initialEmission().transport.component;
 					var route = (Route) c.messages.last().content;

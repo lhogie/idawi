@@ -1,9 +1,9 @@
 package idawi;
 
 import idawi.messaging.MessageQueue;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.MessageODestination;
 import idawi.routing.MessageQDestination;
-import idawi.routing.TargetComponents;
 
 public class RemotelyRunningOperation {
 
@@ -12,7 +12,7 @@ public class RemotelyRunningOperation {
 
 	public MessageQDestination getOperationInputQueueDestination() {
 		var d = new MessageQDestination();
-		d.componentTarget = new TargetComponents.Unicast(returnQ.service.component);
+		d.componentTarget = ComponentMatcher.one(returnQ.service.component);
 		d.queueID = destination.queueID();
 		d.service = destination.service();
 		return d;

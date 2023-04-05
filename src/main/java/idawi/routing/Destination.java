@@ -6,7 +6,7 @@ import idawi.Service;
 
 public abstract class Destination implements Serializable {
 
-	public TargetComponents componentTarget;
+	public ComponentMatcher componentTarget;
 
 	public abstract Class<? extends Service> service();
 

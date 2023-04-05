@@ -16,7 +16,7 @@ import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import toools.thread.Q;
 
 /**
@@ -59,7 +59,7 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(localBench.class, null, TargetComponents.all, true, parms).returnQ.c().collect(c -> {
+		component.bb().exec(localBench.class, null, ComponentMatcher.all, true, parms).returnQ.c().collect(c -> {
 			var r = c.messages.last();
 
 			if (r.content instanceof String) {

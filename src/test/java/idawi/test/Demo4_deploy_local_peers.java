@@ -9,7 +9,7 @@ import idawi.InnerClassOperation;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.messaging.MessageQueue;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import idawi.transport.SharedMemoryTransport;
 import toools.thread.Q;
 
@@ -66,8 +66,8 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		initialThing.defaultRoutingProtocol().exec(DummyService.op.class, null, new TargetComponents.Unicast(last),
-				true, "hello!");
+		initialThing.defaultRoutingProtocol().exec(DummyService.op.class, null, ComponentMatcher.one(last), true,
+				"hello!");
 		s.wait.poll_sync();
 		System.out.println("completed");
 		Component.stopPlatformThreads();

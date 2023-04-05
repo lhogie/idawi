@@ -12,7 +12,7 @@ import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import idawi.service.ServiceManager;
 import idawi.service.map_reduce.MapReduceService;
 import idawi.service.map_reduce.Result;
@@ -43,7 +43,7 @@ public class Main {
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
 		var ro = mapper.defaultRoutingProtocol().exec(ServiceManager.ensureStarted.class, null,
-				new TargetComponents.Multicast(workers), true, new OperationParameterList(MapReduceService.class));
+				 ComponentMatcher.among(workers), true, new OperationParameterList(MapReduceService.class));
 		ro.returnQ.c().collectUntilNEOT(1, workers.size());
 
 		// create tasks

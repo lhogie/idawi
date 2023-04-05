@@ -39,7 +39,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(RandomWalkData parms) {
+	public ComponentMatcher naturalTarget(RandomWalkData parms) {
 		return c -> true;
 	}
 }

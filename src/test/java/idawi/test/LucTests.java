@@ -18,7 +18,7 @@ import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import idawi.service.DemoService;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
@@ -127,7 +127,7 @@ public class LucTests {
 
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
-		Component first = root.bb().exec(DemoService.waiting.class, null, new TargetComponents.Multicast(ss), true,
+		Component first = root.bb().exec(DemoService.waiting.class, null,  ComponentMatcher.among(ss), true,
 				new OperationParameterList(1)).returnQ.c().collectWhile(c -> !c.messages.isEmpty()).messages
 				.get(0).route.initialEmission.transport.component;
 

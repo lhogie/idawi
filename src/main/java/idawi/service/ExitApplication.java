@@ -3,7 +3,7 @@ package idawi.service;
 import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 
 public class ExitApplication extends Service {
 
@@ -29,7 +29,7 @@ public class ExitApplication extends Service {
 	}
 
 	public void exit(int exitCode) {
-		component.bb().exec(ExitApplication.exit.class, null, TargetComponents.all, false, exitCode);
+		component.bb().exec(ExitApplication.exit.class, null, ComponentMatcher.all, false, exitCode);
 		component.forEachService(s -> s.dispose());
 		System.exit(exitCode);
 	}

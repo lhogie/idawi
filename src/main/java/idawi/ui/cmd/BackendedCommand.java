@@ -5,7 +5,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.messaging.ProgressMessage;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -35,7 +35,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 		var col = c.defaultRoutingProtocol().exec(CommandsService.exec.class, null,
-				new TargetComponents.Multicast(target), true, backend).returnQ.collect(1, 1, c2 -> {
+				 ComponentMatcher.among(target), true, backend).returnQ.collect(1, 1, c2 -> {
 					var msg = c2.messages.last();
 					if (msg.isError()) {
 						((Throwable) msg.content).printStackTrace();

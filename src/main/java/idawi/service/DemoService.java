@@ -14,7 +14,7 @@ import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import idawi.service.web.Graph;
 import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
@@ -110,7 +110,7 @@ public class DemoService extends Service {
 		a.lookup(SharedMemoryTransport.class).connectTo(b);
 
 		var s = new BlindBroadcasting(a);
-		var o = s.exec(DemoService.stringLength.class, null, new TargetComponents.Unicast(b), true, "");
+		var o = s.exec(DemoService.stringLength.class, null,  ComponentMatcher.one(b), true, "");
 
 		for (int i = 0; i < 50; ++i) {
 			s.send("" + i, o);

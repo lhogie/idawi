@@ -72,7 +72,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(BFSRoutingParms p) {
+	public ComponentMatcher naturalTarget(BFSRoutingParms p) {
 		return c -> p.recipients.contains(c);
 	}
 

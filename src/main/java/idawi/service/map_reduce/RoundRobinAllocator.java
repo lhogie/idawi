@@ -1,14 +1,13 @@
 package idawi.service.map_reduce;
 
 import java.util.List;
-import java.util.Set;
 
 import idawi.Component;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 
 public class RoundRobinAllocator<R> implements Allocator<R> {
 	@Override
 	public void assign(List<Task<R>> tasks, List<Component> workers) {
-		tasks.forEach(t -> t.to = new TargetComponents.Multicast(Set.of(workers.get(t.id % workers.size()))));
+		tasks.forEach(t -> t.to =  ComponentMatcher.one(workers.get(t.id % workers.size())));
 	}
 }

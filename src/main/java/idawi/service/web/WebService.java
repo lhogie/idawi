@@ -35,10 +35,10 @@ import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.FloodingWithSelfPruning;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
-import idawi.routing.TargetComponents;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
 import toools.io.Cout;
@@ -304,7 +304,7 @@ public class WebService extends Service {
 
 		RoutingService r;
 		RoutingData rp;
-		TargetComponents t;
+		ComponentMatcher t;
 		Class<? extends Service> s;
 		Class<? extends Operation> o;
 		OperationParameterList op = new OperationParameterList();
@@ -312,40 +312,40 @@ public class WebService extends Service {
 		if (path.isEmpty()) {// show available routing protocols
 			r = component.defaultRoutingProtocol();
 			rp = r.defaultData();
-			t = TargetComponents.unicast(component);
+			t = ComponentMatcher.one(component);
 			s = ServiceManager.class;
 			o = ServiceManager.listRoutingServices.class;
 		} else if (path.size() == 1) { // show examples of routing parms
 			r = routing(path.get(0));
 			rp = r.defaultData();
-			t = TargetComponents.unicast(component);
+			t = ComponentMatcher.one(component);
 			s = r.getClass();
 			o = RoutingService.suggestParms.class;
 		} else if (path.size() == 2) { // no target, show possible ones
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = TargetComponents.unicast(component);
+			t = ComponentMatcher.one(component);
 			s = DigitalTwinService.class;
 			o = DigitalTwinService.components.class;
 		} else if (path.size() == 3) { // show available services in the targets
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = target(path.get(2));
+			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
 			s = ServiceManager.class;
 			o = ServiceManager.listServices.class;
 		} else if (path.size() == 4) { // show operations available in services
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = target(path.get(2));
+			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
 			s = service(path.get(3));
 			o = ServiceManager.listOperations.class;
 			op.add(s);
 		} else { // all ok
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = target(path.get(2));
+			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
 			s = service(path.get(3));
-			o = operation(s.getName(), path.get(4));
+			o = operation(s, path.get(4));
 			op.addAll(path.subList(5, path.size()));
 		}
 
@@ -353,12 +353,22 @@ public class WebService extends Service {
 				postDataInputStream);
 	}
 
-	private Class<? extends Operation> f(Class<? extends RoutingService> c, String s) throws ClassNotFoundException {
-		return (Class<? extends Operation>) Class.forName(c.getName() + "$" + s);
-	}
-
-	private Class<? extends Operation> operation(String service, String o) throws ClassNotFoundException {
-		return (Class<? extends Operation>) Class.forName(service + "$" + o);
+	private Class<? extends Operation> operation(Class<? extends Service> service, String o)
+			throws ClassNotFoundException {
+		final var a = service;
+		while (true) {
+			try {
+				Cout.debug("trying " + service + "$" + o);
+				return (Class<? extends Operation>) Class.forName(service.getName() + "$" + o);
+			} catch (Exception e) {
+				e.printStackTrace();
+				if (Service.class.isAssignableFrom(service.getSuperclass())) {
+					service = (Class<? extends Service>) service.getSuperclass();
+				} else {
+					throw new IllegalArgumentException("cannot find operation " + o + " in the hierarchy of " + a);
+				}
+			}
+		}
 	}
 
 	private Class<? extends Service> service(String s) throws ClassNotFoundException {
@@ -366,7 +376,7 @@ public class WebService extends Service {
 		return (Class<? extends Service>) Class.forName(s);
 	}
 
-	public void exec(RoutingService routing, RoutingData routingParms, TargetComponents target,
+	public void exec(RoutingService routing, RoutingData routingParms, ComponentMatcher target,
 			Class<? extends Service> actualServiceID, Class<? extends Operation> operationID,
 			OperationParameterList parms, boolean compress, boolean encrypt, double duration, double timeout,
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
@@ -427,7 +437,6 @@ public class WebService extends Service {
 			}).start();
 		}
 
-		Cout.debugSuperVisible("COLLECT : " + duration + ", " + timeout);
 		collector.collect(duration, timeout, c -> {
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(c);
@@ -466,16 +475,6 @@ public class WebService extends Service {
 		}
 
 		throw new IllegalStateException();
-	}
-
-	private TargetComponents target(String targetString) {
-		var t = TargetComponents.all;
-
-		if (!targetString.isEmpty()) {
-			t = TargetComponents.fromString(targetString, component.lookup(DigitalTwinService.class));
-		}
-
-		return t;
 	}
 
 	private RoutingData routingsParms(RoutingService routing, String routingDataDescr) {

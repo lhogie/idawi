@@ -59,8 +59,8 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(SPPParm parms) {
-		return TargetComponents.all;
+	public ComponentMatcher naturalTarget(SPPParm parms) {
+		return ComponentMatcher.all;
 	}
 
 }

@@ -22,7 +22,7 @@ import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.MessageODestination;
 import idawi.routing.MessageQDestination;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 import idawi.service.ErrorLog;
 import idawi.service.web.WebService;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
@@ -352,7 +352,7 @@ public class Service implements SizeOf, Serializable {
 
 	protected void reply(Message m, Object o) {
 		var replyTo = m.destination.replyTo;
-		replyTo.componentTarget = new TargetComponents.Unicast(m.route.initialEmission.transport.component);
+		replyTo.componentTarget =  ComponentMatcher.one(m.route.initialEmission.transport.component);
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
 		component.bb().send(o, replyTo.componentTarget, replyTo.service, replyTo.queueID);

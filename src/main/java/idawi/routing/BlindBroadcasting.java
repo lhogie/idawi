@@ -44,7 +44,7 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(RoutingData parms) {
-		return TargetComponents.all;
+	public ComponentMatcher naturalTarget(RoutingData parms) {
+		return ComponentMatcher.all;
 	}
 }

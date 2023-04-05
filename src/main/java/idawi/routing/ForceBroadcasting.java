@@ -67,8 +67,8 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 	}
 
 	@Override
-	public TargetComponents naturalTarget(EvaporatingRoutingjavaParm parms) {
-		return TargetComponents.all;
+	public ComponentMatcher naturalTarget(EvaporatingRoutingjavaParm parms) {
+		return ComponentMatcher.all;
 	}
 
 }

@@ -75,8 +75,8 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
-	public TargetComponents naturalTarget(FloodingWithSelfPruning_UsingBloomFilterParm parms) {
-		return TargetComponents.all;
+	public ComponentMatcher naturalTarget(FloodingWithSelfPruning_UsingBloomFilterParm parms) {
+		return ComponentMatcher.all;
 	}
 
 }

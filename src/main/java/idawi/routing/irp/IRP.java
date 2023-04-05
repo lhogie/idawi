@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import idawi.Component;
 import idawi.knowledge_base.DigitalTwinListener;
 import idawi.messaging.Message;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
-import idawi.routing.TargetComponents;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -64,11 +64,11 @@ public class IRP extends RoutingService<IRPParms> {
 			}
 		}
 	}
+
 	@Override
 	public String webShortcut() {
 		return "irp";
 	}
-
 
 	@Override
 	public String getAlgoName() {
@@ -113,8 +113,8 @@ public class IRP extends RoutingService<IRPParms> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(IRPParms parms) {
+	public ComponentMatcher naturalTarget(IRPParms parms) {
 		var p = (IRPParms) parms;
-		return new TargetComponents.Multicast(p.components);
+		return ComponentMatcher.among(p.components);
 	}
 }

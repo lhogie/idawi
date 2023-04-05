@@ -9,7 +9,7 @@ import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.Utils;
 import idawi.messaging.MessageQueue;
-import idawi.routing.TargetComponents;
+import idawi.routing.ComponentMatcher;
 
 public class ErrorLog extends Service {
 	public final List<Throwable> errors = new ArrayList<>();
@@ -49,7 +49,7 @@ public class ErrorLog extends Service {
 		error = Utils.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		component.	bb().exec(registerError.class, null, TargetComponents.all, false, error);
+		component.	bb().exec(registerError.class, null, ComponentMatcher.all, false, error);
 	}
 
 	public void report(String msg) {

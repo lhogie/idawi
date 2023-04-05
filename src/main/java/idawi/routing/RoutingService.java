@@ -47,7 +47,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		return (P) p;
 	}
 
-	public abstract TargetComponents naturalTarget(P parms);
+	public abstract ComponentMatcher naturalTarget(P parms);
 
 	public abstract String getAlgoName();
 
@@ -57,7 +57,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		return dataSuggestions().get(0);
 	}
 
-	public void send(Object value, TargetComponents r, Class<? extends Service> s, String queueID) {
+	public void send(Object value, ComponentMatcher r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
 
 		var dest = new MessageQDestination();
@@ -80,23 +80,24 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		send(value, o.getOperationInputQueueDestination());
 	}
 
-	public RemotelyRunningOperation exec(Class<? extends Service> target,Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
-			boolean returnQ, Object initialInputData) {
+	public RemotelyRunningOperation exec(Class<? extends Service> target, Class<? extends InnerClassOperation> o,
+			P parms, ComponentMatcher re, boolean returnQ, Object initialInputData) {
 		return exec(target, o, parms, re, returnQ ? createAutoQueue("returnQ") : null, initialInputData);
 	}
-	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
+
+	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, ComponentMatcher re,
 			boolean returnQ, Object initialInputData) {
 		return exec(o, parms, re, returnQ ? createAutoQueue("returnQ") : null, initialInputData);
 	}
 
 	public RemotelyRunningOperation exec(Component to, Class<? extends InnerClassOperation> o,
 			Object initialInputData) {
-		return exec(o, null, new TargetComponents.Unicast(to), true, initialInputData);
+		return exec(o, null, ComponentMatcher.one(to), true, initialInputData);
 	}
 
 	public RemotelyRunningOperation exec(Component to, Class<? extends InnerClassOperation> o, P parms,
 			Object initialInputData) {
-		return exec(o, parms, new TargetComponents.Unicast(to), true, initialInputData);
+		return exec(o, parms, ComponentMatcher.one(to), true, initialInputData);
 	}
 
 	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, Object initialInputData) {
@@ -104,24 +105,24 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		return exec(o, parms, naturalTarget(parms), true, initialInputData);
 	}
 
-	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
+	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, ComponentMatcher re,
 			MessageQueue returnQ, Object initialInputData) {
 		return exec(InnerClassOperation.serviceClass(o), o, parms, re, returnQ, initialInputData);
 	}
 
-	public RemotelyRunningOperation exec(Class<? extends Service> target, Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
-			MessageQueue returnQ, Object initialInputData) {
+	public RemotelyRunningOperation exec(Class<? extends Service> target, Class<? extends InnerClassOperation> o,
+			P parms, ComponentMatcher re, MessageQueue returnQ, Object initialInputData) {
 		var dest = new MessageODestination();
 		dest.invocationDate = Date.timeNs();
 		dest.operationID = o;
 		dest.componentTarget = re;
-		dest.targetService = target; 
+		dest.targetService = target;
 		var r = new RemotelyRunningOperation();
 
 		if (returnQ != null) {
 			r.returnQ = returnQ;
 			dest.replyTo = new MessageQDestination();
-			dest.replyTo.componentTarget = new TargetComponents.Unicast(component);
+			dest.replyTo.componentTarget =  ComponentMatcher.one(component);
 			dest.replyTo.queueID = r.returnQ.name;
 			dest.replyTo.service = r.returnQ.service.getClass();
 		}
@@ -132,7 +133,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public Object exec_rpc(Component to, Class<? extends InnerClassOperation> o, Object parms) {
-		var rec = new TargetComponents.Unicast(to);
+		var rec =  ComponentMatcher.one(to);
 		var rq = exec(o, defaultData(), rec, createAutoQueue("returnQ"), new OperationParameterList(parms)).returnQ;
 		return rq.toList().throwAnyError_Runtime().getContentOrNull(0);
 	}
@@ -166,7 +167,7 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 	}
 
 	public MessageQueue ping(Set<Component> targets, P parms) {
-		return exec(ping.class, parms, new TargetComponents.Multicast(targets), true, "ping").returnQ;
+		return exec(ping.class, parms,  ComponentMatcher.among(targets), true, "ping").returnQ;
 	}
 
 	public MessageQueue ping(Set<Component> targets) {

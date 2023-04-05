@@ -57,7 +57,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(IRTo parms) {
+	public ComponentMatcher naturalTarget(IRTo parms) {
 		// TODO Auto-generated method stub
 		return null;
 	}
