@@ -11,12 +11,12 @@ import idawi.transport.SharedMemoryTransport;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 1;
+		int n = 5;
 		var components = new ArrayList<Component>();
 		components.add(new Component("gw"));
 
 		for (int i = 0; i < n; ++i) {
-			components.add(new Component("" + i));
+			components.add(new Component("Component" + i));
 		}
 
 		components.forEach(c -> new DemoService(c));
