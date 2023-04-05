@@ -368,7 +368,7 @@ public class WebService extends Service {
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
 			InputStream postDataInputStream) {
 
-		System.out.println(routing.getClass().getName() + "/" + routingParms + "/" + target + "/"
+		System.out.println(routing.webShortcut() + "/" + routingParms + "/" + target + "/"
 				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt="
 				+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
 				+ serializer.getMIMEType());

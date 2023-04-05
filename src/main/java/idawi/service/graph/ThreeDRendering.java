@@ -40,9 +40,7 @@ public class ThreeDRendering extends Service {
 
 	public ThreeDRendering(Component component) {
 		super(component);
-		webShortCut("dyng");
 
-		
 		new Thread(() -> {
 			while (true) {
 				Threads.sleep(1);
@@ -73,7 +71,10 @@ public class ThreeDRendering extends Service {
 		});
 	}
 
-
+	@Override
+	public String webShortcut() {
+		return "dyng";
+	}
 
 	interface GraphListener {
 		void newVertex(Vertex v);

@@ -19,7 +19,7 @@ public class RunTestServer {
 		}
 
 		var gateway = components.get(0);
-		var ws = new WebService(gateway);
+		var ws = gateway.lookup(WebService.class);
 		ws.startHTTPServer();
 
 		SharedMemoryTransport.randomTree(components, SharedMemoryTransport.class);

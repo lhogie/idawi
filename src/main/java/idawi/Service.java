@@ -28,7 +28,6 @@ import idawi.service.web.WebService;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.SizeOf;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
@@ -58,10 +57,10 @@ public class Service implements SizeOf, Serializable {
 
 	public Service(Component component) {
 		this.component = component;
-		
-		if(component.lookup(getClass()) != null)
+
+		if (component.lookup(getClass()) != null)
 			throw new IllegalStateException("component already has service " + getClass());
-		
+
 		component.services.add(this);
 		this.id = getClass();
 		registerOperation(new descriptor());
@@ -74,9 +73,15 @@ public class Service implements SizeOf, Serializable {
 		registerOperation("friendlyName", q -> getFriendlyName());
 	}
 
-	protected void webShortCut(String shortcut) {
+	public String webShortcut() {
+		return getClass().getName();
+	}
+
+	protected void registerShortCut() {
 		var map = component.lookup(WebService.class).serviceShortcuts;
 
+		var shortcut = webShortcut();
+		
 		if (map.containsKey(shortcut))
 			throw new IllegalArgumentException("shortcut already in use: " + shortcut);
 
@@ -148,7 +153,7 @@ public class Service implements SizeOf, Serializable {
 	public Set<AbstractOperation> operations() {
 		return operations;
 	}
-	
+
 	public class listNativeOperations extends TypedInnerClassOperation {
 		public Set<OperationDescriptor> f() {
 			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
