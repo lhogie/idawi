@@ -33,6 +33,7 @@ import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.DigitalTwinService;
+import idawi.messaging.EOT;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.FloodingWithSelfPruning;
@@ -178,8 +179,8 @@ public class WebService extends Service {
 							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
 									serializer.toBytes(err), serializer.isBinary());
 						} finally {
-							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())), "EOT".getBytes(),
-									false);
+							//sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())), EOT.instance,
+							//		false);
 						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",

@@ -1,27 +1,9 @@
-package idawi.service.web;
+package idawi.service.web.chart;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Chart {
-	static class System {
-		Dimension x = new Dimension();
-		Dimension y = new Dimension();
-	}
-
-	static class Dimension {
-		double min = -1, max = 1;
-	}
-
-	static class Point {
-		double x, y;
-	}
-
-	static class Function {
-		List<Point> points = new ArrayList<>();
-		String color;
-	}
-
 	System system;
 	List<Function> functions = new ArrayList<>();
 

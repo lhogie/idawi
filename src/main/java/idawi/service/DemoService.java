@@ -15,8 +15,8 @@ import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.TargetComponents;
-import idawi.service.web.Chart;
 import idawi.service.web.Graph;
+import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
 import toools.math.MathsUtilities;
 import toools.net.NetUtilities;
@@ -32,6 +32,7 @@ public class DemoService extends Service {
 		registerOperation(new grep());
 		registerOperation(new sendProgressInformation());
 		registerOperation(new stringLength());
+		registerOperation(new chart());
 		registerOperation(new throwError());
 		registerOperation(new waiting());
 		registerOperation(new multipleRandomMessages());
@@ -146,6 +147,17 @@ public class DemoService extends Service {
 		@Override
 		public String getDescription() {
 			return null;
+		}
+	}
+
+	public class chart extends TypedInnerClassOperation {
+		public Chart f() {
+			return new Chart();
+		}
+
+		@Override
+		public String getDescription() {
+			return "gives a chart";
 		}
 	}
 

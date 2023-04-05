@@ -52,7 +52,6 @@ public class ServiceManager extends Service {
 	
 	public class listOperations extends TypedInnerClassOperation {
 		public List<String> f(Class<? extends Service> serviceName) {
-			Cout.debugSuperVisible(serviceName);
 			Service s = component.lookup(serviceName);
 			var l= new ArrayList<>(s.operations().stream().map(o -> o.getName()).toList());
 			l.sort((a, b)->a.compareTo(b));
