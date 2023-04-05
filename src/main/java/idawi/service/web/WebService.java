@@ -178,9 +178,8 @@ public class WebService extends Service {
 							err.printStackTrace();
 							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
 									serializer.toBytes(err), serializer.isBinary());
-						} finally {
-							//sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())), EOT.instance,
-							//		false);
+							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
+									serializer.toBytes(EOT.instance), false);
 						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
@@ -333,7 +332,7 @@ public class WebService extends Service {
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
 			t = target(path.get(2));
-			s = ServiceManager.class; 
+			s = ServiceManager.class;
 			o = ServiceManager.listServices.class;
 		} else if (path.size() == 4) { // show operations available in services
 			r = routing(path.get(0));
@@ -371,9 +370,9 @@ public class WebService extends Service {
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
 			InputStream postDataInputStream) {
 
-		System.out.println(routing.webShortcut() + "/" + routingParms + "/" + target + "/"
-				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt="
-				+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
+		System.out.println(routing.webShortcut() + "/" + routingParms + "/" + target + "/" + operationID.getName() + "/"
+				+ TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt=" + encrypt + ",duration="
+				+ duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
 				+ serializer.getMIMEType());
 
 		RemotelyRunningOperation ro = routing.exec(operationID, routingParms, target, true, parms);
