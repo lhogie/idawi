@@ -24,11 +24,17 @@ Here are some of his features of interest:
 
 Team members:
 - [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
-- Eliel Wotobe (Master degree intern in autumn 2022)
-- Saad El Din Ahmed (Master degree intern in spring 2022)
+- Paul Gros (Engineering & Master2 degree intern in srping 2023)
+-  (Engineering & Master2 degree intern in srping 2023)
+-  (Engineering & Master2 degree intern in srping 2023)
+-  (Engineering & Master2 degree intern in srping 2023)
+-  (Engineering & Master2 degree intern in srping 2023)
+-  (Engineering & Master2 degree intern in srping 2023)
+- Eliel Wotobe (Master1 degree intern in autumn 2022)
+- (Saad El Din Ahmed)[https://www.linkedin.com/in/saadeldinahmed] (Master1 degree intern in spring 2022)
 - Mamadou Camara (Master degree intern in spring 2022)
-- Khadidiatou Dieye (Master degree intern in autumn 2021)
-- Ahmed El Hanafi Si Dehbi (Master degree intern in autumn 2021)
+- Khadidiatou Dieye (Master1 degree intern in autumn 2021)
+- Ahmed El Hanafi Si Dehbi (Master1 degree intern in autumn 2021)
 - Fedi Ghalloussi (Bachelor degree intern in spring 2021)
 - Antonin Lacomme (Master degree intern in autumn 2020)
 
