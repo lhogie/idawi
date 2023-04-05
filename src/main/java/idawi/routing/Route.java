@@ -73,7 +73,7 @@ public class Route implements Serializable {
 	public RouteEvent last() {
 		RouteEvent e = initialEmission;
 
-		while (e.hasNext()) {
+		while (e != null && e.hasNext()) {
 			e = e.next();
 		}
 
@@ -91,6 +91,10 @@ public class Route implements Serializable {
 	}
 
 	public Emission lastEmission() {
+		if (initialEmission == null) {
+			return null;
+		}
+
 		var last = last();
 		return last instanceof Emission ? (Emission) last : ((Reception) last).previousEmission;
 	}

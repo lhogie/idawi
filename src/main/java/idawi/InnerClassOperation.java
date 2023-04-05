@@ -1,12 +1,13 @@
 package idawi;
 
+import idawi.messaging.MessageQueue;
+
 public abstract class InnerClassOperation extends AbstractOperation {
 
 	@Override
 	public String getName() {
 		return name(getClass());
 	}
-	
 
 	public static <S extends Service> Class<S> serviceClass(Class<? extends InnerClassOperation> c) {
 		return (Class<S>) c.getEnclosingClass();
@@ -26,4 +27,12 @@ public abstract class InnerClassOperation extends AbstractOperation {
 
 		return (Class<? extends Service>) c;
 	}
+/*
+	@Override
+	public void impl(MessageQueue in) throws Throwable {
+		
+		
+	}*/
+
+
 }

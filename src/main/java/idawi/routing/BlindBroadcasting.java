@@ -8,6 +8,7 @@ import idawi.messaging.Message;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
 
 public class BlindBroadcasting extends RoutingService<RoutingData> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();

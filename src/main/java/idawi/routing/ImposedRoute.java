@@ -22,6 +22,11 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	public String getAlgoName() {
 		return "P2P routing";
 	}
+	@Override
+	public String webShortcut() {
+		return "ir";
+	}
+
 
 	@Override
 	public void accept(Message msg, IRTo p) {

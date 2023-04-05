@@ -20,6 +20,7 @@ import idawi.knowledge_base.DigitalTwinService;
 import idawi.knowledge_base.MiscKnowledgeBase;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.FloodingWithSelfPruning;
+import idawi.routing.ForceBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.routing.irp.IRP;
 import idawi.service.Location;
@@ -69,20 +70,21 @@ public class Component implements SizeOf, Externalizable {
 	public Component(String ref) {
 		this.ref = ref;
 
-		new SharedMemoryTransport(this);
 		new WebService(this);
+		new SharedMemoryTransport(this);
 		new DigitalTwinService(this);
 		new BlindBroadcasting(this);
 		new IRP(this);
 		new ServiceManager(this);
 		new ThreeDRendering(this);
-
+		new ForceBroadcasting(this);
+		
 		// descriptorRegistry.add(descriptor());
 //		componentsInThisJVM.put(ref, this);
 	}
 
 	public void dispose() {
-		//componentsInThisJVM.remove(this);
+		// componentsInThisJVM.remove(this);
 		services.forEach(s -> s.dispose());
 		dependantChildren.forEach(t -> t.dispose());
 	}

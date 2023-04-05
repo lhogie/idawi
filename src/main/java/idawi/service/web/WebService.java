@@ -33,7 +33,6 @@ import idawi.RemotelyRunningOperation;
 import idawi.Service;
 import idawi.TypedInnerClassOperation;
 import idawi.knowledge_base.DigitalTwinService;
-import idawi.messaging.EOT;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.FloodingWithSelfPruning;
@@ -178,8 +177,8 @@ public class WebService extends Service {
 							err.printStackTrace();
 							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
 									serializer.toBytes(err), serializer.isBinary());
-							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
-									serializer.toBytes(EOT.instance), false);
+						} finally {
+							sendEvent(output, new ChunkHeader(List.of("plain")), "EOT".getBytes(), false);
 						}
 					} else if (context.equals("favicon.ico")) {
 						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
@@ -354,12 +353,15 @@ public class WebService extends Service {
 				postDataInputStream);
 	}
 
+	private Class<? extends Operation> f(Class<? extends RoutingService> c, String s) throws ClassNotFoundException {
+		return (Class<? extends Operation>) Class.forName(c.getName() + "$" + s);
+	}
+
 	private Class<? extends Operation> operation(String service, String o) throws ClassNotFoundException {
 		return (Class<? extends Operation>) Class.forName(service + "$" + o);
 	}
 
 	private Class<? extends Service> service(String s) throws ClassNotFoundException {
-		Cout.debugSuperVisible(serviceShortcuts);
 		s = serviceShortcuts.getOrDefault(s, s);
 		return (Class<? extends Service>) Class.forName(s);
 	}
@@ -370,12 +372,12 @@ public class WebService extends Service {
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
 			InputStream postDataInputStream) {
 
-		System.out.println(routing.webShortcut() + "/" + routingParms + "/" + target + "/" + operationID.getName() + "/"
-				+ TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt=" + encrypt + ",duration="
-				+ duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
+		System.out.println(routing.webShortcut() + "/" + routingParms.toURLElement() + "/" + target + "/"
+				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt="
+				+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
 				+ serializer.getMIMEType());
 
-		RemotelyRunningOperation ro = routing.exec(operationID, routingParms, target, true, parms);
+		RemotelyRunningOperation ro = routing.exec(actualServiceID, operationID, routingParms, target, true, parms);
 		var aes = new AESEncrypter();
 		SecretKey key = null;
 
@@ -425,8 +427,8 @@ public class WebService extends Service {
 			}).start();
 		}
 
+		Cout.debugSuperVisible("COLLECT : " + duration + ", " + timeout);
 		collector.collect(duration, timeout, c -> {
-			// Cout.debugSuperVisible("result: " + collector.messages.last());
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(c);
 

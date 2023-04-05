@@ -3,9 +3,9 @@ package idawi.routing;
 import toools.io.Utilities;
 
 public class EvaporatingRoutingjavaParm extends RoutingData {
-	double force;
+	int force;
 
-	public EvaporatingRoutingjavaParm(double initialForce) {
+	public EvaporatingRoutingjavaParm(int initialForce) {
 		this.force = initialForce;
 	}
 
@@ -22,6 +22,11 @@ public class EvaporatingRoutingjavaParm extends RoutingData {
 	@Override
 	public long sizeOf() {
 		return 8 * 3;
+	}
+
+	@Override
+	public String toURLElement() {
+		return "" + force;
 	}
 
 }

@@ -26,6 +26,11 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 	public String getAlgoName() {
 		return "division broadcasting";
 	}
+	
+	@Override
+	public String webShortcut() {
+		return "fb";
+	}
 
 	@Override
 	public void accept(Message msg, EvaporatingRoutingjavaParm parms) {
@@ -55,7 +60,9 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 	@Override
 	public List<EvaporatingRoutingjavaParm> dataSuggestions() {
 		var l = new ArrayList<EvaporatingRoutingjavaParm>();
-		l.add(new EvaporatingRoutingjavaParm());
+		l.add(new EvaporatingRoutingjavaParm(1));
+		l.add(new EvaporatingRoutingjavaParm(10));
+		l.add(new EvaporatingRoutingjavaParm(100));
 		return l;
 	}
 

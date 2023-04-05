@@ -23,6 +23,11 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
+	public String webShortcut() {
+		return "bfs";
+	}
+
+	@Override
 	public long sizeOf() {
 		return super.sizeOf() + alreadyReceivedMsgs.size() * 8 + 8;
 	}
@@ -45,6 +50,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	@Override
 	public List<BFSRoutingParms> dataSuggestions() {
 		var l = new ArrayList<BFSRoutingParms>();
+
 		{
 			var p = new BFSRoutingParms();
 			p.recipients.add(component);
@@ -61,7 +67,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 			var p = new BFSRoutingParms();
 			l.add(p);
 		}
-		
+
 		return l;
 	}
 

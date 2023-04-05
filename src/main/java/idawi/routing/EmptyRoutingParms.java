@@ -1,19 +1,21 @@
 package idawi.routing;
 
-import toools.SizeOf;
-
-public class EmptyRoutingParms extends RoutingData{
+public class EmptyRoutingParms extends RoutingData {
 
 	@Override
 	public void fromString(String s, RoutingService service) {
-		// TODO Auto-generated method stub
-		
+		if (!s.isEmpty())
+			throw new IllegalArgumentException("there are no parameter to feed");
 	}
-
 
 	@Override
 	public long sizeOf() {
 		return 0;
+	}
+
+	@Override
+	public String toURLElement() {
+		return "";
 	}
 
 }

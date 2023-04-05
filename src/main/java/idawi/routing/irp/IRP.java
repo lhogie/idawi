@@ -14,7 +14,7 @@ import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
-public class IRP extends RoutingService<NEParms> {
+public class IRP extends RoutingService<IRPParms> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 	public final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
 
@@ -51,30 +51,33 @@ public class IRP extends RoutingService<NEParms> {
 	}
 
 	@Override
-	public void accept(Message msg, NEParms p) {
+	public void accept(Message msg, IRPParms p) {
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 
-			var parms = (NEParms) msg.route.lastEmission().routingParms();
-
-			boolean wentToFar = parms.coverage > msg.route.nbEvents() / 2;
-			boolean outdated = parms.validityDuration > msg.route.duration();
+			boolean wentToFar = p.coverage > msg.route.nbEvents() / 2;
+			boolean outdated = msg.route.isEmpty() ? false : p.validityDuration > msg.route.duration();
 
 			if (!wentToFar && !outdated) {
 				component.services(TransportService.class).forEach(t -> t.bcast(msg, this, p));
 			}
 		}
 	}
+	@Override
+	public String webShortcut() {
+		return "irp";
+	}
+
 
 	@Override
 	public String getAlgoName() {
-		return "NE";
+		return "IRP";
 	}
 
 	public double expirationDate(Message msg) {
 		var creationDate = msg.route.initialEmission().date();
-		var r = (NEParms) msg.route.initialEmission().routingParms();
+		var r = (IRPParms) msg.route.initialEmission().routingParms();
 		return creationDate + r.getValidityDuration();
 	}
 
@@ -87,20 +90,20 @@ public class IRP extends RoutingService<NEParms> {
 	}
 
 	@Override
-	public List<NEParms> dataSuggestions() {
-		var l = new ArrayList<NEParms>();
+	public List<IRPParms> dataSuggestions() {
+		var l = new ArrayList<IRPParms>();
 
 		{
-			var p = new NEParms();
-			p.componentNames = component.digitalTwinService().components;
+			var p = new IRPParms();
+			p.components = component.digitalTwinService().components;
 			p.coverage = 1000;
 			p.validityDuration = 1;
 			l.add(p);
 		}
 
 		{
-			var p = new NEParms();
-			p.componentNames = null;
+			var p = new IRPParms();
+			p.components = null;
 			p.coverage = 3;
 			p.validityDuration = 2;
 			l.add(p);
@@ -110,8 +113,8 @@ public class IRP extends RoutingService<NEParms> {
 	}
 
 	@Override
-	public TargetComponents naturalTarget(NEParms parms) {
-		var p = (NEParms) parms;
-		return new TargetComponents.Multicast(p.componentNames);
+	public TargetComponents naturalTarget(IRPParms parms) {
+		var p = (IRPParms) parms;
+		return new TargetComponents.Multicast(p.components);
 	}
 }

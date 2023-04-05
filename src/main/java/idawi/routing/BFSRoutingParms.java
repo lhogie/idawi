@@ -5,6 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import toools.SizeOf;
+import toools.text.TextUtilities;
 
 public class BFSRoutingParms extends RoutingData {
 	private static final long serialVersionUID = 1L;
@@ -27,5 +28,10 @@ public class BFSRoutingParms extends RoutingData {
 	@Override
 	public long sizeOf() {
 		return 8 + SizeOf.sizeOf(recipients);
+	}
+
+	@Override
+	public String toURLElement() {
+		return TextUtilities.concat(" ", recipients);
 	}
 }

@@ -57,6 +57,11 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 
 		return p;
 	}
+	@Override
+	public String webShortcut() {
+		return "fwsp_bf";
+	}
+
 
 	@Override
 	public List<FloodingWithSelfPruning_UsingBloomFilterParm> dataSuggestions() {

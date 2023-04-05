@@ -22,6 +22,11 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	public String getAlgoName() {
 		return "Flooding With Self Pruning";
 	}
+	@Override
+	public String webShortcut() {
+		return "fwsp";
+	}
+
 
 	@Override
 	public void accept(Message msg, SPPParm p) {

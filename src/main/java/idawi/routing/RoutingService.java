@@ -80,6 +80,10 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 		send(value, o.getOperationInputQueueDestination());
 	}
 
+	public RemotelyRunningOperation exec(Class<? extends Service> target,Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
+			boolean returnQ, Object initialInputData) {
+		return exec(target, o, parms, re, returnQ ? createAutoQueue("returnQ") : null, initialInputData);
+	}
 	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
 			boolean returnQ, Object initialInputData) {
 		return exec(o, parms, re, returnQ ? createAutoQueue("returnQ") : null, initialInputData);
@@ -102,10 +106,16 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 
 	public RemotelyRunningOperation exec(Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
 			MessageQueue returnQ, Object initialInputData) {
+		return exec(InnerClassOperation.serviceClass(o), o, parms, re, returnQ, initialInputData);
+	}
+
+	public RemotelyRunningOperation exec(Class<? extends Service> target, Class<? extends InnerClassOperation> o, P parms, TargetComponents re,
+			MessageQueue returnQ, Object initialInputData) {
 		var dest = new MessageODestination();
 		dest.invocationDate = Date.timeNs();
 		dest.operationID = o;
 		dest.componentTarget = re;
+		dest.targetService = target; 
 		var r = new RemotelyRunningOperation();
 
 		if (returnQ != null) {
@@ -150,8 +160,8 @@ public abstract class RoutingService<P extends RoutingData> extends Service impl
 			return "suggestParms";
 		}
 
-		public List<P> impl() {
-			return dataSuggestions();
+		public List<String> impl() {
+			return dataSuggestions().stream().map(d -> d.toURLElement()).toList();
 		}
 	}
 

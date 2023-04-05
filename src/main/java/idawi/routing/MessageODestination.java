@@ -5,6 +5,7 @@ import idawi.Service;
 
 public class MessageODestination extends Destination {
 	public Class<? extends InnerClassOperation> operationID;
+	public Class<? extends Service> targetService;
 	public boolean premptive;
 	public long invocationDate;
 	public long instanceID;
@@ -12,7 +13,7 @@ public class MessageODestination extends Destination {
 
 	@Override
 	public Class<? extends Service> service() {
-		return InnerClassOperation.serviceClass(operationID);
+		return targetService;
 	}
 
 	public MessageQDestination m() {
