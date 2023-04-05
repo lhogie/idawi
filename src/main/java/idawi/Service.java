@@ -71,6 +71,8 @@ public class Service implements SizeOf, Serializable {
 		registerOperation(new shutdown());
 		registerOperation(new getFriendlyName());
 		registerOperation("friendlyName", q -> getFriendlyName());
+
+		registerShortCut();
 	}
 
 	public String webShortcut() {
@@ -78,14 +80,20 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	protected void registerShortCut() {
-		var map = component.lookup(WebService.class).serviceShortcuts;
+		var ws = component.lookup(WebService.class);
 
-		var shortcut = webShortcut();
-		
-		if (map.containsKey(shortcut))
-			throw new IllegalArgumentException("shortcut already in use: " + shortcut);
+		if (ws != null) {
+			var shortcut = webShortcut();
 
-		map.put(shortcut, getClass().getName());
+			var map = ws.serviceShortcuts;
+
+			if (map != null) {
+				if (map.containsKey(shortcut))
+					throw new IllegalArgumentException("shortcut already in use: " + shortcut);
+
+				map.put(shortcut, getClass().getName());
+			}
+		}
 	}
 
 	public class getFriendlyName extends TypedInnerClassOperation {

@@ -41,6 +41,7 @@ import idawi.routing.RoutingService;
 import idawi.routing.TargetComponents;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -82,7 +83,7 @@ public class WebService extends Service {
 	private HttpServer httpServer;
 	private int port;
 
-	public Map<String, String> serviceShortcuts = new HashMap<>();
+	public final Map<String, String> serviceShortcuts = new HashMap<>();
 	Map<String, Function<MessageCollector, Object>> whatToSendMap = new HashMap<>();
 
 	public WebService(Component t) {
@@ -358,6 +359,7 @@ public class WebService extends Service {
 	}
 
 	private Class<? extends Service> service(String s) throws ClassNotFoundException {
+		Cout.debugSuperVisible(serviceShortcuts);
 		s = serviceShortcuts.getOrDefault(s, s);
 		return (Class<? extends Service>) Class.forName(s);
 	}
