@@ -31,7 +31,7 @@ Team members:
 -  (Engineering & Master2 degree intern in srping 2023)
 -  (Engineering & Master2 degree intern in srping 2023)
 - Eliel Wotobe (Master1 degree intern in autumn 2022)
-- (Saad El Din Ahmed)[https://www.linkedin.com/in/saadeldinahmed] (Master1 degree intern in spring 2022)
+- [Saad El Din Ahmed](https://www.linkedin.com/in/saadeldinahmed) (Master1 degree intern in spring 2022)
 - Mamadou Camara (Master degree intern in spring 2022)
 - Khadidiatou Dieye (Master1 degree intern in autumn 2021)
 - Ahmed El Hanafi Si Dehbi (Master1 degree intern in autumn 2021)
