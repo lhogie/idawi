@@ -356,12 +356,11 @@ public class WebService extends Service {
 	private Class<? extends Operation> operation(Class<? extends Service> service, String o)
 			throws ClassNotFoundException {
 		final var a = service;
+
 		while (true) {
 			try {
-				Cout.debug("trying " + service + "$" + o);
 				return (Class<? extends Operation>) Class.forName(service.getName() + "$" + o);
 			} catch (Exception e) {
-				e.printStackTrace();
 				if (Service.class.isAssignableFrom(service.getSuperclass())) {
 					service = (Class<? extends Service>) service.getSuperclass();
 				} else {
