@@ -6,15 +6,19 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import StepElement from './StepElement';
+import { UrlContext } from '../IdawiLinkContext';
 
 const steps = ['Select campaign settings', 'Create an ad group', 'Create an ad', 'Select campaign settings', 'Create an ad group', 'Create an ad'];
-
-export const UrlContext = React.createContext({idawilink:"http://localhost:8081/api/"});
 
 export default function UrlBuilder() {
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set());
 
+  const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/");
+
+  const updateIdawiLink = (newValue) => {
+    setIdawiLink(newValue);
+  };
 
   const isStepOptional = (step) => {
     return step === 1;
@@ -92,7 +96,10 @@ export default function UrlBuilder() {
       ) : (
         <React.Fragment>
           <Typography sx={{ mt: 2, mb: 1 }}>Step {activeStep + 1}</Typography>
-          <StepElement title={steps[activeStep]} />
+          <div>{idawilink}</div>
+          <UrlContext.Provider value={{idawilink, updateIdawiLink}}>
+            <StepElement title={steps[activeStep]} />
+          </UrlContext.Provider>
           <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
             <Button
               color="inherit"
