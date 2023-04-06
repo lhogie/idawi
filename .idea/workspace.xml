@@ -5,11 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e5b72562-619a-45fa-8ab7-d691a3d03302" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/StepElement.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/StepElement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +24,9 @@
         <option name="useMavenConfig" value="true" />
       </MavenGeneralSettings>
     </option>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RunManager">
     <configuration name="RunTestServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">

@@ -1,17 +1,19 @@
 import * as React from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import { UrlContext } from '../components/UrlBuilder';
+import { UrlContext } from '../IdawiLinkContext';
 
 export default function StepElement(props) {
 
   const [choices, setChoices] = React.useState([]);
   const [value, setValue] = React.useState(choices[0]);
 
-  var idawilink = React.useContext(UrlContext).idawilink;
+  //var idawilink = React.useContext(UrlContext).idawilink;
+
+  const {idawilink, updateIdawiLink} = React.useContext(UrlContext);
   
   React.useEffect(() => {
-    console.log("idawilink: " + idawilink)
+    console.log("idawilink :", idawilink);
     var idawiListener = new EventSource(idawilink, { withCredentials: true });
 
     idawiListener.onmessage = function (event) {
@@ -20,13 +22,29 @@ export default function StepElement(props) {
         var headerraw = lines.shift();
         var data = lines.join('');
         var payload = JSON.parse(data);
-        if(payload['#class'] != 'idawi.messaging.EOT' && payload.content.elements){
-            setChoices(Array.from(payload.content.elements));
-            console.log(choices)
-        
+        console.log("payload :", payload);
+        if(payload['#class'] == "idawi.messaging.Message" && payload.content['#class'] != "idawi.messaging.EOT"){
+          var elements = Array.from(payload.content.elements);
+          if(elements.length > 0){
+            if(elements[0]['#class'] == "idawi.Component"){
+              setChoices(elements.map((element) => element.ref));
+            }
+            else if(elements[0]['#class'] == "idawi.routing.EmptyRoutingParms"){
+              setChoices(elements.map((element) => element['#class']));
+            }
+            else{
+              setChoices(Array.from(payload.content.elements));
+            }
+          }
         }
     }
   });
+
+  const handleChange = (newValue) => {
+    setValue(newValue);
+    // change the value in context
+    updateIdawiLink(idawilink + newValue + "/");
+  };
     
   return (
     <div>
@@ -37,7 +55,7 @@ export default function StepElement(props) {
             <Autocomplete
                 value={value}
                 onChange={(event, newValue) => {
-                setValue(newValue);
+                    handleChange(newValue);
                 }}
                 options={choices}
                 sx={{ width: 300 }}
