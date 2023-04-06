@@ -1,127 +1,59 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import StepElement from './StepElement';
-import { UrlContext } from '../IdawiLinkContext';
-
-const steps = ['Select campaign settings', 'Create an ad group', 'Create an ad', 'Select campaign settings', 'Create an ad group', 'Create an ad'];
 
 export default function UrlBuilder() {
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [skipped, setSkipped] = React.useState(new Set());
-
   const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/");
+
+  const [steps, setSteps] = React.useState([{title: "step1", choices: []}, {title: "step2", choices: []}]);
 
   const updateIdawiLink = (newValue) => {
     setIdawiLink(newValue);
   };
 
-  const isStepOptional = (step) => {
-    return step === 1;
-  };
+  const getSuggestions = (idawilink, index) => {
+    console.log("idawilink :", idawilink);
+    var idawiListener = new EventSource(idawilink, { withCredentials: true });
 
-  const isStepSkipped = (step) => {
-    return skipped.has(step);
-  };
-
-  const handleNext = () => {
-    let newSkipped = skipped;
-    if (isStepSkipped(activeStep)) {
-      newSkipped = new Set(newSkipped.values());
-      newSkipped.delete(activeStep);
+    idawiListener.onmessage = function (event) {
+        var s = event.data;
+        var lines = s.split(/\r?\n/);
+        var headerraw = lines.shift();
+        var data = lines.join('');
+        var payload = JSON.parse(data);
+        if(payload['#class'] == "idawi.messaging.Message" && payload.content['#class'] != "idawi.messaging.EOT"){
+          var elements = Array.from(payload.content.elements);
+          if(elements.length > 0){
+            if(elements[0]['#class'] == "idawi.Component"){
+              var newSteps = steps;
+              newSteps[index].choices = elements.map((element) => element.ref);
+              setSteps(newSteps);
+            }
+            else if(elements[0]['#class'] == "idawi.routing.EmptyRoutingParms"){
+              var newSteps = steps;
+              newSteps[index].choices = elements.map((element) => element['#class']);
+              setSteps(newSteps);
+            }
+            else{
+              var newSteps = steps;
+              newSteps[index].choices = Array.from(payload.content.elements);
+              setSteps(newSteps);
+            }
+          }
+        }
     }
-
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    setSkipped(newSkipped);
   };
 
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleSkip = () => {
-    if (!isStepOptional(activeStep)) {
-      // You probably want to guard against something like this,
-      // it should never occur unless someone's actively trying to break something.
-      throw new Error("You can't skip a step that isn't optional.");
-    }
-
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    setSkipped((prevSkipped) => {
-      const newSkipped = new Set(prevSkipped.values());
-      newSkipped.add(activeStep);
-      return newSkipped;
-    });
-  };
-
-  const handleReset = () => {
-    setActiveStep(0);
-  };
+  React.useEffect(() => {
+    getSuggestions(idawilink, 0);
+  }, [idawilink]);
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Stepper activeStep={activeStep}>
-        {steps.map((label, index) => {
-          const stepProps = {};
-          const labelProps = {};
-          if (isStepOptional(index)) {
-            labelProps.optional = (
-              <Typography variant="caption">Optional</Typography>
-            );
-          }
-          if (isStepSkipped(index)) {
-            stepProps.completed = false;
-          }
-          return (
-            <Step key={label} {...stepProps}>
-              <StepLabel {...labelProps}>{label}</StepLabel>
-            </Step>
-          );
-        })}
-      </Stepper>
-      {activeStep === steps.length ? (
         <React.Fragment>
-          <Typography sx={{ mt: 2, mb: 1 }}>
-            All steps completed - you&apos;re finished
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-            <Box sx={{ flex: '1 1 auto' }} />
-            <Button onClick={handleReset}>Reset</Button>
-          </Box>
-        </React.Fragment>
-      ) : (
-        <React.Fragment>
-          <Typography sx={{ mt: 2, mb: 1 }}>Step {activeStep + 1}</Typography>
           <div>{idawilink}</div>
-          <UrlContext.Provider value={{idawilink, updateIdawiLink}}>
-            <StepElement title={steps[activeStep]} />
-          </UrlContext.Provider>
-          <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-            <Button
-              color="inherit"
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              sx={{ mr: 1 }}
-            >
-              Back
-            </Button>
-            <Box sx={{ flex: '1 1 auto' }} />
-            {isStepOptional(activeStep) && (
-              <Button color="inherit" onClick={handleSkip} sx={{ mr: 1 }}>
-                Skip
-              </Button>
-            )}
-
-            <Button onClick={handleNext}>
-              {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-            </Button>
-          </Box>
+          <div>{steps.map((step, index) => <StepElement index={index} getSuggestions={getSuggestions} idawilink={idawilink} choices={step.choices} title={step.title} />)}</div>
         </React.Fragment>
-      )}
     </Box>
   );
 }
