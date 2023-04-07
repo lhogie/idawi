@@ -2,14 +2,14 @@ package idawi.routing;
 
 import toools.io.Utilities;
 
-public class EvaporatingRoutingjavaParm extends RoutingData {
+public class ForceRoutingParms extends RoutingData {
 	int force;
 
-	public EvaporatingRoutingjavaParm(int initialForce) {
+	public ForceRoutingParms(int initialForce) {
 		this.force = initialForce;
 	}
 
-	public EvaporatingRoutingjavaParm() {
+	public ForceRoutingParms() {
 		this(100);
 	}
 

@@ -9,8 +9,9 @@ import idawi.transport.OutNeighbor;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import toools.io.Cout;
 
-public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm> {
+public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 
 	public ForceBroadcasting(Component node) {
@@ -24,7 +25,7 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 
 	@Override
 	public String getAlgoName() {
-		return "division broadcasting";
+		return "force broadcasting";
 	}
 	
 	@Override
@@ -33,24 +34,27 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 	}
 
 	@Override
-	public void accept(Message msg, EvaporatingRoutingjavaParm parms) {
+	public void accept(Message msg, ForceRoutingParms parms) {
+
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
+			Cout.debug(component +  " runs FB routing "+parms.force);
 
 			for (var t : component.services(TransportService.class)) {
-				var recipient = new ArrayList<OutNeighbor>();
+				var recipients = new ArrayList<OutNeighbor>();
 
 				for (var c : t.neighborhood()) {
 					// if the message is still powerful enough
 					if (parms.force-- >= 1) {
-						recipient.add(c);
+						recipients.add(c);
 					} else {
 						return;
 					}
 				}
 
-				t.multicast(msg, recipient, this, parms);
+				Cout.debug("multicast " + recipients);
+				t.multicast(msg, recipients, this, parms);
 			}
 		}
 	}
@@ -58,16 +62,16 @@ public class ForceBroadcasting extends RoutingService<EvaporatingRoutingjavaParm
 
 	
 	@Override
-	public List<EvaporatingRoutingjavaParm> dataSuggestions() {
-		var l = new ArrayList<EvaporatingRoutingjavaParm>();
-		l.add(new EvaporatingRoutingjavaParm(1));
-		l.add(new EvaporatingRoutingjavaParm(10));
-		l.add(new EvaporatingRoutingjavaParm(100));
+	public List<ForceRoutingParms> dataSuggestions() {
+		var l = new ArrayList<ForceRoutingParms>();
+		l.add(new ForceRoutingParms(10));
+		l.add(new ForceRoutingParms(100));
+		l.add(new ForceRoutingParms(10000));
 		return l;
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(EvaporatingRoutingjavaParm parms) {
+	public ComponentMatcher naturalTarget(ForceRoutingParms parms) {
 		return ComponentMatcher.all;
 	}
 

@@ -1,12 +1,9 @@
 package idawi.service.web;
 
-import java.util.Collection;
-
 import idawi.Component;
-import jaseto.ArrayNode;
+import idawi.routing.Route;
 import jaseto.DefaultCustomizer;
 import jaseto.Node;
-import jaseto.ObjectNode;
 
 public class IdawiWebSerializer extends JasetoSerializer {
 	public IdawiWebSerializer() {
@@ -16,6 +13,8 @@ public class IdawiWebSerializer extends JasetoSerializer {
 			public Object substitute(Object o) {
 				if (o instanceof Component) {
 					return o.toString();
+				} else if (o instanceof Route) {
+					return ((Route) o).components().stream().map(c -> c.ref).toList();
 				}
 
 				return o;
@@ -23,18 +22,16 @@ public class IdawiWebSerializer extends JasetoSerializer {
 
 			@Override
 			public Node alter(Node n) {
-				if(!n.path().equals(".content")) {
-					//n.removeKey("#class");
+				if (!n.path().equals(".content")) {
+					// n.removeKey("#class");
 				}
 
 				/*
-				if (//n.value instanceof Collection)
-				{
-					var on = (ObjectNode) n;
-					var elements = (ArrayNode)  on.map.remove("elements");
-					elements.children.forEach(c -> on.map.put("", c));
-				}*/
-				
+				 * if (//n.value instanceof Collection) { var on = (ObjectNode) n; var elements
+				 * = (ArrayNode) on.map.remove("elements"); elements.children.forEach(c ->
+				 * on.map.put("", c)); }
+				 */
+
 				return n;
 			}
 		};

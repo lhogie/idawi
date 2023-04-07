@@ -165,6 +165,18 @@ public class Route implements Serializable {
 		};
 	}
 
+	public List<RouteEvent> eventList() {
+		var l = new ArrayList<RouteEvent>();
+		RouteEvent i = initialEmission;
+
+		while (i != null && i.hasNext()) {
+			l.add(i);
+			i = i.next();
+		}
+
+		return l;
+	}
+
 	public boolean isEmpty() {
 		return nbEvents() == 0;
 	}
