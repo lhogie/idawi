@@ -15,11 +15,14 @@ import idawi.TypedInnerClassOperation;
 
 public class SystemService extends Service {
 
+	public int nbCores;
+
 	public SystemService(Component node) {
 		super(node);
 		registerOperation(new binaryFetchBytes());
 		registerOperation(new binarySize());
 		registerOperation(new systemProperties());
+		this.nbCores = Runtime.getRuntime().availableProcessors();
 	}
 
 	public class binaryFetchBytes extends TypedInnerClassOperation {
@@ -33,7 +36,7 @@ public class SystemService extends Service {
 			return "extract bytes from the binary files";
 		}
 	}
-	
+
 	public class binaryHash extends TypedInnerClassOperation {
 
 		public long fetch(long[] offsets) throws IOException {
