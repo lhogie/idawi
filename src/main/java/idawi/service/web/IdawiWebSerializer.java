@@ -27,12 +27,13 @@ public class IdawiWebSerializer extends JasetoSerializer {
 					//n.removeKey("#class");
 				}
 
-				if (false)//n.value instanceof Collection)
+				/*
+				if (//n.value instanceof Collection)
 				{
 					var on = (ObjectNode) n;
 					var elements = (ArrayNode)  on.map.remove("elements");
 					elements.children.forEach(c -> on.map.put("", c));
-				}
+				}*/
 				
 				return n;
 			}
