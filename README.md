@@ -3,10 +3,10 @@
 *Idawi* is a Java middleware for decentralized applications, as they can be found in the Internet Of Things (IOT), in the fog, in Mobile Ad hoc Networks (MANETs), etc. 
 Because who can do more can do less, it can also be used for usual distributed computing in cluster. 
 *Idawi* is extensively described in the following publications:. 
-	- [working paper](https://hal.archives-ouvertes.fr/hal-03562184)
-	- [A Service-Oriented Middleware Enabling Decentralised Deployment in Mobile Multihop Networks](https://hal.science/hal-03886521v1)
-	- [Idawi: a decentralized middleware for achieving the full potential of the IoT, the fog, and other difficult computing environments](https://hal.science/hal-03863333v1)
-	- [A Decentralized Web Service Infrastructure for the Interoperability of Applications in Multihop Dynamic Networks](https://hal.science/hal-04075895)
+	* [working paper](https://hal.archives-ouvertes.fr/hal-03562184)
+	* [A Service-Oriented Middleware Enabling Decentralised Deployment in Mobile Multihop Networks](https://hal.science/hal-03886521v1)
+	* [Idawi: a decentralized middleware for achieving the full potential of the IoT, the fog, and other difficult computing environments](https://hal.science/hal-03863333v1)
+	* [A Decentralized Web Service Infrastructure for the Interoperability of Applications in Multihop Dynamic Networks](https://hal.science/hal-04075895)
 	
 To make a long story short, it provides a **structuring frame work** and implementations of algorithms for the construction and operation of decentralized systems. 
 
