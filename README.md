@@ -8,11 +8,11 @@ Because who can do more can do less, it can also be used for usual distributed c
 	- [Idawi: a decentralized middleware for achieving the full potential of the IoT, the fog, and other difficult computing environments](https://hal.science/hal-03863333v1)
 	- [A Decentralized Web Service Infrastructure for the Interoperability of Applications in Multihop Dynamic Networks](https://hal.science/hal-04075895)
 	
-To make a long story short, it provides a **structuring frame work** and implementations of algorithms for the construction and operation of decentralized systems. 
+To make a long story short, it provides a **structuring framework** and algorithms for the construction and operation of decentralized systems. 
 
  *Idawi* is developed at the
 [Computer Science Laboratory of the Université Côte d'Azur](http://www.i3s.unice.fr/en/comredEn) ([Nice](https://www.google.com/maps/@43.5168069,6.6753034,5633a,35y,67.34h,76.97t/data=!3m1!1e3), France),
-a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria Sophia Antipolis](https://www.inria.fr)
+a joint lab of [Cnrs](https://www.cnrs.fr) and [Inria]([https://www.inria.fr](https://www.inria.fr/fr/centre-inria-universite-cote-azur)).
 Its design is driven by our practical experience in distributed computing applied to scientific experimentation. 
 
 Here are some of his features of interest:
@@ -71,8 +71,8 @@ public IdawiQuickStart {
 
 		// enable them to communicate via shared memory
 		// b be relay messages to/from a and c
-		LMI.connect(a, b);
-		LMI.connect(b, c);
+		a.lookup(SharedMemoryTransport.class).connectTo(b);
+		b.lookup(SharedMemoryTransport.class).connectTo(c);
 	}
 }
 ```
@@ -80,23 +80,36 @@ public IdawiQuickStart {
 
 Here is an example code of a component deploying another one in another JVM and then invoking an operation on it.
 ```java
-var a = new Component();
+// creates a *local* peer that will drive the deployment
+var localComponent = new Component("parent");
 
-// remote components are referred to as a descriptor
-var b = new ComponentDescriptor();
-b.name = "b";
+// describes the child peer that will be deployed to
+var childDeployment = new ExtraJVMDeploymentRequest();
+childDeployment.target = new Component("child");
+ 
+// deploy
+localComponent.lookup(DeployerService.class).deployInNewJVMs(Set.of(childDeployment),
+	s -> System.out.println(s), ok -> System.out.println(ok));
 
-// ask the deployment service on "a" to deploy "b" according to its description
-a.lookup(DeployerService.class).deployOtherJVM(b, true, feedback -> {}, ok -> {});
+// at this step the child is running on the remote host. We can interact with it
+var pong = localComponent.bb().ping(childDeployment.target).poll_sync(3);
 ```
 ### Deploying new components to a remote node
 ```java
-var a = new Component();
-var b = new ComponentDescriptor();
-child.name = "b";
-child.sshParameters.hostname = "192.168.32.44"; // this is where the b will be deployed to
-a.lookup(DeployerService.class).deploy(Set.of(b), true, 10000, true,
-	feedback -> System.out.println("feedback: " + feedback), ok -> System.out.println("peer ok: " + ok));
+// prints out the Java version
+System.out.println("You are using JDK " + System.getProperty("java.version"));
+
+// creates a *local* peer that will drive the deployment
+var localComponent = new Component("a");
+
+// describes the child peer that will be deployed to
+ar childDeployment = new RemoteDeploymentRequest();
+childDeployment.target = new Component("child");
+childDeployment.ssh.host = "algothe.inria.fr";
+
+// deploy
+localComponent.lookup(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
+	err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 ```
 
 
@@ -168,13 +181,9 @@ public static void main(String[] args) throws IOException {
 
 ### Invoking an operation
 ```java
-// the operation has to be scheduled to an address that can refer to multiple components
-// in our case, let it run on component "a" only
-var to = new To(a);
-
-// the operation is run asynchronously
-// we obtain a bridge to the remotely running operation
-var rop = o.exec(to, true, null);
+var c = new Component();
+var o = c.lookup(BlindBroadcasting.class).exec(MyOperation.class, initialData);
+return o.returnQ.toList().throwAnyError().getContentOrNull(0);
 ```
 Operation execution is always __asynchronous___.
 
