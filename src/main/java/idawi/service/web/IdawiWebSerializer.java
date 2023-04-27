@@ -20,7 +20,7 @@ public class IdawiWebSerializer extends JasetoSerializer {
 				return o;
 			}
 
-			@Override
+			//@Override
 			public Node alter(Node n) {
 				if (!n.path().equals(".content")) {
 					// n.removeKey("#class");
