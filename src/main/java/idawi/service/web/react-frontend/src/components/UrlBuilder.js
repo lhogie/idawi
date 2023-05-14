@@ -8,17 +8,25 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
+/**
+ * This component is used to build an idawi link
+ * @returns the UrlBuilder component
+ */
 export default function UrlBuilder() {
+
   const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/");
-
   const [steps, setSteps] = React.useState([{title: "Routing", choices: []}, {title: "Parameters", choices: []}, {title: "Components", choices: []}, {title: "Services", choices: []}, {title: "Operations", choices: []}]);
-
   const [content, setContent] = React.useState([]);
 
   const updateIdawiLink = (newValue) => {
     setIdawiLink(newValue);
   };
 
+  /**
+   * Get suggestions for the next step
+   * @param idawilink - the idawilink to get suggestions from
+   * @param index - the index of the step to update
+   */
   const getSuggestions = (idawilink, index) => {
     setIdawiLink(idawilink);
     console.log("idawilink :", idawilink);
@@ -59,6 +67,9 @@ export default function UrlBuilder() {
     }
   };
 
+  /**
+   * Get suggestions for the first step
+   */
   React.useEffect(() => {
     getSuggestions(idawilink, 0);
   }, [idawilink]);

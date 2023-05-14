@@ -1,6 +1,11 @@
 import React from 'react';
 import { JSONTree } from 'react-json-tree';
 
+/**
+ * This component is used to display a JSON object
+ * @returns the JSONViewer component
+ * @param data - the data to display
+*/
 function JSONViewer({ data }) {
   const theme = {
     scheme: 'monokai',
