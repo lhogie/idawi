@@ -1,11 +1,19 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import StepElement from './StepElement';
+import JSONViewer from './JSONViewer';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
 
 export default function UrlBuilder() {
   const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/");
 
-  const [steps, setSteps] = React.useState([{title: "step1", choices: []}, {title: "step2", choices: []}]);
+  const [steps, setSteps] = React.useState([{title: "Routing", choices: []}, {title: "Parameters", choices: []}, {title: "Components", choices: []}, {title: "Services", choices: []}, {title: "Operations", choices: []}]);
+
+  const [content, setContent] = React.useState([]);
 
   const updateIdawiLink = (newValue) => {
     setIdawiLink(newValue);
@@ -24,7 +32,8 @@ export default function UrlBuilder() {
         if(data != "EOT"){
           var payload = JSON.parse(data);
           if(payload['#class'] == "idawi.messaging.Message" && payload.content['#class'] != "idawi.messaging.EOT"){
-            var elements = Array.from(payload.content.elements);
+            var elements = Array.from(payload.content.elements).concat(Array.from(payload.route.elements));
+            elements = [...new Set(elements)];      
             if(elements.length > 0){
               if(elements[0]['#class'] == "idawi.Component"){
                 var newSteps = [...steps]
@@ -36,10 +45,13 @@ export default function UrlBuilder() {
                 newSteps[index].choices = elements.map((element) => element['#class']);
                 setSteps(newSteps);
               }
-              else{
+              else if(index < steps.length){
                 var newSteps = [...steps]
-                newSteps[index].choices = Array.from(payload.content.elements);
+                newSteps[index].choices =  elements;
                 setSteps(newSteps);
+              }
+              if(index === 5){
+                setContent(payload.content.elements);
               }
             }
           }
@@ -50,13 +62,35 @@ export default function UrlBuilder() {
   React.useEffect(() => {
     getSuggestions(idawilink, 0);
   }, [idawilink]);
-
+  
   return (
-    <Box sx={{ width: '100%' }}>
-        <React.Fragment>
-          <div>{idawilink}</div>
-          <div>{steps.map((step, index) => <StepElement index={index} getSuggestions={getSuggestions} idawilink={idawilink} choices={step.choices} title={step.title} />)}</div>
-        </React.Fragment>
-    </Box>
+    <React.Fragment>
+      <Box sx={{ width: '100%' }}>
+        <AppBar position="static">
+          <Container maxWidth="xl">
+            <Toolbar disableGutters>
+              <Typography
+                variant="h6"
+                href="/"
+                sx={{
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  letterSpacing: '.3rem',
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                IDAWI
+              </Typography>
+              </Toolbar>
+          </Container>
+      </AppBar>
+            <Stack direction="row" spacing={20} marginLeft={10} marginTop={10}>
+            <div>{steps.map((step, index) => <StepElement index={index} getSuggestions={getSuggestions} idawilink={idawilink} choices={step.choices} title={step.title} />)}</div>
+            <div>{idawilink}</div>
+            {content.length > 0 && <JSONViewer data={content} />}
+          </Stack>
+      </Box>
+    </React.Fragment>
   );
 }
