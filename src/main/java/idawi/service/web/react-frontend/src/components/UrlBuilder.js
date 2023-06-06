@@ -7,6 +7,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import ExceptionComponent from './ExceptionComponent'
 
 /**
  * This component is used to build an idawi link
@@ -17,6 +18,9 @@ export default function UrlBuilder() {
   const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/");
   const [steps, setSteps] = React.useState([{title: "Routing", choices: []}, {title: "Parameters", choices: []}, {title: "Components", choices: []}, {title: "Services", choices: []}, {title: "Operations", choices: []}]);
   const [content, setContent] = React.useState([]);
+  const [exceptionMessage, setExceptionMessage] = React.useState("")
+  const [exceptionStackTrace, setExceptionStackTrace] = React.useState({})
+
 
   const updateIdawiLink = (newValue) => {
     setIdawiLink(newValue);
@@ -52,6 +56,10 @@ export default function UrlBuilder() {
                 var newSteps = [...steps]
                 newSteps[index].choices = elements.map((element) => element['#class']);
                 setSteps(newSteps);
+              }
+              else if(elements[0]['#class']?.includes("Exception")){
+                setExceptionMessage(payload.content.message)
+                setExceptionStackTrace(payload.content.stack_trace)
               }
               else if(index < steps.length){
                 var newSteps = [...steps]
@@ -100,6 +108,7 @@ export default function UrlBuilder() {
             <div>{steps.map((step, index) => <StepElement index={index} getSuggestions={getSuggestions} idawilink={idawilink} choices={step.choices} title={step.title} />)}</div>
             <div>{idawilink}</div>
             {content.length > 0 && <JSONViewer data={content} />}
+            {exceptionMessage.length > 0 && <ExceptionComponent data={exceptionStackTrace} message={exceptionMessage} />}
           </Stack>
       </Box>
     </React.Fragment>

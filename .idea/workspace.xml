@@ -6,9 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e5b72562-619a-45fa-8ab7-d691a3d03302" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -83,7 +80,11 @@
       <workItem from="1682612251402" duration="718000" />
       <workItem from="1683416181571" duration="231000" />
       <workItem from="1684057417377" duration="1879000" />
-      <workItem from="1684068509774" duration="6557000" />
+      <workItem from="1684068509774" duration="7123000" />
+      <workItem from="1684258422613" duration="608000" />
+      <workItem from="1685275471725" duration="543000" />
+      <workItem from="1685955462205" duration="3932000" />
+      <workItem from="1686038204375" duration="827000" />
     </task>
     <servers />
   </component>
