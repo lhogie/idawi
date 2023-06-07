@@ -37,6 +37,8 @@ public class DemoService extends Service {
 		registerOperation(new waiting());
 		registerOperation(new multipleRandomMessages());
 		registerOperation(new complexResponse());
+		registerOperation(new SendGraph());
+		registerOperation(new SendChart());
 		registerOperation("e", q -> {
 		});
 
@@ -285,4 +287,31 @@ public class DemoService extends Service {
 		}
 	}
 
+	public class SendGraph extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple graph";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Graph.random());
+		}
+	}
+
+	public class SendChart extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple chart";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Chart.random());
+		}
+	}
 }

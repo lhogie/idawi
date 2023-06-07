@@ -1,9 +1,10 @@
 package idawi.service.web.chart;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Chart {
+public class Chart implements Serializable {
 	System system;
 	List<Function> functions = new ArrayList<>();
 

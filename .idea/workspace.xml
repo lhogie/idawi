@@ -6,7 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="e5b72562-619a-45fa-8ab7-d691a3d03302" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/DemoService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/DemoService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/Graph.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/Graph.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Chart.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Chart.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Function.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Function.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Point.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Point.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/ComponentContent.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/ComponentContent.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,7 +92,9 @@
       <workItem from="1684258422613" duration="608000" />
       <workItem from="1685275471725" duration="543000" />
       <workItem from="1685955462205" duration="3932000" />
-      <workItem from="1686038204375" duration="827000" />
+      <workItem from="1686038204375" duration="8937000" />
+      <workItem from="1686091256784" duration="1150000" />
+      <workItem from="1686123929006" duration="1959000" />
     </task>
     <servers />
   </component>
