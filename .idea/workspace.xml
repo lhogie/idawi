@@ -5,31 +5,41 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e5b72562-619a-45fa-8ab7-d691a3d03302" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/Image.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/Media.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/Video.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_github_lhogie_jaseto_0_0_1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Maven__io_github_lhogie_jaseto_0_0_2_SNAPSHOT.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/DemoService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/DemoService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/Graph.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/Graph.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Chart.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Chart.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Function.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Function.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Point.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/chart/Point.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/ComponentContent.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/ComponentContent.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/idawi/service/web/react-frontend/src/components/UrlBuilder.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+        <option value="Interface" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/src/main/java/idawi/service/web/IdawiWebSerializer.java" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/pom.xml" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/main/java/idawi/knowledge_base/DigitalTwinService.java" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/main/java/idawi/service/DemoService.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/main/java/idawi/service/web/IdawiWebSerializer.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/main/java/idawi/service/web/RunTestServer.java" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -46,18 +56,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Downloads/Plugins-master/Plugins-master" />
-    <property name="nodejs_package_manager_path" value="npm" />
-    <property name="project.structure.last.edited" value="Project" />
-    <property name="project.structure.proportion" value="0.0" />
-    <property name="project.structure.side.proportion" value="0.0" />
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="idawi.service.web" />
+    </key>
   </component>
-  <component name="RunManager">
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="mvn clean" />
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.RunTestServer">
+    <configuration name="DemoService" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="idawi.service.DemoService" />
+      <module name="idawi" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="idawi.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="RunTestServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="idawi.service.web.RunTestServer" />
       <module name="idawi" />
@@ -67,13 +97,28 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Application.DemoService" />
+      <item itemvalue="Application.RunTestServer" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.RunTestServer" />
+        <item itemvalue="Application.DemoService" />
       </list>
     </recent_temporary>
   </component>

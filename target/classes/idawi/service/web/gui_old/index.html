@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Idawi GUI</title>
+    <!--CSS-->
+    <link rel="stylesheet" type="text/css" href="./css/semantic.min.css">
+    <link href="./css/style.css" rel="stylesheet">
+
+    <!--JS-->
+    <script src="./js/script.js"></script>
+    <script src="./js/listenIdawi.js"></script>
+    <script src="./js/classes.js"></script>
+
+
+
+</head>
+
+<!-- Page Contents -->
+<div class="pusher">
+    <div class="ui inverted vertical masthead center aligned segment">
+
+        <h1>Idawi GUI</h1>
+
+    </div>
+
+    <div class="ui vertical stripe segment">
+        <div class="ui middle aligned stackable container">
+            <div class="ui form">
+                <form id="urlform">
+                <h2>URL Form</h2>
+                <div id ="urlformfields" class="fields">
+                </div>
+            </form>
+            </div>
+        </div>
+        <div class="ui middle aligned stackable container">
+            <div class="ui form">
+                <form id="requestform">
+                    <div class="two fields">
+                        <div class="field" style="width: 100%;">
+                            <h2>Request URL</h2>
+                            <input id="requestfield" type="text"
+                                value="http://localhost:8081/api/a,b,c/idawi.service.DemoService/complexResponse?duration=100">
+                        </div>
+                        <div class="field">
+                            <h2>&#160;</h2>
+                            <button class="ui button" type="submit">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div style="min-height: 74vh;">
+        <div class="ui vertical stripe quote segment">
+            <div id="resultats" class="ui equal width stackable internally celled grid">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="ui inverted vertical footer segment">
+        <div class="ui container">
+            <div class="ui stackable inverted equal height stackable grid">
+                <div class="six wide column">
+                </div>
+                <div class="seven wide column">
+                    <p>2022 | Luc HOGIE, Saad el din AHMED</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>
