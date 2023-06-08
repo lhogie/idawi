@@ -4,7 +4,6 @@ import ChartComponent from './ChartComponent';
 import GraphComponent from './GraphComponent';
 import ImageComponent from './ImageComponent';
 import VideoComponent from './VideoComponent';
-import { Button, Stack, TextField } from '@mui/material';
 
 /**
  * This component is used to build an idawi link
@@ -13,8 +12,8 @@ import { Button, Stack, TextField } from '@mui/material';
 export default function ComponentContent() {
 
   const [idawilink, setIdawiLink] = React.useState("http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendImage");
-  const graphLink = "http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendGraph"
-  const imageLink = "http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendImage"
+  //const graphLink = "http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendGraph"
+ // const imageLink = "http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendImage"
   const [steps, setSteps] = React.useState([{title: "Routing", choices: []}, {title: "Parameters", choices: []}, {title: "Components", choices: []}, {title: "Services", choices: []}, {title: "Operations", choices: []}]);
   const [componentName, setComponentName] = React.useState("");
   const [chart, setChart] = React.useState([])
@@ -41,7 +40,7 @@ export default function ComponentContent() {
         var lines = s.split(/\r?\n/);
         var headerraw = lines.shift();
         var data = lines.join('');
-        if(data != "EOT"){
+        if(data !== "EOT"){
           var payload = JSON.parse(data);
           if(payload['#class'] === "idawi.messaging.Message" && payload.content['#class'] !== "idawi.messaging.EOT"){
             if(payload.content['#class'] === "idawi.service.web.chart.Function"){
@@ -124,9 +123,9 @@ export default function ComponentContent() {
     <React.Fragment>
       <div> Component : {componentName}</div>
       <ChartComponent xList={chart.listX} yList={chart.listY} />
-      {/* <GraphComponent /> */}
+      <GraphComponent />
       <ImageComponent data ={image} height={180} width={180} />
-      <VideoComponent data={video}  width="640" height="360" />
+      <VideoComponent data={video}  width={640} height={360} />
     </React.Fragment>
   );
 }
