@@ -4,6 +4,8 @@ import ChartComponent from './ChartComponent';
 import GraphComponent from './GraphComponent';
 import ImageComponent from './ImageComponent';
 import VideoComponent from './VideoComponent';
+import PrimitiveComponent from './PrimitiveComponent';
+import { Stack } from '@mui/material';
 
 /**
  * This component is used to build an idawi link
@@ -19,12 +21,19 @@ export default function ComponentContent() {
   const [chart, setChart] = React.useState([])
   const [image, setImage] = React.useState("")
   const [video, setVideo] = React.useState("")
+  const [primitiveValue, setPrimitiveValue] = React.useState("")
 
 
   const updateIdawiLink = (newValue) => {
     //setIdawiLink(newValue);
     setIdawiLink(newValue)
   };
+
+
+  function isNotArrayOrJSON(variable) {
+    return !Array.isArray(variable) && typeof variable !== 'object';
+  }
+
 
   /**
    * Get suggestions for the next step
@@ -68,7 +77,9 @@ export default function ComponentContent() {
               var base64 = payload.content.base64
               setVideo(base64)
             }
-          } 
+          } else if(payload['#class'] === "idawi.messaging.Message" && isNotArrayOrJSON(payload.content) ){
+             setPrimitiveValue(payload.content)
+          }
         }
     }
   };
@@ -122,10 +133,13 @@ export default function ComponentContent() {
   return (
     <React.Fragment>
       <div> Component : {componentName}</div>
-      <ChartComponent xList={chart.listX} yList={chart.listY} />
-      <GraphComponent />
-      <ImageComponent data ={image} height={180} width={180} />
-      <VideoComponent data={video}  width={640} height={360} />
+      <Stack spacing={2}>
+        <ChartComponent xList={chart.listX} yList={chart.listY} />
+        <GraphComponent />
+        <PrimitiveComponent data={primitiveValue} />
+        <ImageComponent data ={image} height={180} width={180} />
+        <VideoComponent data={video}  width={640} height={360} />
+      </Stack>
     </React.Fragment>
   );
 }
