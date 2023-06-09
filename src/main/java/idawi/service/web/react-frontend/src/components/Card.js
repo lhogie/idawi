@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import JSONViewer from "./JSONViewer"
+
 
 const Card = ({ title, content }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -28,13 +30,12 @@ const Card = ({ title, content }) => {
     <div>
       <div style={cardStyle} onClick={openPopup}>
         <h3 style={titleStyle}>{title}</h3>
-        <p>{content}</p>
+        <JSONViewer data={content} />
       </div>
       {isPopupOpen && (
         <div className="popup-overlay">
           <div className="popup-content">
             <h3 style={titleStyle}>{title}</h3>
-            <p>{content}</p>
             <button onClick={closePopup}>Close</button>
           </div>
         </div>

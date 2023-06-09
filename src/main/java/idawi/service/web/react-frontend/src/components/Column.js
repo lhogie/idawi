@@ -1,5 +1,6 @@
 import Card from "./Card";
 import React from 'react'
+import JSONViewer from "./JSONViewer"
 
 const Column = ({ name, width, messages }) => {
   
@@ -12,7 +13,6 @@ const Column = ({ name, width, messages }) => {
   };
 
   React.useEffect(()=>{
-    console.log("updated")
   }, [messages])
 
   const headerStyle = {
@@ -25,7 +25,9 @@ const Column = ({ name, width, messages }) => {
     <div style={columnStyle}>
       <h2 style={headerStyle}>{name}</h2>
       {messages.map((message, index) => (
-        <Card key={index} title="Card 1" content={message.content} />
+        <div>
+            <Card key={index} title={message.content['#class'].split('.')[3]} content={message.content} />
+        </div>
       ))}
     </div>
   );
