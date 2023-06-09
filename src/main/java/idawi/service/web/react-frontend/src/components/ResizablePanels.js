@@ -10,7 +10,7 @@ class ResizablePanels extends React.Component {
       
       this.state = {
         isDragging: false,
-        panels: [300, 300, 300]
+        panels: [300]
       }
     }
   
@@ -54,12 +54,9 @@ class ResizablePanels extends React.Component {
     }
     
     render() {
-      const rest = this.props.children.slice(1)
+      const rest = this.props.children
       return (
         <div className="panel-container" onMouseUp={() => this.stopResize()}>
-          <div className="panel" style={{width: `calc(100% - ${this.state.panels[1]}px - ${this.state.panels[2]}px)`}}>
-            {this.props.children[0]}
-          </div>
           {[].concat(...rest.map((child, i) => {
             return [
               <div onMouseDown={(e) => this.startResize(e, i + 1)}

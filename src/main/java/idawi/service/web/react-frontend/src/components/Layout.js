@@ -7,11 +7,20 @@ const Layout = () => {
   const [idawilink, setIdawiLink] = useState(
     "http://localhost:8081/api/idawi.routing.ForceBroadcasting///idawi.service.DemoService/SendGraph"
   );
-  const [columnNames, setColumnNames] = useState([]);
+  const [newLink, setNewLink] = useState("")
+
   const [components, setComponents] = useState({});
+  const [openedEventSources, setOpenedEventSources] = useState([])
+
+
 
   const getMessages = () => {
-    var idawiListener = new EventSource(idawilink, { withCredentials: true });
+    openedEventSources.forEach((eventSource) => {
+      eventSource.close()
+    })
+    let idawiListener = new EventSource(idawilink, { withCredentials: true });
+    setOpenedEventSources(openedEventSources => [...openedEventSources, idawiListener])
+
     idawiListener.onmessage = function (event) {
       var s = event.data;
       var lines = s.split(/\r?\n/);
@@ -37,13 +46,14 @@ const Layout = () => {
     };
   };
 
-  const updateIdawiLink = (value) => {
-    setIdawiLink(value)
+  const updateIdawiLink = (event) => {
+    setNewLink(event.target.value)
   }
+
 
   useEffect(() => {
     getMessages();
-  }, []);
+  }, [idawilink]);
 
   return (
     <div>
@@ -53,17 +63,20 @@ const Layout = () => {
             id="outlined-basic" 
             label="URL" 
             variant="outlined" 
-            value={idawilink}
-            onChange={(event, newValue) => {
-              updateIdawiLink(newValue);
+            value={newLink}
+            onChange={(event) => {
+              updateIdawiLink(event);
             }}
             fullWidth 
           />
-          <Button variant="contained" onClick={getMessages}>
+          <Button variant="contained" onClick={()=>{
+            setComponents({})            
+            setIdawiLink(newLink)
+          }}>
             Valider
           </Button>
       </Stack>
-      <div className="container" style={{ display: "flex" }}>
+      <div >
         <ResizablePanels>
           {Object.keys(components).map((key) => (
             <div>
