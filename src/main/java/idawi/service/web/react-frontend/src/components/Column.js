@@ -25,7 +25,7 @@ const Column = ({ name, messages }) => {
       <h2 style={headerStyle}>{name}</h2>
       {messages.map((message, index) => (
         <div>
-            <Card key={index} title={message.content['#class'].split('.')[3]} content={message.content} />
+            <Card key={index} title={message.content['#class'].split('.').pop()} content={message} />
         </div>
       ))}
     </div>

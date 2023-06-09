@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import JSONViewer from "./JSONViewer"
-
+import ComponentContent from "./ComponentContent";
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import { Switch } from "@mui/material";
 
 const Card = ({ title, content }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [checked, setChecked] = React.useState(false);
 
   const cardStyle = {
     backgroundColor: "#ffffff",
@@ -19,24 +23,28 @@ const Card = ({ title, content }) => {
   };
 
   const openPopup = () => {
-    setIsPopupOpen(true);
+    setIsPopupOpen(!isPopupOpen);
   };
 
-  const closePopup = () => {
-    setIsPopupOpen(false);
+  const handleChange = (event) => {
+    setChecked(event.target.checked);
   };
 
   return (
     <div>
       <div style={cardStyle} onClick={openPopup}>
         <h3 style={titleStyle}>{title}</h3>
-        <JSONViewer data={content} />
+        <FormGroup>
+          <FormControlLabel value={checked} control={<Switch  onChange={handleChange}/>} label="Afficher Payload" />
+      </FormGroup>
       </div>
-      {isPopupOpen && (
+      {checked &&  (
+        <JSONViewer data={content} />
+      )}
+      {isPopupOpen && !checked && (
         <div className="popup-overlay">
           <div className="popup-content">
-            <h3 style={titleStyle}>{title}</h3>
-            <button onClick={closePopup}>Close</button>
+            <ComponentContent content={content} />
           </div>
         </div>
       )}
