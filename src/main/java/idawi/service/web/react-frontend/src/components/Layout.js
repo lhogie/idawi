@@ -1,9 +1,11 @@
 import Column from "./Column";
 import React, { useEffect, useState } from "react";
+import ResizablePanels from "./ResizablePanels";
+import { AppBar, Button, Container, Stack, TextField, Toolbar, Typography } from "@mui/material";
 
 const Layout = () => {
   const [idawilink, setIdawiLink] = useState(
-    "http://localhost:8081/api/idawi.routing.ForceBroadcasting//gw/idawi.service.DemoService/SendGraph"
+    "http://localhost:8081/api/idawi.routing.ForceBroadcasting///idawi.service.DemoService/SendGraph"
   );
   const [columnNames, setColumnNames] = useState([]);
   const [components, setComponents] = useState({});
@@ -35,16 +37,40 @@ const Layout = () => {
     };
   };
 
+  const updateIdawiLink = (value) => {
+    setIdawiLink(value)
+  }
+
   useEffect(() => {
     getMessages();
   }, []);
 
   return (
     <div>
-      <div className="container" style={{ height: "100vh", display: "flex" }}>
-        {Object.keys(components).map((key) => (
-          <Column key={key} name={key} width={20} messages={components[key]} />
-        ))}
+      <div> IDAWI </div>
+      <Stack spacing={2} direction={"row"} mt={2} ml={5} mb={5} mr={5}>
+          <TextField 
+            id="outlined-basic" 
+            label="URL" 
+            variant="outlined" 
+            value={idawilink}
+            onChange={(event, newValue) => {
+              updateIdawiLink(newValue);
+            }}
+            fullWidth 
+          />
+          <Button variant="contained" onClick={getMessages}>
+            Valider
+          </Button>
+      </Stack>
+      <div className="container" style={{ display: "flex" }}>
+        <ResizablePanels>
+          {Object.keys(components).map((key) => (
+            <div>
+              <Column key={key} name={key} messages={components[key]} />
+            </div>
+          ))}
+        </ResizablePanels>
       </div>
     </div>
   );

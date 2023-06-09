@@ -2,11 +2,10 @@ import Card from "./Card";
 import React from 'react'
 import JSONViewer from "./JSONViewer"
 
-const Column = ({ name, width, messages }) => {
+const Column = ({ name, messages }) => {
   
   
   const columnStyle = {
-    width: `${width}%`,
     height: "100%",
     backgroundColor: "#f2f2f2",
     margin: "0 5px",
