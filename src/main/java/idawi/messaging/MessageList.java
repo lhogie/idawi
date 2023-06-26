@@ -34,9 +34,9 @@ public class MessageList extends ArrayList<Message> {
 
 		for (var m : this) {
 			if (m.isEOT()) {
-				r.remove(m.route.initialEmission().transport.component);
+				r.remove(m.route.source());
 			} else {
-				r.add(m.route.initialEmission().transport.component);
+				r.add(m.route.source());
 			}
 		}
 
@@ -56,8 +56,8 @@ public class MessageList extends ArrayList<Message> {
 	}
 
 	public MessageList retainFirstCompleted() {
-		var firstCompleted = eots().first().route.initialEmission().transport.component;
-		return filter(m -> m.route.initialEmission().transport.component.equals(firstCompleted) && !m.isEOT());
+		var firstCompleted = eots().first().route.source();
+		return filter(m -> m.route.source().equals(firstCompleted) && !m.isEOT());
 	}
 
 	public Message first() {
@@ -122,10 +122,10 @@ public class MessageList extends ArrayList<Message> {
 		Map<Component, MessageList> r = new HashMap<>();
 
 		for (Message m : this) {
-			MessageList l = r.get(m.route.initialEmission().transport.component);
+			MessageList l = r.get(m.route.source());
 
 			if (l == null) {
-				r.put(m.route.initialEmission().transport.component, l = new MessageList());
+				r.put(m.route.source(), l = new MessageList());
 			}
 
 			l.add(m);
@@ -188,7 +188,7 @@ public class MessageList extends ArrayList<Message> {
 
 	public Set<Component> senders() {
 		var r = new HashSet<Component>();
-		forEach(msg -> r.add(msg.route.initialEmission().transport.component));
+		forEach(msg -> r.add(msg.route.source()));
 		return r;
 	}
 

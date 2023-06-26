@@ -32,7 +32,7 @@ public class Demo3_multi_deployment {
 		var children = new Vector<Component>();
 
 		// deploy
-		t.lookup(DeployerService.class).deployRemotely(reqs, rsyncOut -> System.out.println("rsync: " + rsyncOut),
+		t.need(DeployerService.class).deployRemotely(reqs, rsyncOut -> System.out.println("rsync: " + rsyncOut),
 				rsyncErr -> System.err.println("rsync: " + rsyncErr), ok -> {
 					children.add(ok);
 					System.out.println("peer ok: " + ok);

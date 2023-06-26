@@ -1,15 +1,16 @@
 package idawi.routing.irp;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinListener;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
+import idawi.service.local_view.DigitalTwinListener;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -21,7 +22,7 @@ public class IRP extends RoutingService<IRPParms> {
 	public IRP(Component node) {
 		super(node);
 
-		component.digitalTwinService().listeners.add(new DigitalTwinListener() {
+		component.localView().listeners.add(new DigitalTwinListener() {
 
 			@Override
 			public void newComponent(Component p) {
@@ -34,11 +35,11 @@ public class IRP extends RoutingService<IRPParms> {
 			@Override
 			public void newInteraction(TransportService from, TransportService to) {
 				if (component.equals(from.component)) {
-					var tt = component.lookup(from.getClass());
+					var tt = component.need(from.getClass());
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.multicast(msg, Set.of(to.find(to.component)), IRP.this, msg.route.last().routingParms());
+							tt.send(msg, Set.of(component.localView().findLink(to, to.component)), IRP.this, msg.route.last().routingParms);
 						}
 					}
 				}
@@ -56,7 +57,7 @@ public class IRP extends RoutingService<IRPParms> {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 
-			boolean wentToFar = p.coverage > msg.route.nbEvents() / 2;
+			boolean wentToFar = p.coverage > msg.route.len() / 2;
 			boolean outdated = msg.route.isEmpty() ? false : p.validityDuration > msg.route.duration();
 
 			if (!wentToFar && !outdated) {
@@ -76,8 +77,8 @@ public class IRP extends RoutingService<IRPParms> {
 	}
 
 	public double expirationDate(Message msg) {
-		var creationDate = msg.route.initialEmission().date();
-		var r = (IRPParms) msg.route.initialEmission().routingParms();
+		var creationDate = msg.route.first().emissionDate;
+		var r = (IRPParms) msg.route.first().routingParms;
 		return creationDate + r.getValidityDuration();
 	}
 
@@ -95,7 +96,7 @@ public class IRP extends RoutingService<IRPParms> {
 
 		{
 			var p = new IRPParms();
-			p.components = component.digitalTwinService().components;
+			p.components = new HashSet<>(component.localView().components());
 			p.coverage = 1000;
 			p.validityDuration = 1;
 			l.add(p);
@@ -115,6 +116,6 @@ public class IRP extends RoutingService<IRPParms> {
 	@Override
 	public ComponentMatcher naturalTarget(IRPParms parms) {
 		var p = (IRPParms) parms;
-		return ComponentMatcher.among(p.components);
+		return ComponentMatcher.multicast(p.components);
 	}
 }

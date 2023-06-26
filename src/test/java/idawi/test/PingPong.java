@@ -30,7 +30,7 @@ public class PingPong {
 			Component t = things.get(i - 1);
 
 			// gets the deployment service
-			DeployerService deployer = t.lookup(DeployerService.class);
+			DeployerService deployer = t.need(DeployerService.class);
 
 			var c = new Component("t" + i);
 
@@ -42,7 +42,7 @@ public class PingPong {
 			things.add(newThings.get(0));
 		}
 
-		SharedMemoryTransport.chain(things, SharedMemoryTransport.class);
+		SharedMemoryTransport.chain(things, SharedMemoryTransport.class, true);
 
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);

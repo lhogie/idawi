@@ -6,12 +6,12 @@ import java.util.List;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import toools.io.Cout;
 
 public class BlindBroadcasting extends RoutingService<RoutingData> {
-	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
+	public final AutoForgettingLongList alreadyReceivedMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+
+	// public final BloomFilterForLong alreadyReceivedMsgs2 = new
+	// BloomFilterForLong(1000);
 
 	public BlindBroadcasting(Component node) {
 		super(node);
@@ -24,15 +24,24 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 
 	@Override
 	public long sizeOf() {
-		return super.sizeOf() + alreadyReceivedMsgs.size() * 8 + 8;
+		return super.sizeOf() + alreadyReceivedMsgs.sizeOf() + 8;
 	}
 
 	@Override
-	public void accept(Message msg, RoutingData parms) {
+	synchronized public void accept(Message msg, RoutingData parms) {
+//		System.err.println(System.identityHashCode(this)+ alreadyReceivedMsgs.l.size() +  " messagesd eceived");
 		// the message was never received
+//		System.err.println(msg);
+
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
+			listeners.forEach(l -> l.messageForwarded(this, msg));
+
 			alreadyReceivedMsgs.add(msg.ID);
-			component.services(TransportService.class).forEach(t -> t.bcast(msg, this, parms));
+			component.services(TransportService.class).forEach(t -> {
+				t.bcast(msg, this, parms);
+			});
+		} else {
+			listeners.forEach(l -> l.messageDropped(this, msg));
 		}
 	}
 

@@ -18,10 +18,10 @@ public class Centralized {
 		var rand = new Random();
 
 		for (int i = 0; i < n; ++i) {
-			var a = new Component();
+			var a = new Component("" + i);
 			new SimulatedLocationService(a);
-			a.lookup(SharedMemoryTransport.class).emissionRange = rand.nextDouble(100);
-			var ls = a.lookup(SimulatedLocationService.class);
+			a.need(SharedMemoryTransport.class).emissionRange = rand.nextDouble(100);
+			var ls = a.need(SimulatedLocationService.class);
 			ls.location.x = rand.nextDouble(1000);
 			ls.location.y = rand.nextDouble(1000);
 			ls.angle = rand.nextDouble(2 * Math.PI);
@@ -29,29 +29,29 @@ public class Centralized {
 			l.add(a);
 		}
 
-		l.get(0).lookup(WebService.class).startHTTPServer(4456);
+		l.get(0).need(WebService.class).startHTTPServer(4456);
 		System.out.println("gateway: " + l.get(0));
 
-		
 		var r = new Random();
 
 		while (true) {
 			for (var c : l) {
-				//System.out.println(c + "\t" + c.lookup(SimulatedLocationService.class).location);
-			}	
+				// System.out.println(c + "\t" +
+				// c.lookup(SimulatedLocationService.class).location);
+			}
 
 			Threads.sleep(1);
 
 			var o = l.get(r.nextInt(l.size()));
-			//System.out.println(o);
+			// System.out.println(o);
 
 			for (var c : l) {
-				c.lookup(SimulatedLocationService.class).move();
-				c.lookup(SimulatedLocationService.class).angle += rand.nextDouble(Math.PI / 5 - Math.PI / 10);
+				c.need(SimulatedLocationService.class).move();
+				c.need(SimulatedLocationService.class).angle += rand.nextDouble(Math.PI / 5 - Math.PI / 10);
 			}
-			
+
 			SharedMemoryTransport.reconnectAccordingToDistance(l);
 		}
-		
+
 	}
 }

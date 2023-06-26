@@ -2,14 +2,13 @@ package idawi.service;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.routing.ComponentMatcher;
 
 public class ExitApplication extends Service {
 
 	public ExitApplication(Component peer) {
 		super(peer);
-		registerOperation(new exit());
 	}
 
 	@Override
@@ -17,7 +16,7 @@ public class ExitApplication extends Service {
 		return "exit";
 	}
 
-	public class exit extends TypedInnerClassOperation {
+	public class exit extends TypedInnerClassEndpoint {
 		public void f(int code) {
 			exit(code);
 		}
@@ -29,7 +28,7 @@ public class ExitApplication extends Service {
 	}
 
 	public void exit(int exitCode) {
-		component.bb().exec(ExitApplication.exit.class, null, ComponentMatcher.all, false, exitCode);
+		component.bb().exec(ExitApplication.class, exit.class, null, ComponentMatcher.all, false, exitCode);
 		component.forEachService(s -> s.dispose());
 		System.exit(exitCode);
 	}

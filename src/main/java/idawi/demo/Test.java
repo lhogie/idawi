@@ -10,8 +10,8 @@ import toools.io.ser.JavaSerializer;
 public class Test {
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		
-		System.out.println(BlindBroadcasting.ping.class.getName());
-		var c = Class.forName(BlindBroadcasting.ping.class.getName());
+		System.out.println(BlindBroadcasting.ping.class.getSimpleName());
+		var c = Class.forName(BlindBroadcasting.ping.class.getSimpleName());
 		System.out.println(c);
 	}
 }

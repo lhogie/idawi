@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
@@ -19,11 +19,11 @@ import toools.util.Date;
 public class MapReduceService extends Service {
 	public MapReduceService(Component component) {
 		super(component);
-		operations.add(new taskProcessor());
 	}
 
+
 	// the backend op
-	public class taskProcessor extends InnerClassOperation {
+	public class taskProcessor extends InnerClassEndpoint {
 
 		@Override
 		public String getDescription() {
@@ -96,7 +96,7 @@ public class MapReduceService extends Service {
 		var unprocessedTasks = new ArrayList<>(tasks);
 
 		// all results will end here
-		var q = createAutoQueue("results");
+		var q = createUniqueQueue("results");
 
 		// assign IDs
 		IntStream.range(0, unprocessedTasks.size()).forEach(taskID -> unprocessedTasks.get(taskID).id = taskID);
@@ -111,7 +111,7 @@ public class MapReduceService extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					component.bb().exec(taskProcessor.class, null, task.to, q, task);
+					component.bb().exec(getClass(), taskProcessor.class, null, task.to, q, task);
 				}
 			}
 
@@ -120,12 +120,12 @@ public class MapReduceService extends Service {
 				var msg = c.messages.last();
 				if (msg.content instanceof Result) {
 					var workerResponse = (Result<R>) msg.content;
-					workerResponse.worker = msg.route.initialEmission().transport.component;
+					workerResponse.worker = msg.route.source();
 					unprocessedTasks.removeIf(t -> t.id == workerResponse.taskID);
 					h.newResult(workerResponse);
 					h.newProgressRatio(100 * (tasks.size() - unprocessedTasks.size()) / (double) tasks.size());
 				} else if (msg.content instanceof ProgressMessage) {
-					h.newProgressMessage(msg.route.initialEmission().transport.component + ": " + msg.content);
+					h.newProgressMessage(msg.route.source() + ": " + msg.content);
 				} else {
 					h.newMessage(msg);
 				}

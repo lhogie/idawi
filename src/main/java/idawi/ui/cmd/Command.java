@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.service.local_view.LocalViewService;
 import j4u.CommandLineApplication;
 import j4u.License;
 import toools.io.Cout;
@@ -53,7 +53,7 @@ public abstract class Command extends CommandLineApplication {
 			if (p.equals("_")) {
 				peers.add(n);
 			} else {
-				var pp = n.lookup(DigitalTwinService.class).lookup(p);
+				var pp = n.need(LocalViewService.class).lookup(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

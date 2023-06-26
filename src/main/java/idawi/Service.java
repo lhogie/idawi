@@ -1,6 +1,7 @@
 package idawi;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,17 +14,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import idawi.knowledge_base.OperationDescriptor;
-import idawi.knowledge_base.ServiceDescriptor;
+import com.google.common.util.concurrent.AtomicDouble;
+
 import idawi.messaging.EOT;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.MessageODestination;
 import idawi.routing.MessageQDestination;
-import idawi.routing.ComponentMatcher;
 import idawi.service.ErrorLog;
+import idawi.service.local_view.EndpointDescriptor;
+import idawi.service.local_view.ServiceInfo;
 import idawi.service.web.WebService;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
@@ -32,17 +36,25 @@ import toools.io.file.Directory;
 import toools.thread.Threads;
 import toools.util.Date;
 
-public class Service implements SizeOf, Serializable {
+public class Service implements SizeOf {
 
 	// creates the threads that will process the messages
 //	public static ExecutorService threadPool = Executors.newFixedThreadPool(1);
 	public static ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	public static AtomicDouble time = new AtomicDouble();
 
-	transient public final Class<? extends Service> id;
-	public final Component component;
+	public static double now() {
+		return Service.time == null ? Date.time() :Service.time.get();
+		//var ts = lookup(TimeService.class);
+		//return ts == null ? Date.time() : ts.now();
+	}
+	
+	
+	transient public final Class<? extends Service> id = getClass();
+	public Component component;
 	private boolean askToRun = true;
 	transient protected final List<Thread> threads = new ArrayList<>();
-	transient protected final Set<AbstractOperation> operations = new HashSet<>();
+	transient protected final Set<AbstractEndpoint> endpoints = new HashSet<>();
 	transient private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	transient private final Set<String> detachedQueues = new HashSet<>();
 	transient final AtomicLong returnQueueID = new AtomicLong();
@@ -55,48 +67,72 @@ public class Service implements SizeOf, Serializable {
 	transient private Directory directory;
 //	transient SD data;
 
+	// for deserialization
+	public Service() {
+	}
+
 	public Service(Component component) {
 		this.component = component;
 
-		if (component.lookup(getClass()) != null)
+		if (component.has(getClass()))
 			throw new IllegalStateException("component already has service " + getClass());
 
 		component.services.add(this);
-		this.id = getClass();
-		registerOperation(new descriptor());
-		registerOperation(new listNativeOperations());
-		registerOperation(new listOperationNames());
-		registerOperation(new nbMessagesReceived());
-		registerOperation(new sec2nbMessages());
-		registerOperation(new shutdown());
-		registerOperation(new getFriendlyName());
-		registerOperation("friendlyName", q -> getFriendlyName());
+		registerURLShortCut();
 
-		registerShortCut();
+		registerEndpoint("friendlyName", q -> getFriendlyName());
+
+		for (var innerClass : getClass().getClasses()) {
+			if (InnerClassEndpoint.class.isAssignableFrom(innerClass)) {
+				try {
+					registerEndpoint((InnerClassEndpoint) innerClass.getConstructor(innerClass.getDeclaringClass())
+							.newInstance(this));
+				} catch (InvocationTargetException | InstantiationException | IllegalAccessException
+						| IllegalArgumentException | NoSuchMethodException | SecurityException err) {
+					throw new IllegalStateException(err);
+				}
+			}
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return ("" + component + getClass()).hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		var s = (Service) obj;
+		return s.component.equals(component) && getClass().equals(s.getClass());
+	}
+
+	protected void setComponent(Component parent) {
+		if (component != null) {
+			component.services.remove(this);
+		}
+
+		parent.services.add(this);
+		this.component = parent;
 	}
 
 	public String webShortcut() {
 		return getClass().getName();
 	}
 
-	protected void registerShortCut() {
+	protected void registerURLShortCut() {
 		var ws = component.lookup(WebService.class);
 
-		if (ws != null) {
+		if (ws != null && ws != this) {
 			var shortcut = webShortcut();
 
-			var map = ws.serviceShortcuts;
+			if (ws.serviceShortcuts.containsKey(shortcut))
+				throw new IllegalArgumentException("shortcut already in use: " + shortcut);
 
-			if (map != null) {
-				if (map.containsKey(shortcut))
-					throw new IllegalArgumentException("shortcut already in use: " + shortcut);
-
-				map.put(shortcut, getClass().getName());
-			}
+			ws.serviceShortcuts.put(shortcut, getClass().getName());
 		}
 	}
 
-	public class getFriendlyName extends TypedInnerClassOperation {
+	public class getFriendlyName extends TypedInnerClassEndpoint {
 
 		public String f() {
 			return getFriendlyName();
@@ -109,7 +145,7 @@ public class Service implements SizeOf, Serializable {
 
 	}
 
-	public class sec2nbMessages extends TypedInnerClassOperation {
+	public class sec2nbMessages extends TypedInnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "gets a map associating a number a message received during seconds";
@@ -136,7 +172,7 @@ public class Service implements SizeOf, Serializable {
 		return this.directory;
 	}
 
-	public class nbMessagesReceived extends TypedInnerClassOperation {
+	public class nbMessagesReceived extends TypedInnerClassEndpoint {
 		public long f() {
 			return nbMsgsReceived;
 		}
@@ -147,24 +183,24 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	public class listOperationNames extends TypedInnerClassOperation {
+	public class listOperationNames extends TypedInnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns the name of available operations";
 		}
 
 		public Set<String> f() {
-			return new HashSet<>(operations.stream().map(o -> o.getName()).collect(Collectors.toSet()));
+			return new HashSet<>(endpoints.stream().map(o -> o.getName()).collect(Collectors.toSet()));
 		}
 	}
 
-	public Set<AbstractOperation> operations() {
-		return operations;
+	public Set<AbstractEndpoint> endpoints() {
+		return endpoints;
 	}
 
-	public class listNativeOperations extends TypedInnerClassOperation {
-		public Set<OperationDescriptor> f() {
-			return operations.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
+	public class listNativeOperations extends TypedInnerClassEndpoint {
+		public Set<EndpointDescriptor> f() {
+			return endpoints.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
 		}
 
 		@Override
@@ -184,20 +220,19 @@ public class Service implements SizeOf, Serializable {
 
 		if (msg.destination instanceof MessageODestination) {
 			var dest = (MessageODestination) msg.destination;
-			var operationName = dest.operationID;
-			AbstractOperation operation = lookupOperation(operationName);
+			AbstractEndpoint endpoint = lookupEndpoint(dest.operationID.getSimpleName());
+			System.err.println(component + " trigger " + msg.route);
 
-			if (operation == null) {
-				triggerErrorHappened(dest.replyTo, new IllegalArgumentException(
-						"can't find operation '" + operationName + "' in service " + getClass().getName()));
+			if (endpoint == null) {
+				triggerErrorHappened(dest.replyTo, new IllegalArgumentException("can't find endpoint '" + dest));
 			} else {
-				trigger(msg, operation, dest);
+				trigger(msg, endpoint, dest);
 			}
 		} else {
 			MessageQueue q = name2queue.get(msg.destination.queueID());
 
 			if (q == null) {
-//				System.out.println("ERERROEORO");
+				System.err.println("ERERROEORO");
 			} else {
 				q.add_sync(msg);
 			}
@@ -216,11 +251,35 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	private synchronized void trigger(Message msg, AbstractOperation operation, MessageODestination dest) {
+	static abstract class Event implements Runnable {
+		When when;
+	}
+
+	static abstract interface When extends Predicate<Event>, Serializable {
+		static class Time implements When {
+			public double time;
+
+			public Time(double t) {
+				this.time = t;
+			}
+
+			@Override
+			public boolean test(Event t) {
+				return time >= Service.time.get();
+			}
+
+		}
+
+		public static When time(double time) {
+			return new Time(time);
+		}
+	}
+
+	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, MessageODestination dest) {
 		var inputQ = getQueue(dest.queueID());
 
 		// most of the time the queue will not exist, unless the user wants to use the
-		// input queue of another running operation
+		// input queue of another running endpoint
 		if (inputQ == null) {
 			inputQ = createQueue(dest.queueID());
 		}
@@ -228,37 +287,43 @@ public class Service implements SizeOf, Serializable {
 		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
-		Runnable r = () -> {
-			try {
-				final double start = Date.time();
-				operation.nbCalls++;
-//				Cout.debug("CALLING " + operation);
-				operation.impl(inputQ_final);
-//				Cout.debug("REUTNED " + operation);
+		Event r = new Event() {
+			@Override
+			public void run() {
+				try {
+					final double start = Date.time();
+					endpoint.nbCalls++;
+//					Cout.debug("CALLING " + endpoint);
+					endpoint.impl(inputQ_final);
+//					Cout.debug("REUTNED " + endpoint);
 
-				// tells the client the processing has completed
-				if (dest.replyTo != null) {
-					component.bb().send(EOT.instance, dest.replyTo);
+					// tells the client the processing has completed
+					if (dest.replyTo != null) {
+						component.bb().send(EOT.instance, dest.replyTo);
+					}
+					endpoint.totalDuration += Date.time() - start;
+				} catch (Throwable exception) {
+					exception.printStackTrace();
+					endpoint.nbFailures++;
+					triggerErrorHappened(dest.replyTo, exception);
 				}
-				operation.totalDuration += Date.time() - start;
-			} catch (Throwable exception) {
-				exception.printStackTrace();
-				operation.nbFailures++;
-				triggerErrorHappened(dest.replyTo, exception);
-			}
 
-			detachQueue(inputQ_final);
+				detachQueue(inputQ_final);
+
+			}
 		};
 
 		if (dest.premptive) {
 			r.run();
 		} else if (!threadPool.isShutdown()) {
 			threadPool.submit(r);
+		} else {
+			System.err.println("ignoring exec message: " + msg);
 		}
 	}
 
-	public AbstractOperation lookupOperation(String name) {
-		for (var o : operations) {
+	public AbstractEndpoint lookupEndpoint(String name) {
+		for (var o : endpoints) {
 			if (o.getName().equals(name)) {
 				return o;
 			}
@@ -267,38 +332,12 @@ public class Service implements SizeOf, Serializable {
 		return null;
 	}
 
-	public <C extends InnerClassOperation> C lookupOperation(Class<C> c) {
-		for (var o : operations) {
-			if (o.getClass() == c) {
-				return (C) o;
-			}
-		}
-
-		return null;
-	}
-
-	public <O extends InnerClassOperation> O lookup(Class<O> oc) {
-//		Cout.debug(InnerOperation.serviceClass(oc));
-//		Cout.debug(getClass());
-		if (!InnerClassOperation.serviceClass(oc).isAssignableFrom(getClass()))
-			throw new IllegalStateException(
-					"searching operation " + oc.getName() + " in service class " + getClass().getName());
-
-		for (var o : operations) {
-			if (o.getClass() == oc) {
-				return (O) o;
-			}
-		}
-
-		return null;
-	}
-
-	public void registerOperation(String name, Operation userCode) {
+	public void registerEndpoint(String name, Endpoint userCode) {
 
 		if (name == null)
 			throw new NullPointerException("no name give for operation");
 
-		registerOperation(new AbstractOperation() {
+		registerEndpoint(new AbstractEndpoint() {
 
 			@Override
 			public String getName() {
@@ -322,10 +361,10 @@ public class Service implements SizeOf, Serializable {
 		});
 	}
 
-	public void registerOperation(String name, BiConsumer<Message, Consumer<Object>> userCode) {
+	public void registerEndpoint(String name, BiConsumer<Message, Consumer<Object>> userCode) {
 		Objects.requireNonNull(name);
 
-		registerOperation(new AbstractOperation() {
+		registerEndpoint(new AbstractEndpoint() {
 
 			@Override
 			public String getName() {
@@ -352,24 +391,20 @@ public class Service implements SizeOf, Serializable {
 
 	protected void reply(Message m, Object o) {
 		var replyTo = m.destination.replyTo;
-		replyTo.componentTarget =  ComponentMatcher.one(m.route.initialEmission.transport.component);
+		replyTo.componentMatcher = ComponentMatcher.unicast(m.route.source());
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
-		component.bb().send(o, replyTo.componentTarget, replyTo.service, replyTo.queueID);
+		component.bb().send(o, replyTo.componentMatcher, replyTo.service, replyTo.queueID);
 	}
 
-	public void registerOperation(AbstractOperation o) {
-		if (lookupOperation(o.getName()) != null) {
+	public void registerEndpoint(AbstractEndpoint o) {
+		if (lookupEndpoint(o.getName()) != null) {
 			throw new IllegalStateException(
-					"in class: " + o.getDeclaringServiceClass() + ", operation name is already in use: " + o);
+					"in class: " + o.getDeclaringServiceClass() + ", endpoint name is already in use: " + o);
 		}
 
-		if (o instanceof TypedInnerClassOperation) {
-			((TypedInnerClassOperation) o).service = this;
-		}
-
-		operations.add(o);
 		o.service = this;
+		endpoints.add(o);
 	}
 
 	public void newThread_loop_periodic(long periodMs, Runnable r) {
@@ -405,7 +440,7 @@ public class Service implements SizeOf, Serializable {
 		return askToRun;
 	}
 
-	public class shutdown extends TypedInnerClassOperation {
+	public class shutdown extends TypedInnerClassEndpoint {
 		public void f() {
 			dispose();
 		}
@@ -427,11 +462,13 @@ public class Service implements SizeOf, Serializable {
 				logError(e);
 			}
 		});
+
+		component.services.remove(this);
 	}
 
 	@Override
 	public String toString() {
-		return component + "/" + id;
+		return component + "/" + id.getSimpleName();
 	}
 
 	protected MessageQueue createQueue(String qid) {
@@ -440,9 +477,8 @@ public class Service implements SizeOf, Serializable {
 		return q;
 	}
 
-	protected MessageQueue createAutoQueue(String prefix) {
-		String qid = prefix + returnQueueID.getAndIncrement();
-		return createQueue(qid);
+	protected MessageQueue createUniqueQueue(String prefix) {
+		return createQueue(prefix + returnQueueID.getAndIncrement());
 	}
 
 	protected MessageQueue getQueue(String qid) {
@@ -455,12 +491,12 @@ public class Service implements SizeOf, Serializable {
 		q.cancelEventisation();
 	}
 
-	protected final OperationParameterList parms(Object... parms) {
-		return new OperationParameterList(parms);
+	protected final EndpointParameterList parms(Object... parms) {
+		return new EndpointParameterList(parms);
 	}
 
-	public class descriptor extends TypedInnerClassOperation {
-		public ServiceDescriptor f() {
+	public class descriptor extends TypedInnerClassEndpoint {
+		public ServiceInfo f() {
 			return Service.this.descriptor();
 		}
 
@@ -470,16 +506,18 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	public ServiceDescriptor descriptor() {
-		var d = new ServiceDescriptor();
+	public ServiceInfo descriptor() {
+		var d = new ServiceInfo();
 		d.clazz = id;
 		d.description = getDescription();
-		operations.forEach(o -> d.operations.add(o.descriptor()));
+		endpoints.forEach(o -> d.endpoints.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;
+		d.nbQueues = name2queue.size();
+		d.sizeOf = sizeOf();
 		return d;
 	}
 
-	public void apply(ServiceDescriptor sd) {
+	public void apply(ServiceInfo sd) {
 	}
 
 	@Override
@@ -495,9 +533,9 @@ public class Service implements SizeOf, Serializable {
 		}
 
 		size += 8;
-		size += operations.size() * 8 + 16;
+		size += endpoints.size() * 8 + 16;
 
-		for (var o : operations) {
+		for (var o : endpoints) {
 			size += o.sizeOf();
 		}
 

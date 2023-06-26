@@ -1,7 +1,7 @@
 package idawi.ui.cmd;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
@@ -10,10 +10,10 @@ public class CommandsService extends Service {
 
 	public CommandsService(Component peer) {
 		super(peer);
-		registerOperation(new exec());
 	}
 
-	public class exec extends InnerClassOperation {
+
+	public class exec extends InnerClassEndpoint {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {

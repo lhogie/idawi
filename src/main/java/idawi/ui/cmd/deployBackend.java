@@ -12,7 +12,7 @@ public class deployBackend extends CommandBackend {
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 
-		var peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream().map(s -> new Component(s))
+		var peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream().map(s -> new Component(s, n))
 				.toList();
 		peers.remove(n);
 
@@ -23,9 +23,9 @@ public class deployBackend extends CommandBackend {
 
 		boolean suicideWhenParentDie = !cmdline.isOptionSpecified("--autonomous");
 		var reqs = RemoteDeploymentRequest.from(peers);
-		reqs.forEach(r -> r.target.info.suicideWhenParentDie = suicideWhenParentDie);
+		reqs.forEach(r -> r.target.dt().info().suicideWhenParentDie = suicideWhenParentDie);
 
-		n.lookup(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
+		n.need(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
 				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"));
 	}
 }

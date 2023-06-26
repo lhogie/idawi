@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.knowledge_base.DigitalTwinService;
 import idawi.routing.BlindBroadcasting;
+import idawi.service.local_view.LocalViewService;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
 import jdotgen.GraphvizDriver;
@@ -18,16 +18,16 @@ public class ManyComponents {
 		System.out.println("start");
 
 		// creates components
-		var components = Component.create("c", 100);
-		
+		var components = Component.createNComponent("c", 100);
+
 		for (var c : components) {
 			new SharedMemoryTransport(c);
-			new DigitalTwinService(c);
+			new LocalViewService(c);
 			new BlindBroadcasting(c);
 		}
 
 		// connect them in a random tree
-		SharedMemoryTransport.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class);
+		SharedMemoryTransport.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, true);
 
 		System.out.println(SharedMemoryTransport.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
@@ -37,7 +37,7 @@ public class ManyComponents {
 
 		var first = components.get(0);
 		var last = components.get(components.size() - 1);
-		last.lookup(SharedMemoryTransport.class).connectTo(first);
+		last.need(SharedMemoryTransport.class).outTo(first);
 
 		var q = first.bb().ping(components.get(components.size() / 2));
 		var pong = q.poll_sync();
@@ -46,7 +46,7 @@ public class ManyComponents {
 		long nbMessages = 0;
 
 		for (var c : components) {
-			nbMessages += c.lookup(TransportService.class).nbOfMsgReceived;
+			nbMessages += c.need(TransportService.class).nbOfMsgReceived;
 		}
 
 		Service.threadPool.awaitTermination(1, TimeUnit.SECONDS);

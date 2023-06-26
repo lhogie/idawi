@@ -54,10 +54,10 @@ public class Utils {
 		return Clazz.findClass(lambda.getClass().getName().substring(0, i));
 	}
 
-	public static Class<? extends InnerClassOperation> innerClass(Class<? extends Service> clazz, String className) {
+	public static Class<? extends InnerClassEndpoint> innerClass(Class<? extends Service> clazz, String className) {
 		for (var ic : clazz.getDeclaredClasses()) {
 			if (ic.getName().equals(className)) {
-				return (Class<? extends InnerClassOperation>) ic;
+				return (Class<? extends InnerClassEndpoint>) ic;
 			}
 		}
 

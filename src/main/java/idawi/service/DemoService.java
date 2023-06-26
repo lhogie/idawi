@@ -5,10 +5,11 @@ import java.io.Serializable;
 import java.util.Random;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
-import idawi.OperationParameterList;
+import idawi.EndpointParameterList;
+import idawi.InnerClassEndpoint;
+import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.EOT;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
@@ -18,6 +19,7 @@ import idawi.routing.ComponentMatcher;
 import idawi.service.web.Graph;
 import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
+import toools.io.Cout;
 import toools.math.MathsUtilities;
 import toools.net.NetUtilities;
 import toools.thread.Threads;
@@ -27,22 +29,13 @@ public class DemoService extends Service {
 
 	public DemoService(Component component) {
 		super(component);
-		registerOperation(new countFrom1toN());
-		registerOperation(new countFromAtoB());
-		registerOperation(new grep());
-		registerOperation(new sendProgressInformation());
-		registerOperation(new stringLength());
-		registerOperation(new chart());
-		registerOperation(new throwError());
-		registerOperation(new waiting());
-		registerOperation(new multipleRandomMessages());
-		registerOperation(new complexResponse());
-		registerOperation("e", q -> {
-		});
 
+		registerEndpoint("e", q -> {
+		});
 	}
 
-	public class multipleRandomMessages extends InnerClassOperation {
+
+	public class multipleRandomMessages extends InnerClassEndpoint {
 
 		@Override
 		public String getDescription() {
@@ -52,7 +45,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
-			var opl = (OperationParameterList) tg.content;
+			var opl = (EndpointParameterList) tg.content;
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
@@ -62,7 +55,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class waiting extends TypedInnerClassOperation {
+	public class waiting extends TypedInnerClassEndpoint {
 		public double waiting(double maxSeconds) {
 			double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
 			Threads.sleepMs((long) (seconds * 1000));
@@ -76,7 +69,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class grep extends InnerClassOperation {
+	public class grep extends InnerClassEndpoint {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_async();
@@ -105,12 +98,12 @@ public class DemoService extends Service {
 	}
 
 	public static void main(String[] args) {
-		Component a = new Component();
-		Component b = new Component();
-		a.lookup(SharedMemoryTransport.class).connectTo(b);
+		Component a = new Component("a");
+		Component b = new Component("b");
+		a.need(SharedMemoryTransport.class).inoutTo(b);
 
 		var s = new BlindBroadcasting(a);
-		var o = s.exec(DemoService.stringLength.class, null,  ComponentMatcher.one(b), true, "");
+		 RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b), true, "");
 
 		for (int i = 0; i < 50; ++i) {
 			s.send("" + i, o);
@@ -139,8 +132,9 @@ public class DemoService extends Service {
 //		}
 //	}
 
-	public class stringLength extends TypedInnerClassOperation {
+	public class stringLength extends TypedInnerClassEndpoint {
 		public int f(String s) {
+			Cout.debugSuperVisible("lenght");
 			return s.length();
 		}
 
@@ -150,7 +144,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class chart extends TypedInnerClassOperation {
+	public class chart extends TypedInnerClassEndpoint {
 		public Chart f() {
 			return new Chart();
 		}
@@ -161,7 +155,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class countFrom1toN extends InnerClassOperation {
+	public class countFrom1toN extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "replies n messages";
@@ -186,7 +180,7 @@ public class DemoService extends Service {
 		int a, b;
 	}
 
-	public class countFromAtoB extends InnerClassOperation {
+	public class countFromAtoB extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return null;
@@ -202,7 +196,8 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class loremPicsum extends TypedInnerClassOperation {
+
+	public class loremPicsum extends TypedInnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns a random image";
@@ -215,7 +210,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class throwError extends InnerClassOperation {
+	public class throwError extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return null;
@@ -227,7 +222,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class sendProgressInformation extends InnerClassOperation {
+	public class sendProgressInformation extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return null;
@@ -245,7 +240,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class complexResponse extends InnerClassOperation {
+	public class complexResponse extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "simulate a complex output";
@@ -268,7 +263,7 @@ public class DemoService extends Service {
 				} else if (d < 0.2) {
 					reply(msg, new Error("test error"));
 				} else if (d < 0.2) {
-					reply(msg, lookupOperation(loremPicsum.class).f(200, 100));
+					reply(msg, ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100));
 				} else if (d < 0.3) {
 					reply(msg, Chart.random());
 				} else if (d < 0.4) {

@@ -3,6 +3,8 @@ package idawi.demo;
 import java.io.IOException;
 
 import idawi.Component;
+import idawi.RemotelyRunningEndpoint;
+import idawi.service.DemoService;
 import idawi.transport.SharedMemoryTransport;
 
 public class TwoComponents {
@@ -10,12 +12,8 @@ public class TwoComponents {
 		var a = new Component("a");
 		var b = new Component("b");
 
-		a.lookup(SharedMemoryTransport.class).connectTo(b);
-		b.lookup(SharedMemoryTransport.class).connectTo(a);
-		System.out.println(b.neighbors());
-		var q = a.bb().ping(b);
-		System.out.println("wait for pong");
-		var pong = q.poll_sync();
-		System.out.println("pong= " + pong);
+		a.need(SharedMemoryTransport.class).inoutTo(b);
+		RemotelyRunningEndpoint r = a.bb().exec(DemoService.class, DemoService.stringLength.class, "salut");
+		System.out.println(r.returnQ.poll_sync().content);
 	}
 }

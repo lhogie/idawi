@@ -1,7 +1,6 @@
 package idawi.transport;
 
 import java.util.Base64;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -36,15 +35,7 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
-		if (!neighbors.equals(actualNeighbors()))
-			throw new IllegalStateException();
-
-		bcastImpl(msg);
-	}
-
-	@Override
-	protected void bcastImpl(Message msg) {
+	protected void sendImpl(Message msg) {
 		sysout(msg);
 	}
 
@@ -52,7 +43,7 @@ public class PipeFromToParentProcess extends TransportService {
 		var bytes = serializer.toBytes(o);
 		var base64 = new String(Base64.getEncoder().encode(bytes));
 		base64 = base64.replace("\n", "");
-		System.out.println(PipeFromToChildProcess.base64ObjectMark + base64);
+		System.out.println(PipesFromToChildrenProcess.base64ObjectMark + base64);
 	}
 
 	@Override

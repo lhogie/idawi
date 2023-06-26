@@ -30,7 +30,7 @@ public class Demo2_simple_deployment {
 		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
-		localComponent.lookup(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
+		localComponent.need(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
 				err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 
 // at this step the child is running on the remote host. We can interact with
@@ -41,7 +41,7 @@ public class Demo2_simple_deployment {
 			System.err.println("ping timeout");
 		} else {
 			var ping = (Message) pong.content;
-			double pongDuration = pong.route.last().date() - ping.route.initialEmission.date();
+			double pongDuration = pong.route.last().receptionDate - ping.route.first().emissionDate;
 			System.out.println("pong received after " + pongDuration + "ms");
 		}
 	}

@@ -2,7 +2,7 @@ package idawi.service;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -14,14 +14,14 @@ public class LocationService extends Service {
 
 	public LocationService(Component node) {
 		super(node);
-		registerOperation(new location());
 	}
+
 
 	public Location getLocation() {
 		return location;
 	}
 
-	public class location extends TypedInnerClassOperation {
+	public class locationo extends TypedInnerClassEndpoint {
 
 		public Location get() {
 			return getLocation();

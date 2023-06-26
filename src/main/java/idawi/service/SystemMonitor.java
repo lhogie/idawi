@@ -5,7 +5,7 @@ import java.io.Serializable;
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.Utils;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -30,11 +30,10 @@ public class SystemMonitor extends Service {
 
 	public SystemMonitor(Component peer) {
 		super(peer);
-		registerOperation(new get());
-		registerOperation(new loadAvg());
 	}
 
-	public class get extends TypedInnerClassOperation {
+
+	public class get extends TypedInnerClassEndpoint {
 
 		@Override
 		public String getDescription() {
@@ -58,7 +57,7 @@ public class SystemMonitor extends Service {
 		return i;
 	}
 
-	public class loadAvg extends TypedInnerClassOperation {
+	public class loadAvg extends TypedInnerClassEndpoint {
 
 		@Override
 		public String getDescription() {

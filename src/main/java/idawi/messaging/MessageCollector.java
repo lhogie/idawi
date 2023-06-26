@@ -44,7 +44,7 @@ public class MessageCollector {
 		while (remainingTime() > 0 && !stop) {
 			var msg = q.poll_sync(Math.min(remainingTime(), initialTimeout));
 
-			if (msg != null && !blacklist.contains(msg.route.initialEmission().transport.component)) {
+			if (msg != null && !msg.route.components().stream().anyMatch(c -> blacklist.contains(c))) {
 				if (msg.isProgress()) {
 					if (deliverProgress) {
 						messages.add(msg);

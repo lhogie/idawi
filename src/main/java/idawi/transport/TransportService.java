@@ -1,76 +1,91 @@
 package idawi.transport;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
-import idawi.routing.Emission;
-import idawi.routing.Reception;
+import idawi.routing.RouteListener;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 
-public abstract class TransportService extends Service {
+public abstract class TransportService extends Service implements Externalizable {
+	// used to serialized messages for transport
 	public static Serializer serializer = new JavaSerializer();
 	public long nbOfMsgReceived = 0;
 
-	private Neighborhood neighborhood = new Neighborhood();
+	public TransportService() {
+	}
 
 	public TransportService(Component c) {
 		super(c);
-		registerOperation(new getNbMessagesReceived());
-		registerOperation(new neighbors());
 	}
 
-	public OutNeighbor find(Component c) {
-		for (var neighbor : neighborhood) {
-			if (neighbor.dest.component.equals(c)) {
-				return neighbor;
-			}
-		}
+	@Override
+	public String toString() {
+		return component + "/" + getName();
+	}
 
-		return null;
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(component);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		setComponent((Component) in.readObject());
 	}
 
 	// this is called by transport implementations
 	protected final void processIncomingMessage(Message msg) {
-//		Cout.debug("received: " + msg);
+		Cout.debug(" " + component + " receives " + msg);
 		++nbOfMsgReceived;
-		var reception = new Reception(this);
-		msg.route.add(reception);
 
-		var kb = component.lookup(DigitalTwinService.class);
+		if (component.isDigitalTwin())
+			throw new IllegalStateException();
 
-		for (var e : msg.route.events()) {
-			e.transport = kb.twinTransport(e.transport);
+		msg.route.entries().forEach(e -> e.link = component.localView().ensureTwinLinkExists(e.link));
+		msg.route.last().receptionDate = component.now();
+
+		component.forEachServiceOfClass(RouteListener.class, s -> s.feedWith(msg.route));
+
+		// if the message was targeted to this component and its the first time it is
+		// received
+		if (msg.destination.componentMatcher.test(component)
+				&& msg.route.recipients().filter(t -> t.component.equals(component)).count() == 1) {
+			var s = component.need(msg.destination.service());
+
+			if (s == null) {
+				System.err.println(
+						"component " + component + " does not have service " + msg.destination.service().getName());
+			} else {
+				System.err.println(component + " DELIVER " + msg.route);
+				s.considerNewMessage(msg);
+			}
+		} else {
+			System.err.println(component + " DROP " + msg.route);
 		}
 
-		component.forEachServiceOfClass(DigitalTwinService.class, s -> s.feedWith(msg.route));
+		forward(msg);
+	}
 
-		// if the message was target to this component
-		if (msg.destination.componentTarget.test(component)) {
-			var s = component.lookup(msg.destination.service());
-
-			if (s == null)
-				Cout.debugSuperVisible(
-						"component " + component + " does not have service " + msg.destination.service());
-			else
-			s.considerNewMessage(msg);
-		}
-
+	private void forward(Message msg) {
 		// search for the same routing service
-		var rs = component.lookup(reception.previousEmission().routingProtocol());
+		var rs = component.need(msg.route.last().routingProtocol());
 
 		// no such routing protocol running here
 		if (rs == null) {
 			// dunno what to do with the message
 			// so just pass it around
-			component.bb().accept(msg, msg.currentRoutingParameters());
+			component.defaultRoutingProtocol().accept(msg, msg.currentRoutingParameters());
 		} else {
 			rs.accept(msg, msg.currentRoutingParameters());
 		}
@@ -80,28 +95,42 @@ public abstract class TransportService extends Service {
 
 	public abstract boolean canContact(Component c);
 
-	public Neighborhood neighborhood() {
-		return neighborhood;
+	public OutLinks outLinks() {
+		return new OutLinks(component.localView().links().stream().filter(l -> l.src.equals(this)).toList());
 	}
 
-	protected abstract void multicastImpl(Message msg, Collection<OutNeighbor> throughSpecificNeighbors);
+	protected abstract void sendImpl(Message msg);
 
-	protected abstract void bcastImpl(Message msg);
+	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
 
-	public final void multicast(Message msg, Collection<OutNeighbor> throughSpecificNeighbors, RoutingService r,
-			RoutingData parms) {
-//		Cout.debug("multicast: " + msg);
-		msg.route.add(new Emission(r, parms, this));
-		multicastImpl(msg, throughSpecificNeighbors);
-		msg.route.removeLast();
+		// Cout.debug(" " + component + " sends: " + msg);
+		for (var outLink : outLinks) {
+			msg.route.add(outLink, r);
+
+			if (component.isDigitalTwin()) {
+				throw new IllegalStateException("a digital twin cannot send a message");
+			} else {
+				if (outLink.dest.component.isDigitalTwin()) {
+					sendImpl(msg);
+				} else { // a real component in the same JVM
+					var c = msg.clone();
+
+					Service.threadPool.submit(() -> {
+						try {
+							outLink.dest.processIncomingMessage(c);
+						} catch (Throwable e) {
+							e.printStackTrace();
+						}
+					});
+				}
+			}
+
+			msg.route.removeLast();
+		}
 	}
 
 	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
-//		Cout.debug("bcast: " + msg);
-
-		msg.route.add(new Emission(r, parms, this));
-		bcastImpl(msg);
-		msg.route.removeLast();
+		send(msg, outLinks().links(), r, parms);
 	}
 
 	@Override
@@ -113,7 +142,7 @@ public abstract class TransportService extends Service {
 		return nbOfMsgReceived;
 	}
 
-	public class getNbMessagesReceived extends TypedInnerClassOperation {
+	public class getNbMessagesReceived extends TypedInnerClassEndpoint {
 		public long f() {
 			return getNbMessagesReceived();
 		}
@@ -124,9 +153,9 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	public class neighbors extends TypedInnerClassOperation {
-		public Neighborhood f() {
-			return neighborhood();
+	public class neighbors extends TypedInnerClassEndpoint {
+		public OutLinks f() {
+			return outLinks();
 		}
 
 		@Override
@@ -136,9 +165,4 @@ public abstract class TransportService extends Service {
 	}
 
 	public abstract Collection<Component> actualNeighbors();
-
-	@Override
-	public String toString() {
-		return getName();
-	}
 }

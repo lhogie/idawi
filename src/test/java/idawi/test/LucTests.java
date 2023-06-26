@@ -8,17 +8,19 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
 import idawi.Component;
-import idawi.OperationParameterList;
+import idawi.EndpointParameterList;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
+import idawi.routing.RoutingListener;
 import idawi.service.DemoService;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
@@ -27,11 +29,8 @@ import toools.net.NetUtilities;
 
 public class LucTests {
 
-	public static void main(String[] args) {
-		var a = new StringBuilder("toto");
-		var b = new StringBuilder("toto");
-		System.out.println(a.equals(b));
-		System.out.println(a.hashCode());
+	public static void main(String[] args) throws Throwable {
+		new LucTests().operationSignatures();
 	}
 
 	public static void main2(String[] args) throws Throwable {
@@ -44,7 +43,7 @@ public class LucTests {
 		Component c2 = new Component("c2");
 
 		// connect those 2 components
-		c1.lookup(SharedMemoryTransport.class).connectTo(c2);
+		c1.need(SharedMemoryTransport.class).inoutTo(c2);
 
 		// ask c1 to ping c2
 		Message pong = c1.bb().ping(c2).poll_sync();
@@ -62,7 +61,7 @@ public class LucTests {
 		Component c2 = new Component("c2");
 
 		// connect those 2 components
-		c1.lookup(SharedMemoryTransport.class).connectTo(c2);
+		c1.need(SharedMemoryTransport.class).inoutTo(c2);
 
 		// ask c1 to ping c2
 		Message pong = c1.bb().ping(c2).poll_sync();
@@ -81,7 +80,7 @@ public class LucTests {
 
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component("c2d");
-		c1.lookup(DeployerService.class).deployInNewJVM(req, msg -> System.out.println(msg));
+		c1.need(DeployerService.class).deployInNewJVM(req, msg -> System.out.println(msg));
 
 		for (int i = 0; i < 100; ++i) {
 			Message pong = c1.bb().ping(req.target).poll_sync();
@@ -99,14 +98,15 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test operationSignatures");
 		Component c1 = new Component("c1");
 		Component c2 = new Component("c2");
-		c1.lookup(SharedMemoryTransport.class).connectTo(c2);
+		c1.need(SharedMemoryTransport.class).inoutTo(c2);
 
-		Cout.debugSuperVisible(1);
+		Cout.debugSuperVisible(c1.outLinks());
 
-		assertEquals(5, (int) c1.lookup(BlindBroadcasting.class).exec_rpc(c2, DemoService.stringLength.class, "salut"));
+//		RoutingListener.debug_on(c1, c2);
+		assertEquals(5, (int) 	c1.need(BlindBroadcasting.class).exec_rpc(c2, DemoService.stringLength.class, "salut"));
 		Cout.debugSuperVisible(2);
 
-		assertEquals(53, (int) c1.lookup(BlindBroadcasting.class).exec(c2, DemoService.countFrom1toN.class, 100).returnQ
+		assertEquals(53, (int) c1.need(BlindBroadcasting.class).exec(c2, DemoService.countFrom1toN.class, 100).returnQ
 				.c().collectNResults(100).get(53));
 		Cout.debugSuperVisible(3);
 
@@ -123,13 +123,13 @@ public class LucTests {
 	public void waitingFirst() {
 		Cout.debugSuperVisible("Starting test waitingFirst");
 		var root = new Component("root");
-		List<Component> others = root.lookup(DeployerService.class).deployInThisJVM("c1", "c2");
+		List<Component> others = root.need(DeployerService.class).deployInThisJVM("c1", "c2");
 
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
-		Component first = root.bb().exec(DemoService.waiting.class, null,  ComponentMatcher.among(ss), true,
-				new OperationParameterList(1)).returnQ.c().collectWhile(c -> !c.messages.isEmpty()).messages
-				.get(0).route.initialEmission.transport.component;
+		Component first = root.bb().exec(DemoService.class, DemoService.waiting.class, null,
+				ComponentMatcher.multicast(ss), true, new EndpointParameterList(1)).returnQ.c()
+				.collectWhile(c -> !c.messages.isEmpty()).messages.get(0).route.first().link.src.component;
 
 		System.out.println(first);
 //		assertEquals(7, (Double) );
@@ -147,7 +147,7 @@ public class LucTests {
 		// they will communicate through standard streams
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component("other_peer");
-		master.lookup(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
+		master.need(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
 
 		// asks the master to ping the other component
 		Message pong = new Service(master).component.bb().ping(req.target).poll_sync();
@@ -165,9 +165,9 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting signature test");
 		Component c1 = new Component("c1");
 		Component c2 = new Component("c2");
-		c1.lookup(SharedMemoryTransport.class).connectTo(c2);
+		c1.need(SharedMemoryTransport.class).inoutTo(c2);
 
-		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new OperationParameterList("hello"));
+		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new EndpointParameterList("hello"));
 		var c = rom.returnQ.collect(5, 5, cc -> {
 			cc.stop = !cc.messages.resultMessages().isEmpty();
 		});
@@ -184,7 +184,7 @@ public class LucTests {
 	public void rest() throws IOException {
 		Cout.debugSuperVisible("Starting REST test");
 		Component c1 = new Component();
-		var ws = c1.lookup(WebService.class);
+		var ws = c1.need(WebService.class);
 		ws.startHTTPServer();
 		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1);
 		// clean
@@ -200,7 +200,7 @@ public class LucTests {
 			l.add(new Component());
 		}
 
-		SharedMemoryTransport.chain(l, SharedMemoryTransport.class);
+		SharedMemoryTransport.chain(l, SharedMemoryTransport.class, true);
 		var first = new Service(l.get(0));
 		var last = l.get(l.size() - 1);
 		Message pong = first.component.bb().ping(last).poll_sync();

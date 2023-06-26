@@ -38,7 +38,8 @@ public class ImposedRoute extends RoutingService<IRTo> {
 			var relay = remainingRoute == null ? null : remainingRoute.remove(0);
 
 			for (var t : component.services(TransportService.class)) {
-				t.multicast(msg, relay == null ? null : Set.of(t.find(relay)), this, p);
+				
+				t.send(msg, relay == null ? null : Set.of(component.localView().findLink(relay)), this, p);
 			}
 		}
 	}
@@ -49,7 +50,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 		l.add(new IRTo());
 		{
 			var t = new IRTo();
-			t.route.addAll(component.digitalTwinService().components);
+			t.route.addAll(component.localView().components());
 			l.add(t);
 
 		}

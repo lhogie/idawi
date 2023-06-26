@@ -6,8 +6,8 @@ import java.net.DatagramSocket;
 import java.util.Collection;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.Message;
+import idawi.service.local_view.LocalViewService;
 
 public class UDPDriver extends IPDriver {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
@@ -23,45 +23,38 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> relays) {
+	protected void sendImpl(Message msg) {
 		if (socket == null)
 			return;
 
 		byte[] buf = serializer.toBytes(msg);
 		// Cout.debugSuperVisible("sending to " + neighbors);
 
-		for (var relay : relays) {
-			// System.out.println(n.toHTML());
+		// System.out.println(n.toHTML());
 
-			if (msg.route.isEmpty())
-				throw new IllegalStateException("empty route");
+		var to = msg.route.last().link.dest;
 
-			DatagramPacket p = new DatagramPacket(buf, buf.length);
-			p.setAddress(relay.dest.component.info.inetAddresses.get(0));
-			// System.out.println(relay.inetAddresses.get(0) + ":" +
-			// relay.udpPort);
-			p.setPort(relay.dest.component.info.udpPort);
+		if (msg.route.isEmpty())
+			throw new IllegalStateException("empty route");
 
-			try {
-				socket.send(p);
-				// System.out.println(n.inetAddresses.get(0));
-				// System.out.println(n.udpPort);
-			} catch (IOException e1) {
-			}
+		DatagramPacket p = new DatagramPacket(buf, buf.length);
+		p.setAddress(to.component.dt().info().inetAddresses.get(0));
+		// System.out.println(relay.inetAddresses.get(0) + ":" +
+		// relay.udpPort);
+		p.setPort(to.component.dt().info().udpPort);
+
+		try {
+			socket.send(p);
+			// System.out.println(n.inetAddresses.get(0));
+			// System.out.println(n.udpPort);
+		} catch (IOException e1) {
 		}
-	}
 
-	@Override
-	protected void bcastImpl(Message msg) {
-		if (socket == null)
-			return;
-
-		multicastImpl(msg, neighborhood().infos());
 	}
 
 	@Override
 	public boolean canContact(Component c) {
-		return super.canContact(c) && c.info.udpPort != null;
+		return super.canContact(c) && c.dt().info().udpPort != null;
 	}
 
 	@Override
@@ -86,7 +79,7 @@ public class UDPDriver extends IPDriver {
 						Message msg = (Message) serializer.fromBytes(p.getData());
 						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
-						component.services(DigitalTwinService.class).forEach(s -> s.feedWith(msg.route));
+						component.services(LocalViewService.class).forEach(s -> s.feedWith(msg.route));
 						processIncomingMessage(msg);
 					} catch (IOException e) {
 						e.printStackTrace();

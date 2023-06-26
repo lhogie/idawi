@@ -31,7 +31,7 @@ public class SSH {
 		var deployReq = new RemoteDeploymentRequest();
 		deployReq.ssh.host = "musclotte.inria.fr";
 
-		c1.lookup(DeployerService.class).deployRemotely(Set.of(deployReq),
+		c1.need(DeployerService.class).deployRemotely(Set.of(deployReq),
 				rsyncOut -> System.out.println("rsync: " + rsyncOut),
 				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"));
 

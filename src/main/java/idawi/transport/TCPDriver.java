@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinService;
 import idawi.messaging.Message;
 import toools.thread.Threads;
 
@@ -42,7 +41,7 @@ public class TCPDriver extends IPDriver {
 
 	@Override
 	public boolean canContact(Component c) {
-		return super.canContact(c) && c.info.tcpPort != null;
+		return super.canContact(c) && c.dt().info().tcpPort != null;
 	}
 
 	@Override
@@ -71,7 +70,7 @@ public class TCPDriver extends IPDriver {
 			try {
 				while (true) {
 					Message msg = (Message) serializer.read(is);
-					var from = msg.route.last().transport().component;
+					var from = msg.route.last().link.src.component;
 
 					synchronized (neighbor_socket) {
 						Entry e = neighbor_socket.get(from);
@@ -111,34 +110,22 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
-		for (var n : neighbors) {
-			Entry entry = null;
+	protected void sendImpl(Message msg) {
+		Entry entry = null;
+		var n = msg.route.last().link.dest;
+		
+		synchronized (neighbor_socket) {
+			entry = neighbor_socket.get(n);
 
-			synchronized (neighbor_socket) {
-				entry = neighbor_socket.get(n);
-
-				// there is no connection to this peer yet
-				// try to establish one
-				if (entry == null) {
-					entry = createSocket(n.dest.component);
-				}
-			}
-
-			// if a connection could be obtained
-			if (entry != null) {
-				try {
-					serializer.write(msg, entry.os);
-				} catch (IOException e) {
-					errorOn(entry.socket);
-				}
+			// there is no connection to this peer yet
+			// try to establish one
+			if (entry == null) {
+				entry = createSocket(n.component);
 			}
 		}
-	}
 
-	@Override
-	protected void bcastImpl(Message msg) {
-		for (var entry : neighbor_socket.values()) {
+		// if a connection could be obtained
+		if (entry != null) {
 			try {
 				serializer.write(msg, entry.os);
 			} catch (IOException e) {
@@ -148,11 +135,11 @@ public class TCPDriver extends IPDriver {
 	}
 
 	protected Entry createSocket(Component to) {
-		for (var ip : to.info.inetAddresses) {
+		for (var ip : to.dt().info().inetAddresses) {
 			Entry entry = null;
 
 			try {
-				var socket = new Socket(ip, to.info.tcpPort);
+				var socket = new Socket(ip, to.dt().info().tcpPort);
 				neighbor_socket.put(to, entry = new Entry(socket));
 				newSocket(socket);
 				return entry;

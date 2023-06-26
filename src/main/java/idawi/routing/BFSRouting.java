@@ -39,10 +39,10 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var recipients = p.recipients;
-			var relays = component.digitalTwinService().bfsResult.get().predecessors.successors(component, recipients);
+			var relays = component.localView().bfsResult.get().predecessors.successors(component, recipients);
 
 			for (var t : component.services(TransportService.class)) {
-				t.multicast(msg, relays, this, parms);
+				t.send(msg, relays, this, parms);
 			}
 		}
 	}
@@ -59,7 +59,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 		{
 			var p = new BFSRoutingParms();
 			p.recipients.add(component);
-			p.recipients.addAll(component.digitalTwinService().components);
+			p.recipients.addAll(component.localView().components());
 			l.add(p);
 		}
 
@@ -73,7 +73,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 
 	@Override
 	public ComponentMatcher naturalTarget(BFSRoutingParms p) {
-		return c -> p.recipients.contains(c);
+		return ComponentMatcher.multicast(p.recipients);
 	}
 
 }

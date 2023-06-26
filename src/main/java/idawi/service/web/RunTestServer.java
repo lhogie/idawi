@@ -11,22 +11,18 @@ import idawi.transport.SharedMemoryTransport;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 1;
+		int n = 0;
 		var components = new ArrayList<Component>();
-		components.add(new Component("gw"));
-
-		for (int i = 0; i < n; ++i) {
-			components.add(new Component("" + i));
-		}
+		components.addAll(Component.createNComponent("", n));
 
 		components.forEach(c -> new DemoService(c));
 
 		var gateway = components.get(0);
-		var ws = gateway.lookup(WebService.class);
+		var ws = gateway.need(WebService.class);
 		ws.startHTTPServer();
 
 		SharedMemoryTransport.randomTree(components, SharedMemoryTransport.class);
-		System.out.println("gw reaches: " + gateway.neighbors());
+		System.out.println("gw reaches: " + gateway.outLinks());
 
 		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}

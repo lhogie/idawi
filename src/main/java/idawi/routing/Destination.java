@@ -5,16 +5,21 @@ import java.io.Serializable;
 import idawi.Service;
 
 public abstract class Destination implements Serializable {
-
-	public ComponentMatcher componentTarget;
+	public ComponentMatcher componentMatcher;
+	public MessageQDestination replyTo;
 
 	public abstract Class<? extends Service> service();
 
 	public abstract String queueID();
-	public MessageQDestination replyTo;
 
 	@Override
 	public String toString() {
-		return componentTarget + "/" + service().getName() + "." + queueID()  + ", replyTo: " + replyTo;
+		var s = componentMatcher + "/" + service().getSimpleName() + "/" + queueID();
+
+		if (replyTo != null) {
+			s += ", replyTo: " + replyTo;
+		}
+
+		return s;
 	}
 }

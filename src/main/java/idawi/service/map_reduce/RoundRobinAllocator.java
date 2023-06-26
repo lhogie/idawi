@@ -8,6 +8,6 @@ import idawi.routing.ComponentMatcher;
 public class RoundRobinAllocator<R> implements Allocator<R> {
 	@Override
 	public void assign(List<Task<R>> tasks, List<Component> workers) {
-		tasks.forEach(t -> t.to =  ComponentMatcher.one(workers.get(t.id % workers.size())));
+		tasks.forEach(t -> t.to =  ComponentMatcher.unicast(workers.get(t.id % workers.size())));
 	}
 }

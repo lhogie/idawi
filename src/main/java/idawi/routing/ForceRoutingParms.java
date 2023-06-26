@@ -26,7 +26,7 @@ public class ForceRoutingParms extends RoutingData {
 
 	@Override
 	public String toURLElement() {
-		return "" + force;
+		return force < 0 ? "+inf" : "" + force;
 	}
 
 }

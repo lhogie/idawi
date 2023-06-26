@@ -6,6 +6,7 @@ import idawi.Component;
 import idawi.messaging.Message;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
+import idawi.ui.cmd.CommandsService.exec;
 import j4u.CommandLine;
 import toools.io.Cout;
 import toools.io.file.RegularFile;
@@ -34,9 +35,10 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var col = c.defaultRoutingProtocol().exec(CommandsService.exec.class, null,
-				 ComponentMatcher.among(target), true, backend).returnQ.collect(1, 1, c2 -> {
+		var col = c.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
+				ComponentMatcher.multicast(target), true, backend).returnQ.collect(1, 1, c2 -> {
 					var msg = c2.messages.last();
+
 					if (msg.isError()) {
 						((Throwable) msg.content).printStackTrace();
 					} else if (msg.isProgress()) {
@@ -62,9 +64,10 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 	private void newReturn(Message feedback, Set<Component> peers) {
 
 		if (feedback.content instanceof ProgressMessage) {
-			progress(feedback.route.initialEmission().transport.component, (ProgressMessage) feedback.content);
+			progress(feedback.route.source(), (ProgressMessage) feedback.content);
 		} else if (feedback.content instanceof Throwable) {
-			System.err.println("the following error occured on " + feedback.route.initialEmission());
+			// System.err.println("the following error occured on " +
+			// feedback.route.initialEmission());
 			((Throwable) feedback.content).printStackTrace();
 		} else {
 			String text = feedback.content.toString();
@@ -74,9 +77,9 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 			if (peers == null || peers.size() > 1) {
 				// if it's a multiline message
 				if (text.contains("\n")) {
-					System.out.println(feedback.route.initialEmission() + " says:");
+					System.out.println(feedback.route.source() + " says:");
 				} else {
-					System.out.print(feedback.route.initialEmission() + " says: \t");
+					System.out.print(feedback.route.source() + " says: \t");
 				}
 			}
 

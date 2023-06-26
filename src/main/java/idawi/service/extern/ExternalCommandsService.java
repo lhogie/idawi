@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
-import idawi.RemotelyRunningOperation;
+import idawi.InnerClassEndpoint;
+import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
@@ -22,12 +22,12 @@ public class ExternalCommandsService extends Service {
 
 	public ExternalCommandsService(Component t) {
 		super(t);
-		registerOperation(new commands());
-		registerOperation(new exec());
-		registerOperation(new has());
 	}
 
-	public class has extends TypedInnerClassOperation {
+	
+
+
+	public class has extends TypedInnerClassEndpoint {
 		public boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
 			return f != null && f.exists();
@@ -40,7 +40,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class commands extends TypedInnerClassOperation {
+	public class commands extends TypedInnerClassEndpoint {
 		public Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
@@ -52,7 +52,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class exec extends InnerClassOperation {
+	public class exec extends InnerClassEndpoint {
 		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
@@ -109,7 +109,7 @@ public class ExternalCommandsService extends Service {
 	}
 
 	public void exec(Component to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
-		RemotelyRunningOperation s = component.defaultRoutingProtocol().exec(ExternalCommandsService.exec.class, null,
+		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(ExternalCommandsService.class, exec.class, null,
 				null, true, cmdLine);
 		boolean eofIN = false;
 

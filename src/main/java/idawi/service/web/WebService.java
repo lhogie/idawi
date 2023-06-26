@@ -27,12 +27,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
-import idawi.Operation;
-import idawi.OperationParameterList;
-import idawi.RemotelyRunningOperation;
+import idawi.Endpoint;
+import idawi.EndpointParameterList;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
@@ -41,7 +40,7 @@ import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
-import toools.io.Cout;
+import idawi.service.local_view.LocalViewService;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -90,19 +89,18 @@ public class WebService extends Service {
 		super(t);
 
 		serviceShortcuts.put("bb", BlindBroadcasting.class.getName());
-		serviceShortcuts.put("dt", DigitalTwinService.class.getName());
+		serviceShortcuts.put("dt", LocalViewService.class.getName());
 		serviceShortcuts.put("fwsp", FloodingWithSelfPruning.class.getName());
 		serviceShortcuts.put("demo", DemoService.class.getName());
 
 		whatToSendMap.put("msg", c -> c.messages.last());
 		whatToSendMap.put("content", c -> c.messages.last().content);
 		whatToSendMap.put("route", c -> c.messages.last().route);
-		whatToSendMap.put("source", c -> c.messages.last().route.initialEmission.transport.component);
-		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.initialEmission.transport.component,
-				c.messages.last().content });
+		whatToSendMap.put("source", c -> c.messages.last().route.source());
+		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.source(), c.messages.last().content });
 	}
 
-	public class Base64URL extends TypedInnerClassOperation {
+	public class Base64URL extends TypedInnerClassEndpoint {
 		class A {
 			String routing;
 			String service;
@@ -119,7 +117,6 @@ public class WebService extends Service {
 		public String getDescription() {
 			return "interpret URLs encoded in base64";
 		}
-
 	}
 
 	@Override
@@ -256,6 +253,7 @@ public class WebService extends Service {
 	public static void writeOneShot(int returnCode, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
 			throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
+//		System.err.println("sending this to client: " + new String(bytes));
 		e.sendResponseHeaders(returnCode, bytes.length);
 		os.write(bytes);
 	}
@@ -305,69 +303,62 @@ public class WebService extends Service {
 		RoutingService r;
 		RoutingData rp;
 		ComponentMatcher t;
-		Class<? extends Service> s;
-		Class<? extends Operation> o;
-		OperationParameterList op = new OperationParameterList();
+		Class<? extends Endpoint> o;
+		Class<? extends Service> service;
+		EndpointParameterList op = new EndpointParameterList();
+		String description;
 
 		if (path.isEmpty()) {// show available routing protocols
 			r = component.defaultRoutingProtocol();
 			rp = r.defaultData();
-			t = ComponentMatcher.one(component);
-			s = ServiceManager.class;
+			t = ComponentMatcher.multicast(Set.of(component));
+			service = ServiceManager.class;
 			o = ServiceManager.listRoutingServices.class;
+			description = "list of available routing services";
 		} else if (path.size() == 1) { // show examples of routing parms
 			r = routing(path.get(0));
 			rp = r.defaultData();
-			t = ComponentMatcher.one(component);
-			s = r.getClass();
+			t = ComponentMatcher.multicast(Set.of(component));
+			service = r.getClass();
 			o = RoutingService.suggestParms.class;
+			description = "suggest parameters for the routing service given by the user";
 		} else if (path.size() == 2) { // no target, show possible ones
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.one(component);
-			s = DigitalTwinService.class;
-			o = DigitalTwinService.components.class;
+			t = ComponentMatcher.multicast(Set.of(component));
+			o = LocalViewService.twinComponents.class;
+			service = LocalViewService.class;
+			description = "suggest ways to target components";
 		} else if (path.size() == 3) { // show available services in the targets
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
-			s = ServiceManager.class;
+			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
 			o = ServiceManager.listServices.class;
+			service = ServiceManager.class;
+			description = "list services in the targeted components";
 		} else if (path.size() == 4) { // show operations available in services
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
-			s = service(path.get(3));
+			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
+			service = ServiceManager.class;
 			o = ServiceManager.listOperations.class;
-			op.add(s);
+			op.add(path.get(3)); // service name
+			description = "list operations in the targeted service";
 		} else { // all ok
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.lookup(DigitalTwinService.class));
-			s = service(path.get(3));
-			o = operation(s, path.get(4));
+			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
+			service = (Class<? extends Service>) Class.forName(path.get(3));
+			o = (Class<? extends Endpoint>) Class.forName(service.getClass().getName() + "$" + path.get(4));
 			op.addAll(path.subList(5, path.size()));
+			description = r.webShortcut() + "/" + rp.toURLElement() + "/" + t + "/" + service.getName() + "/"
+					+ o.getSimpleName() + "/" + TextUtilities.concat("/", op) + "?compress=" + compress + ",encrypt="
+					+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF)
+					+ ",format=" + serializer.getMIMEType();
 		}
 
-		exec(r, rp, t, s, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-				postDataInputStream);
-	}
-
-	private Class<? extends Operation> operation(Class<? extends Service> service, String o)
-			throws ClassNotFoundException {
-		final var a = service;
-
-		while (true) {
-			try {
-				return (Class<? extends Operation>) Class.forName(service.getName() + "$" + o);
-			} catch (Exception e) {
-				if (Service.class.isAssignableFrom(service.getSuperclass())) {
-					service = (Class<? extends Service>) service.getSuperclass();
-				} else {
-					throw new IllegalArgumentException("cannot find operation " + o + " in the hierarchy of " + a);
-				}
-			}
-		}
+		exec(r, rp, t, service, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
+				postDataInputStream, description);
 	}
 
 	private Class<? extends Service> service(String s) throws ClassNotFoundException {
@@ -376,17 +367,13 @@ public class WebService extends Service {
 	}
 
 	public void exec(RoutingService routing, RoutingData routingParms, ComponentMatcher target,
-			Class<? extends Service> actualServiceID, Class<? extends Operation> operationID,
-			OperationParameterList parms, boolean compress, boolean encrypt, double duration, double timeout,
-			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
-			InputStream postDataInputStream) {
+			Class<? extends Service> service, Class<? extends Endpoint> operationID, EndpointParameterList parms, boolean compress,
+			boolean encrypt, double duration, double timeout, Function<MessageCollector, Object> whatToSendF,
+			Serializer serializer, OutputStream output, InputStream postDataInputStream, String resultDescription) {
 
-		System.out.println(routing.webShortcut() + "/" + routingParms.toURLElement() + "/" + target + "/"
-				+ operationID.getName() + "/" + TextUtilities.concat("/", parms) + "?compress=" + compress + ",encrypt="
-				+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF) + ",format="
-				+ serializer.getMIMEType());
+		System.out.println(resultDescription);
 
-		RemotelyRunningOperation ro = routing.exec(actualServiceID, operationID, routingParms, target, true, parms);
+		var ro = routing.exec(service, operationID, routingParms, target, true, parms);
 		var aes = new AESEncrypter();
 		SecretKey key = null;
 
@@ -440,7 +427,11 @@ public class WebService extends Service {
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(c);
 
-			var bytes = serializer.toBytes(what2send);
+			var ir = new InformedResponse();
+			ir.msg = resultDescription;
+			ir.response = what2send;
+
+			var bytes = serializer.toBytes(ir);
 			encodingsToClient.add(serializer.getMIMEType());
 			boolean base64 = serializer.isBinary() || compress || encrypt;
 
@@ -459,11 +450,15 @@ public class WebService extends Service {
 			}
 
 			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
-
 		});
 
 //			ro.dispose();
 
+	}
+
+	public static class InformedResponse {
+		String msg;
+		Object response;
 	}
 
 	private String name(Function<MessageCollector, Object> whatToSendF) {
@@ -494,9 +489,9 @@ public class WebService extends Service {
 
 			try {
 				var routingClass = (Class<? extends RoutingService>) Class.forName(routingString);
-				routing = component.lookup(routingClass);
-			} catch (Exception err) {
-				throw new RuntimeException(err);
+				routing = component.need(routingClass);
+			} catch (ClassNotFoundException | NoClassDefFoundError err) {
+				throw new URLContentException("cannot find routing service: " + routingString, null);
 			}
 		}
 
@@ -571,7 +566,7 @@ public class WebService extends Service {
 		return query;
 	}
 
-	public class stopHTTPServer extends TypedInnerClassOperation {
+	public class stopHTTPServer extends TypedInnerClassEndpoint {
 		public void f() throws IOException {
 			if (httpServer == null) {
 				throw new IOException("REST server is not running");
@@ -587,7 +582,7 @@ public class WebService extends Service {
 		}
 	}
 
-	public class startHTTPServerOperation extends TypedInnerClassOperation {
+	public class startHTTPServerOperation extends TypedInnerClassEndpoint {
 		public void f(int port) throws IOException {
 			startHTTPServer(port);
 		}

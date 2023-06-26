@@ -89,7 +89,7 @@ public class Message implements Serializable {
 	}
 
 	public Component sender() {
-		return route.initialEmission().transport.component;
+		return route.source();
 	}
 
 }

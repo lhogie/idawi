@@ -16,16 +16,17 @@ import java.util.Vector;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.knowledge_base.ComponentInfo;
-import idawi.knowledge_base.DigitalTwinService;
-import idawi.knowledge_base.ServiceDescriptor;
 import idawi.messaging.MessageQueue;
-import idawi.transport.OutNeighbor;
-import idawi.transport.PipeFromToChildProcess;
-import idawi.transport.PipeFromToChildProcess.FirstResponse;
+import idawi.service.SystemService;
+import idawi.service.local_view.ComponentInfo;
+import idawi.service.local_view.LocalViewService;
+import idawi.service.local_view.ServiceInfo;
+import idawi.transport.Link;
 import idawi.transport.PipeFromToParentProcess;
+import idawi.transport.PipesFromToChildrenProcess;
+import idawi.transport.PipesFromToChildrenProcess.Entry;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
 import toools.extern.ProcesException;
@@ -35,7 +36,6 @@ import toools.net.SSHParms;
 import toools.net.SSHUtils;
 import toools.progression.LongProcess;
 import toools.reflect.ClassPath;
-import toools.reflect.Clazz;
 import toools.thread.OneElementOneThreadProcessing;
 import toools.thread.Threads;
 
@@ -54,6 +54,7 @@ public class DeployerService extends Service {
 	}
 
 	public static class ExtraJVMDeploymentRequest extends DeploymentRequest {
+		Component parent;
 	}
 
 	public static class RemoteDeploymentRequest extends ExtraJVMDeploymentRequest {
@@ -79,10 +80,6 @@ public class DeployerService extends Service {
 
 		if (!remoteClassDir.endsWith("/"))
 			throw new IllegalStateException("class dir should end with a '/': " + remoteClassDir);
-
-		registerOperation(new remote_deploy());
-		registerOperation(new local_deploy());
-		registerOperation(new deploy_in_other_jvms());
 	}
 
 	@Override
@@ -90,26 +87,22 @@ public class DeployerService extends Service {
 		return "deployer";
 	}
 
-	public class remote_deploy extends InnerClassOperation {
-		@Override
-		public void impl(MessageQueue in) throws Throwable {
-			var trigger = in.poll_sync();
-			var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
+	private void remote_deploy_impl(MessageQueue in) throws Throwable {
+		var trigger = in.poll_sync();
+		var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
 
-			System.err.println(reqs);
-			deployRemotely(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
-					peerOk -> reply(trigger, peerOk));
+		System.err.println(reqs);
+		deployRemotely(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
+				peerOk -> reply(trigger, peerOk));
 
-			System.err.println("done");
-		}
-
-		@Override
-		public String getDescription() {
-			return "deploy components using SSH";
-		}
+		System.err.println("done");
 	}
 
-	public class local_deploy extends InnerClassOperation {
+	public String remote_deploy_impl_description() {
+		return "deploy components using SSH";
+	}
+
+	public class local_deploy extends InnerClassEndpoint {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -118,7 +111,7 @@ public class DeployerService extends Service {
 			List<Component> compoennts = new ArrayList<>();
 			deployInThisJVM(req, peerOk -> compoennts.add(peerOk));
 			reply(msg, req.size() + " compoennts created");
-			SharedMemoryTransport.chain(compoennts, SharedMemoryTransport.class);
+			SharedMemoryTransport.chain(compoennts, SharedMemoryTransport.class, true);
 			reply(msg, "chained");
 		}
 
@@ -128,7 +121,7 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public class deploy_in_other_jvms extends InnerClassOperation {
+	public class deploy_in_other_jvms extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "deploy in new JVMs";
@@ -164,33 +157,30 @@ public class DeployerService extends Service {
 
 	private void initChildProcess(Process proc, ExtraJVMDeploymentRequest req, Consumer<String> feedback)
 			throws IOException {
-		DeployInfo deployInfo = new DeployInfo();
-		deployInfo.req = req;
-		deployInfo.parent = component;
+		req.parent = component;
 
 		OutputStream out = proc.getOutputStream();
-		TransportService.serializer.write(deployInfo, out);
+		TransportService.serializer.write(req, out);
 		out.flush();
 
-		var pipesToChildren = component.lookup(PipeFromToChildProcess.class);
-		var e = pipesToChildren.add(req.target, proc);
+		var pipesToChildren = component.need(PipesFromToChildrenProcess.class);
+		Entry childEntry = pipesToChildren.add(req.target, proc);
 
 		feedback.accept("waiting for " + req.target + " to be ready");
-		FirstResponse response = e.waitForChild.poll_sync(10);
+		Object response = childEntry.waitForChild.poll_sync(10);
+		// no more responses will be accepted
+		childEntry.waitForChild = null;
 
 		if (response == null) { // timeout :(
 			throw new IllegalStateException("timeout");
-		} else if (response.content instanceof PipeFromToParentProcess) { // deploy success
-			var connectionToParent = (PipeFromToParentProcess) response.content;
-			var child = connectionToParent.component;
-			component.knowledgeBase().considers(connectionToParent);
-			component.forEachServiceOfClass(DigitalTwinService.class, s -> {
-				var t = component.digitalTwinService().twinTransport(connectionToParent);
-				s.add(component.now(), pipesToChildren, 0, t);
-				s.add(component.now(), t, 0, pipesToChildren);
-			});
-		} else if (response.content instanceof Throwable) { // deploy error
-			throw new IllegalStateException(req.target + " failed", (Throwable) response.content);
+		} else if (response instanceof Throwable) { // deploy error
+			throw new IllegalStateException(req.target + " failed", (Throwable) response);
+		} else if (response instanceof ComponentInfo) {
+			var dts = component.need(LocalViewService.class);
+			var connectionToParent = dts.localTwin(PipeFromToParentProcess.class, childEntry.child);
+			dts.ensureTwinLinkExists(new Link(pipesToChildren, connectionToParent));
+			dts.ensureTwinLinkExists(new Link(connectionToParent, pipesToChildren));
+			childEntry.child.dt().update((ComponentInfo) response);
 		} else {
 			throw new IllegalStateException("obtaining " + response);
 		}
@@ -211,8 +201,8 @@ public class DeployerService extends Service {
 
 		for (var req : reqs) {
 			var t = new Component(req.toString());
-			t.parent = component;
-			component.lookup(SharedMemoryTransport.class).connectTo(t);
+			t.deployer = component;
+			component.need(SharedMemoryTransport.class).outTo(t);
 
 			if (peerOk != null) {
 				peerOk.accept(t);
@@ -222,6 +212,21 @@ public class DeployerService extends Service {
 		}
 
 		return r;
+	}
+
+	public class remote_deploy extends InnerClassEndpoint {
+		@Override
+		public String getDescription() {
+			return "deploy on another hosts";
+		}
+
+		@Override
+		public void impl(MessageQueue q) throws Throwable {
+			var trigger = q.poll_sync();
+			var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
+			deployRemotely(reqs, line -> reply(trigger, line), line -> reply(trigger, "stderr: " + line),
+					ok -> reply(trigger, ok));
+		}
 	}
 
 	public void deployRemotely(Collection<RemoteDeploymentRequest> peers, Consumer<String> feedback,
@@ -274,12 +279,6 @@ public class DeployerService extends Service {
 		};
 	}
 
-	private static class DeployInfo implements Serializable {
-		ExtraJVMDeploymentRequest req;
-		Component parent;
-//		Set<CR> peersSharingFileSystem;
-	}
-
 	// this method should be called only by this class
 	public static void main(String[] args)
 			throws IOException, ClassNotFoundException, NoSuchMethodException, SecurityException {
@@ -293,26 +292,25 @@ public class DeployerService extends Service {
 			System.out.println("JVM " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")
 					+ " is running");
 			System.out.println("Now reading deployment information");
-			var deployInfo = (DeployInfo) TransportService.serializer.read(System.in);
+			var req = (ExtraJVMDeploymentRequest) TransportService.serializer.read(System.in);
 
 			System.out.println("instantiating component");
-			var child = Clazz.makeInstance(
-					deployInfo.req.target.info.component.getClass().getConstructor(Component.class),
-					deployInfo.req.target);
-			child.parent = deployInfo.parent;
+			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.name());
+			child.addBasicServices();
+			var parent = child.localView().localTwin(req.parent);
+			child.deployer = parent;
 //			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
-			var pipe = new PipeFromToParentProcess(child, child.parent,
-					deployInfo.req.target.info.suicideWhenParentDie);
-			var parentInterface = child.parent.lookup(PipeFromToChildProcess.class);
-			var i = new OutNeighbor();
-			i.dest = parentInterface;
+			// create the pipe to the parent
+			var pipeToParent = new PipeFromToParentProcess(child, parent, !req.target.autonomous);
 
-			parentInterface.neighborhood().add(i);
+			// updates the twin parent
+			var parentInterface = parent.need(PipesFromToChildrenProcess.class);
+			parent.localView().ensureTwinLinkExists(new Link(pipeToParent, parentInterface));
 
 			// tell the parent process that this node is ready for connections
 			System.out.println("ready, notifying parent");
-			PipeFromToParentProcess.sysout(child);
+			PipeFromToParentProcess.sysout(child.need(SystemService.class).localComponentInfo());
 			System.out.flush();
 
 			// prevents the JVM to quit
@@ -395,7 +393,7 @@ public class DeployerService extends Service {
 
 			private RemoteDeploymentRequest findByName(String name, Iterable<RemoteDeploymentRequest> nodes) {
 				for (RemoteDeploymentRequest p : nodes) {
-					if (p.target.ref.equals(name)) {
+					if (p.target.name().equals(name)) {
 						return p;
 					}
 				}
@@ -431,8 +429,8 @@ public class DeployerService extends Service {
 	public void apply(ComponentInfo d) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
 
-		for (ServiceDescriptor sd : d.services) {
-			if (component.lookup(sd.clazz) == null) {
+		for (ServiceInfo sd : d.services) {
+			if (component.need(sd.clazz) == null) {
 				var s = sd.clazz.getConstructor(Component.class).newInstance(component);
 				s.apply(sd);
 			}
