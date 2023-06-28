@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import idawi.Component;
 import idawi.Service;
@@ -79,7 +82,7 @@ public abstract class TransportService extends Service implements Externalizable
 
 	private void forward(Message msg) {
 		// search for the same routing service
-		var rs = component.need(msg.route.last().routingProtocol());
+		var rs = component.lookup(msg.route.last().routingProtocol());
 
 		// no such routing protocol running here
 		if (rs == null) {
@@ -95,8 +98,20 @@ public abstract class TransportService extends Service implements Externalizable
 
 	public abstract boolean canContact(Component c);
 
+	public abstract Collection<Component> actualNeighbors();
+
+	public Set<TransportService> knownNeighbors = new HashSet<>();
+
+	public Stream<TransportService> knownNeighbors() {
+		if (component.isDigitalTwin()) {
+			return knownNeighbors.stream();
+		} else {
+			return actualNeighbors().stream().map(n -> n.need(getClass()));
+		}
+	}
+
 	public OutLinks outLinks() {
-		return new OutLinks(component.localView().links().stream().filter(l -> l.src.equals(this)).toList());
+		return new OutLinks(knownNeighbors().map(n -> new Link(this, n)).toList());
 	}
 
 	protected abstract void sendImpl(Message msg);
@@ -163,6 +178,4 @@ public abstract class TransportService extends Service implements Externalizable
 			return "get the neighborhood";
 		}
 	}
-
-	public abstract Collection<Component> actualNeighbors();
 }

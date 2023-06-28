@@ -6,7 +6,6 @@
 	<groupId>io.github.lhogie</groupId>
 	<artifactId>idawi</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
-	<name>Idawi</name>
 	<description>A P2P middleware for distributed/parallel applications</description>
 	<url>https://github.com/lhogie/idawi</url>
 	<properties>

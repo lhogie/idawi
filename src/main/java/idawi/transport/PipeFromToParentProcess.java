@@ -1,7 +1,7 @@
 package idawi.transport;
 
 import java.util.Base64;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Set;
 
 import idawi.Component;
@@ -9,12 +9,12 @@ import idawi.messaging.Message;
 
 public class PipeFromToParentProcess extends TransportService {
 	private final boolean suicideIfLoseParent;
-	private final Set<Component> parent;
+	private final Component parent;
 
 	public PipeFromToParentProcess(Component me, Component parent, boolean suicideWhenParentDies) {
 		super(me);
 		this.suicideIfLoseParent = suicideWhenParentDies;
-		this.parent = Collections.singleton(parent);
+		this.parent = parent;
 
 		new Thread(() -> {
 			try {
@@ -30,8 +30,8 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
-	public Set<Component> actualNeighbors() {
-		return parent;
+	public OutLinks outLinks() {
+		return new OutLinks(Set.of(new Link(this, parent.need(PipesFromToChildrenProcess.class))));
 	}
 
 	@Override
@@ -53,7 +53,12 @@ public class PipeFromToParentProcess extends TransportService {
 
 	@Override
 	public boolean canContact(Component c) {
-		return parent.contains(c);
+		return parent.equals(c);
+	}
+
+	@Override
+	public Collection<Component> actualNeighbors() {
+		return Set.of(parent);
 	}
 
 }

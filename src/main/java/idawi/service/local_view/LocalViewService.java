@@ -13,8 +13,8 @@ import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.routing.RouteListener;
 import idawi.routing.Route;
+import idawi.routing.RouteListener;
 import idawi.service.DigitalTwinService;
 import idawi.service.digital_twin.info.KNW_NeighborLost;
 import idawi.service.local_view.BFS.BFSResult;
@@ -28,7 +28,7 @@ import jdotgen.Props.Style;
 import jdotgen.VertexProps;
 import toools.io.Cout;
 
-public class LocalViewService extends KnowledgeBase implements RouteListener{
+public class LocalViewService extends KnowledgeBase implements RouteListener {
 
 	public final Cache<BFSResult> bfsResult = new Cache<>(5,
 			() -> BFS.bfs(component, 10, Integer.MAX_VALUE, avoid -> false));
@@ -37,7 +37,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener{
 	public final List<DigitalTwinListener> listeners = new ArrayList<>();
 	public double minimumAccuracyTolerated = 0.1;
 
-	private List<Link> links = new ArrayList<>();
+	private List<Link> remoteLinks = new ArrayList<>();
 
 	public LocalViewService(Component component) {
 		super(component);
@@ -62,7 +62,6 @@ public class LocalViewService extends KnowledgeBase implements RouteListener{
 		}
 	}
 
-
 	public class twinComponents extends TypedInnerClassEndpoint {
 		public Set<Component> components() {
 			Cout.debug("running on " + component + ": " + components);
@@ -74,7 +73,6 @@ public class LocalViewService extends KnowledgeBase implements RouteListener{
 			return "get all known components";
 		}
 	}
-
 
 	public class clear extends TypedInnerClassEndpoint {
 		public void f() {
@@ -112,8 +110,12 @@ public class LocalViewService extends KnowledgeBase implements RouteListener{
 		}
 	}
 
-	public List<Link> links() {
-		return links;
+	public Stream<Link> localLinks() {
+		return component.services(TransportService.class).stream().flatMap(s -> s.outLinks().stream());
+	}
+
+	public Stream<Link> links() {
+		return Stream.concat(remoteLinks.stream(), localLinks());
 	}
 
 	public Link ensureTwinLinkExists(Link l) {
@@ -269,5 +271,9 @@ public class LocalViewService extends KnowledgeBase implements RouteListener{
 
 	public Link findLink(TransportService from, Component to) {
 		return findLink(l -> l.src.equals(from) && l.dest.component.equals(to));
+	}
+
+	public Link findReverseLink(Link l) {
+		return findLink(l.dest, l.src.component);
 	}
 }

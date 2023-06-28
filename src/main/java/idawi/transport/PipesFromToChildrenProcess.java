@@ -56,6 +56,12 @@ public class PipesFromToChildrenProcess extends TransportService {
 		return child_entry.keySet();
 	}
 
+	@Override
+	public OutLinks outLinks() {
+		return new OutLinks(
+				actualNeighbors().stream().map(n -> new Link(this, n.need(PipeFromToParentProcess.class))).toList());
+	}
+
 	static int nbW = 0;
 
 	@Override

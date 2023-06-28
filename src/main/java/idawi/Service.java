@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,17 +40,29 @@ import toools.util.Date;
 public class Service implements SizeOf {
 
 	// creates the threads that will process the messages
-//	public static ExecutorService threadPool = Executors.newFixedThreadPool(1);
-	public static ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-	public static AtomicDouble time = new AtomicDouble();
+	public static ExecutorService threadPool = Executors.newCachedThreadPool();
+	public static AtomicDouble simulatedTime;
+	public static PriorityQueue<Event<SpecificTime>> eventQueue = new PriorityQueue<>(
+			(a, b) -> a.when.compareTo(b.when));
+
+	public static void simulationMode() {
+		simulatedTime = new AtomicDouble(0);
+	}
+
+	static {
+		threadPool.submit(() -> {
+			var e = eventQueue.poll();
+			simulatedTime.set(e.when.time);
+			threadPool.submit(e);
+		});
+	}
 
 	public static double now() {
-		return Service.time == null ? Date.time() :Service.time.get();
-		//var ts = lookup(TimeService.class);
-		//return ts == null ? Date.time() : ts.now();
+		return Service.simulatedTime == null ? Date.time() : Service.simulatedTime.get();
+		// var ts = lookup(TimeService.class);
+		// return ts == null ? Date.time() : ts.now();
 	}
-	
-	
+
 	transient public final Class<? extends Service> id = getClass();
 	public Component component;
 	private boolean askToRun = true;
@@ -251,28 +264,33 @@ public class Service implements SizeOf {
 		}
 	}
 
-	static abstract class Event implements Runnable {
-		When when;
+	public static abstract class Event<W extends When> implements Runnable, Serializable {
+		public W when;
 	}
 
-	static abstract interface When extends Predicate<Event>, Serializable {
-		static class Time implements When {
-			public double time;
+	public static abstract interface When extends Predicate<Event<?>>, Serializable {
+	}
 
-			public Time(double t) {
-				this.time = t;
-			}
+	public static class SpecificTime implements When, Comparable<SpecificTime> {
+		public double time;
 
-			@Override
-			public boolean test(Event t) {
-				return time >= Service.time.get();
-			}
-
+		public SpecificTime(double t) {
+			this.time = t;
 		}
 
-		public static When time(double time) {
-			return new Time(time);
+		@Override
+		public boolean test(Event<?> t) {
+			return time >= Service.simulatedTime.get();
 		}
+
+		@Override
+		public int compareTo(SpecificTime o) {
+			return Double.compare(time, o.time);
+		}
+	}
+
+	public static When time(double time) {
+		return new SpecificTime(time);
 	}
 
 	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, MessageODestination dest) {

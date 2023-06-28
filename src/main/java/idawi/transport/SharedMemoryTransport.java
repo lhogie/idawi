@@ -3,8 +3,10 @@ package idawi.transport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
@@ -19,6 +21,7 @@ import jdotgen.VertexProps;
 public class SharedMemoryTransport extends TransportService {
 
 	public double emissionRange = Double.MAX_VALUE;
+	Set<TransportService> outs = new HashSet<>();
 
 	public SharedMemoryTransport() {
 	}
@@ -67,7 +70,7 @@ public class SharedMemoryTransport extends TransportService {
 	}
 
 	public void outTo(SharedMemoryTransport networkInterfaceOnDestination) {
-		component.localView().links().add(new Link(this, networkInterfaceOnDestination));
+		outs.add(networkInterfaceOnDestination);
 	}
 
 	public void connectTo(SharedMemoryTransport a, boolean bidi) {
@@ -98,7 +101,8 @@ public class SharedMemoryTransport extends TransportService {
 		}
 	}
 
-	public static void chainRandomly(List<Component> l, int n, Random r, Class<? extends SharedMemoryTransport> t, boolean bidi) {
+	public static void chainRandomly(List<Component> l, int n, Random r, Class<? extends SharedMemoryTransport> t,
+			boolean bidi) {
 		List<Component> l2 = new ArrayList<>(l);
 
 		for (int i = 0; i < n; ++i) {
@@ -206,7 +210,7 @@ public class SharedMemoryTransport extends TransportService {
 				.distanceFrom(b.need(SimulatedLocationService.class).getLocation());
 	}
 
-	public static GraphvizDriver toDot(List<Component> components) {
+	public static GraphvizDriver toDot(Collection<Component> components) {
 		return new GraphvizDriver() {
 
 			@Override
@@ -215,20 +219,19 @@ public class SharedMemoryTransport extends TransportService {
 					v.id = c;
 					f.f();
 				}
-
 			}
 
 			@Override
 			protected void findEdges(EdgeProps e, Validator f) {
 				for (var c : components) {
 					for (var t : c.services(TransportService.class)) {
-						for (var n : t.actualNeighbors()) {
+						t.outLinks().stream().map(l -> l.dest.component).forEach(n -> {
 							e.from = c;
 							e.to = n;
 							e.directed = true;
 							e.label = t.getFriendlyName();
 							f.f();
-						}
+						});
 					}
 				}
 			}
@@ -237,7 +240,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	public Collection<Component> actualNeighbors() {
-		return outLinks().destinations();
+		return outs.stream().map(o -> o.component).toList();
 	}
 
 }
