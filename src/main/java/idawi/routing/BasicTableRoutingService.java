@@ -8,6 +8,7 @@ import java.util.Set;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
+import idawi.transport.OutLinks;
 import idawi.transport.TransportService;
 import toools.collections.primitive.BloomFilterForLong;
 
@@ -31,7 +32,7 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 
 					if (relay != null) {
 						component.services(TransportService.class).forEach(t -> {
-							var link = t.outLinks().search(relay);
+							var link = new OutLinks(t.outLinks()).search(relay);
 
 							if (link != null) {
 								t.send(msg, Set.of(link), this, parms);

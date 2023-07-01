@@ -184,9 +184,6 @@ public class Component implements SizeOf, Externalizable {
 		return name.hashCode();
 	}
 
-	public static void stopPlatformThreads() {
-		Service.threadPool.shutdown();
-	}
 
 	public double now() {
 		return Service.now();

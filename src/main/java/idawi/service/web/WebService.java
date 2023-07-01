@@ -30,6 +30,7 @@ import idawi.Component;
 import idawi.Endpoint;
 import idawi.EndpointParameterList;
 import idawi.InnerClassEndpoint;
+import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageCollector;
@@ -223,7 +224,7 @@ public class WebService extends Service {
 			output.close();
 		});
 
-		httpServer.setExecutor(Service.threadPool);
+		httpServer.setExecutor(RuntimeEngine.threadPool);
 		httpServer.start();
 		this.port = port;
 		return httpServer;

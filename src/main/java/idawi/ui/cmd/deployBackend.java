@@ -14,7 +14,7 @@ public class deployBackend extends CommandBackend {
 
 		var peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream().map(s -> new Component(s, n))
 				.toList();
-		peers.remove(n);
+//		peers.removeLinksHeadingTo(n);
 
 		if (peers.isEmpty()) {
 			out.accept("no peer");

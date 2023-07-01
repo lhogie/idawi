@@ -6,12 +6,14 @@ import java.util.List;
 
 import idawi.Component;
 import idawi.InnerClassEndpoint;
+import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.test.Demo4_deploy_local_peers.DummyService.op;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 import toools.thread.Q;
 
 /**
@@ -57,7 +59,7 @@ public class Demo4_deploy_local_peers {
 		List<Component> things = new ArrayList<>();
 		var l = Component.createNComponent("c-", 50);
 		initialThing.need(DeployerService.class).deployInThisJVM(l, peerOk -> things.add(peerOk));
-		SharedMemoryTransport.chain(things, SharedMemoryTransport.class, true);
+		Topologies.chain(things, SharedMemoryTransport.class, true);
 		Component last = things.get(things.size() - 1);
 
 		// prints neighborhoods for all things
@@ -67,10 +69,10 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		initialThing.defaultRoutingProtocol().exec(DummyService.class, op.class, null, ComponentMatcher.unicast(last), true,
-				"hello!");
+		initialThing.defaultRoutingProtocol().exec(DummyService.class, op.class, null, ComponentMatcher.unicast(last),
+				true, "hello!");
 		s.wait.poll_sync();
 		System.out.println("completed");
-		Component.stopPlatformThreads();
+		RuntimeEngine.stopPlatformThreads();
 	}
 }

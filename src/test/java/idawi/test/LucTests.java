@@ -8,22 +8,22 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.junit.Test;
 
 import idawi.Component;
 import idawi.EndpointParameterList;
+import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
-import idawi.routing.RoutingListener;
 import idawi.service.DemoService;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 import toools.io.Cout;
 import toools.net.NetUtilities;
 
@@ -48,7 +48,7 @@ public class LucTests {
 		// ask c1 to ping c2
 		Message pong = c1.bb().ping(c2).poll_sync();
 		System.out.println(pong);
-		Component.stopPlatformThreads();
+		RuntimeEngine.stopPlatformThreads();
 	}
 
 	@org.junit.Test
@@ -103,7 +103,7 @@ public class LucTests {
 		Cout.debugSuperVisible(c1.outLinks());
 
 //		RoutingListener.debug_on(c1, c2);
-		assertEquals(5, (int) 	c1.need(BlindBroadcasting.class).exec_rpc(c2, DemoService.stringLength.class, "salut"));
+		assertEquals(5, (int) c1.need(BlindBroadcasting.class).exec_rpc(c2, DemoService.stringLength.class, "salut"));
 		Cout.debugSuperVisible(2);
 
 		assertEquals(53, (int) c1.need(BlindBroadcasting.class).exec(c2, DemoService.countFrom1toN.class, 100).returnQ
@@ -200,7 +200,7 @@ public class LucTests {
 			l.add(new Component());
 		}
 
-		SharedMemoryTransport.chain(l, SharedMemoryTransport.class, true);
+		Topologies.chain(l, SharedMemoryTransport.class, true);
 		var first = new Service(l.get(0));
 		var last = l.get(l.size() - 1);
 		Message pong = first.component.bb().ping(last).poll_sync();

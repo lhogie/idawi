@@ -4,21 +4,23 @@ import java.util.function.Predicate;
 
 import idawi.Component;
 import idawi.service.local_view.Info;
+import idawi.transport.Link;
 import idawi.transport.TransportService;
 
-public class KNW_NeighborLost extends Info {
+public class KNW_LinkDisapeared extends Info {
 	
 	public TransportService from;
-	public TransportService lostNeighbor;
+	public TransportService to;
 
-	public KNW_NeighborLost(double date, TransportService c, TransportService neighbor) {
+	public KNW_LinkDisapeared(double date, TransportService c, TransportService neighbor) {
 		super(date);
 		this.from = c;
-		this.lostNeighbor = neighbor;
+		this.to = neighbor;
 	}
+
 
 	@Override
 	public void exposeComponent(Predicate<Component> p) {
-		var b = p.test(from.component) || p.test(lostNeighbor.component);
+		var b = p.test(from.component) || p.test(to.component);
 	}
 }

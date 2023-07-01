@@ -112,8 +112,8 @@ public class TCPDriver extends IPDriver {
 	@Override
 	protected void sendImpl(Message msg) {
 		Entry entry = null;
-		var n = msg.route.last().link.dest;
-		
+		TransportService n = msg.route.last().link.dest;
+
 		synchronized (neighbor_socket) {
 			entry = neighbor_socket.get(n);
 
@@ -177,8 +177,15 @@ public class TCPDriver extends IPDriver {
 		return ss != null;
 	}
 
-	@Override
 	public Collection<Component> actualNeighbors() {
 		return neighbor_socket.keySet();
+	}
+
+	@Override
+	public void dispose(Link l) {
+		try {
+			neighbor_socket.get(l.dest.component).socket.close();
+		} catch (IOException err) {
+		}
 	}
 }

@@ -42,14 +42,14 @@ public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 			for (var t : component.services(TransportService.class)) {
 				var recipients = new ArrayList<Link>();
 
-				for (var c : t.outLinks()) {
+				t.outLinks().forEach(l -> {
 					// if the message is still powerful enough
 					if (parms.force-- >= 1) {
-						recipients.add(c);
+						recipients.add(l);
 					} else {
 						return;
 					}
-				}
+				});
 
 				t.send(msg, recipients, this, parms);
 			}

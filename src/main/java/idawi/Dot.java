@@ -52,7 +52,7 @@ public class Dot {
 
 		for (var c : components) {
 			for (var t : c.services(TransportService.class)) {
-				for (var n : t.outLinks()) {
+				for (var n : t.outLinks().toList()) {
 					out.println(t.component + " -> " + n + " [");
 					out.println(c + " [");
 					out.println("label=" + dot.edgeLabel.apply(n));

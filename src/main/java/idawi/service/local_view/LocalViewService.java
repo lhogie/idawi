@@ -16,11 +16,13 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.routing.Route;
 import idawi.routing.RouteListener;
 import idawi.service.DigitalTwinService;
-import idawi.service.digital_twin.info.KNW_NeighborLost;
+import idawi.service.digital_twin.info.KNW_LinkDisapeared;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
 import idawi.service.local_view.BFS.Routes;
 import idawi.transport.Link;
+import idawi.transport.OutLinks;
+import idawi.transport.TimeFrame;
 import idawi.transport.TransportService;
 import jdotgen.EdgeProps;
 import jdotgen.GraphvizDriver;
@@ -35,15 +37,46 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 
 	private final Set<Component> components = new HashSet<>();
 	public final List<DigitalTwinListener> listeners = new ArrayList<>();
-	public double minimumAccuracyTolerated = 0.1;
 
-	private List<Link> remoteLinks = new ArrayList<>();
+	private OutLinks links = new OutLinks();
 
 	public LocalViewService(Component component) {
 		super(component);
 
 		// the component won't have twin
 		components.add(component);
+	}
+
+	public void newLink(Component from, Component to, Class<? extends TransportService> p) {
+		newLink(from.need(p), to.need(p));
+	}
+
+	public void newLink(TransportService from, TransportService to) {
+		var l = findLink(from, to);
+
+		if (l == null) {
+			component.localView().links().add(l = new Link(from, to));
+		} else {
+			l.activity.add(new TimeFrame(now()));
+		}
+	}
+	
+	public void activateLink(TransportService from, TransportService to) {
+		var l = findLink(from, to);
+
+		if (l == null) {
+			component.localView().links().add(l = new Link(from, to));
+		} else {
+			l.activity.add(new TimeFrame(now()));
+		}
+	}
+
+	public void deactivateLink(TransportService from, TransportService to) {
+		var l = findLink(from, to);
+
+		if (l != null) {
+			l.activity.close();
+		}
 	}
 
 	@Override
@@ -106,16 +139,17 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 	@Override
 	public void feedWith(Route route) {
 		for (var l : route.entries()) {
-			ensureTwinLinkExists(l.link);
+			var tw = ensureTwinLinkExists(l.link);
+			tw.activity.considerActivity();
 		}
 	}
 
 	public Stream<Link> localLinks() {
-		return component.services(TransportService.class).stream().flatMap(s -> s.outLinks().stream());
+		return links.stream().filter(l -> l.src.component.equals(component));
 	}
 
-	public Stream<Link> links() {
-		return Stream.concat(remoteLinks.stream(), localLinks());
+	public OutLinks links() {
+		return links;
 	}
 
 	public Link ensureTwinLinkExists(Link l) {
@@ -129,15 +163,23 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		} else {
 			twin.latency = l.latency;
 			twin.throughput = l.throughput;
-			twin.since = l.since;
+
+			if (l.activity != null) {
+				twin.activity.merge(l.activity);
+			}
+
 			twin.date = l.date;
 		}
 
 		return twin;
 	}
 
-	public void removeOutdated(double now) {
-		links.removeIf(n -> n.reliability(now) < minimumAccuracyTolerated);
+	public Stream<Link> snapshotAt(double time) {
+		return links().stream().filter(l -> l.activity.availableAt(time));
+	}
+
+	public Stream<Link> inactiveLinks() {
+		return links.set.stream().filter(l -> !l.isActive());
 	}
 
 	public GraphvizDriver toGraphvizDriver() {
@@ -156,7 +198,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 			protected void findEdges(EdgeProps v, Validator f) {
 				for (var c : components) {
 					for (var t : c.services(TransportService.class)) {
-						for (var neighbor : t.outLinks().links()) {
+						for (var neighbor : t.outLinks().toList()) {
 							v.from = t.component.name();
 							v.to = neighbor.dest;
 							v.label = t.getFriendlyName();
@@ -240,8 +282,8 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 	public void accept(Info i) {
 		if (i instanceof Link) {
 			ensureTwinLinkExists((Link) i);
-		} else if (i instanceof KNW_NeighborLost) {
-			lostLink((KNW_NeighborLost) i);
+		} else if (i instanceof KNW_LinkDisapeared) {
+			lostLink((KNW_LinkDisapeared) i);
 		} else if (i instanceof ComponentInfo) {
 			consider((ComponentInfo) i);
 		} else {
@@ -253,8 +295,8 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		localTwin(d.component).dt().update(d);
 	}
 
-	private void lostLink(KNW_NeighborLost l) {
-		localTwin(l.from).outLinks().remove(l.lostNeighbor);
+	private void lostLink(KNW_LinkDisapeared linkOff) {
+		links.set.removeIf(l -> l.src.equals(linkOff.from) && l.dest.equals(linkOff.to));
 	}
 
 	public Collection<? extends Component> components() {
@@ -273,7 +315,29 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		return findLink(l -> l.src.equals(from) && l.dest.component.equals(to));
 	}
 
+	public Link findLink(TransportService from, TransportService to) {
+		return findLink(l -> l.src.equals(from) && l.dest.equals(to));
+	}
+
 	public Link findReverseLink(Link l) {
 		return findLink(l.dest, l.src.component);
 	}
+
+	public void linkLost(Link l) {
+		links.remove(l);
+		component.defaultRoutingProtocol().exec(LocalViewService.class, removeLink.class,
+				new KNW_LinkDisapeared(now(), l.src, l.dest));
+	}
+
+	public class removeLink extends TypedInnerClassEndpoint {
+		public void f(KNW_LinkDisapeared c) {
+			links.set.removeIf(l -> l.matches(c.from, c.to));
+		}
+
+		@Override
+		public String getDescription() {
+			return "get the description for a particular component";
+		}
+	}
+
 }

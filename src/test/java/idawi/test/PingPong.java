@@ -9,6 +9,7 @@ import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 
 /**
  * 
@@ -42,7 +43,7 @@ public class PingPong {
 			things.add(newThings.get(0));
 		}
 
-		SharedMemoryTransport.chain(things, SharedMemoryTransport.class, true);
+		Topologies.chain(things, SharedMemoryTransport.class, true);
 
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);

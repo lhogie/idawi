@@ -8,6 +8,7 @@ import idawi.Component;
 import idawi.service.SimulatedLocationService;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 import toools.thread.Threads;
 
 public class Centralized {
@@ -50,7 +51,7 @@ public class Centralized {
 				c.need(SimulatedLocationService.class).angle += rand.nextDouble(Math.PI / 5 - Math.PI / 10);
 			}
 
-			SharedMemoryTransport.reconnectAccordingToDistance(l);
+			Topologies.reconnectAccordingToDistance(l);
 		}
 
 	}

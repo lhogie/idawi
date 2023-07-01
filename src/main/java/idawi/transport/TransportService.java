@@ -5,11 +5,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
@@ -98,22 +97,6 @@ public abstract class TransportService extends Service implements Externalizable
 
 	public abstract boolean canContact(Component c);
 
-	public abstract Collection<Component> actualNeighbors();
-
-	public Set<TransportService> knownNeighbors = new HashSet<>();
-
-	public Stream<TransportService> knownNeighbors() {
-		if (component.isDigitalTwin()) {
-			return knownNeighbors.stream();
-		} else {
-			return actualNeighbors().stream().map(n -> n.need(getClass()));
-		}
-	}
-
-	public OutLinks outLinks() {
-		return new OutLinks(knownNeighbors().map(n -> new Link(this, n)).toList());
-	}
-
 	protected abstract void sendImpl(Message msg);
 
 	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
@@ -122,22 +105,20 @@ public abstract class TransportService extends Service implements Externalizable
 		for (var outLink : outLinks) {
 			msg.route.add(outLink, r);
 
-			if (component.isDigitalTwin()) {
-				throw new IllegalStateException("a digital twin cannot send a message");
+			// sending from a real component to a digital twin in the only situation
+			// the network is involved
+			if (!component.isDigitalTwin() && outLink.dest.component.isDigitalTwin()) {
+				sendImpl(msg);
 			} else {
-				if (outLink.dest.component.isDigitalTwin()) {
-					sendImpl(msg);
-				} else { // a real component in the same JVM
-					var c = msg.clone();
+				var c = msg.clone();
 
-					Service.threadPool.submit(() -> {
-						try {
-							outLink.dest.processIncomingMessage(c);
-						} catch (Throwable e) {
-							e.printStackTrace();
-						}
-					});
-				}
+				RuntimeEngine.threadPool.submit(() -> {
+					try {
+						outLink.dest.processIncomingMessage(c);
+					} catch (Throwable e) {
+						e.printStackTrace();
+					}
+				});
 			}
 
 			msg.route.removeLast();
@@ -145,7 +126,11 @@ public abstract class TransportService extends Service implements Externalizable
 	}
 
 	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
-		send(msg, outLinks().links(), r, parms);
+		send(msg, outLinks().toList(), r, parms);
+	}
+
+	public Stream<Link> outLinks() {
+		return component.localView().links().stream().filter(l -> l.activity.availableAt(now()) && l.src.equals(this));
 	}
 
 	@Override
@@ -170,12 +155,43 @@ public abstract class TransportService extends Service implements Externalizable
 
 	public class neighbors extends TypedInnerClassEndpoint {
 		public OutLinks f() {
-			return outLinks();
+			return new OutLinks(outLinks());
 		}
 
 		@Override
 		public String getDescription() {
 			return "get the neighborhood";
+		}
+	}
+
+	public abstract void dispose(Link l);
+
+	public Link outTo(Component dest) {
+		return outTo(dest.need(getClass()));
+	}
+
+	public Link outTo(TransportService to) {
+		var l = component.localView().findLink(this, to);
+
+		if (l == null) {
+			component.localView().links().add(l = new Link(this, to));
+		} else {
+			l.activity.add(new TimeFrame(now()));
+		}
+
+		return l;
+	}
+
+	public void inoutTo(Component c) {
+		outTo(c);
+		c.need(getClass()).outTo(this);
+	}
+
+	public void connectTo(TransportService a, boolean bidi) {
+		outTo(a);
+
+		if (bidi) {
+			a.outTo(this);
 		}
 	}
 }

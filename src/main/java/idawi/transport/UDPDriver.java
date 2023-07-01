@@ -103,8 +103,8 @@ public class UDPDriver extends IPDriver {
 		return socket != null;
 	}
 
+
 	@Override
-	public Collection<Component> actualNeighbors() {
-		return null;
+	public void dispose(Link l) {
 	}
 }

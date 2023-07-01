@@ -5,10 +5,11 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import idawi.Component;
-import idawi.Service;
+import idawi.RuntimeEngine;
 import idawi.routing.BlindBroadcasting;
 import idawi.service.local_view.LocalViewService;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 import idawi.transport.TransportService;
 import jdotgen.GraphvizDriver;
 import toools.io.file.RegularFile;
@@ -27,12 +28,12 @@ public class ManyComponents {
 		}
 
 		// connect them in a random tree
-		SharedMemoryTransport.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, true);
+		Topologies.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, true);
 
-		System.out.println(SharedMemoryTransport.toDot(components));
+		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
 		GraphvizDriver.pathToCommands = "/usr/local/bin/";
-		pdfFile.setContent(SharedMemoryTransport.toDot(components).toPDF());
+		pdfFile.setContent(Topologies.toDot(components).toPDF());
 		pdfFile.open();
 
 		var first = components.get(0);
@@ -49,7 +50,7 @@ public class ManyComponents {
 			nbMessages += c.need(TransportService.class).nbOfMsgReceived;
 		}
 
-		Service.threadPool.awaitTermination(1, TimeUnit.SECONDS);
+		RuntimeEngine.threadPool.awaitTermination(1, TimeUnit.SECONDS);
 		System.out.println("nbMessages: " + nbMessages);
 	}
 }

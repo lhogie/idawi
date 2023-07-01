@@ -20,9 +20,6 @@ public abstract class KnowledgeBase extends Service implements Consumer<Info>, S
 		return infos().mapToDouble(i -> i.reliability(now)).average().getAsDouble();
 	}
 
-	public abstract void removeOutdated(double now);
-
-
 	public class consider extends TypedInnerClassEndpoint {
 		@Override
 		public String getDescription() {

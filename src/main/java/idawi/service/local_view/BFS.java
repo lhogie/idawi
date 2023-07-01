@@ -137,7 +137,7 @@ public class BFS {
 
 			if (!ignore.test(n)) {
 				for (var transport : n.dest.component.services(TransportService.class)) {
-					for (var outNeighbor : transport.outLinks()) {
+					for (var outNeighbor : transport.outLinks().toList()) {
 						var d = r.distances.getLong(n);
 
 						if (!r.distances.containsKey(outNeighbor)) {

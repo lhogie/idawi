@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import idawi.Component;
 import idawi.messaging.Message;
@@ -25,6 +26,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 		boolean run;
 		public Q waitForChild = new Q<>(1);
 		public long base64Len;
+		public Process process;
 	}
 
 	// the mark that announces a binary message coming from child stdout
@@ -43,6 +45,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 		e.stdin = p.getOutputStream();
 		e.child = child;
 		e.run = true;
+		e.process = p;
 
 		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stdout, System.out));
 		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stderr, System.err));
@@ -51,15 +54,8 @@ public class PipesFromToChildrenProcess extends TransportService {
 		return e;
 	}
 
-	@Override
 	public Collection<Component> actualNeighbors() {
 		return child_entry.keySet();
-	}
-
-	@Override
-	public OutLinks outLinks() {
-		return new OutLinks(
-				actualNeighbors().stream().map(n -> new Link(this, n.need(PipeFromToParentProcess.class))).toList());
 	}
 
 	static int nbW = 0;
@@ -125,5 +121,19 @@ public class PipesFromToChildrenProcess extends TransportService {
 		}
 
 		return sum;
+	}
+
+	@Override
+	public void dispose(Link l) {
+		Entry e = child_entry.get(l.dest.component);
+		e.process.destroy();
+
+		Stream.of(e.stderr, e.stdin, e.stdout).forEach(s -> {
+			try {
+				s.close();
+			} catch (IOException err) {
+			}
+		});
+
 	}
 }

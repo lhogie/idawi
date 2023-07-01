@@ -28,6 +28,7 @@ import idawi.transport.PipeFromToParentProcess;
 import idawi.transport.PipesFromToChildrenProcess;
 import idawi.transport.PipesFromToChildrenProcess.Entry;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 import idawi.transport.TransportService;
 import toools.extern.ProcesException;
 import toools.io.RSync;
@@ -108,10 +109,10 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
 			var req = (Collection<Component>) msg.content;
-			List<Component> compoennts = new ArrayList<>();
-			deployInThisJVM(req, peerOk -> compoennts.add(peerOk));
+			List<Component> components = new ArrayList<>();
+			deployInThisJVM(req, peerOk -> components.add(peerOk));
 			reply(msg, req.size() + " compoennts created");
-			SharedMemoryTransport.chain(compoennts, SharedMemoryTransport.class, true);
+			Topologies.chain(components, SharedMemoryTransport.class, true);
 			reply(msg, "chained");
 		}
 

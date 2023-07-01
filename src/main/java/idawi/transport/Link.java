@@ -8,11 +8,21 @@ import idawi.service.local_view.Info;
 public class Link extends Info {
 	// the network interface on the neighbor side
 	public TransportService src, dest;
-	public double since;
+	public final Activity activity = new Activity();
+
 	public double latency;
 	public int throughput;
 
 	public Link() {
+	}
+
+	@Override
+	public long sizeOf() {
+		return super.sizeOf() + 32 + activity.sizeOf();
+	}
+
+	public boolean isActive() {
+		return activity.available();
 	}
 
 	public Link(TransportService from, TransportService to) {
@@ -40,17 +50,22 @@ public class Link extends Info {
 		return src.equals(l.src) && dest.equals(l.dest);
 	}
 
+	public void dispose() {
+		src.dispose(this);
+		dest.dispose(this);
+	}
+
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 
-	public boolean matches(TransportService from, Class<? extends TransportService> protocol, Component to) {
-		return (from == null || from.equals(src)) && (dest == null || dest.outLinks().contains(to));
+	public boolean matches(TransportService from, TransportService to) {
+		return (from == null || from.equals(this.src)) && (dest == null || to.equals(this.dest));
 	}
 
-	public boolean matches(Component from, Class<? extends TransportService> protocol, Component to) {
-		return (from == null || from.equals(src.component)) && (dest == null || dest.outLinks().contains(to));
+	public boolean matches(Component from, Component to) {
+		return (from == null || from.equals(this.src.component)) && (dest == null || to.equals(this.dest.component));
 	}
 
 }

@@ -1,10 +1,12 @@
 package idawi.transport;
 
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.RuntimeEngine;
 import idawi.messaging.Message;
 
 public class PipeFromToParentProcess extends TransportService {
@@ -16,9 +18,11 @@ public class PipeFromToParentProcess extends TransportService {
 		this.suicideIfLoseParent = suicideWhenParentDies;
 		this.parent = parent;
 
-		new Thread(() -> {
+		RuntimeEngine.threadPool.submit(() -> {
 			try {
-				processIncomingMessage((Message) serializer.read(System.in));
+				while (true) {
+					processIncomingMessage((Message) serializer.read(System.in));
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 
@@ -26,12 +30,7 @@ public class PipeFromToParentProcess extends TransportService {
 					System.exit(0);
 				}
 			}
-		}).start();
-	}
-
-	@Override
-	public OutLinks outLinks() {
-		return new OutLinks(Set.of(new Link(this, parent.need(PipesFromToChildrenProcess.class))));
+		});
 	}
 
 	@Override
@@ -56,9 +55,17 @@ public class PipeFromToParentProcess extends TransportService {
 		return parent.equals(c);
 	}
 
-	@Override
-	public Collection<Component> actualNeighbors() {
-		return Set.of(parent);
-	}
 
+	@Override
+	public void dispose(Link l) {
+		if (!l.dest.component.equals(parent))
+			throw new IllegalStateException();
+
+		try {
+			System.in.close();
+		} catch (IOException e) {
+		}
+
+		System.out.close();
+	}
 }

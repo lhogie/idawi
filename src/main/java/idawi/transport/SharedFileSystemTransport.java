@@ -72,8 +72,8 @@ public class SharedFileSystemTransport extends TransportService {
 		}
 	}
 
+
 	@Override
-	public Set<Component> actualNeighbors() {
-		return null;
+	public void dispose(Link l) {
 	}
 }

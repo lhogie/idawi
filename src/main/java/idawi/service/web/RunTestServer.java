@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import idawi.Component;
 import idawi.service.DemoService;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 
 public class RunTestServer {
 
@@ -21,7 +22,7 @@ public class RunTestServer {
 		var ws = gateway.need(WebService.class);
 		ws.startHTTPServer();
 
-		SharedMemoryTransport.randomTree(components, SharedMemoryTransport.class);
+		Topologies.randomTree(components, SharedMemoryTransport.class);
 		System.out.println("gw reaches: " + gateway.outLinks());
 
 		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));

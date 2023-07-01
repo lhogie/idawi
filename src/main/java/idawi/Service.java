@@ -8,17 +8,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import com.google.common.util.concurrent.AtomicDouble;
 
 import idawi.messaging.EOT;
 import idawi.messaging.Message;
@@ -39,28 +34,8 @@ import toools.util.Date;
 
 public class Service implements SizeOf {
 
-	// creates the threads that will process the messages
-	public static ExecutorService threadPool = Executors.newCachedThreadPool();
-	public static AtomicDouble simulatedTime;
-	public static PriorityQueue<Event<SpecificTime>> eventQueue = new PriorityQueue<>(
-			(a, b) -> a.when.compareTo(b.when));
-
-	public static void simulationMode() {
-		simulatedTime = new AtomicDouble(0);
-	}
-
-	static {
-		threadPool.submit(() -> {
-			var e = eventQueue.poll();
-			simulatedTime.set(e.when.time);
-			threadPool.submit(e);
-		});
-	}
-
 	public static double now() {
-		return Service.simulatedTime == null ? Date.time() : Service.simulatedTime.get();
-		// var ts = lookup(TimeService.class);
-		// return ts == null ? Date.time() : ts.now();
+		return RuntimeEngine.now();
 	}
 
 	transient public final Class<? extends Service> id = getClass();
@@ -266,6 +241,10 @@ public class Service implements SizeOf {
 
 	public static abstract class Event<W extends When> implements Runnable, Serializable {
 		public W when;
+
+		public Event(W w) {
+			this.when = w;
+		}
 	}
 
 	public static abstract interface When extends Predicate<Event<?>>, Serializable {
@@ -280,7 +259,7 @@ public class Service implements SizeOf {
 
 		@Override
 		public boolean test(Event<?> t) {
-			return time >= Service.simulatedTime.get();
+			return time <= now();
 		}
 
 		@Override
@@ -305,7 +284,7 @@ public class Service implements SizeOf {
 		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
-		Event r = new Event() {
+		Event r = new Event(new SpecificTime(now())) {
 			@Override
 			public void run() {
 				try {
@@ -327,14 +306,13 @@ public class Service implements SizeOf {
 				}
 
 				detachQueue(inputQ_final);
-
 			}
 		};
 
 		if (dest.premptive) {
 			r.run();
-		} else if (!threadPool.isShutdown()) {
-			threadPool.submit(r);
+		} else if (!RuntimeEngine.threadPool.isShutdown()) {
+			RuntimeEngine.eventQueue.offer(r);
 		} else {
 			System.err.println("ignoring exec message: " + msg);
 		}
