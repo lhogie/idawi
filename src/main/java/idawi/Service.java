@@ -1,6 +1,5 @@
 package idawi;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import idawi.messaging.EOT;
@@ -239,38 +237,6 @@ public class Service implements SizeOf {
 		}
 	}
 
-	public static abstract class Event<W extends When> implements Runnable, Serializable {
-		public W when;
-
-		public Event(W w) {
-			this.when = w;
-		}
-	}
-
-	public static abstract interface When extends Predicate<Event<?>>, Serializable {
-	}
-
-	public static class SpecificTime implements When, Comparable<SpecificTime> {
-		public double time;
-
-		public SpecificTime(double t) {
-			this.time = t;
-		}
-
-		@Override
-		public boolean test(Event<?> t) {
-			return time <= now();
-		}
-
-		@Override
-		public int compareTo(SpecificTime o) {
-			return Double.compare(time, o.time);
-		}
-	}
-
-	public static When time(double time) {
-		return new SpecificTime(time);
-	}
 
 	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, MessageODestination dest) {
 		var inputQ = getQueue(dest.queueID());

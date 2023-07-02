@@ -28,7 +28,7 @@ public class ManyComponents {
 		}
 
 		// connect them in a random tree
-		Topologies.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, true);
+		Topologies.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, (a, b) -> true);
 
 		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");

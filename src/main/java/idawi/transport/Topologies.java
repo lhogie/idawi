@@ -3,9 +3,13 @@ package idawi.transport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import idawi.Component;
 import idawi.service.LocationService;
@@ -13,29 +17,34 @@ import idawi.service.SimulatedLocationService;
 import jdotgen.EdgeProps;
 import jdotgen.GraphvizDriver;
 import jdotgen.VertexProps;
-import jdotgen.GraphvizDriver.Validator;
+import jdotgen.VertexProps.Shape;
 
 public class Topologies {
 
-	public static void chain(List<Component> l, Class<? extends TransportService> t, boolean bidi) {
+	public static void chain(List<Component> l, Class<? extends TransportService> t,
+			BiFunction<TransportService, TransportService, Boolean> bidi) {
 		int n = l.size();
 
 		for (int i = 1; i < n; ++i) {
-			l.get(i - 1).need(t).connectTo(l.get(i).need(t), bidi);
+			var a = l.get(i - 1).need(t);
+			var b = l.get(i).need(t);
+			a.connectTo(b, bidi.apply(a, b));
 		}
 	}
 
-	public static void chainRandomly(List<Component> l, int n, Random r, Class<? extends TransportService> t,
-			boolean bidi) {
-		List<Component> l2 = new ArrayList<>(l);
+	public static void chainRandomly(Collection<Component> components, int n, Random r,
+			Class<? extends TransportService> t, BiFunction<TransportService, TransportService, Boolean> bidi) {
+
+		var l = new ArrayList<>(components);
 
 		for (int i = 0; i < n; ++i) {
-			Collections.shuffle(l2, r);
-			chain(l2, t, bidi);
+			Collections.shuffle(l, r);
+			chain(l, t, bidi);
 		}
 	}
 
-	public static void random(List<Component> l, int nbEdges, Class<? extends TransportService> t, boolean bidi) {
+	public static void random(List<Component> l, int nbEdges, Class<? extends TransportService> t,
+			BiFunction<TransportService, TransportService, Boolean> bidi) {
 		chain(l, t, bidi);
 		nbEdges -= l.size() - 1;
 
@@ -49,7 +58,8 @@ public class Topologies {
 				b = l.get(ThreadLocalRandom.current().nextInt(l.size()));
 			}
 
-			at.connectTo(b.need(t), bidi);
+			var bt = b.need(t);
+			at.connectTo(bt, bidi.apply(at, bt));
 		}
 	}
 
@@ -101,9 +111,8 @@ public class Topologies {
 		for (var c : components) {
 			var ta = c.need(SharedMemoryTransport.class);
 			var linksToKill = c.localView().links().stream()
-					.filter(l -> l.matches(ta, null) && distance(c, l.dest.component) > ta.emissionRange)
-					.toList();
-			//ta.
+					.filter(l -> l.matches(ta, null) && distance(c, l.dest.component) > ta.emissionRange).toList();
+			// ta.
 		}
 
 		// create new links
@@ -132,32 +141,46 @@ public class Topologies {
 				.distanceFrom(b.need(SimulatedLocationService.class).getLocation());
 	}
 
-	public static GraphvizDriver toDot(Collection<Component> components) {
+	public static GraphvizDriver toDot(Collection<Component> components, OutLinks links) {
+		return toDot(components, links, c -> c);
+	}
+
+	public static GraphvizDriver toDot(Collection<Component> components, OutLinks links,
+			Function<Component, Object> id) {
 		return new GraphvizDriver() {
+			Set<Link> s = new HashSet<>();
 
 			@Override
 			protected void findVertices(VertexProps v, Validator f) {
 				for (var c : components) {
-					v.id = c;
+					v.id = id.apply(c);
+					v.shape = Shape.circle;
 					f.f();
 				}
 			}
 
 			@Override
 			protected void findEdges(EdgeProps e, Validator f) {
-				for (var c : components) {
-					for (var t : c.services(TransportService.class)) {
-						t.outLinks().map(l -> l.dest.component).forEach(n -> {
-							e.from = c;
-							e.to = n;
+				for (var l : links) {
+					if (!s.contains(l) && components.contains(l.src.component)
+							&& components.contains(l.dest.component)) {
+						// search for the reverse link
+						var ol = links.stream().filter(ll -> ll.matches(l.dest, l.src)).findAny().orElse(null);
+
+						if (ol == null) {
 							e.directed = true;
-							e.label = t.getFriendlyName();
-							f.f();
-						});
+						} else {
+							s.add(ol);
+							e.directed = false;
+						}
+
+						e.from = id.apply(l.src.component);
+						e.to = id.apply(l.dest.component);
+						e.label = new HashSet<>(List.of(l.src.getClass(), l.dest.getClass()));
+						f.f();
 					}
 				}
 			}
 		};
 	}
-
 }

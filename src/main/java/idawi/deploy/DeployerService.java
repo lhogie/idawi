@@ -112,7 +112,7 @@ public class DeployerService extends Service {
 			List<Component> components = new ArrayList<>();
 			deployInThisJVM(req, peerOk -> components.add(peerOk));
 			reply(msg, req.size() + " compoennts created");
-			Topologies.chain(components, SharedMemoryTransport.class, true);
+			Topologies.chain(components, SharedMemoryTransport.class, (a, b)->true);
 			reply(msg, "chained");
 		}
 

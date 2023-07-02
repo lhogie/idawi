@@ -60,7 +60,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 			l.activity.add(new TimeFrame(now()));
 		}
 	}
-	
+
 	public void activateLink(TransportService from, TransportService to) {
 		var l = findLink(from, to);
 
@@ -299,7 +299,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		links.set.removeIf(l -> l.src.equals(linkOff.from) && l.dest.equals(linkOff.to));
 	}
 
-	public Collection<? extends Component> components() {
+	public Collection<Component> components() {
 		return components;
 	}
 
@@ -337,6 +337,14 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		@Override
 		public String getDescription() {
 			return "get the description for a particular component";
+		}
+	}
+
+	public void createTwins(int n) {
+		for (int i = 0; i < n; i++) {
+			var t = new Component(""+i);
+			new DigitalTwinService(t, component.localView());
+			components.add(t);
 		}
 	}
 
