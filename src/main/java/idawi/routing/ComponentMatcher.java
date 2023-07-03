@@ -2,6 +2,7 @@ package idawi.routing;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -38,14 +39,14 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 	};
 
-	public static ComponentMatcher multicast(Set<Component> target) {
+	public static ComponentMatcher multicast(Collection<Component> target) {
 		return new multicast(target);
 	}
 
 	public static class multicast extends ComponentMatcher {
-		Set<Component> target;
+		Collection<Component> target;
 
-		multicast(Set<Component> target) {
+		multicast(Collection<Component> target) {
 			this.target = target;
 		}
 

@@ -116,7 +116,7 @@ public class MapReduceService extends Service {
 			}
 
 			h.newProgressMessage("waiting for results");
-			q.c().collect(c -> {
+			q.collector().collect(c -> {
 				var msg = c.messages.last();
 				if (msg.content instanceof Result) {
 					var workerResponse = (Result<R>) msg.content;

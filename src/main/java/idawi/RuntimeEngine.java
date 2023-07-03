@@ -21,7 +21,7 @@ import toools.util.Date;
 public class RuntimeEngine {
 	public static ExecutorService threadPool = Executors.newCachedThreadPool();
 	public static AtomicDouble simulatedTime;
-	public static PriorityBlockingQueue<Event<SpecificTime>> eventQueue = new PriorityBlockingQueue<>(100,
+	private static PriorityBlockingQueue<Event<SpecificTime>> eventQueue = new PriorityBlockingQueue<>(100,
 			(a, b) -> a.when.compareTo(b.when));
 
 	public static void simulationMode() {
@@ -32,13 +32,16 @@ public class RuntimeEngine {
 
 	static {
 		threadPool.submit(() -> {
-			try {
-				var e = eventQueue.take();
-				simulatedTime.set(e.when.time);
-				listeners.forEach(l -> l.newEvent(e));
-				threadPool.submit(e);
-			} catch (InterruptedException err) {
-				err.printStackTrace();
+			while (true) {
+				try {
+					System.err.println("take");
+					var e = eventQueue.take();
+					simulatedTime.set(e.when.time);
+					listeners.forEach(l -> l.newEvent(e));
+					threadPool.submit(e);
+				} catch (InterruptedException err) {
+					err.printStackTrace();
+				}
 			}
 		});
 	}
@@ -72,9 +75,9 @@ public class RuntimeEngine {
 		public abstract boolean plot(Event<?> e);
 	}
 
-	public static void plotNet(LocalViewService localView, Directory dir, Predicate<Event<?>> p) {
+	public static RegularFile plotNet(LocalViewService localView, Directory dir, Predicate<Event<?>> p) {
 		dir.mkdirs();
-		doImg(localView, now(), dir, "").open();
+		var firstImg = doImg(localView, now(), dir, "");
 
 		RuntimeEngine.listeners.add(new LocalViewPlotter(dir, localView) {
 
@@ -87,6 +90,8 @@ public class RuntimeEngine {
 			public void eventSubmitted(Event<SpecificTime> newEvent) {
 			}
 		});
+
+		return firstImg;
 	}
 
 	public static int eventIndex = 0;

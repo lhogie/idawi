@@ -43,7 +43,7 @@ public class PingPong {
 			things.add(newThings.get(0));
 		}
 
-		Topologies.chain(things, SharedMemoryTransport.class, true);
+		Topologies.chain(things, SharedMemoryTransport.class, (a, b) -> true);
 
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);

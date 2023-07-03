@@ -250,7 +250,7 @@ public class Service implements SizeOf {
 		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
-		Event r = new Event(new SpecificTime(now())) {
+		Event e = new Event(new SpecificTime(now())) {
 			@Override
 			public void run() {
 				try {
@@ -276,9 +276,9 @@ public class Service implements SizeOf {
 		};
 
 		if (dest.premptive) {
-			r.run();
+			e.run();
 		} else if (!RuntimeEngine.threadPool.isShutdown()) {
-			RuntimeEngine.eventQueue.offer(r);
+			RuntimeEngine.offer(e);
 		} else {
 			System.err.println("ignoring exec message: " + msg);
 		}

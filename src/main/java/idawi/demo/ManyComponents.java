@@ -30,10 +30,10 @@ public class ManyComponents {
 		// connect them in a random tree
 		Topologies.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, (a, b) -> true);
 
-		System.out.println(Topologies.toDot(components));
+//		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
 		GraphvizDriver.pathToCommands = "/usr/local/bin/";
-		pdfFile.setContent(Topologies.toDot(components).toPDF());
+//		pdfFile.setContent(Topologies.toDot(components).toPDF());
 		pdfFile.open();
 
 		var first = components.get(0);

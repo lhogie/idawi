@@ -16,6 +16,6 @@ public class DeployToAnotherNode {
 
 		var ro = a.bb().exec(DeployerService.class, DeployerService.remote_deploy.class, req);
 
-		ro.returnQ.collect(10, 10, c -> System.out.println(c.messages.last().content));
+		ro.returnQ.collector().collect(10, 10, c -> System.out.println(c.messages.last().content));
 	}
 }

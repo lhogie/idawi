@@ -35,7 +35,7 @@ public class MessageCollector {
 		return Date.time() - startDate;
 	}
 
-	public void collect(final double initialCollectDuration, final double initialTimeout,
+	public MessageCollector collect(final double initialCollectDuration, final double initialTimeout,
 			Consumer<MessageCollector> userCode) {
 		this.startDate = Date.time();
 		this.endDate = startDate + initialCollectDuration;
@@ -68,6 +68,7 @@ public class MessageCollector {
 		}
 
 		q.detach();
+		return this;
 	}
 
 	public Object collectOneResult(double timeout) {
@@ -97,6 +98,10 @@ public class MessageCollector {
 		var timeout = MessageCollector.DEFAULT_COLLECT_DURATION;
 		collect(timeout, timeout, c -> c.stop = !p.test(c));
 		return this;
+	}
+
+	public MessageCollector collectDuring(double durationS) {
+		return collectWhile(c -> c.duration() < durationS);
 	}
 
 	public void collect(Consumer<MessageCollector> collector) {

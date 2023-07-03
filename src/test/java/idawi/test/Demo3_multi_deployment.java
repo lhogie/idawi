@@ -39,7 +39,7 @@ public class Demo3_multi_deployment {
 				});
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = t.bb().ping(new HashSet<>(children)).collect(1000, 1000, c -> {
+		MessageList pongs = t.bb().ping(new HashSet<>(children)).collector().collect(1000, 1000, c -> {
 		}).messages;
 
 		if (pongs.isEmpty()) {

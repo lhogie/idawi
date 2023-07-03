@@ -107,11 +107,11 @@ public class LucTests {
 		Cout.debugSuperVisible(2);
 
 		assertEquals(53, (int) c1.need(BlindBroadcasting.class).exec(c2, DemoService.countFrom1toN.class, 100).returnQ
-				.c().collectNResults(100).get(53));
+				.collector().collectNResults(100).get(53));
 		Cout.debugSuperVisible(3);
 
 		assertEquals(7, (int) c1.bb().exec(c2, DemoService.countFromAtoB.class, new DemoService.Range(0, 13)).returnQ
-				.c().collectNResults(13).get(7));
+				.collector().collectNResults(13).get(7));
 		Cout.debugSuperVisible(4);
 
 		// assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
@@ -128,7 +128,7 @@ public class LucTests {
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
 		Component first = root.bb().exec(DemoService.class, DemoService.waiting.class, null,
-				ComponentMatcher.multicast(ss), true, new EndpointParameterList(1)).returnQ.c()
+				ComponentMatcher.multicast(ss), true, new EndpointParameterList(1)).returnQ.collector()
 				.collectWhile(c -> !c.messages.isEmpty()).messages.get(0).route.first().link.src.component;
 
 		System.out.println(first);
@@ -168,7 +168,8 @@ public class LucTests {
 		c1.need(SharedMemoryTransport.class).inoutTo(c2);
 
 		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new EndpointParameterList("hello"));
-		var c = rom.returnQ.collect(5, 5, cc -> {
+		var c = rom.returnQ.collector();
+		c.collect(5, 5, cc -> {
 			cc.stop = !cc.messages.resultMessages().isEmpty();
 		});
 
@@ -200,7 +201,7 @@ public class LucTests {
 			l.add(new Component());
 		}
 
-		Topologies.chain(l, SharedMemoryTransport.class, true);
+		Topologies.chain(l, SharedMemoryTransport.class, (a, b)->true);
 		var first = new Service(l.get(0));
 		var last = l.get(l.size() - 1);
 		Message pong = first.component.bb().ping(last).poll_sync();

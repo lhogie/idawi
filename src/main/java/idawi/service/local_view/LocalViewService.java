@@ -44,7 +44,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 		super(component);
 
 		// the component won't have twin
-		components.add(component);
+//		components.add(component);
 	}
 
 	public void newLink(Component from, Component to, Class<? extends TransportService> p) {

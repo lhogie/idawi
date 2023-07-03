@@ -1,33 +1,28 @@
 package idawi.demo.valentin;
 
-import java.util.Collection;
 import java.util.Random;
 
 import idawi.Component;
 import idawi.RuntimeEngine;
-import idawi.Service;
 import idawi.transport.UDPDriver;
 import toools.collections.Collections;
 
 class NewLinkEvent extends MobilityEvent {
-	private Collection<Component> twins;
 
-	public NewLinkEvent(double date, Collection<Component> twins, Random prng) {
-		super(date, prng);
-		this.twins = twins;
+	public NewLinkEvent(double date, Component c, Random prng) {
+		super(c, date, prng);
 	}
 
 	@Override
 	public void run() {
-		var a = Collections.pickRandomObject(twins, prng);
+		var a = Collections.pickRandomObject(c.localView().components(), prng);
 		var b = a;
 
 		while (b == a) {
-			b = Collections.pickRandomObject(twins, prng);
+			b = Collections.pickRandomObject(c.localView().components(), prng);
 		}
 
-		a.need(UDPDriver.class).outTo(b);
-		RuntimeEngine.offer(new NewLinkEvent(Service.now() + 2, twins, prng));
+		a.need(UDPDriver.class).connectTo(b.need(UDPDriver.class), true);
+		RuntimeEngine.offer(new LinkFailEvent(RuntimeEngine.now() + 1, c, prng));
 	}
-
 }

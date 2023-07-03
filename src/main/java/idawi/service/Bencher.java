@@ -60,7 +60,7 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms).returnQ.c().collect(c -> {
+		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms).returnQ.collector().collect(c -> {
 			var m = c.messages.last();
 
 			if (m.content instanceof String) {

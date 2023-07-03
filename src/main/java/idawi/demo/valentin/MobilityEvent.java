@@ -13,10 +13,12 @@ import toools.collections.Collections;
 
 abstract class MobilityEvent extends Event<SpecificTime> {
 	protected Random prng;
+	protected Component c;
 
-	public MobilityEvent(double date, Random prng) {
+	public MobilityEvent(Component c, double date, Random prng) {
 		super(new SpecificTime(date));
 		this.prng = prng;
+		this.c = c;
 	}
 
 }

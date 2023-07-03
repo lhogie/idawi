@@ -8,8 +8,10 @@ import java.util.Collection;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.Event;
 import idawi.RuntimeEngine;
 import idawi.Service;
+import idawi.SpecificTime;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.RouteListener;
@@ -112,11 +114,14 @@ public abstract class TransportService extends Service implements Externalizable
 			} else {
 				var c = msg.clone();
 
-				RuntimeEngine.threadPool.submit(() -> {
-					try {
-						outLink.dest.processIncomingMessage(c);
-					} catch (Throwable e) {
-						e.printStackTrace();
+				RuntimeEngine.offer(new Event<SpecificTime>(new SpecificTime(now() + outLink.latency)) {
+					@Override
+					public void run() {
+						try {
+							outLink.dest.processIncomingMessage(c);
+						} catch (Throwable e) {
+							e.printStackTrace();
+						}
 					}
 				});
 			}

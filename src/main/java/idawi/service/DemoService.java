@@ -109,7 +109,7 @@ public class DemoService extends Service {
 			s.send("" + i, o);
 		}
 
-		o.returnQ.c().collect(c -> c.messages.last().getClass());
+		o.returnQ.collector().collect(c -> c.messages.last().getClass());
 	}
 
 //	public static interface stringLength extends Operation2 {
