@@ -7,16 +7,16 @@ import idawi.Component;
 import idawi.Event;
 import idawi.RuntimeEngine;
 import idawi.Service;
-import idawi.SpecificTime;
+import idawi.PointInTime;
 import idawi.transport.UDPDriver;
 import toools.collections.Collections;
 
-abstract class MobilityEvent extends Event<SpecificTime> {
+abstract class MobilityEvent extends Event<PointInTime> {
 	protected Random prng;
 	protected Component c;
 
 	public MobilityEvent(Component c, double date, Random prng) {
-		super(new SpecificTime(date));
+		super(new PointInTime(date));
 		this.prng = prng;
 		this.c = c;
 	}

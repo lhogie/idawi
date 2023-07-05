@@ -4,10 +4,19 @@ import toools.SizeOf;
 
 public class Item implements SizeOf {
 	String key;
-	SizeOf content;
+	byte[] content;
+
+	public Item() {
+		this(null, null);
+	}
+
+	public Item(String key, byte[] value) {
+		this.key = key;
+		this.content = value;
+	}
 
 	@Override
 	public long sizeOf() {
-		return key.length() + content.sizeOf();
+		return key.length() + content.length;
 	}
 }

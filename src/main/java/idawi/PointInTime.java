@@ -1,9 +1,9 @@
 package idawi;
 
-public class SpecificTime implements When, Comparable<SpecificTime> {
+public class PointInTime implements When, Comparable<PointInTime> {
 	public double time;
 
-	public SpecificTime(double t) {
+	public PointInTime(double t) {
 		this.time = t;
 	}
 
@@ -13,7 +13,7 @@ public class SpecificTime implements When, Comparable<SpecificTime> {
 	}
 
 	@Override
-	public int compareTo(SpecificTime o) {
+	public int compareTo(PointInTime o) {
 		return Double.compare(time, o.time);
 	}
 

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.InnerClassEndpoint;
@@ -12,15 +13,37 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
-import toools.SizeOf;
+import toools.io.file.Directory;
+import toools.io.file.RegularFile;
 
-public class ChordService extends Service implements SizeOf {
-	Set<Item> items = new HashSet<>();
-	RoutingService r = component.defaultRoutingProtocol();
+public class ChordService extends Service {
+	// item data will be stored there
+	public static String pathToLocalContents = "$HOME/i3s/idawi/chord/";
+	final public Directory directory;
+
+	// chord queries will be send using this routing scheme
+	public RoutingService rp = component.defaultRoutingProtocol();
+
+	public ChordService(Component c) {
+		super(c);
+		directory = new Directory(pathToLocalContents);
+	}
 
 	public void store(Item item) {
+		// computes the set of component that will host the item
+		var h = hash(item.key);
+
 		// async multicast the item to all targets
-		r.exec(ChordService.class, set.class, r.defaultData(), ComponentMatcher.multicast(hash(item.key)), null, item);
+		var target = ComponentMatcher.multicast(h);
+		rp.exec(ChordService.class, set.class, rp.defaultData(), target, null, item);
+	}
+
+	public Set<String> localKeys() {
+		return directory.listRegularFiles().stream().map(f -> file2ItemKey(f)).collect(Collectors.toSet());
+	}
+
+	private static String file2ItemKey(RegularFile f) {
+		return f.getName().replaceFirst(".dat$", "");
 	}
 
 	public Item get(String key) {
@@ -29,7 +52,7 @@ public class ChordService extends Service implements SizeOf {
 		// try all components in a sequence
 		for (var c : hosts) {
 			// sync call
-			var msg = r.exec(ChordService.class, get.class, r.defaultData(), ComponentMatcher.unicast(c), true,
+			var msg = rp.exec(ChordService.class, get.class, rp.defaultData(), ComponentMatcher.unicast(c), true,
 					key).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {
@@ -50,9 +73,9 @@ public class ChordService extends Service implements SizeOf {
 		}
 	}
 
-	public List<ItemLocation> search(String regex, double searchDuration) {
-		// SYNC multicast the item to all targets
-		return r.exec(ChordService.class, get.class, regex).returnQ.collector().collectDuring(searchDuration).messages
+	public List<ItemLocation> search(String k, double searchDuration) {
+		// SYNC multicast the key to all targets
+		return rp.exec(ChordService.class, get.class, k).returnQ.collector().collectDuring(searchDuration).messages
 				.stream().filter(msg -> msg.content instanceof Item)
 				.map(msg -> new ItemLocation((Item) msg.content, msg.route.source())).toList();
 	}
@@ -74,19 +97,20 @@ public class ChordService extends Service implements SizeOf {
 	}
 
 	public class keys extends TypedInnerClassEndpoint {
-		public Collection<String> keys(String regex) {
-			return items.stream().map(i -> i.key).filter(key -> key.matches(regex)).toList();
+		public Collection<String> keys() {
+			return localKeys();
 		}
 
 		@Override
 		public String getDescription() {
-			return "list the entries stored in this component";
+			return "list the name of the entries stored in this component";
 		}
 	}
 
 	public class set extends TypedInnerClassEndpoint {
 		public void f(Item i) {
-			items.add(i);
+			System.out.println("writing " + file(i.key));
+			file(i.key).setContent(i.content);
 		}
 
 		@Override
@@ -95,13 +119,28 @@ public class ChordService extends Service implements SizeOf {
 		}
 	}
 
+	private RegularFile file(String key) {
+		return new RegularFile(directory, key + ".dat");
+	}
+
 	public class get extends InnerClassEndpoint {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
+			// get the exec message
 			var execMsg = in.poll_sync();
-			String re = (String) execMsg.content;
-			items.stream().filter(i -> i.key.matches(re)).forEach(i -> reply(execMsg, i));
+
+			// extract the key param from it
+			String k = (String) execMsg.content;
+
+			// get the corresponding items
+			for (var f : directory.listRegularFiles()) {
+				if (file2ItemKey(f).equals(k)) {
+					var i = new Item(k, file(k).getContent());
+					reply(execMsg, i);
+					return;
+				}
+			}
 		}
 
 		@Override
@@ -111,8 +150,9 @@ public class ChordService extends Service implements SizeOf {
 	}
 
 	public class deleteRegex extends TypedInnerClassEndpoint {
-		public void delete(String regex) {
-			items.removeIf(i -> i.key.matches(regex));
+		public void delete(String k) {
+			directory.listRegularFiles().stream().filter(f -> file2ItemKey(f).equals(k)).findAny()
+					.ifPresent(f -> f.delete());
 		}
 
 		@Override

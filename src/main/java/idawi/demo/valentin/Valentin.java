@@ -5,19 +5,18 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.RuntimeEngine;
-import idawi.Service;
 import idawi.StdOutRuntimeListener;
+import idawi.TerminationEvent;
 import idawi.transport.Topologies;
 import idawi.transport.WiFiDirect;
 import jdotgen.GraphvizDriver;
 import toools.io.file.Directory;
-import toools.thread.Threads;
 
 public class Valentin {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		// RuntimeEngine.syncToI3S();
-		GraphvizDriver.pathToCommands = "/usr/local/bin/";
+		GraphvizDriver.pathToNativeExecutables = "/usr/local/bin/";
 		Random prng = new Random();
 		RuntimeEngine.simulationMode();
 		RuntimeEngine.listeners.add(new StdOutRuntimeListener());
@@ -26,6 +25,13 @@ public class Valentin {
 		Component root = new Component("root");
 		root.localView().createTwins(10);
 		Topologies.chainRandomly(root.localView().components(), 3, prng, WiFiDirect.class, (a, b) -> true);
+		root.localView().components().forEach(c -> new ChordService(c));
+
+		// each second a new topology change will happen
+		RuntimeEngine.offer(new NewLinkEvent(1, root, prng));
+		RuntimeEngine.terminateAt(20);
+		RuntimeEngine.offer(5, () -> root.localView().components().iterator().next().need(ChordService.class)
+				.store(new Item("item1", "value".getBytes())));
 
 		// results will go there
 		var dir = new Directory("$HOME/tmp/valentin");
@@ -36,13 +42,10 @@ public class Valentin {
 
 		// each mobility event will entail the generation of a new image of the network
 		RuntimeEngine.plotNet(root.localView(), dir, e -> e instanceof MobilityEvent);
+		//dir.open();
 
-		// dir.open();
 
-		// each second a new topology change will happen
-		RuntimeEngine.offer(new NewLinkEvent(Service.now() + 1, root, prng));
-
-		Threads.sleepForever();
+		System.out.println(RuntimeEngine.blockUntilSimulationHasCompleted() +  " event(s) processed $$$$$$$$$$$");
 	}
 
 }

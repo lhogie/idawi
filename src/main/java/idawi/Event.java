@@ -4,13 +4,25 @@ import java.io.Serializable;
 
 public abstract class Event<W extends When> implements Runnable, Serializable {
 	public W when;
+	String name;
 
 	public Event(W w) {
+		this(null, w);
+	}
+
+	public Event(String name, W w) {
 		this.when = w;
+		this.name = name;
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "@" + when;
+		String s = name == null ? getClass().getSimpleName() : name;
+
+		if (s == null || s.isEmpty()) {
+			s = getClass().getName();
+		}
+
+		return s + "@" + when;
 	}
 }

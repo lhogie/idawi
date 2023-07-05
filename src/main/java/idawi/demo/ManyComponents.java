@@ -32,7 +32,7 @@ public class ManyComponents {
 
 //		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
-		GraphvizDriver.pathToCommands = "/usr/local/bin/";
+		GraphvizDriver.pathToNativeExecutables = "/usr/local/bin/";
 //		pdfFile.setContent(Topologies.toDot(components).toPDF());
 		pdfFile.open();
 

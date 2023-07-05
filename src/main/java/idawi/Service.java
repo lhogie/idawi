@@ -250,7 +250,7 @@ public class Service implements SizeOf {
 		inputQ.add_sync(msg);
 		final var inputQ_final = inputQ;
 
-		Event e = new Event(new SpecificTime(now())) {
+		Event e = new Event(new PointInTime(now())) {
 			@Override
 			public void run() {
 				try {

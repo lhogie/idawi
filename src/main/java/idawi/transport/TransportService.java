@@ -11,7 +11,7 @@ import idawi.Component;
 import idawi.Event;
 import idawi.RuntimeEngine;
 import idawi.Service;
-import idawi.SpecificTime;
+import idawi.PointInTime;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.RouteListener;
@@ -114,7 +114,7 @@ public abstract class TransportService extends Service implements Externalizable
 			} else {
 				var c = msg.clone();
 
-				RuntimeEngine.offer(new Event<SpecificTime>(new SpecificTime(now() + outLink.latency)) {
+				RuntimeEngine.offer(new Event<PointInTime>(new PointInTime(now() + outLink.latency)) {
 					@Override
 					public void run() {
 						try {

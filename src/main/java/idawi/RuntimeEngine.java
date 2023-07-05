@@ -3,12 +3,12 @@ package idawi;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-
-import com.google.common.util.concurrent.AtomicDouble;
 
 import idawi.service.local_view.LocalViewService;
 import idawi.transport.Topologies;
@@ -19,35 +19,85 @@ import toools.reflect.ClassPath;
 import toools.util.Date;
 
 public class RuntimeEngine {
-	public static ExecutorService threadPool = Executors.newCachedThreadPool();
-	public static AtomicDouble simulatedTime;
-	private static PriorityBlockingQueue<Event<SpecificTime>> eventQueue = new PriorityBlockingQueue<>(100,
+	public static ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+//	public static AtomicDouble simulatedTime;
+	private static PriorityBlockingQueue<Event<PointInTime>> eventQueue = new PriorityBlockingQueue<>(100,
 			(a, b) -> a.when.compareTo(b.when));
 
-	public static void simulationMode() {
-		simulatedTime = new AtomicDouble(0);
-	}
+	static ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
 
 	public static List<RuntimeListener> listeners = new ArrayList<>();
 
+	static List<Event<?>> runningEvents = new ArrayList<>();
+	static long nbPastEvents = 0;
+	public static final double startTime = Date.time();
+	public static double timeAcceleartionFactor = 1;
+	private static Thread controllerThread;
+
+	public static void simulationMode() {
+//		simulatedTime = new AtomicDouble(0);
+	}
+
+	static Event<PointInTime> pendingEvent;
+public static AtomicBoolean terminationRequired = new AtomicBoolean(false); 
 	static {
 		threadPool.submit(() -> {
+			controllerThread = Thread.currentThread();
+
 			while (true) {
-				try {
-					System.err.println("take");
-					var e = eventQueue.take();
-					simulatedTime.set(e.when.time);
-					listeners.forEach(l -> l.newEvent(e));
-					threadPool.submit(e);
-				} catch (InterruptedException err) {
-					err.printStackTrace();
+				// if we do a simulation and nothing can generate new events, so take() has not
+				// chance to return
+				if (terminationRequired.get()) {
+					listeners.forEach(l -> l.terminating(nbPastEvents));
+					stopQ.offer("");
+					break;
+				} else {
+					try {
+						while (true) {
+							listeners.forEach(l -> l.waitingForEvent());
+							pendingEvent = eventQueue.take();
+							listeners.forEach(l -> l.newEventTakenFromQueue(pendingEvent));
+							double waitTimeS = Math.max(0, pendingEvent.when.time - now());
+							long waitTimeMs = (long) (1000 * waitTimeS);
+
+							try {
+								listeners.forEach(l -> l.sleeping(waitTimeMs));
+								Thread.sleep(waitTimeMs);
+								break;
+							} catch (InterruptedException interupt) {
+								listeners.forEach(l -> l.interrupted());
+								eventQueue.offer(pendingEvent);
+							}
+						}
+
+//						simulatedTime.set(e.when.time);
+						listeners.forEach(l -> l.newEventScheduledForExecution(pendingEvent));
+						threadPool.submit(new Runnable() {
+							Event<?> e = pendingEvent;
+							{
+								runningEvents.add(e);
+							}
+
+							public void run() {
+								listeners.forEach(l -> l.eventProcessingStarts(e));
+								e.run();
+								++nbPastEvents;
+								runningEvents.remove(e);
+								listeners.forEach(l -> l.eventProcessingCompleted(e));
+							}
+						});
+						pendingEvent = null;
+					} catch (InterruptedException err) {
+						err.printStackTrace();
+					}
 				}
 			}
 		});
 	}
 
 	public static double now() {
-		return simulatedTime == null ? Date.time() : simulatedTime.get();
+//		return simulatedTime == null ? Date.time() : simulatedTime.get();
+		return (Date.time() - startTime) * timeAcceleartionFactor;
 		// var ts = lookup(TimeService.class);
 		// return ts == null ? Date.time() : ts.now();
 	}
@@ -56,7 +106,7 @@ public class RuntimeEngine {
 		threadPool.shutdown();
 	}
 
-	public static abstract class LocalViewPlotter implements RuntimeListener {
+	private static abstract class LocalViewPlotter extends RuntimeAdapter {
 		private Directory dir;
 		private LocalViewService localView;
 
@@ -66,7 +116,7 @@ public class RuntimeEngine {
 		}
 
 		@Override
-		public void newEvent(Event<?> e) {
+		public void newEventTakenFromQueue(Event<?> e) {
 			if (plot(e)) {
 				doImg(localView, now(), dir, e.getClass().getSimpleName());
 			}
@@ -86,18 +136,13 @@ public class RuntimeEngine {
 				return p.test(e);
 			}
 
-			@Override
-			public void eventSubmitted(Event<SpecificTime> newEvent) {
-			}
 		});
 
 		return firstImg;
 	}
 
-	public static int eventIndex = 0;
-
 	public static RegularFile doImg(LocalViewService s, double date, Directory dir, String label) {
-		var pdf = new RegularFile(dir, "/simulated_network-" + String.format("%03d", eventIndex) + " date=" + date
+		var pdf = new RegularFile(dir, "/simulated_network-" + String.format("%03d", nbPastEvents) + " date=" + date
 				+ ", event=" + label + ".pdf");
 		pdf.setContent(Topologies
 				.toDot(s.components(), s.links(), c -> c.toString().replaceFirst(s.component + "/", "")).toPDF());
@@ -114,9 +159,36 @@ public class RuntimeEngine {
 		System.out.println(ssh.host + ":" + dir);
 	}
 
-	public static void offer(Event<SpecificTime> newEvent) {
+	public static void offer(Event<PointInTime> newEvent) {
 		listeners.forEach(l -> l.eventSubmitted(newEvent));
 		eventQueue.offer(newEvent);
+
+		if (pendingEvent != null && newEvent.when.time < pendingEvent.when.time) {
+			controllerThread.interrupt();
+		}
 	}
 
+	public static void offer(double date, Runnable r) {
+		offer(new Event<PointInTime>(new PointInTime(date)) {
+
+			@Override
+			public void run() {
+				r.run();
+			}
+		});
+	}
+
+	public static long blockUntilSimulationHasCompleted() {
+		try {
+			stopQ.take();
+			stopPlatformThreads();
+			return nbPastEvents;
+		} catch (InterruptedException e) {
+			throw new IllegalStateException();
+		}
+	}
+
+	public static void terminateAt(int i) {
+		offer(new TerminationEvent(20));		
+	}
 }
