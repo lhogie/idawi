@@ -6,15 +6,17 @@ import java.util.function.Predicate;
 
 import idawi.Component;
 import idawi.transport.Link;
-import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import toools.io.Cout;
 
 public class BFS {
 	public static class BFSResult {
+		public BFSResult(Component src) {
+			this.predecessors = new PredecessorTable(src);
+		}
+
 		public Object2LongMap<Component> distances = new Object2LongOpenHashMap<>();
-		public PredecessorTable predecessors = new PredecessorTable();
+		public PredecessorTable predecessors;
 		public int nbVerticesVisited;
 
 		@Override
@@ -28,7 +30,7 @@ public class BFS {
 			@Override
 			public void exposeComponent(Predicate<Component> p) {
 				for (var c : RRoute.this) {
-					if (p.test(c.dest.component)) {
+					if (p.test(c.src.component) || p.test(c.dest.component)) {
 						return;
 					}
 				}
@@ -53,6 +55,10 @@ public class BFS {
 		@Override
 		public Info asInfo() {
 			return info;
+		}
+
+		public Link last() {
+			return get(size() - 1);
 		}
 	}
 
@@ -96,7 +102,7 @@ public class BFS {
 			routes.add(newRoute);
 		}
 
-		public RRoute findRouteUsing(Link l) {
+		public RRoute findARouteUsing(Link l) {
 			for (var alreadyKnownRoute : routes) {
 				if (alreadyKnownRoute.contains(l)) {
 					return alreadyKnownRoute;
@@ -105,56 +111,35 @@ public class BFS {
 
 			return null;
 		}
-
 	}
 
-	public static BFSResult bfs(Component source, long maxDistance, long maxNbVerticesVisited,
-			Predicate<Link> ignore) {
-		Cout.debugSuperVisible("bfs");
-		BFSResult r = new BFSResult();
-
-//		AtomicBoolean completed = new AtomicBoolean(false);
-
-		// Threads.newThread_loop_periodic(1000, () -> completed.get(), () -> {
-		// reply(triggerMsg, new ProgressRatio(nbVertices, r.nbVerticesVisited));
-		// });
-
-//		var lp = new LongProcess("BFS (classic)", " vertex", nbVertices);
-		var q = new ArrayList<Link>();
-
-		for (var n : source.outLinks()) {
-			q.add(n);
-			r.distances.put(n.dest.component, 1L);
-		}
-
-		long nbVerticesVisited = 1;
+	public static BFSResult bfs(LocalViewService lv, Component source, long maxDistance, long maxNbVerticesVisited,
+			Predicate<Component> ignoreComponent, Predicate<Link> ignoreLink) {
+		BFSResult r = new BFSResult(source);
+		var q = new ArrayList<Component>();
+		q.add(source);
+		r.distances.put(source, 0L);
 
 		while (!q.isEmpty()) {
-			Cout.debug(q.size() + " elements in queue");
-//			++lp.sensor.progressStatus;
+			var c = q.remove(0);
+			var d = r.distances.getLong(c);
 
-			var n = q.remove(0);
+			if (!ignoreComponent.test(c)) {
+				lv.links().stream().filter(l ->  l.src.component.equals(c)).forEach(l -> {
 
-			if (!ignore.test(n)) {
-				for (var transport : n.dest.component.services(TransportService.class)) {
-					for (var outNeighbor : transport.outLinks().toList()) {
-						var d = r.distances.getLong(n);
+					if (!ignoreLink.test(l) && l.isActive()) {
+						var succ = l.dest.component;
 
-						if (!r.distances.containsKey(outNeighbor)) {
-							r.distances.put(outNeighbor.dest.component, d + 1);
-							r.predecessors.put(n, outNeighbor);
-
-							if (nbVerticesVisited++ >= maxNbVerticesVisited)
-								break;
-
-							q.add(outNeighbor);
+						if (!r.distances.containsKey(succ)) {
+							r.distances.put(succ, d + 1);
+							r.predecessors.put(succ, l);
+							q.add(succ);
 						}
+					}else {
 					}
-				}
+				});
 			}
 		}
-
-		Cout.debugSuperVisible("bfs completed");
 
 		return r;
 	}

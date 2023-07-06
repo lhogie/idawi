@@ -133,4 +133,8 @@ public class OutLinks extends Info implements Serializable, Iterable<Link> {
 
 	}
 
+	public Collection<Link> outLinks(Component c) {
+		return stream().filter(l -> l.src.component.equals(c)).toList();
+	}
+
 }

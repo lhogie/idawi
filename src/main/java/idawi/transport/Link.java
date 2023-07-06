@@ -3,6 +3,7 @@ package idawi.transport;
 import java.util.function.Predicate;
 
 import idawi.Component;
+import idawi.RuntimeEngine;
 import idawi.service.local_view.Info;
 
 public class Link extends Info {
@@ -10,10 +11,11 @@ public class Link extends Info {
 	public TransportService src, dest;
 	public final Activity activity = new Activity();
 
-	public double latency;
+	public double latency = 0.001;
 	public int throughput;
 
 	public Link() {
+		activity.add(new TimeFrame(RuntimeEngine.now()));
 	}
 
 	@Override

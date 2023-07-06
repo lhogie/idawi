@@ -4,7 +4,7 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.RuntimeEngine;
-import idawi.transport.UDPDriver;
+import idawi.transport.WiFiDirect;
 import toools.collections.Collections;
 
 class NewLinkEvent extends MobilityEvent {
@@ -22,7 +22,7 @@ class NewLinkEvent extends MobilityEvent {
 			b = Collections.pickRandomObject(c.localView().components(), prng);
 		}
 
-		a.need(UDPDriver.class).connectTo(b.need(UDPDriver.class), true);
+		a.need(WiFiDirect.class).connectTo(b.need(WiFiDirect.class), true);
 		RuntimeEngine.offer(new LinkFailEvent(RuntimeEngine.now() + 1, c, prng));
 	}
 }

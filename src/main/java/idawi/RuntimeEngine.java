@@ -7,11 +7,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import idawi.service.local_view.LocalViewService;
-import idawi.transport.Topologies;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 import toools.net.SSHParms;
@@ -24,38 +23,41 @@ public class RuntimeEngine {
 	private static PriorityBlockingQueue<Event<PointInTime>> eventQueue = new PriorityBlockingQueue<>(100,
 			(a, b) -> a.when.compareTo(b.when));
 
-	static ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
+	private static ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
 
-	public static List<RuntimeListener> listeners = new ArrayList<>();
+	public final static List<RuntimeListener> listeners = new ArrayList<>();
 
-	static List<Event<?>> runningEvents = new ArrayList<>();
+	private static List<Event<?>> runningEvents = new ArrayList<>();
 	static long nbPastEvents = 0;
 	public static final double startTime = Date.time();
 	public static double timeAcceleartionFactor = 1;
 	private static Thread controllerThread;
+	private static Event<PointInTime> pendingEvent;
+	public static Supplier<Boolean> terminationCondition = () -> false;
 
-	public static void simulationMode() {
-//		simulatedTime = new AtomicDouble(0);
-	}
-
-	static Event<PointInTime> pendingEvent;
-public static AtomicBoolean terminationRequired = new AtomicBoolean(false); 
 	static {
 		threadPool.submit(() -> {
-			controllerThread = Thread.currentThread();
+			try {
+				controllerThread = Thread.currentThread();
 
-			while (true) {
-				// if we do a simulation and nothing can generate new events, so take() has not
-				// chance to return
-				if (terminationRequired.get()) {
-					listeners.forEach(l -> l.terminating(nbPastEvents));
-					stopQ.offer("");
-					break;
-				} else {
-					try {
+				while (true) {
+					// if we do a simulation and nothing can generate new events, so take() has not
+					// chance to return
+					if (terminationCondition.get()) {
+						listeners.forEach(l -> l.terminating(nbPastEvents));
+						stopQ.offer("");
+						break;
+					} else {
 						while (true) {
 							listeners.forEach(l -> l.waitingForEvent());
-							pendingEvent = eventQueue.take();
+							while (true) {
+								try {
+									pendingEvent = eventQueue.take();
+									break;
+								} catch (InterruptedException interupt) {
+									System.err.println("weird");
+								}
+							}
 							listeners.forEach(l -> l.newEventTakenFromQueue(pendingEvent));
 							double waitTimeS = Math.max(0, pendingEvent.when.time - now());
 							long waitTimeMs = (long) (1000 * waitTimeS);
@@ -72,6 +74,8 @@ public static AtomicBoolean terminationRequired = new AtomicBoolean(false);
 
 //						simulatedTime.set(e.when.time);
 						listeners.forEach(l -> l.newEventScheduledForExecution(pendingEvent));
+
+						// if (!threadPool.isShutdown())
 						threadPool.submit(new Runnable() {
 							Event<?> e = pendingEvent;
 							{
@@ -79,18 +83,23 @@ public static AtomicBoolean terminationRequired = new AtomicBoolean(false);
 							}
 
 							public void run() {
-								listeners.forEach(l -> l.eventProcessingStarts(e));
-								e.run();
-								++nbPastEvents;
-								runningEvents.remove(e);
-								listeners.forEach(l -> l.eventProcessingCompleted(e));
+								try {
+									listeners.forEach(l -> l.eventProcessingStarts(e));
+									e.run();
+									++nbPastEvents;
+									runningEvents.remove(e);
+									listeners.forEach(l -> l.eventProcessingCompleted(e));
+								} catch (Throwable err) {
+									stopQ.offer(err);
+									terminationCondition = () -> true;
+								}
 							}
 						});
 						pendingEvent = null;
-					} catch (InterruptedException err) {
-						err.printStackTrace();
 					}
 				}
+			} catch (Throwable err) {
+				err.printStackTrace();
 			}
 		});
 	}
@@ -116,7 +125,7 @@ public static AtomicBoolean terminationRequired = new AtomicBoolean(false);
 		}
 
 		@Override
-		public void newEventTakenFromQueue(Event<?> e) {
+		public void eventProcessingCompleted(Event<?> e) {
 			if (plot(e)) {
 				doImg(localView, now(), dir, e.getClass().getSimpleName());
 			}
@@ -144,8 +153,7 @@ public static AtomicBoolean terminationRequired = new AtomicBoolean(false);
 	public static RegularFile doImg(LocalViewService s, double date, Directory dir, String label) {
 		var pdf = new RegularFile(dir, "/simulated_network-" + String.format("%03d", nbPastEvents) + " date=" + date
 				+ ", event=" + label + ".pdf");
-		pdf.setContent(Topologies
-				.toDot(s.components(), s.links(), c -> c.toString().replaceFirst(s.component + "/", "")).toPDF());
+		s.plot(pdf);
 		return pdf;
 	}
 
@@ -178,17 +186,27 @@ public static AtomicBoolean terminationRequired = new AtomicBoolean(false);
 		});
 	}
 
-	public static long blockUntilSimulationHasCompleted() {
+	public static long blockUntilSimulationHasCompleted() throws Throwable {
 		try {
-			stopQ.take();
-			stopPlatformThreads();
-			return nbPastEvents;
+			// stopPlatformThreads();
+			var o = stopQ.take();
+
+			if (o instanceof Throwable) {
+				throw (Throwable) o;
+			} else {
+				return nbPastEvents;
+			}
 		} catch (InterruptedException e) {
 			throw new IllegalStateException();
 		}
 	}
 
-	public static void terminateAt(int i) {
-		offer(new TerminationEvent(20));		
+	public static void stdout(String s) {
+		System.out.println(String.format("%.3f", RuntimeEngine.now()) + "\t" + s);
 	}
+
+	public static void stderr(String s) {
+		System.err.println(String.format("%.3f", RuntimeEngine.now()) + "\t" + s);
+	}
+
 }

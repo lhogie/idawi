@@ -1,47 +1,48 @@
 package idawi.service.local_view;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.service.local_view.BFS.RRoute;
 import idawi.transport.Link;
 
-public class PredecessorTable extends HashMap<Link, Link> {
-	public RRoute path(Component source, Component dest) {
+public class PredecessorTable extends LinkedHashMap<Component, Link> {
+	final Component src;
+
+	public PredecessorTable(Component src) {
+		this.src = src;
+	}
+
+	public RRoute pathTo(Component dest) {
 		var r = new RRoute();
-		r.add(find(dest));
 
-		while (true) {
-			var p = get(r.get(r.size() - 1));
+		while (!dest.equals(src)) {
+			var l = get(dest);
 
-			if (p == null) {
+			if (l == null) {
 				return null;
-			} else if (p.dest.component.equals(source)) {
-				r.reverse();
-				return r;
-			}
-
-			r.add(p);
-		}
-	}
-
-	private Link find(Component c) {
-		for (var on : keySet()) {
-			if (on.dest.component.equals(c)) {
-				return on;
+			} else {
+				r.add(l);
+				dest = l.src.component;
 			}
 		}
 
-		return null;
+		r.reverse();
+		return r;
 	}
 
-	public Set<Link> successors(Component source, Set<Component> dest) {
+	public List<RRoute> allPaths() {
+		return keySet().stream().map(c -> pathTo(c)).toList();
+	}
+
+	public Set<Link> relaysTo(Set<Component> dest) {
 		var r = new HashSet<Link>();
 
 		for (var d : dest) {
-			var p = path(source, d);
+			var p = pathTo(d);
 
 			if (p != null) {
 				r.add(p.get(0));
@@ -51,8 +52,8 @@ public class PredecessorTable extends HashMap<Link, Link> {
 		return r;
 	}
 
-	public int distance(Component from, Component to) {
-		return path(from, to).size();
+	public int distanceTo(Component c) {
+		return pathTo(c).size();
 	}
 
 }

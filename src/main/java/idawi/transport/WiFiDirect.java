@@ -6,10 +6,14 @@ import toools.exceptions.NotYetImplementedException;
 
 public class WiFiDirect extends TransportService {
 
+	public WiFiDirect() {
+		super();
+	}
+
 	public WiFiDirect(Component c) {
 		super(c);
 	}
-	
+
 	@Override
 	public String getName() {
 		return "Wi-Fi";

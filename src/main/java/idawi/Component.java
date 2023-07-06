@@ -262,8 +262,8 @@ public class Component implements SizeOf, Externalizable {
 		return o instanceof Component && o.hashCode() == hashCode();
 	}
 
-	public boolean matches(String re) {
-		return name.matches(re);
+	public boolean matches(String s) {
+		return name.equals(s);
 	}
 
 	public DigitalTwinService dt() {

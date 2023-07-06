@@ -9,9 +9,9 @@ import java.util.stream.Stream;
 
 import idawi.Component;
 import idawi.Event;
+import idawi.PointInTime;
 import idawi.RuntimeEngine;
 import idawi.Service;
-import idawi.PointInTime;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.RouteListener;
@@ -52,9 +52,6 @@ public abstract class TransportService extends Service implements Externalizable
 	protected final void processIncomingMessage(Message msg) {
 		Cout.debug(" " + component + " receives " + msg);
 		++nbOfMsgReceived;
-
-		if (component.isDigitalTwin())
-			throw new IllegalStateException();
 
 		msg.route.entries().forEach(e -> e.link = component.localView().ensureTwinLinkExists(e.link));
 		msg.route.last().receptionDate = component.now();
@@ -180,8 +177,8 @@ public abstract class TransportService extends Service implements Externalizable
 
 		if (l == null) {
 			component.localView().links().add(l = new Link(this, to));
-		} else {
 			l.activity.add(new TimeFrame(now()));
+		} else {
 		}
 
 		return l;

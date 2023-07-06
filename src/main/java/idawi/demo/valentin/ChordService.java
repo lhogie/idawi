@@ -18,7 +18,7 @@ import toools.io.file.RegularFile;
 
 public class ChordService extends Service {
 	// item data will be stored there
-	public static String pathToLocalContents = "$HOME/i3s/idawi/chord/";
+	public static Directory pathToLocalContents = new Directory("$HOME/i3s/idawi/chord");
 	final public Directory directory;
 
 	// chord queries will be send using this routing scheme
@@ -26,12 +26,16 @@ public class ChordService extends Service {
 
 	public ChordService(Component c) {
 		super(c);
-		directory = new Directory(pathToLocalContents);
+		directory = new Directory(pathToLocalContents, c.name());
+		directory.mkdirs();
 	}
 
 	public void store(Item item) {
+		System.out.println("add item via " + component);
+
 		// computes the set of component that will host the item
 		var h = hash(item.key);
+		System.out.println("to " + h);
 
 		// async multicast the item to all targets
 		var target = ComponentMatcher.multicast(h);

@@ -2,9 +2,10 @@ package idawi.service.local_view;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
@@ -24,17 +25,18 @@ import idawi.service.local_view.BFS.Routes;
 import idawi.transport.Link;
 import idawi.transport.OutLinks;
 import idawi.transport.TimeFrame;
+import idawi.transport.Topologies;
 import idawi.transport.TransportService;
 import jdotgen.EdgeProps;
 import jdotgen.GraphvizDriver;
 import jdotgen.Props.Style;
 import jdotgen.VertexProps;
 import toools.io.Cout;
+import toools.io.file.RegularFile;
 
 public class LocalViewService extends KnowledgeBase implements RouteListener {
 
-	public final Cache<BFSResult> bfsResult = new Cache<>(5,
-			() -> BFS.bfs(component, 10, Integer.MAX_VALUE, avoid -> false));
+	public final Map<Component, Cache<BFSResult>> src2bfsCache = new HashMap<>();
 
 	private final Set<Component> components = new HashSet<>();
 	public final List<DigitalTwinListener> listeners = new ArrayList<>();
@@ -46,6 +48,30 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 
 		// the component won't have twin
 //		components.add(component);
+	}
+
+	public RegularFile plot() {
+		var f = RegularFile.createTempFile("idawi-", ".pdf");
+		f.setContent(Topologies.toDot(components(), links(), c -> c.name()).toPDF());
+		return f;
+	}
+	public void plot(RegularFile f) {
+		f.setContent(Topologies.toDot(components(), links(), c -> c.name()).toPDF());
+	}
+
+	public BFSResult bfs(Component from) {
+		var cache = src2bfsCache.get(from);
+
+		if (cache == null) {
+			src2bfsCache.put(from, cache = new Cache<>(5,
+					() -> BFS.bfs(component.localView(), from, 10, Integer.MAX_VALUE, avoid -> false, avoid -> false)));
+		}
+
+		return cache.get();
+	}
+
+	public void clearBFSCaches() {
+		src2bfsCache.clear();
 	}
 
 	public void newLink(Component from, Component to, Class<? extends TransportService> p) {
@@ -216,17 +242,17 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 	}
 
 	public RRoute findRoute(Component src, Component dest, int maxDistance) {
-		return BFS.bfs(src, maxDistance, Integer.MAX_VALUE, c -> false).predecessors.path(src, dest);
+		return BFS.bfs(this, src, maxDistance, Integer.MAX_VALUE, c -> false, c -> false).predecessors.pathTo(dest);
 	}
 
 	public Routes findDisjointRoutes(Component src, Component dest, int maxDistance, Predicate<Routes> enough) {
 		var routes = new Routes();
 		routes.disjoint = true;
 		var ignore = new HashSet<Component>();
-		var bfs = BFS.bfs(src, maxDistance, Integer.MAX_VALUE, c -> false);
+		var bfs = BFS.bfs(this, src, maxDistance, Integer.MAX_VALUE, c -> false, c -> false);
 
 		while (true) {
-			var r = bfs.predecessors.path(src, dest);
+			var r = bfs.predecessors.pathTo( dest);
 
 			if (r == null) {
 				return routes;
@@ -256,7 +282,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 	}
 
 	public Component lookup(String name) {
-		return components.stream().filter(c -> c.matches(name)).findFirst().orElse(null);
+		return components.stream().filter(c -> c.name().matches(name)).findFirst().orElse(null);
 	}
 
 	public <S extends Service> S localTwin(Class<S> s, Component child) {
@@ -343,7 +369,7 @@ public class LocalViewService extends KnowledgeBase implements RouteListener {
 
 	public void createTwins(int n) {
 		for (int i = 0; i < n; i++) {
-			var t = new Component(""+i);
+			var t = new Component("" + i);
 			new DigitalTwinService(t, component.localView());
 			components.add(t);
 		}

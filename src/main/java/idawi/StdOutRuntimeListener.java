@@ -3,7 +3,7 @@ package idawi;
 public class StdOutRuntimeListener implements RuntimeListener {
 
 	private void print(String s) {
-		System.out.println(String.format("%.2f", RuntimeEngine.now())+ "\t" + s);
+		RuntimeEngine.stdout(String.format("%.2f", RuntimeEngine.now())+ "\t" + s);
 	}
 	
 	@Override

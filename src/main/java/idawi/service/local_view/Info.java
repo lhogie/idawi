@@ -59,7 +59,7 @@ public abstract class Info implements Serializable, SizeOf {
 		}
 		A a = new A();
 
-		forEachComponent(d -> a.d = Math.min(a.d, predecessors.distance(c, d)));
+		forEachComponent(d -> a.d = Math.min(a.d, predecessors.distanceTo( d)));
 		return a.d;
 	}
 
