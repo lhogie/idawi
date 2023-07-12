@@ -1,6 +1,7 @@
 package idawi.service.local_view;
 
 import idawi.Component;
+import idawi.transport.Link;
 import idawi.transport.TransportService;
 
 public interface NetworkTopologyListener {
@@ -8,7 +9,8 @@ public interface NetworkTopologyListener {
 
 	void componentHasGone(Component a);
 
-	void newInteraction(TransportService from, TransportService to);
 
-	void interactionStopped(TransportService from, TransportService to);
+	void linkActivated(Link l);
+
+	void linkDeactivated(Link l);
 }

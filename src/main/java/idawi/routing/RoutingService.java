@@ -30,6 +30,8 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 
 	public final List<RoutingListener> listeners = new ArrayList<>();
 
+	public long nbMessagesInitiated;
+
 	public RoutingService(Component node) {
 		super(node);
 	}
@@ -63,7 +65,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 
 	public void send(Object value, ComponentMatcher r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
-
+		++nbMessagesInitiated;
 		var dest = new MessageQDestination();
 		dest.queueID = queueID;
 		dest.service = s;

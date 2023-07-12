@@ -16,6 +16,7 @@ import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
+import idawi.service.local_view.Network;
 import idawi.service.web.Graph;
 import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
@@ -33,7 +34,6 @@ public class DemoService extends Service {
 		registerEndpoint("e", q -> {
 		});
 	}
-
 
 	public class multipleRandomMessages extends InnerClassEndpoint {
 
@@ -100,10 +100,11 @@ public class DemoService extends Service {
 	public static void main(String[] args) {
 		Component a = new Component("a");
 		Component b = new Component("b");
-		a.need(SharedMemoryTransport.class).inoutTo(b);
+		Network.link(a, b, SharedMemoryTransport.class, true);
 
 		var s = new BlindBroadcasting(a);
-		 RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b), true, "");
+		RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b),
+				true, "");
 
 		for (int i = 0; i < 50; ++i) {
 			s.send("" + i, o);
@@ -195,7 +196,6 @@ public class DemoService extends Service {
 			}
 		}
 	}
-
 
 	public class loremPicsum extends TypedInnerClassEndpoint {
 		@Override

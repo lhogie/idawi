@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import idawi.Component;
+import idawi.service.local_view.Network;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
 import toools.thread.Threads;
@@ -18,7 +19,7 @@ public class Tree {
 			var a = l.get(new Random().nextInt(l.size()));
 			var b = new Component();
 			l.add(b);
-			a.need(SharedMemoryTransport.class).outTo(b);
+			Network.link(a, b, SharedMemoryTransport.class, false);
 		}
 
 		l.get(0).need(WebService.class).startHTTPServer();

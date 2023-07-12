@@ -21,6 +21,7 @@ import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.service.DemoService;
+import idawi.service.local_view.Network;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
@@ -43,12 +44,12 @@ public class LucTests {
 		Component c2 = new Component("c2");
 
 		// connect those 2 components
-		c1.need(SharedMemoryTransport.class).inoutTo(c2);
+		Network.link(c1, c2, SharedMemoryTransport.class, true);
 
 		// ask c1 to ping c2
 		Message pong = c1.bb().ping(c2).poll_sync();
 		System.out.println(pong);
-		RuntimeEngine.stopPlatformThreads();
+		RuntimeEngine.threadPool.shutdown();
 	}
 
 	@org.junit.Test
@@ -61,7 +62,7 @@ public class LucTests {
 		Component c2 = new Component("c2");
 
 		// connect those 2 components
-		c1.need(SharedMemoryTransport.class).inoutTo(c2);
+		Network.link(c1, c2, SharedMemoryTransport.class, true);
 
 		// ask c1 to ping c2
 		Message pong = c1.bb().ping(c2).poll_sync();
@@ -98,7 +99,7 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test operationSignatures");
 		Component c1 = new Component("c1");
 		Component c2 = new Component("c2");
-		c1.need(SharedMemoryTransport.class).inoutTo(c2);
+		Network.link(c1, c2, SharedMemoryTransport.class, true);
 
 		Cout.debugSuperVisible(c1.outLinks());
 
@@ -165,7 +166,7 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting signature test");
 		Component c1 = new Component("c1");
 		Component c2 = new Component("c2");
-		c1.need(SharedMemoryTransport.class).inoutTo(c2);
+		Network.link(c1, c2, SharedMemoryTransport.class, true);
 
 		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new EndpointParameterList("hello"));
 		var c = rom.returnQ.collector();

@@ -9,17 +9,21 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import idawi.Component;
+import idawi.RuntimeEngine;
 import idawi.service.LocationService;
 import idawi.service.SimulatedLocationService;
+import idawi.service.local_view.Network;
 import jdotgen.EdgeProps;
 import jdotgen.GraphvizDriver;
 import jdotgen.VertexProps;
 import jdotgen.VertexProps.Shape;
 
 public class Topologies {
+
 
 	public static void chain(List<Component> l, Class<? extends TransportService> t,
 			BiFunction<TransportService, TransportService, Boolean> bidi) {
@@ -28,7 +32,7 @@ public class Topologies {
 		for (int i = 1; i < n; ++i) {
 			var a = l.get(i - 1).need(t);
 			var b = l.get(i).need(t);
-			a.connectTo(b, bidi.apply(a, b));
+			Network.link(a, b, bidi.apply(a, b));
 		}
 	}
 
@@ -59,16 +63,19 @@ public class Topologies {
 			}
 
 			var bt = b.need(t);
-			at.connectTo(bt, bidi.apply(at, bt));
+			Network.link(at, bt, bidi.apply(at, bt));
 		}
 	}
 
-	public static void gnp(List<Component> l, double p, Class<? extends TransportService> t) {
-		for (var a : l) {
-			for (var b : l) {
-				if (a != b && Math.random() < p
-						&& !a.need(t).outLinks().map(ol -> ol.dest.component).anyMatch(c -> c.equals(b))) {
-					a.need(t).outTo(b);
+	public static void gnp(Collection<Component> components, double p, Class<? extends TransportService> t, boolean bidi, double timeIncrement) {
+		int i =0;
+		for (var a : components) {
+			for (var b : components) {
+				if (a != b && RuntimeEngine.prng.nextDouble() < p
+						&& !a.need(t).outLinks().anyMatch(l -> l.dest.component.equals(b))) {
+					RuntimeEngine.offer(i += timeIncrement, "add link GNP",
+							() -> Network.link(a, b, WiFiDirect.class, bidi));
+					//Network.link(a, b, t, false);
 				}
 			}
 		}
@@ -78,10 +85,9 @@ public class Topologies {
 		int n = l.size();
 
 		for (int i = 1; i < n; ++i) {
-			var from = l.get(i).need(t);
+			var from = l.get(i);
 			var to = l.get(ThreadLocalRandom.current().nextInt(i));
-			from.outTo(to);
-			to.need(t).outTo(from);
+			Network.link(from, to, t, true);
 		}
 	}
 
@@ -97,10 +103,15 @@ public class Topologies {
 	}
 
 	public static void clique(Collection<Component> components, Class<? extends TransportService> t) {
+		couples(components, t, (a, b) -> true);
+	}
+
+	public static void couples(Collection<Component> components, Class<? extends TransportService> t,
+			BiPredicate<Component, Component> p) {
 		for (var a : components) {
 			for (var b : components) {
-				if (a != b) {
-					a.need(t).outTo(b);
+				if (a != b && p.test(a, b)) {
+					Network.link(a, b, t, false);
 				}
 			}
 		}
@@ -127,7 +138,7 @@ public class Topologies {
 
 						if (tb != null) {
 							if (ta.component.localView().links().stream().noneMatch(ll -> ll.matches(ta, tb))) {
-								ta.outTo(tb);
+								Network.link(ta, tb, false);
 							}
 						}
 					}
@@ -142,10 +153,10 @@ public class Topologies {
 	}
 
 	public static GraphvizDriver toDot(Collection<Component> components, OutLinks links) {
-		return toDot(components, links, c -> c);
+		return graphViz(components, links, c -> c);
 	}
 
-	public static GraphvizDriver toDot(Collection<Component> components, OutLinks links,
+	public static GraphvizDriver graphViz(Collection<Component> components, OutLinks links,
 			Function<Component, Object> id) {
 		return new GraphvizDriver() {
 			Set<Link> s = new HashSet<>();

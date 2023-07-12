@@ -39,7 +39,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 
 			for (var t : component.services(TransportService.class)) {
 				
-				t.send(msg, relay == null ? null : Set.of(component.localView().findLink(relay)), this, p);
+				t.send(msg, relay == null ? null : Set.of(component.localView().g.findLink(relay)), this, p);
 			}
 		}
 	}

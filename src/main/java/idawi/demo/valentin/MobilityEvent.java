@@ -1,15 +1,10 @@
 package idawi.demo.valentin;
 
-import java.util.Collection;
 import java.util.Random;
 
 import idawi.Component;
 import idawi.Event;
-import idawi.RuntimeEngine;
-import idawi.Service;
 import idawi.PointInTime;
-import idawi.transport.UDPDriver;
-import toools.collections.Collections;
 
 abstract class MobilityEvent extends Event<PointInTime> {
 	protected Random prng;
@@ -20,5 +15,4 @@ abstract class MobilityEvent extends Event<PointInTime> {
 		this.prng = prng;
 		this.c = c;
 	}
-
 }

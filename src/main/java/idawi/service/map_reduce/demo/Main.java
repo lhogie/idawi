@@ -27,7 +27,7 @@ public class Main {
 
 		// create workers
 		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().lookup("w" + i)));
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.lookup("w" + i)));
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();
@@ -82,7 +82,7 @@ public class Main {
 
 		System.out.println("result= " + finalResult.get());
 
-		RuntimeEngine.stopPlatformThreads();
+		RuntimeEngine.threadPool.shutdown();
 	}
 
 }

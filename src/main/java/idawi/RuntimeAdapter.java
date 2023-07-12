@@ -3,10 +3,6 @@ package idawi;
 public class RuntimeAdapter implements RuntimeListener {
 
 	@Override
-	public void newEventTakenFromQueue(Event<?> e) {
-	}
-
-	@Override
 	public void eventSubmitted(Event<?> newEvent) {
 	}
 
@@ -23,25 +19,23 @@ public class RuntimeAdapter implements RuntimeListener {
 	}
 
 	@Override
-	public void waitingForEvent() {
+	public void sleeping(double waitingTime, Event<?> event) {
 	}
 
 	@Override
 	public void interrupted() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void sleeping(long waitTimeMs) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void terminating(long nbPastEvents) {
-		// TODO Auto-generated method stub
-		
+	}
+
+	@Override
+	public void starting() {
 	}
 
 }

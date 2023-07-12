@@ -115,7 +115,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 			if (pos == -1) {
 				return multicast(new HashSet<Component>(Arrays.stream(s.split(" *, *")).map(ref -> {
-					var c = lookup.lookup(ref);
+					var c = lookup.g.lookup(ref);
 
 					if (c == null) {
 						lookup.localTwin(c = new Component(ref, lookup));

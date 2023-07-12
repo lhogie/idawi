@@ -22,6 +22,7 @@ import idawi.messaging.MessageQueue;
 import idawi.service.SystemService;
 import idawi.service.local_view.ComponentInfo;
 import idawi.service.local_view.LocalViewService;
+import idawi.service.local_view.Network;
 import idawi.service.local_view.ServiceInfo;
 import idawi.transport.Link;
 import idawi.transport.PipeFromToParentProcess;
@@ -112,7 +113,7 @@ public class DeployerService extends Service {
 			List<Component> components = new ArrayList<>();
 			deployInThisJVM(req, peerOk -> components.add(peerOk));
 			reply(msg, req.size() + " compoennts created");
-			Topologies.chain(components, SharedMemoryTransport.class, (a, b)->true);
+			Topologies.chain(components, SharedMemoryTransport.class, (a, b) -> true);
 			reply(msg, "chained");
 		}
 
@@ -203,7 +204,7 @@ public class DeployerService extends Service {
 		for (var req : reqs) {
 			var t = new Component(req.toString());
 			t.deployer = component;
-			component.need(SharedMemoryTransport.class).outTo(t);
+			Network.link(component, t, SharedMemoryTransport.class, false);
 
 			if (peerOk != null) {
 				peerOk.accept(t);

@@ -33,7 +33,7 @@ public abstract class Info implements Serializable, SizeOf {
 		return date > b.date;
 	}
 
-	public final boolean involves(Component d) {
+	public  boolean involves(Component d) {
 		AtomicBoolean found = new AtomicBoolean();
 
 		exposeComponent(c -> {

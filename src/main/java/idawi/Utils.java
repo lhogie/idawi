@@ -2,13 +2,26 @@ package idawi;
 
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Random;
 
+import idawi.transport.OutLinks;
+import idawi.transport.Topologies;
+import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
 public class Utils {
 	public static final Random random = new Random();
 
+	public static RegularFile plot(Collection<Component> components, OutLinks links) {
+		var f = RegularFile.createTempFile("idawi-", ".pdf");
+		f.setContent(Topologies.graphViz(components, links, c -> c.name()).toPDF());
+		return f;
+	}
+	public static String prettyTime(double t) {
+		return String.format("%.3f", t) + "s";
+	}
+	
 	// Objects.equals() does not support arrays
 	public static boolean equals(Object a, Object b) {
 		if (a == null) {

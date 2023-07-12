@@ -8,6 +8,7 @@ import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingListener;
 import idawi.routing.RoutingService;
+import idawi.service.local_view.Network;
 import idawi.transport.SharedMemoryTransport;
 import toools.thread.Threads;
 
@@ -21,14 +22,14 @@ public class Minimal {
 
 		System.out.println(a.services());
 
-		a.need(SharedMemoryTransport.class).outTo(b.need(SharedMemoryTransport.class));
+		Network.link(a, b, SharedMemoryTransport.class, false);
 
 		var r = a.bb();
 		System.out.println("routing: " + r);
 		r.exec(BlindBroadcasting.class, RoutingService.test2.class, null, ComponentMatcher.regex("b"), true, null);
 //		var pong = r.ping(b).poll_sync();
 //		System.out.println("pong= " + pong);
-		
+
 		Threads.sleep(1);
 		System.out.println(a.bb().alreadyReceivedMsgs);
 	}

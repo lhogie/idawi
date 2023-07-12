@@ -73,6 +73,6 @@ public class Demo4_deploy_local_peers {
 				true, "hello!");
 		s.wait.poll_sync();
 		System.out.println("completed");
-		RuntimeEngine.stopPlatformThreads();
+		RuntimeEngine.threadPool.shutdown();
 	}
 }

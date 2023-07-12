@@ -39,7 +39,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var recipients = p.recipients;
-			var relays = component.localView().bfs(component).predecessors.relaysTo(recipients);
+			var relays = component.localView().g.bfs(component).predecessors.relaysTo(recipients);
 
 			for (var t : component.services(TransportService.class)) {
 				t.send(msg, relays, this, parms);

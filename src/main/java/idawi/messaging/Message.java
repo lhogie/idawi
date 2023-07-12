@@ -30,9 +30,8 @@ public class Message implements Serializable {
 		this.content = value;
 	}
 
-	private static final JavaSerializer ser = new JavaSerializer<>();
 
-	public Message clone() {
+	public Message clone(JavaSerializer ser) {
 		return (Message) ser.clone(this);
 	}
 

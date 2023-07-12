@@ -37,13 +37,13 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 		}
 	}
 
-	public void considerActivity() {
+	public void markActive() {
 		if (isEmpty()) {
 			add(new TimeFrame(RuntimeEngine.now()));
 		} else {
 			var last = last();
 
-			if (last.isClosed()) {
+			if (last.isOver()) {
 				add(new TimeFrame(RuntimeEngine.now()));
 			} else {
 				last.end(RuntimeEngine.now());
@@ -51,17 +51,12 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 		}
 	}
 
-	public void close() {
-		if (!isEmpty()) {
-			last().close();
-		}
-	}
 
 	public TimeFrame last() {
 		return get(size() - 1);
 	}
 
 	public boolean available() {
-		return isEmpty() ? false : !last().isClosed();
+		return isEmpty() ? false : !last().isOver();
 	}
 }

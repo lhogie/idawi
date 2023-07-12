@@ -11,11 +11,21 @@ public class Link extends Info {
 	public TransportService src, dest;
 	public final Activity activity = new Activity();
 
-	public double latency = 0.001;
+	public double latency = 0.1;
 	public int throughput;
 
 	public Link() {
 		activity.add(new TimeFrame(RuntimeEngine.now()));
+	}
+
+	public Link(TransportService from, TransportService to) {
+		this.src = from;
+		this.dest = to;
+	}
+
+	@Override
+	public final boolean involves(Component d) {
+		return src.component.equals(d) || dest.component.equals(d);
 	}
 
 	@Override
@@ -24,12 +34,7 @@ public class Link extends Info {
 	}
 
 	public boolean isActive() {
-		return activity.available();
-	}
-
-	public Link(TransportService from, TransportService to) {
-		this.src = from;
-		this.dest = to;
+		return true;//activity.available();
 	}
 
 	@Override

@@ -7,9 +7,10 @@ import toools.SizeOf;
 
 public class TimeFrame implements Serializable, SizeOf {
 	private double start, end;
+	public static double TIMEOUT = 2;
 
 	public TimeFrame(double from) {
-		this(from, -1);
+		this(from, from);
 	}
 
 	public TimeFrame(double from, double to) {
@@ -17,19 +18,12 @@ public class TimeFrame implements Serializable, SizeOf {
 		this.end = to;
 	}
 
-	public void close() {
-		if (isClosed())
-			throw new IllegalStateException("already closed");
-
-		end = RuntimeEngine.now();
-	}
-
-	public boolean isClosed() {
-		return end > 0;
+	public boolean isOver() {
+		return RuntimeEngine.now() - end > TIMEOUT;
 	}
 
 	public double duration() {
-		return isClosed() ? end - start : RuntimeEngine.now() - start;
+		return end - start;
 	}
 
 	@Override
@@ -38,11 +32,7 @@ public class TimeFrame implements Serializable, SizeOf {
 	}
 
 	public boolean includes(double time) {
-		if (isClosed()) {
-			return start <= time && time <= end;
-		} else {
-			return start <= time;
-		}
+		return start <= time && time <= end;
 	}
 
 	public double end() {

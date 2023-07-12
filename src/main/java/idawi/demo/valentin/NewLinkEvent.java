@@ -1,6 +1,7 @@
 package idawi.demo.valentin;
 
 import java.util.Random;
+import java.util.Set;
 
 import idawi.Component;
 import idawi.RuntimeEngine;
@@ -22,7 +23,8 @@ class NewLinkEvent extends MobilityEvent {
 			b = Collections.pickRandomObject(c.localView().components(), prng);
 		}
 
-		a.need(WiFiDirect.class).connectTo(b.need(WiFiDirect.class), true);
+		a.localView().g.link(a,  b, WiFiDirect.class, true);
+		
 		RuntimeEngine.offer(new LinkFailEvent(RuntimeEngine.now() + 1, c, prng));
 	}
 }

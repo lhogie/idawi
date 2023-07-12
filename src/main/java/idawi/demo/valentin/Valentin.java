@@ -1,60 +1,87 @@
 package idawi.demo.valentin;
 
-import java.util.Random;
+import java.util.stream.IntStream;
 
 import idawi.Component;
+import idawi.Event;
+import idawi.RuntimeAdapter;
 import idawi.RuntimeEngine;
-import idawi.routing.BlindBroadcasting;
-import idawi.routing.RoutingListener;
+import idawi.RuntimeListener;
+import idawi.Utils;
+import idawi.service.local_view.NetworkTopologyListener;
+import idawi.transport.Link;
 import idawi.transport.Topologies;
+import idawi.transport.TransportService;
 import idawi.transport.WiFiDirect;
 import jdotgen.GraphvizDriver;
-import toools.io.file.Directory;
+import jexperiment.AVGMODE;
+import jexperiment.GNUPlot;
+import toools.io.file.RegularFile;
 
 public class Valentin {
 
 	public static void main(String[] args) throws Throwable {
-		// RuntimeEngine.syncToI3S();
-		GraphvizDriver.pathToNativeExecutables = "/usr/local/bin/";
-		Random prng = new Random(5);
 
-		RuntimeEngine.terminationCondition = () -> RuntimeEngine.now() > 20;
-//		RuntimeEngine.listeners.add(new StdOutRuntimeListener());
+		GraphvizDriver.path = "/usr/local/bin/";
+		GNUPlot.path = "/usr/local/bin/";
+		RuntimeEngine.setDirectory("$HOME/tmp/valentin").open();
 
-		// generates a random topology of simulated components
-		Component root = new Component("root");
-		root.localView().createTwins(10);
-		var c0 = root.localView().lookup("0");
-		System.out.println("components: " + root.localView().components());
-		
-		
-		Topologies.chainRandomly(root.localView().components(), 2, prng, WiFiDirect.class, (a, b) -> true);
+		// declares the plots we will draw
+		var trafficPlot = RuntimeEngine.plots.createPlot("Traffic", "time (s)", "#msg");
+		var msgSentFct = trafficPlot.createFunction("#msg sent");
+		var msgReceivedFct = trafficPlot.createFunction("#msg received");
 
-		root.localView().components()
-				.forEach(c -> c.need(BlindBroadcasting.class).listeners.add(RoutingListener.stdout));
-		root.localView().components().forEach(c -> new ChordService(c));
+		int n = 10;
+		// create the 10 components that will be simulated
+		var components = IntStream.range(0, n).mapToObj(i -> new Component("" + i)).toList();
+		System.out.println("components: " + components);
 
-		// each second a new topology change will happen
-		RuntimeEngine.offer(new NewLinkEvent(1, root, prng));
+		// show what happens on stdout
+//		RuntimeEngine.listeners.add(new RuntimeListener.StdOutRuntimeListener(System.out));
 
+		// trigger measures
+		RuntimeEngine.listeners.add(new RuntimeAdapter() {
 
-		root.localView().bfs(c0).predecessors.allPaths().forEach(r -> System.out.println("route: " + r));
+			@Override
+			public void eventProcessingCompleted(Event<?> e) {
+				if (true)
+					return;
+				long nbMsgSent = 0, nbMsgReceived = 0;
+
+				for (var c : components) {
+					for (var r : c.services(TransportService.class)) {
+						nbMsgSent += r.nbMsgSent;
+						nbMsgReceived += r.nbOfMsgReceived;
+					}
+				}
+
+				msgSentFct.instances(null).addMeasure(RuntimeEngine.now(), nbMsgSent);
+				msgReceivedFct.instances(null).addMeasure(RuntimeEngine.now(), nbMsgReceived);
+			}
+		});
+
+		// trigger network plots
+		components.forEach(c -> new TopologyChangePlotter(c, i -> true));
+
+		// generates a random topology
+		Topologies.gnp(components, 0.5, WiFiDirect.class, true, 1);
+
+		Component c0 = components.get(0);
+
+		// initiate mobility
+//		RuntimeEngine.offer(new NewLinkEvent(1, root, RuntimeEngine.prng));
 
 		// ask a node 0 to inject an item into the DHT
-		RuntimeEngine.offer(2, () -> c0.need(ChordService.class).store(new Item("item1", "value".getBytes())));
+		// components.forEach(c -> new ChordService(c));
+		// RuntimeEngine.offer(2, "add item", () ->
+		// c0.need(ChordService.class).store(new Item("item1", "value".getBytes())));
 
-		// results will go there
-		var dir = new Directory("$HOME/tmp/valentin");
+		// stop after 20s
+		RuntimeEngine.terminated = () -> RuntimeEngine.now() > 100;
+		System.err.println("running");
+		RuntimeEngine.run();
 
-		if (dir.exists()) {
-			dir.deleteRecursively();
-		}
-
-		// each mobility event will entail the generation of a new image of the network
-		RuntimeEngine.plotNet(root.localView(), dir, e -> e instanceof MobilityEvent);
-		dir.open();
-
-		System.out.println(RuntimeEngine.blockUntilSimulationHasCompleted() + " event(s) processed");
+		RuntimeEngine.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
 	}
 
 }

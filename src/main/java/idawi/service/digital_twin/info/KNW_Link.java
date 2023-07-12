@@ -7,17 +7,15 @@ import idawi.service.local_view.Info;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
 
-public class KNW_LinkDisapeared extends Info {
-	
+public class KNW_Link extends Info {
 	public TransportService from;
 	public TransportService to;
 
-	public KNW_LinkDisapeared(double date, TransportService c, TransportService neighbor) {
+	public KNW_Link(double date, Link l) {
 		super(date);
-		this.from = c;
-		this.to = neighbor;
+		this.from = l.src;
+		this.to = l.dest;
 	}
-
 
 	@Override
 	public void exposeComponent(Predicate<Component> p) {

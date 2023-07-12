@@ -15,7 +15,7 @@ public class IRTo extends RoutingData {
 		route = new ArrayList<>();
 
 		for (var n : s.split(" *, *")) {
-			route.add(r.component.localView().lookup(n));
+			route.add(r.component.localView().g.lookup(n));
 		}
 	}
 

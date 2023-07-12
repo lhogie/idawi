@@ -8,6 +8,7 @@ import idawi.Component;
 import idawi.RuntimeEngine;
 import idawi.routing.BlindBroadcasting;
 import idawi.service.local_view.LocalViewService;
+import idawi.service.local_view.Network;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
 import idawi.transport.TransportService;
@@ -32,13 +33,13 @@ public class ManyComponents {
 
 //		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
-		GraphvizDriver.pathToNativeExecutables = "/usr/local/bin/";
+		GraphvizDriver.path = "/usr/local/bin/";
 //		pdfFile.setContent(Topologies.toDot(components).toPDF());
 		pdfFile.open();
 
 		var first = components.get(0);
 		var last = components.get(components.size() - 1);
-		last.need(SharedMemoryTransport.class).outTo(first);
+		Network.link(last, first, SharedMemoryTransport.class, false);
 
 		var q = first.bb().ping(components.get(components.size() / 2));
 		var pong = q.poll_sync();

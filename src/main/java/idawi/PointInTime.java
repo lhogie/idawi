@@ -19,6 +19,6 @@ public class PointInTime implements When, Comparable<PointInTime> {
 
 	@Override
 	public String toString() {
-		return String.valueOf(time);
+		return Utils.prettyTime(time);
 	}
 }

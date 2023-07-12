@@ -29,7 +29,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void sendImpl(Message msg) {
-		var c = msg.clone();
+		var c = msg.clone(component.ser);
 
 		RuntimeEngine.threadPool.submit(() -> {
 			try {
@@ -44,7 +44,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	public void dispose(Link l) {
-		l.activity.close();
+//		l.activity.close();
 	}
 
 

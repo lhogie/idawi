@@ -11,6 +11,7 @@ import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
 import idawi.service.local_view.DigitalTwinListener;
+import idawi.transport.Link;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -33,20 +34,20 @@ public class IRP extends RoutingService<IRPParms> {
 			}
 
 			@Override
-			public void newInteraction(TransportService from, TransportService to) {
-				if (component.equals(from.component)) {
-					var tt = component.need(from.getClass());
+			public void linkActivated(Link l) {
+				if (component.equals(l.src.component)) {
+					var tt = component.need(l.src.getClass());
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.send(msg, Set.of(component.localView().findLink(to, to.component)), IRP.this, msg.route.last().routingParms);
+							tt.send(msg, Set.of(l), IRP.this, msg.route.last().routingParms);
 						}
 					}
 				}
 			}
 
 			@Override
-			public void interactionStopped(TransportService from, TransportService to) {
+			public void linkDeactivated(Link l) {
 			}
 		});
 	}

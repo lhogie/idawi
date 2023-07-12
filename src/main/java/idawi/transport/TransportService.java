@@ -25,6 +25,7 @@ public abstract class TransportService extends Service implements Externalizable
 	// used to serialized messages for transport
 	public static Serializer serializer = new JavaSerializer();
 	public long nbOfMsgReceived = 0;
+	public long nbMsgSent;
 
 	public TransportService() {
 	}
@@ -68,11 +69,11 @@ public abstract class TransportService extends Service implements Externalizable
 				System.err.println(
 						"component " + component + " does not have service " + msg.destination.service().getName());
 			} else {
-				System.err.println(component + " DELIVER " + msg.route);
+//				System.err.println(component + " DELIVER " + msg.route);
 				s.considerNewMessage(msg);
 			}
 		} else {
-			System.err.println(component + " DROP " + msg.route);
+			// System.err.println(component + " DROP " + msg.route);
 		}
 
 		forward(msg);
@@ -103,24 +104,26 @@ public abstract class TransportService extends Service implements Externalizable
 		// Cout.debug(" " + component + " sends: " + msg);
 		for (var outLink : outLinks) {
 			msg.route.add(outLink, r);
-
+			++nbMsgSent;
 			// sending from a real component to a digital twin in the only situation
 			// the network is involved
 			if (!component.isDigitalTwin() && outLink.dest.component.isDigitalTwin()) {
 				sendImpl(msg);
 			} else {
-				var c = msg.clone();
+				var msgClone = msg.clone(component.ser);
+				double actualLatency = outLink.latency;
 
-				RuntimeEngine.offer(new Event<PointInTime>(new PointInTime(now() + outLink.latency)) {
-					@Override
-					public void run() {
-						try {
-							outLink.dest.processIncomingMessage(c);
-						} catch (Throwable e) {
-							e.printStackTrace();
-						}
-					}
-				});
+				RuntimeEngine
+						.offer(new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
+							@Override
+							public void run() {
+								try {
+									outLink.dest.processIncomingMessage(msgClone);
+								} catch (Throwable e) {
+									e.printStackTrace();
+								}
+							}
+						});
 			}
 
 			msg.route.removeLast();
@@ -132,7 +135,7 @@ public abstract class TransportService extends Service implements Externalizable
 	}
 
 	public Stream<Link> outLinks() {
-		return component.localView().links().stream().filter(l -> l.activity.availableAt(now()) && l.src.equals(this));
+		return component.localView().links().stream().filter(l -> l.isActive() && l.src.equals(this));
 	}
 
 	@Override
@@ -168,32 +171,4 @@ public abstract class TransportService extends Service implements Externalizable
 
 	public abstract void dispose(Link l);
 
-	public Link outTo(Component dest) {
-		return outTo(dest.need(getClass()));
-	}
-
-	public Link outTo(TransportService to) {
-		var l = component.localView().findLink(this, to);
-
-		if (l == null) {
-			component.localView().links().add(l = new Link(this, to));
-			l.activity.add(new TimeFrame(now()));
-		} else {
-		}
-
-		return l;
-	}
-
-	public void inoutTo(Component c) {
-		outTo(c);
-		c.need(getClass()).outTo(this);
-	}
-
-	public void connectTo(TransportService a, boolean bidi) {
-		outTo(a);
-
-		if (bidi) {
-			a.outTo(this);
-		}
-	}
 }

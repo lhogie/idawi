@@ -26,7 +26,6 @@ import idawi.service.Location;
 import idawi.service.LocationService;
 import idawi.service.ServiceManager;
 import idawi.service.local_view.LocalViewService;
-import idawi.service.time.TimeService;
 import idawi.service.web.AESEncrypter;
 import idawi.service.web.WebService;
 import idawi.transport.Link;
@@ -34,9 +33,11 @@ import idawi.transport.OutLinks;
 import idawi.transport.SharedMemoryTransport;
 import toools.SizeOf;
 import toools.io.file.Directory;
-import toools.util.Date;
+import toools.io.ser.JavaSerializer;
 
 public class Component implements SizeOf, Externalizable {
+	public JavaSerializer ser = new JavaSerializer<>();
+
 	public static List<Component> createNComponent(String prefix, int n) {
 		var r = new ArrayList<Component>();
 
@@ -140,21 +141,22 @@ public class Component implements SizeOf, Externalizable {
 	}
 
 	public <S extends Service> S need(Class<S> id) {
-		var l = services(id);
-
-		if (l.isEmpty()) {
-			return start(id);
-		} else {
-			return l.get(0);
-		}
+		var l = lookup(id);
+		return l == null ? start(id) : l;
 	}
-	
+
 	public boolean has(Class<? extends Service> c) {
-		return services.stream().anyMatch(s -> c.isAssignableFrom(s.getClass()));
+		return lookup(c) != null;
 	}
 
 	public <S extends Service> S lookup(Class<S> c) {
-		return (S) services.stream().filter(s -> c.isAssignableFrom(s.getClass())).findFirst().orElse(null);
+		for (var s : services) {
+			if (c.isAssignableFrom(s.getClass())) {
+				return (S) s;
+			}
+		}
+
+		return null;
 	}
 
 	public Endpoint lookup(Class<? extends Service> service, Class<? extends InnerClassEndpoint> id) {
@@ -184,11 +186,10 @@ public class Component implements SizeOf, Externalizable {
 		return name.hashCode();
 	}
 
-
 	public double now() {
 		return Service.now();
-		//var ts = lookup(TimeService.class);
-		//return ts == null ? Date.time() : ts.now();
+		// var ts = lookup(TimeService.class);
+		// return ts == null ? Date.time() : ts.now();
 	}
 
 	public LocalViewService localView() {
@@ -273,6 +274,5 @@ public class Component implements SizeOf, Externalizable {
 	public String name() {
 		return name;
 	}
-
 
 }

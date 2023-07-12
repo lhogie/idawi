@@ -207,7 +207,6 @@ public class Service implements SizeOf {
 		if (msg.destination instanceof MessageODestination) {
 			var dest = (MessageODestination) msg.destination;
 			AbstractEndpoint endpoint = lookupEndpoint(dest.operationID.getSimpleName());
-			System.err.println(component + " trigger " + msg.route);
 
 			if (endpoint == null) {
 				triggerErrorHappened(dest.replyTo, new IllegalArgumentException("can't find endpoint '" + dest));

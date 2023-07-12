@@ -34,7 +34,7 @@ public class ChordService extends Service {
 		System.out.println("add item via " + component);
 
 		// computes the set of component that will host the item
-		var h = hash(item.key);
+		Set<Component> h = hash(item.key);
 		System.out.println("to " + h);
 
 		// async multicast the item to all targets
@@ -85,10 +85,14 @@ public class ChordService extends Service {
 	}
 
 	public Set<Component> hash(String key) {
-		var activeLinks = component.localView().links().stream().filter(l -> l.isActive());
-		var components = activeLinks.map(l -> l.dest.component).toList();
+		var components = component.localView().links().stream().filter(l -> l.isActive()).map(l -> l.dest.component)
+				.toList();
+		components.remove(component);
 
 		int nbTargets = 2;
+
+		if (components.size() < nbTargets)
+			return null;
 
 		var r = new HashSet<Component>();
 
