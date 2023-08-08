@@ -27,7 +27,7 @@ public class UDPDriver extends IPDriver {
 		if (socket == null)
 			return;
 
-		byte[] buf = serializer.toBytes(msg);
+		byte[] buf = component.serializer.toBytes(msg);
 		// Cout.debugSuperVisible("sending to " + neighbors);
 
 		// System.out.println(n.toHTML());
@@ -76,10 +76,9 @@ public class UDPDriver extends IPDriver {
 					try {
 						// Cout.info("reading packet");
 						socket.receive(p);
-						Message msg = (Message) serializer.fromBytes(p.getData());
+						Message msg = (Message) component.serializer.fromBytes(p.getData());
 						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
-						component.services(LocalViewService.class).forEach(s -> s.feedWith(msg.route));
 						processIncomingMessage(msg);
 					} catch (IOException e) {
 						e.printStackTrace();

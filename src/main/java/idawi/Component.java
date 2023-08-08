@@ -1,14 +1,12 @@
 package idawi;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +18,7 @@ import javax.crypto.SecretKey;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ForceBroadcasting;
 import idawi.routing.RoutingService;
+import idawi.routing.TrafficListener;
 import idawi.routing.irp.IRP;
 import idawi.service.DigitalTwinService;
 import idawi.service.Location;
@@ -29,23 +28,73 @@ import idawi.service.local_view.LocalViewService;
 import idawi.service.web.AESEncrypter;
 import idawi.service.web.WebService;
 import idawi.transport.Link;
-import idawi.transport.OutLinks;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.TransportService;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.io.ser.JavaSerializer;
+import toools.io.ser.Serializer;
 
-public class Component implements SizeOf, Externalizable {
-	public JavaSerializer ser = new JavaSerializer<>();
+public class Component implements SizeOf {
 
-	public static List<Component> createNComponent(String prefix, int n) {
-		var r = new ArrayList<Component>();
+	static class ComponentRepresentative implements Serializable {
+		String name;
+	}
 
-		for (int i = 0; i < n; ++i) {
-			r.add(new Component(prefix + i, true));
+	static class LinkRepresentative implements Serializable {
+		Component srcC;
+		Class<? extends TransportService> srcT;
+		Component destC;
+		Class<? extends TransportService> destT;
+	}
+
+	// used to serialized messages for transport
+	public Serializer serializer = new JavaSerializer() {
+
+		@Override
+		protected Object replaceAtDeserialization(Object o) {
+			if (o instanceof ComponentRepresentative) {
+				var alreadyIn = localView().g.findComponent(((ComponentRepresentative) o).name);
+				return alreadyIn != null ? alreadyIn : new Component(name, Component.this);
+			} else if (o instanceof LinkRepresentative) {
+				var r = (LinkRepresentative) o;
+				var src = r.srcC.service(r.srcT, true);
+				var dest = r.destC.service(r.destT, true);
+				var l = localView().g.findALinkConnecting(src, dest);
+				return l != null ? l : new Link(src, dest);
+			} else {
+				return o;
+			}
 		}
 
-		return r;
+		@Override
+		protected Object replaceAtSerialization(Object o) {
+			if (o instanceof Component) {
+				var cr = new ComponentRepresentative();
+				cr.name = ((Component) o).name;
+				return cr;
+			} else if (o instanceof Link) {
+				var l = (Link) o;
+				var r = new LinkRepresentative();
+				r.srcC = l.src.component;
+				r.srcT = l.src.getClass();
+				r.destC = l.dest.component;
+				r.destT = l.dest.getClass();
+				return r;
+			} else {
+				return super.replaceAtSerialization(o);
+			}
+		}
+	};
+
+	public static List<Component> createNComponent(String prefix, int n) {
+		var components = new ArrayList<Component>();
+
+		for (int i = 0; i < n; ++i) {
+			components.add(new Component(prefix + i, true));
+		}
+
+		return components;
 	}
 
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
@@ -60,15 +109,15 @@ public class Component implements SizeOf, Externalizable {
 	public Component deployer;
 	private String name;
 	public boolean autonomous = false;
+	public final List<TrafficListener> trafficListeners = new ArrayList<>();
+	public Set<Component> simulatedComponents = new HashSet<>();
 
 	public Component() {
 		this(Long.toHexString(new Random().nextLong()), false);
 	}
 
 	public Component(String name) {
-		if (name == null)
-			throw new NullPointerException();
-
+		Objects.requireNonNull(name);
 		this.name = name;
 	}
 
@@ -83,11 +132,30 @@ public class Component implements SizeOf, Externalizable {
 //		componentsInThisJVM.put(ref, this);
 	}
 
+	public Component twin(boolean includeServices) {
+		var twin = new Component(name);
+		new DigitalTwinService(twin, localView());
+
+		if (includeServices) {
+			for (var s : services) {
+				try {
+					s.getClass().getConstructor(Component.class).newInstance(twin);
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return twin;
+	}
+
 	public Component(String name, LocalViewService host) {
 		this(name, false);
 		new DigitalTwinService(this, host);
 	}
 
+	// makes a digital twin
 	public Component(String name, Component realComponent) {
 		this(name, realComponent.localView());
 	}
@@ -140,27 +208,22 @@ public class Component implements SizeOf, Externalizable {
 		return (List<S>) services.stream().filter(s -> id.isAssignableFrom(s.getClass())).toList();
 	}
 
-	public <S extends Service> S need(Class<S> id) {
-		var l = lookup(id);
-		return l == null ? start(id) : l;
+	public <S extends Service> S service(Class<S> c) {
+		return service(c, false);
 	}
 
-	public boolean has(Class<? extends Service> c) {
-		return lookup(c) != null;
-	}
-
-	public <S extends Service> S lookup(Class<S> c) {
+	public <S extends Service> S service(Class<S> c, boolean autoload) {
 		for (var s : services) {
 			if (c.isAssignableFrom(s.getClass())) {
 				return (S) s;
 			}
 		}
 
-		return null;
+		return autoload ? start(c) : null;
 	}
 
-	public Endpoint lookup(Class<? extends Service> service, Class<? extends InnerClassEndpoint> id) {
-		return need(service).lookupEndpoint(id.getSimpleName());
+	public boolean has(Class<? extends Service> c) {
+		return service(c, false) != null;
 	}
 
 	public void forEachService(Predicate<Service> predicate, Consumer<Service> h) {
@@ -171,7 +234,7 @@ public class Component implements SizeOf, Externalizable {
 		});
 	}
 
-	public <S> void forEachServiceOfClass(Class<S> serviceID, Consumer<S> h) {
+	public <S> void forEachService(Class<S> serviceID, Consumer<S> h) {
 		forEachService(s -> serviceID.isInstance(s), s -> h.accept((S) s));
 	}
 
@@ -194,23 +257,23 @@ public class Component implements SizeOf, Externalizable {
 
 	public LocalViewService localView() {
 		var dt = dt();
-		return dt == null ? need(LocalViewService.class) : dt.host;
+		return dt == null ? service(LocalViewService.class, true) : dt.host;
 	}
 
 	public RoutingService defaultRoutingProtocol() {
-		return need(BlindBroadcasting.class);
+		return bb();
 	}
 
 	public BlindBroadcasting bb() {
-		return need(BlindBroadcasting.class);
+		return service(BlindBroadcasting.class, true);
 	}
 
 	public IRP irp() {
-		return need(IRP.class);
+		return service(IRP.class, true);
 	}
 
 	public Location getLocation() {
-		var locationService = need(LocationService.class);
+		var locationService = service(LocationService.class);
 		return locationService == null ? null : locationService.location;
 	}
 
@@ -240,35 +303,18 @@ public class Component implements SizeOf, Externalizable {
 		return h;
 	}
 
-	public OutLinks outLinks() {
-		return new OutLinks(localView().links().stream().filter(l -> l.src.component.equals(this)).toList());
-	}
-
-	public List<Link> ins() {
-		return localView().links().stream().filter(l -> l.dest.component.equals(this)).toList();
-	}
-
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(name);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		name = in.readUTF();
+	public List<Link> outLinks() {
+		return localView().g.findLinks(l -> l.src.component.equals(this));
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof Component && o.hashCode() == hashCode();
-	}
-
-	public boolean matches(String s) {
-		return name.equals(s);
+		var c = (Component) o;
+		return c.name().equals(name);
 	}
 
 	public DigitalTwinService dt() {
-		return lookup(DigitalTwinService.class);
+		return service(DigitalTwinService.class);
 	}
 
 	public String name() {

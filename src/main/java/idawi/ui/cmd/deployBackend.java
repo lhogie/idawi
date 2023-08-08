@@ -25,7 +25,7 @@ public class deployBackend extends CommandBackend {
 		var reqs = RemoteDeploymentRequest.from(peers);
 		reqs.forEach(r -> r.target.dt().info().suicideWhenParentDie = suicideWhenParentDie);
 
-		n.need(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
+		n.service(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
 				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"));
 	}
 }

@@ -24,7 +24,7 @@ public class Demo1_multi_jvm {
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component("c2");
 
-		t1.need(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
+		t1.service(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
 
 		Message pong = t1.bb().ping(req.target).poll_sync();
 		System.out.println("pong duration: " + pong.route.duration());

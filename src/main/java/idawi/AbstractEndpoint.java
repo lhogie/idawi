@@ -56,7 +56,7 @@ public abstract class AbstractEndpoint implements Endpoint, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 0;
+		return 48;
 	}
 
 }

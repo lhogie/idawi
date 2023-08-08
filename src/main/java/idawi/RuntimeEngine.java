@@ -10,7 +10,6 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
-import idawi.transport.Topologies;
 import jexperiment.Plots;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
@@ -64,6 +63,10 @@ public class RuntimeEngine {
 		while (!terminated.get()) {
 			var e = grabCloserEvent();
 
+			if (e == null) {
+				stopQ.offer("");
+			}
+
 			listeners.forEach(l -> l.newEventScheduledForExecution(e));
 
 			// if (!threadPool.isShutdown())
@@ -102,18 +105,17 @@ public class RuntimeEngine {
 			var e = eventQueue.peek();
 			try {
 				if (e == null) {
-					listeners.forEach(l -> l.sleeping(Long.MAX_VALUE, null));
+					listeners.forEach(l -> l.sleeping(Double.MAX_VALUE, null));
 					Thread.sleep(Long.MAX_VALUE);
 				} else {
 					double wait = e.when.time - now();
 
 					if (wait < 0) {
-						System.err.println("go backward: " + wait);
+//						System.err.println("go backward: " + wait);
 						return eventQueue.poll();
 					} else {
-						long waitTimeMs = (long) (1000L * wait);
 						listeners.forEach(l -> l.sleeping(wait, e));
-						Thread.sleep(waitTimeMs);
+						Thread.sleep((long) (1000L * wait));
 						return eventQueue.poll();
 					}
 				}
@@ -121,7 +123,7 @@ public class RuntimeEngine {
 				listeners.forEach(l -> l.interrupted());
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -132,10 +134,7 @@ public class RuntimeEngine {
 		return (Date.time() - startTime) * timeAcceleartionFactor;
 	}
 
-	public static void plotNet(Component c0, Object label) {
-		var f = new RegularFile(directory, String.format("%03f", now()) + " " + label + ".pdf");
-		f.setContent(Topologies.graphViz(c0.localView().g.components, c0.localView().g.links, c -> c.name()).toPDF());
-	}
+
 
 	public static void offer(Event<PointInTime> newEvent) {
 		var sooner = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;

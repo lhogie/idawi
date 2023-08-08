@@ -2,7 +2,9 @@ package idawi.messaging;
 
 import java.io.Serializable;
 
-public class EOT implements Serializable {
+import toools.SizeOf;
+
+public class EOT implements Serializable, SizeOf {
 	private EOT() {
 
 	}
@@ -13,4 +15,9 @@ public class EOT implements Serializable {
 	}
 
 	public static final EOT instance = new EOT();
+
+	@Override
+	public long sizeOf() {
+		return 1;
+	}
 }

@@ -6,15 +6,9 @@ import idawi.messaging.Message;
 
 public class SharedMemoryTransport extends TransportService {
 
-	public double emissionRange = Double.MAX_VALUE;
-
-	public SharedMemoryTransport() {
-	}
 
 	public SharedMemoryTransport(Component c) {
 		super(c);
-
-		c.localView().links().add(new Link(this, this)); // loopback
 	}
 
 	@Override
@@ -29,7 +23,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void sendImpl(Message msg) {
-		var c = msg.clone(component.ser);
+		var c = msg.clone(component.serializer);
 
 		RuntimeEngine.threadPool.submit(() -> {
 			try {

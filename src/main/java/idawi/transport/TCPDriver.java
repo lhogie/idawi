@@ -69,7 +69,7 @@ public class TCPDriver extends IPDriver {
 		new Thread(() -> {
 			try {
 				while (true) {
-					Message msg = (Message) serializer.read(is);
+					Message msg = (Message) component.serializer.read(is);
 					var from = msg.route.last().link.src.component;
 
 					synchronized (neighbor_socket) {
@@ -127,7 +127,7 @@ public class TCPDriver extends IPDriver {
 		// if a connection could be obtained
 		if (entry != null) {
 			try {
-				serializer.write(msg, entry.os);
+				component.serializer.write(msg, entry.os);
 			} catch (IOException e) {
 				errorOn(entry.socket);
 			}

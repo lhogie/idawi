@@ -60,7 +60,7 @@ public class ExternalCommandsService extends Service {
 			var stdout = p.getInputStream();
 			var stdin = p.getOutputStream();
 
-			newThread(() -> {
+			new Thread(() -> {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
@@ -75,7 +75,7 @@ public class ExternalCommandsService extends Service {
 						break;
 					}
 				}
-			});
+			}).start();
 
 			while (true) {
 				var msg = in.poll_sync();

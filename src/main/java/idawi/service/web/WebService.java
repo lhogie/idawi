@@ -327,20 +327,20 @@ public class WebService extends Service {
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
 			t = ComponentMatcher.multicast(Set.of(component));
-			o = LocalViewService.twinComponents.class;
+			o = LocalViewService.components.class;
 			service = LocalViewService.class;
 			description = "suggest ways to target components";
 		} else if (path.size() == 3) { // show available services in the targets
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
+			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
 			o = ServiceManager.listServices.class;
 			service = ServiceManager.class;
 			description = "list services in the targeted components";
 		} else if (path.size() == 4) { // show operations available in services
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
+			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
 			service = ServiceManager.class;
 			o = ServiceManager.listOperations.class;
 			op.add(path.get(3)); // service name
@@ -348,7 +348,7 @@ public class WebService extends Service {
 		} else { // all ok
 			r = routing(path.get(0));
 			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.need(LocalViewService.class));
+			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
 			service = (Class<? extends Service>) Class.forName(path.get(3));
 			o = (Class<? extends Endpoint>) Class.forName(service.getClass().getName() + "$" + path.get(4));
 			op.addAll(path.subList(5, path.size()));
@@ -490,7 +490,7 @@ public class WebService extends Service {
 
 			try {
 				var routingClass = (Class<? extends RoutingService>) Class.forName(routingString);
-				routing = component.need(routingClass);
+				routing = component.service(routingClass);
 			} catch (ClassNotFoundException | NoClassDefFoundError err) {
 				throw new URLContentException("cannot find routing service: " + routingString, null);
 			}

@@ -69,7 +69,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 			throw new IllegalStateException("can't send to " + n);
 
 		try {
-			serializer.write(msg, e.stdin);
+			component.serializer.write(msg, e.stdin);
 			e.stdin.flush();
 		} catch (IOException err) {
 			throw new RuntimeException(err);
@@ -95,7 +95,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 				var base64 = line.substring(base64ObjectMark.length()); // get the rest of the line
 				e.base64Len += base64.length();
 				var bytes = Base64.getDecoder().decode(base64);
-				var o = serializer.fromBytes(bytes);
+				var o = component.serializer.fromBytes(bytes);
 
 				if (o instanceof Message) {
 					processIncomingMessage((Message) o);

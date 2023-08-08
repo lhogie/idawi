@@ -21,7 +21,7 @@ public class Demo2_simple_deployment_into_another_JVM {
 		childDeployment.target = new Component("child");
 
 // deploy
-		localComponent.need(DeployerService.class).deployInNewJVMs(Set.of(childDeployment),
+		localComponent.service(DeployerService.class).deployInNewJVMs(Set.of(childDeployment),
 				s -> System.out.println(s), ok -> System.out.println(ok));
 
 // at this step the child is running on the remote host. We can interact with

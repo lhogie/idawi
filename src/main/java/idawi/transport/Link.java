@@ -1,5 +1,6 @@
 package idawi.transport;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import idawi.Component;
@@ -8,19 +9,19 @@ import idawi.service.local_view.Info;
 
 public class Link extends Info {
 	// the network interface on the neighbor side
-	public TransportService src, dest;
+	public final TransportService src, dest;
 	public final Activity activity = new Activity();
-
-	public double latency = 0.1;
+	private boolean active = false;
+	public double latency;
 	public int throughput;
 
-	public Link() {
-		activity.add(new TimeFrame(RuntimeEngine.now()));
+	public Link(TransportService from, TransportService to) {
+		Objects.requireNonNull(this.src = from);
+		Objects.requireNonNull(this.dest = to);
 	}
 
-	public Link(TransportService from, TransportService to) {
-		this.src = from;
-		this.dest = to;
+	public boolean headsTo(Component c) {
+		return c.equals(dest.component);
 	}
 
 	@Override
@@ -34,7 +35,7 @@ public class Link extends Info {
 	}
 
 	public boolean isActive() {
-		return true;//activity.available();
+		return active;// activity.available();
 	}
 
 	@Override
@@ -44,10 +45,20 @@ public class Link extends Info {
 
 	@Override
 	public String toString() {
-		if (src.getClass() == dest.getClass()) {
+		var t = getCommonTransport();
+
+		if (t != null) {
 			return src.component + " ==" + src.getName() + "==> " + dest.component;
 		} else {
 			return src + " => " + dest;
+		}
+	}
+
+	public Class<? extends TransportService> getCommonTransport() {
+		if (src.getClass() == dest.getClass()) {
+			return src.getClass();
+		} else {
+			return null;
 		}
 	}
 
@@ -73,6 +84,29 @@ public class Link extends Info {
 
 	public boolean matches(Component from, Component to) {
 		return (from == null || from.equals(this.src.component)) && (dest == null || to.equals(this.dest.component));
+	}
+
+	public boolean isLoop() {
+		return src.component.equals(dest.component);
+	}
+
+	public void markActive() {
+		active = true;
+		if (activity.isEmpty()) {
+			activity.add(new TimeFrame(RuntimeEngine.now()));
+		} else {
+			var last = activity.last();
+
+			if (last.isClosed()) {
+				activity.add(new TimeFrame(RuntimeEngine.now()));
+			} else {
+				last.end(RuntimeEngine.now());
+			}
+		}
+	}
+
+	public void markInactive() {
+		this.active = false;
 	}
 
 }

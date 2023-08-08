@@ -1,12 +1,12 @@
 package idawi.service.local_view;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
 
 import idawi.Component;
 import idawi.transport.Link;
-import idawi.transport.OutLinks;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
@@ -114,7 +114,7 @@ public class BFS {
 		}
 	}
 
-	public static BFSResult bfs(OutLinks links, Component source, long maxDistance, long maxNbVerticesVisited,
+	public static BFSResult bfs(Network links, Component source, long maxDistance, long maxNbVerticesVisited,
 			Predicate<Component> ignoreComponent, Predicate<Link> ignoreLink) {
 		BFSResult r = new BFSResult(source);
 		var q = new ArrayList<Component>();
@@ -126,7 +126,7 @@ public class BFS {
 			var d = r.distances.getLong(c);
 
 			if (!ignoreComponent.test(c)) {
-				links.stream().filter(l ->  l.src.component.equals(c)).forEach(l -> {
+				links.findLinks(l -> l.src.component.equals(c)).forEach(l -> {
 
 					if (!ignoreLink.test(l) && l.isActive()) {
 						var succ = l.dest.component;
@@ -136,7 +136,7 @@ public class BFS {
 							r.predecessors.put(succ, l);
 							q.add(succ);
 						}
-					}else {
+					} else {
 					}
 				});
 			}

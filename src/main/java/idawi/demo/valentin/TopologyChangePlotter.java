@@ -3,11 +3,8 @@ package idawi.demo.valentin;
 import java.util.function.Function;
 
 import idawi.Component;
-import idawi.RuntimeEngine;
-import idawi.Utils;
 import idawi.service.local_view.NetworkTopologyListener;
 import idawi.transport.Link;
-import toools.io.file.RegularFile;
 
 public class TopologyChangePlotter implements NetworkTopologyListener {
 
@@ -43,11 +40,7 @@ public class TopologyChangePlotter implements NetworkTopologyListener {
 
 	private void plot() {
 		if (ok.apply(i++)) {
-			System.out.println("dt in " + c + ":  " + c.localView().components());
-			var f = new RegularFile(RuntimeEngine.directory,
-					Utils.prettyTime(RuntimeEngine.now()) + " " + c.name() + ".pdf");
-			System.out.println(f);
-			c.localView().g.plot(f);
+			c.localView().g.plot();
 		}
 
 	}

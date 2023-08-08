@@ -19,10 +19,10 @@ import idawi.Component;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
+import idawi.service.DigitalTwinService;
 import idawi.service.SystemService;
 import idawi.service.local_view.ComponentInfo;
 import idawi.service.local_view.LocalViewService;
-import idawi.service.local_view.Network;
 import idawi.service.local_view.ServiceInfo;
 import idawi.transport.Link;
 import idawi.transport.PipeFromToParentProcess;
@@ -30,10 +30,10 @@ import idawi.transport.PipesFromToChildrenProcess;
 import idawi.transport.PipesFromToChildrenProcess.Entry;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
-import idawi.transport.TransportService;
 import toools.extern.ProcesException;
 import toools.io.RSync;
 import toools.io.file.Directory;
+import toools.io.ser.JavaSerializer;
 import toools.net.SSHParms;
 import toools.net.SSHUtils;
 import toools.progression.LongProcess;
@@ -113,7 +113,7 @@ public class DeployerService extends Service {
 			List<Component> components = new ArrayList<>();
 			deployInThisJVM(req, peerOk -> components.add(peerOk));
 			reply(msg, req.size() + " compoennts created");
-			Topologies.chain(components, SharedMemoryTransport.class, (a, b) -> true);
+			Topologies.chain(components, (a, b) -> SharedMemoryTransport.class, components);
 			reply(msg, "chained");
 		}
 
@@ -162,11 +162,12 @@ public class DeployerService extends Service {
 		req.parent = component;
 
 		OutputStream out = proc.getOutputStream();
-		TransportService.serializer.write(req, out);
-		out.flush();
 
-		var pipesToChildren = component.need(PipesFromToChildrenProcess.class);
+		var pipesToChildren = component.service(PipesFromToChildrenProcess.class);
 		Entry childEntry = pipesToChildren.add(req.target, proc);
+
+		pipesToChildren.component.serializer.write(req, out);
+		out.flush();
 
 		feedback.accept("waiting for " + req.target + " to be ready");
 		Object response = childEntry.waitForChild.poll_sync(10);
@@ -178,10 +179,10 @@ public class DeployerService extends Service {
 		} else if (response instanceof Throwable) { // deploy error
 			throw new IllegalStateException(req.target + " failed", (Throwable) response);
 		} else if (response instanceof ComponentInfo) {
-			var dts = component.need(LocalViewService.class);
-			var connectionToParent = dts.localTwin(PipeFromToParentProcess.class, childEntry.child);
-			dts.ensureTwinLinkExists(new Link(pipesToChildren, connectionToParent));
-			dts.ensureTwinLinkExists(new Link(connectionToParent, pipesToChildren));
+			var lv = component.service(LocalViewService.class);
+			var connectionToParent = childEntry.child.service(PipeFromToParentProcess.class);
+			lv.g.markLinkActive(new Link(pipesToChildren, connectionToParent));
+			lv.g.markLinkActive(new Link(connectionToParent, pipesToChildren));
 			childEntry.child.dt().update((ComponentInfo) response);
 		} else {
 			throw new IllegalStateException("obtaining " + response);
@@ -198,19 +199,24 @@ public class DeployerService extends Service {
 		return deployInThisJVM(l);
 	}
 
-	public List<Component> deployInThisJVM(Collection<Component> reqs, Consumer<Component> peerOk) {
+	public List<Component> deployInThisJVM(Collection<Component> twins, Consumer<Component> peerOk) {
 		var r = new ArrayList<Component>();
 
-		for (var req : reqs) {
-			var t = new Component(req.toString());
-			t.deployer = component;
-			Network.link(component, t, SharedMemoryTransport.class, false);
+		for (var twin : twins) {
+			var realComponent = new Component(twin.toString());
+			realComponent.deployer = component;
+			var from = component.service(SharedMemoryTransport.class, true);
+			var to = realComponent.service(SharedMemoryTransport.class, true);
+			component.localView().g.markLinkActive(to, from);
+			component.localView().g.markLinkActive(from, to);
+			realComponent.localView().g.markLinkActive(to, from);
+			realComponent.localView().g.markLinkActive(from, to);
 
 			if (peerOk != null) {
-				peerOk.accept(t);
+				peerOk.accept(realComponent);
 			}
 
-			r.add(t);
+			r.add(realComponent);
 		}
 
 		return r;
@@ -294,25 +300,27 @@ public class DeployerService extends Service {
 			System.out.println("JVM " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")
 					+ " is running");
 			System.out.println("Now reading deployment information");
-			var req = (ExtraJVMDeploymentRequest) TransportService.serializer.read(System.in);
+			var req = (ExtraJVMDeploymentRequest) new JavaSerializer<>().read(System.in);
 
 			System.out.println("instantiating component");
 			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.name());
 			child.addBasicServices();
-			var parent = child.localView().localTwin(req.parent);
-			child.deployer = parent;
+			child.deployer = req.parent;
+			new DigitalTwinService(req.parent, child.localView());
 //			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
 			// create the pipe to the parent
-			var pipeToParent = new PipeFromToParentProcess(child, parent, !req.target.autonomous);
+			var pipeToParent = new PipeFromToParentProcess(child, req.parent);
+			pipeToParent.suicideIfLoseParent = !req.target.autonomous;
 
 			// updates the twin parent
-			var parentInterface = parent.need(PipesFromToChildrenProcess.class);
-			parent.localView().ensureTwinLinkExists(new Link(pipeToParent, parentInterface));
+			var parentInterface = req.parent.service(PipesFromToChildrenProcess.class);
+			child.localView().g.markLinkActive(new Link(pipeToParent, parentInterface));
+			child.localView().g.markLinkActive(new Link(parentInterface, pipeToParent));
 
 			// tell the parent process that this node is ready for connections
 			System.out.println("ready, notifying parent");
-			PipeFromToParentProcess.sysout(child.need(SystemService.class).localComponentInfo());
+			pipeToParent.send(child.service(SystemService.class).localComponentInfo());
 			System.out.flush();
 
 			// prevents the JVM to quit
@@ -320,10 +328,10 @@ public class DeployerService extends Service {
 				Threads.sleep(1);
 //				PipeFromToParentProcess.sysout(child.descriptor());
 			}
-		} catch (Throwable t) {
-			t.printStackTrace(System.err);
+		} catch (Throwable err) {
+			err.printStackTrace(System.err);
 			System.err.println("Stopping JVM");
-			PipeFromToParentProcess.sysout(t);
+			PipeFromToParentProcess.sendBytes(new JavaSerializer<>().toBytes(err));
 			System.out.flush();
 			System.err.flush();
 			Threads.sleep(1);
@@ -432,7 +440,7 @@ public class DeployerService extends Service {
 			InvocationTargetException, NoSuchMethodException, SecurityException {
 
 		for (ServiceInfo sd : d.services) {
-			if (component.need(sd.clazz) == null) {
+			if (component.service(sd.clazz) == null) {
 				var s = sd.clazz.getConstructor(Component.class).newInstance(component);
 				s.apply(sd);
 			}

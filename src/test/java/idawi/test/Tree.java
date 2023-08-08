@@ -12,17 +12,17 @@ import toools.thread.Threads;
 
 public class Tree {
 	public static void main(String[] args) throws IOException {
-		var l = new ArrayList<Component>();
-		l.add(new Component());
+		var components = new ArrayList<Component>();
+		components.add(new Component());
 
 		for (int i = 0; i < 4; ++i) {
-			var a = l.get(new Random().nextInt(l.size()));
+			var a = components.get(new Random().nextInt(components.size()));
 			var b = new Component();
-			l.add(b);
-			Network.link(a, b, SharedMemoryTransport.class, false);
+			components.add(b);
+			Network.markLinkActive(a, b, SharedMemoryTransport.class, false, components);
 		}
 
-		l.get(0).need(WebService.class).startHTTPServer();
+		components.get(0).service(WebService.class).startHTTPServer();
 		Threads.sleepForever();
 	}
 }

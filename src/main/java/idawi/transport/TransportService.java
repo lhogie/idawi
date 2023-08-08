@@ -1,11 +1,7 @@
 package idawi.transport;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.stream.Stream;
+import java.util.List;
 
 import idawi.Component;
 import idawi.Event;
@@ -14,24 +10,18 @@ import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
-import idawi.routing.RouteListener;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
-import toools.io.Cout;
-import toools.io.ser.JavaSerializer;
-import toools.io.ser.Serializer;
 
-public abstract class TransportService extends Service implements Externalizable {
-	// used to serialized messages for transport
-	public static Serializer serializer = new JavaSerializer();
-	public long nbOfMsgReceived = 0;
+public abstract class TransportService extends Service {
+	public long nbMsgReceived = 0;
 	public long nbMsgSent;
-
-	public TransportService() {
-	}
+	public long incomingTraffic;
+	public long outGoingTraffic;
 
 	public TransportService(Component c) {
 		super(c);
+		c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
@@ -39,31 +29,22 @@ public abstract class TransportService extends Service implements Externalizable
 		return component + "/" + getName();
 	}
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(component);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		setComponent((Component) in.readObject());
-	}
-
 	// this is called by transport implementations
 	protected final void processIncomingMessage(Message msg) {
-		Cout.debug(" " + component + " receives " + msg);
-		++nbOfMsgReceived;
+//		Cout.debug(" " + component + " receives " + msg);
+		++nbMsgReceived;
+		incomingTraffic += msg.sizeOf();
+		var last = msg.route.last();
+		last.receptionDate = component.now();
+		last.link.latency = last.duration();
 
-		msg.route.entries().forEach(e -> e.link = component.localView().ensureTwinLinkExists(e.link));
-		msg.route.last().receptionDate = component.now();
-
-		component.forEachServiceOfClass(RouteListener.class, s -> s.feedWith(msg.route));
+		component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
 		// if the message was targeted to this component and its the first time it is
 		// received
 		if (msg.destination.componentMatcher.test(component)
 				&& msg.route.recipients().filter(t -> t.component.equals(component)).count() == 1) {
-			var s = component.need(msg.destination.service());
+			var s = component.service(msg.destination.service(), msg.destination.autoStartService);
 
 			if (s == null) {
 				System.err.println(
@@ -80,17 +61,21 @@ public abstract class TransportService extends Service implements Externalizable
 	}
 
 	private void forward(Message msg) {
-		// search for the same routing service
-		var rs = component.lookup(msg.route.last().routingProtocol());
+		// search for the routing service it was initially sent
+		var rs = component.service(msg.preferredRoutingStrategy.routingService, true);
+		RoutingData routingParms;
+
+		if (rs == null) {
+			rs = component.defaultRoutingProtocol();
+			routingParms = rs.defaultData();
+		} else {
+			routingParms = msg.preferredRoutingStrategy.parms;
+		}
 
 		// no such routing protocol running here
-		if (rs == null) {
-			// dunno what to do with the message
-			// so just pass it around
-			component.defaultRoutingProtocol().accept(msg, msg.currentRoutingParameters());
-		} else {
-			rs.accept(msg, msg.currentRoutingParameters());
-		}
+		// dunno what to do with the message
+		// so just pass it around
+		component.defaultRoutingProtocol().accept(msg, routingParms);
 	}
 
 	public abstract String getName();
@@ -105,37 +90,63 @@ public abstract class TransportService extends Service implements Externalizable
 		for (var outLink : outLinks) {
 			msg.route.add(outLink, r);
 			++nbMsgSent;
+			outGoingTraffic += msg.sizeOf();
+
 			// sending from a real component to a digital twin in the only situation
 			// the network is involved
-			if (!component.isDigitalTwin() && outLink.dest.component.isDigitalTwin()) {
-				sendImpl(msg);
-			} else {
-				var msgClone = msg.clone(component.ser);
-				double actualLatency = outLink.latency;
+			var sentFromTwin = component.isDigitalTwin();
+			var loop = outLink.dest.component.equals(component);
+			var sentToTwin = outLink.dest.component.isDigitalTwin();
+			var sentToSimulatedNode = searchSimlatedComponent(outLink.dest.component);
 
-				RuntimeEngine
-						.offer(new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
-							@Override
-							public void run() {
-								try {
-									outLink.dest.processIncomingMessage(msgClone);
-								} catch (Throwable e) {
-									e.printStackTrace();
-								}
-							}
-						});
+			if (sentFromTwin) {
+				fakeSend(msg, outLink, outLink.dest);
+			} else if (sentToSimulatedNode != null) {
+				var to = sentToSimulatedNode.service(outLink.dest.getClass(), true);
+				fakeSend(msg, outLink, to);
+			} else if (loop) {
+				fakeSend(msg, outLink, outLink.dest);
+			} else {
+				sendImpl(msg);
 			}
 
 			msg.route.removeLast();
 		}
 	}
 
-	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
-		send(msg, outLinks().toList(), r, parms);
+	private Component searchSimlatedComponent(Component search) {
+		for (var c : component.simulatedComponents) {
+			if (c.equals(search)) {
+				return c;
+			}
+		}
+
+		return null;
 	}
 
-	public Stream<Link> outLinks() {
-		return component.localView().links().stream().filter(l -> l.isActive() && l.src.equals(this));
+	private void fakeSend(Message msg, Link outLink, TransportService to) {
+		var msgClone = msg.clone(component.serializer);
+		double actualLatency = outLink.latency;
+
+		RuntimeEngine.offer(
+				new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
+					@Override
+					public void run() {
+						try {
+							to.processIncomingMessage(msgClone);
+						} catch (Throwable e) {
+							e.printStackTrace();
+						}
+					}
+				});
+	}
+
+	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
+		send(msg, activeOutLinks(), r, parms);
+	}
+
+	public List<Link> activeOutLinks() {
+		return component.localView().g.findLinks(l -> l.isActive() && l.src.equals(this));
 	}
 
 	@Override
@@ -144,7 +155,7 @@ public abstract class TransportService extends Service implements Externalizable
 	}
 
 	public long getNbMessagesReceived() {
-		return nbOfMsgReceived;
+		return nbMsgReceived;
 	}
 
 	public class getNbMessagesReceived extends TypedInnerClassEndpoint {
@@ -159,8 +170,8 @@ public abstract class TransportService extends Service implements Externalizable
 	}
 
 	public class neighbors extends TypedInnerClassEndpoint {
-		public OutLinks f() {
-			return new OutLinks(outLinks());
+		public List<Link> f() {
+			return activeOutLinks();
 		}
 
 		@Override

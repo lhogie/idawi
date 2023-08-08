@@ -34,7 +34,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var myNeighbors = component.outLinks().stream().map(n -> n.dest.component).toList();
-			var routingParms = convert(msg.currentRoutingParameters());
+			var routingParms = convert(msg.route.last().routing.parms);
 			var srcNeighbors = routingParms.neighbors;
 
 			// if I have neighbors that the source doesn't know

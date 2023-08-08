@@ -29,7 +29,7 @@ public class ManyComponents {
 		}
 
 		// connect them in a random tree
-		Topologies.chainRandomly(components, 3, new Random(), SharedMemoryTransport.class, (a, b) -> true);
+		Topologies.chains(components, 3, new Random(), (a, b) -> SharedMemoryTransport.class, components);
 
 //		System.out.println(Topologies.toDot(components));
 		var pdfFile = RegularFile.createTempFile("", ".pdf");
@@ -39,7 +39,7 @@ public class ManyComponents {
 
 		var first = components.get(0);
 		var last = components.get(components.size() - 1);
-		Network.link(last, first, SharedMemoryTransport.class, false);
+		Network.markLinkActive(last, first, SharedMemoryTransport.class, false, components);
 
 		var q = first.bb().ping(components.get(components.size() / 2));
 		var pong = q.poll_sync();
@@ -48,7 +48,7 @@ public class ManyComponents {
 		long nbMessages = 0;
 
 		for (var c : components) {
-			nbMessages += c.need(TransportService.class).nbOfMsgReceived;
+			nbMessages += c.service(TransportService.class).nbMsgReceived;
 		}
 
 		RuntimeEngine.threadPool.awaitTermination(1, TimeUnit.SECONDS);

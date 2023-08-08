@@ -3,6 +3,7 @@ package idawi.service;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Random;
+import java.util.Set;
 
 import idawi.Component;
 import idawi.EndpointParameterList;
@@ -100,7 +101,7 @@ public class DemoService extends Service {
 	public static void main(String[] args) {
 		Component a = new Component("a");
 		Component b = new Component("b");
-		Network.link(a, b, SharedMemoryTransport.class, true);
+		Network.markLinkActive(a, b, SharedMemoryTransport.class, true, Set.of(a, b));
 
 		var s = new BlindBroadcasting(a);
 		RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b),

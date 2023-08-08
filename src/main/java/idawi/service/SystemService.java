@@ -31,8 +31,8 @@ public class SystemService extends Service {
 			localInfo = new ComponentInfo(component.now());
 			localInfo.component = component;
 			localInfo.location = component.getLocation();
-			localInfo.timeModel = component.need(TimeService.class).model;
-			localInfo.systemInfo = component.need(SystemMonitor.class).info.get();
+			localInfo.timeModel = component.service(TimeService.class).model;
+			localInfo.systemInfo = component.service(SystemMonitor.class).info.get();
 			component.forEachService(s -> localInfo.services.add(s.descriptor()));
 		}
 

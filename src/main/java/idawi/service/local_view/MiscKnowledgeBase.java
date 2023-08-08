@@ -27,16 +27,6 @@ public class MiscKnowledgeBase extends KnowledgeBase {
 	}
 
 	@Override
-	public void accept(Info t) {
-		if (t instanceof TrustInfo) {
-			trustInfos.add((TrustInfo) t);
-		} else {
-			misc.add(t);
-		}
-
-	}
-
-	@Override
 	public Stream<Info> infos() {
 		return Stream.concat(trustInfos.stream(), misc.stream());
 	}

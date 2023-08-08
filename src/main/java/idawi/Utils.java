@@ -13,11 +13,6 @@ import toools.reflect.Clazz;
 public class Utils {
 	public static final Random random = new Random();
 
-	public static RegularFile plot(Collection<Component> components, OutLinks links) {
-		var f = RegularFile.createTempFile("idawi-", ".pdf");
-		f.setContent(Topologies.graphViz(components, links, c -> c.name()).toPDF());
-		return f;
-	}
 	public static String prettyTime(double t) {
 		return String.format("%.3f", t) + "s";
 	}

@@ -17,7 +17,7 @@ public class BasicExample {
 		c1.forEachService(s -> System.out.println(s));
 
 // among them, picks up the service for component deployments
-		var deployer = c1.need(DeployerService.class);
+		var deployer = c1.service(DeployerService.class);
 
 // and prints the operations exposed by it
 		System.out.println(deployer.endpoints());
@@ -26,7 +26,7 @@ public class BasicExample {
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component("other component");
 
-		c1.need(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
+		c1.service(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 
 // asks the other component to compute something
 		var l = c1.bb().exec_rpc(req.target, DemoService.class, stringLength.class, "Hello Idawi!");

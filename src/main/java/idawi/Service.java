@@ -1,10 +1,9 @@
 package idawi;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +18,7 @@ import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.MessageODestination;
 import idawi.routing.MessageQDestination;
+import idawi.routing.RoutingService;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
@@ -27,35 +27,28 @@ import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import toools.SizeOf;
 import toools.io.file.Directory;
-import toools.thread.Threads;
 import toools.util.Date;
 
-public class Service implements SizeOf {
+public class Service implements SizeOf, Serializable {
 
 	public static double now() {
 		return RuntimeEngine.now();
 	}
 
 	transient public final Class<? extends Service> id = getClass();
-	public Component component;
+	public final Component component;
 	private boolean askToRun = true;
-	transient protected final List<Thread> threads = new ArrayList<>();
-	transient protected final Set<AbstractEndpoint> endpoints = new HashSet<>();
+//	transient protected final List<Thread> threads = new ArrayList<>();
+	transient private final Set<AbstractEndpoint> endpoints = new HashSet<>();
 	transient private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	transient private final Set<String> detachedQueues = new HashSet<>();
-	transient final AtomicLong returnQueueID = new AtomicLong();
+	transient private final AtomicLong returnQueueIDGenerator = new AtomicLong();
 
-	// stores the number of messages received at each second
-	transient final Int2LongMap second2nbMessages = new Int2LongAVLTreeMap();
 
 	transient private long nbMsgsReceived;
 
 	transient private Directory directory;
 //	transient SD data;
-
-	// for deserialization
-	public Service() {
-	}
 
 	public Service(Component component) {
 		this.component = component;
@@ -81,6 +74,10 @@ public class Service implements SizeOf {
 		}
 	}
 
+	protected RoutingService<?> routing() {
+		return component.defaultRoutingProtocol();
+	}
+
 	@Override
 	public int hashCode() {
 		return ("" + component + getClass()).hashCode();
@@ -92,21 +89,12 @@ public class Service implements SizeOf {
 		return s.component.equals(component) && getClass().equals(s.getClass());
 	}
 
-	protected void setComponent(Component parent) {
-		if (component != null) {
-			component.services.remove(this);
-		}
-
-		parent.services.add(this);
-		this.component = parent;
-	}
-
 	public String webShortcut() {
 		return getClass().getName();
 	}
 
 	protected void registerURLShortCut() {
-		var ws = component.lookup(WebService.class);
+		var ws = component.service(WebService.class);
 
 		if (ws != null && ws != this) {
 			var shortcut = webShortcut();
@@ -128,23 +116,9 @@ public class Service implements SizeOf {
 		public String getDescription() {
 			return null;
 		}
-
 	}
 
-	public class sec2nbMessages extends TypedInnerClassEndpoint {
-		@Override
-		public String getDescription() {
-			return "gets a map associating a number a message received during seconds";
-		}
 
-		public Int2LongMap f() {
-			return sec2nbMessages();
-		}
-	}
-
-	public Int2LongMap sec2nbMessages() {
-		return second2nbMessages;
-	}
 
 	public String getDescription() {
 		return null;
@@ -200,8 +174,6 @@ public class Service implements SizeOf {
 	}
 
 	public void considerNewMessage(Message msg) {
-		int sec = (int) Date.time();
-		second2nbMessages.put(sec, second2nbMessages.get(sec) + 1);
 		++nbMsgsReceived;
 
 		if (msg.destination instanceof MessageODestination) {
@@ -235,7 +207,6 @@ public class Service implements SizeOf {
 			component.bb().send(EOT.instance, replyTo);
 		}
 	}
-
 
 	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, MessageODestination dest) {
 		var inputQ = getQueue(dest.queueID());
@@ -368,33 +339,14 @@ public class Service implements SizeOf {
 		endpoints.add(o);
 	}
 
-	public void newThread_loop_periodic(long periodMs, Runnable r) {
-		threads.add(Threads.newThread_loop_periodic(periodMs, () -> isAskedToRun(), r));
-	}
-
-	public void newThread_loop(long pauseMs, Runnable r) {
-		threads.add(Threads.newThread_loop(pauseMs, () -> isAskedToRun(), r));
-	}
-
-	public void newThread_loop(Runnable r) {
-		newThread_loop(0, r);
-	}
-
-	public Thread newThread(Runnable r) {
-		Thread t = new Thread(r);
-		threads.add(t);
-		t.start();
-		return t;
-	}
-
 	protected void logError(String msg) {
 		// System.err.println(component + "/" + id + " error: " + msg);
-		component.forEachServiceOfClass(ErrorLog.class, s -> s.report(msg));
+		component.forEachService(ErrorLog.class, s -> s.report(msg));
 	}
 
 	protected void logError(Throwable err) {
 		// err.printStackTrace();
-		component.forEachServiceOfClass(ErrorLog.class, errorLog -> errorLog.report(err));
+		component.forEachService(ErrorLog.class, errorLog -> errorLog.report(err));
 	}
 
 	public boolean isAskedToRun() {
@@ -412,17 +364,19 @@ public class Service implements SizeOf {
 		}
 	}
 
+	public class size extends TypedInnerClassEndpoint {
+		public long size() {
+			return sizeOf();
+		}
+
+		@Override
+		public String getDescription() {
+			return "nb of bytes used by this knowkedge base";
+		}
+	}
+
 	public void dispose() {
 		askToRun = false;
-		threads.forEach(t -> t.interrupt());
-
-		threads.forEach(t -> {
-			try {
-				t.join();
-			} catch (InterruptedException e) {
-				logError(e);
-			}
-		});
 
 		component.services.remove(this);
 	}
@@ -439,7 +393,7 @@ public class Service implements SizeOf {
 	}
 
 	protected MessageQueue createUniqueQueue(String prefix) {
-		return createQueue(prefix + returnQueueID.getAndIncrement());
+		return createQueue(prefix + returnQueueIDGenerator.getAndIncrement());
 	}
 
 	protected MessageQueue getQueue(String qid) {

@@ -34,7 +34,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var myNeighbors = component.outLinks();
-			var routingParms = convert(msg.currentRoutingParameters());
+			var routingParms = convert(msg.route.last().routing.parms);
 
 			// if I have neighbors that the source doesn't know
 			for (var n : myNeighbors) {

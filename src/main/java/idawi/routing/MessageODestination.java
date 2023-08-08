@@ -18,6 +18,11 @@ public class MessageODestination extends Destination {
 	}
 
 	@Override
+	public long sizeOf() {
+		return super.sizeOf() + 8 + 8 + 1 + 8 + 8;
+	}
+
+	@Override
 	public Class<? extends Service> service() {
 		return service;
 	}
@@ -39,4 +44,5 @@ public class MessageODestination extends Destination {
 	public String toString() {
 		return "to endpoint " + super.toString();
 	}
+
 }

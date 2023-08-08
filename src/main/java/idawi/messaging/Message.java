@@ -9,10 +9,11 @@ import idawi.Utils;
 import idawi.routing.Destination;
 import idawi.routing.Route;
 import idawi.routing.RoutingData;
-import toools.io.ser.JavaSerializer;
+import toools.SizeOf;
+import toools.io.ser.Serializer;
 import toools.text.TextUtilities;
 
-public class Message implements Serializable {
+public class Message implements Serializable, SizeOf {
 	private static final long serialVersionUID = 1L;
 
 	public long ID = ThreadLocalRandom.current().nextLong();
@@ -22,16 +23,18 @@ public class Message implements Serializable {
 	public Destination destination;
 	public Object content;
 
-	public Message(Destination dest, Object value) {
+	public final RoutingStrategy preferredRoutingStrategy;
+
+	public Message(Destination dest, RoutingStrategy preferredRoutingStrategy, Object content) {
 		if (dest == null)
 			throw new NullPointerException();
 
 		this.destination = dest;
-		this.content = value;
+		this.content = content;
+		this.preferredRoutingStrategy = preferredRoutingStrategy;
 	}
 
-
-	public Message clone(JavaSerializer ser) {
+	public Message clone(Serializer ser) {
 		return (Message) ser.clone(this);
 	}
 
@@ -50,9 +53,6 @@ public class Message implements Serializable {
 		throw new IllegalStateException("32-bit int hash code is not precise enough. Use the 64-bit ID instead");
 	}
 
-	public RoutingData currentRoutingParameters() {
-		return route.last().routingParms();
-	}
 
 	@Override
 	public String toString() {
@@ -89,6 +89,11 @@ public class Message implements Serializable {
 
 	public Component sender() {
 		return route.source();
+	}
+
+	@Override
+	public long sizeOf() {
+		return 8 + destination.sizeOf() + preferredRoutingStrategy.sizeOf() + route.sizeOf() + SizeOf.sizeOf(content);
 	}
 
 }

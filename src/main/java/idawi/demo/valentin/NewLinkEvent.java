@@ -5,6 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.RuntimeEngine;
+import idawi.service.local_view.Network;
 import idawi.transport.WiFiDirect;
 import toools.collections.Collections;
 
@@ -16,15 +17,15 @@ class NewLinkEvent extends MobilityEvent {
 
 	@Override
 	public void run() {
-		var a = Collections.pickRandomObject(c.localView().components(), prng);
+		var a = c.localView().g.pickRandomComponent(prng);
 		var b = a;
 
 		while (b == a) {
-			b = Collections.pickRandomObject(c.localView().components(), prng);
+			b = c.localView().g.pickRandomComponent(prng);
 		}
 
-		a.localView().g.link(a,  b, WiFiDirect.class, true);
-		
+		Network.markLinkActive(a, b, WiFiDirect.class, true, Set.of(a, b));
+
 		RuntimeEngine.offer(new LinkFailEvent(RuntimeEngine.now() + 1, c, prng));
 	}
 }

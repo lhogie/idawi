@@ -8,11 +8,10 @@ import java.util.Set;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
-import idawi.transport.OutLinks;
 import idawi.transport.TransportService;
 import toools.collections.primitive.BloomFilterForLong;
 
-public class BasicTableRoutingService extends RoutingService<RoutingData> implements RouteListener {
+public class BasicTableRoutingService extends RoutingService<RoutingData> implements TrafficListener {
 	private final BloomFilterForLong alreadyReceivedMsgs = new BloomFilterForLong(1000);
 	private final Map<Component, Component> destination_relay = new HashMap<>();
 
@@ -32,7 +31,8 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 
 					if (relay != null) {
 						component.services(TransportService.class).forEach(t -> {
-							var link = new OutLinks(t.outLinks()).search(relay);
+							var link = component.localView().g.findALink(
+									l -> l.src.component.equals(component) && l.dest.component.equals(relay));
 
 							if (link != null) {
 								t.send(msg, Set.of(link), this, parms);
@@ -45,8 +45,8 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 	}
 
 	@Override
-	public void feedWith(Route r) {
-		var components = r.components();
+	public void newMessageReceived(TransportService t, Message msg) {
+		var components = msg.route.components();
 		var neighbor = components.get(components.size() - 1);
 		components.subList(0, components.size() - 2).forEach(c -> destination_relay.put(c, neighbor));
 	}

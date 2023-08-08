@@ -4,11 +4,7 @@ import idawi.Component;
 import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 
-public class WiFiDirect extends TransportService {
-
-	public WiFiDirect() {
-		super();
-	}
+public class WiFiDirect extends WirelessTransport {
 
 	public WiFiDirect(Component c) {
 		super(c);
@@ -31,5 +27,10 @@ public class WiFiDirect extends TransportService {
 
 	@Override
 	public void dispose(Link l) {
+	}
+
+	@Override
+	public double typicalEmissionRange() {
+		return 200;
 	}
 }

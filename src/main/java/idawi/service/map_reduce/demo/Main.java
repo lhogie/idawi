@@ -27,7 +27,7 @@ public class Main {
 
 		// create workers
 		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.lookup("w" + i)));
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponent("w" + i)));
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();
@@ -36,7 +36,7 @@ public class Main {
 		}).toList();
 
 		// deploy JVMs
-		mapper.need(DeployerService.class).deployInNewJVMs(reqs, stdout -> System.out.println(stdout),
+		mapper.service(DeployerService.class).deployInNewJVMs(reqs, stdout -> System.out.println(stdout),
 				ok -> System.out.println("peer ok: " + ok));
 
 		// start Map/Reduce workers in them

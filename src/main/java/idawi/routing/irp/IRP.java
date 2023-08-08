@@ -1,8 +1,8 @@
 package idawi.routing.irp;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,11 +36,11 @@ public class IRP extends RoutingService<IRPParms> {
 			@Override
 			public void linkActivated(Link l) {
 				if (component.equals(l.src.component)) {
-					var tt = component.need(l.src.getClass());
+					var tt = component.service(l.src.getClass());
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.send(msg, Set.of(l), IRP.this, msg.route.last().routingParms);
+							tt.send(msg, Set.of(l), IRP.this, msg.route.last().routing.parms);
 						}
 					}
 				}
@@ -79,7 +79,7 @@ public class IRP extends RoutingService<IRPParms> {
 
 	public double expirationDate(Message msg) {
 		var creationDate = msg.route.first().emissionDate;
-		var r = (IRPParms) msg.route.first().routingParms;
+		var r = (IRPParms) msg.route.first().routing.parms;
 		return creationDate + r.getValidityDuration();
 	}
 
@@ -97,7 +97,8 @@ public class IRP extends RoutingService<IRPParms> {
 
 		{
 			var p = new IRPParms();
-			p.components = new HashSet<>(component.localView().components());
+			p.components = Set.of(component.localView().g.pickRandomComponent(new Random()),
+					component.localView().g.pickRandomComponent(new Random()));
 			p.coverage = 1000;
 			p.validityDuration = 1;
 			l.add(p);

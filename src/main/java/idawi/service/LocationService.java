@@ -16,15 +16,10 @@ public class LocationService extends Service {
 		super(node);
 	}
 
-
-	public Location getLocation() {
-		return location;
-	}
-
-	public class locationo extends TypedInnerClassEndpoint {
+	public class location extends TypedInnerClassEndpoint {
 
 		public Location get() {
-			return getLocation();
+			return location;
 		}
 
 		@Override

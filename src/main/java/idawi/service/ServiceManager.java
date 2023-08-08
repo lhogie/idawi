@@ -42,7 +42,7 @@ public class ServiceManager extends Service {
 
 	public class listOperations extends TypedInnerClassEndpoint {
 		public List<String> f(Class<? extends Service> serviceName) {
-			return component.need(serviceName).endpoints().stream().map(o -> o.getName()).sorted().toList();
+			return component.service(serviceName).endpoints().stream().map(o -> o.getName()).sorted().toList();
 		}
 
 		@Override
@@ -88,7 +88,7 @@ public class ServiceManager extends Service {
 
 	public class has extends TypedInnerClassEndpoint {
 		public boolean has(Class serviceID) {
-			return component.need(serviceID) != null;
+			return component.service(serviceID) != null;
 		}
 
 		@Override
@@ -100,7 +100,7 @@ public class ServiceManager extends Service {
 	public class ensureStarted extends TypedInnerClassEndpoint {
 		public void f(Class serviceID) {
 //			Cout.debugSuperVisible("ensure started " + serviceID);
-			component.need(serviceID);
+			component.service(serviceID);
 		}
 
 		@Override

@@ -1,6 +1,7 @@
 package idawi.demo;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import idawi.Component;
@@ -22,7 +23,7 @@ public class Minimal {
 
 		System.out.println(a.services());
 
-		Network.link(a, b, SharedMemoryTransport.class, false);
+		Network.markLinkActive(a, b, SharedMemoryTransport.class, false, Set.of(a, b));
 
 		var r = a.bb();
 		System.out.println("routing: " + r);

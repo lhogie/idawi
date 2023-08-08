@@ -18,9 +18,6 @@ public class KeyValueService extends Service {
 		super(peer);
 	}
 
-
-
-
 	public class get extends TypedInnerClassEndpoint {
 		public List<Object> get(List<Object> keys) throws Throwable {
 			return keys.stream().map(k -> map.get(k)).toList();
@@ -28,7 +25,7 @@ public class KeyValueService extends Service {
 
 		@Override
 		public String getDescription() {
-			return "gets a value";
+			return "gets one or more values";
 		}
 	}
 

@@ -7,11 +7,16 @@ import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 
-public class Bluetooth {
+import idawi.Component;
+import idawi.messaging.Message;
+import toools.exceptions.NotYetImplementedException;
+
+public class Bluetooth extends WirelessTransport {
+
 	private static final Object lock = new Object();
 
 	public static void main(String[] args) {
-System.out.println(System.getProperties());
+		System.out.println(System.getProperties());
 		try {
 			// 1
 			LocalDevice localDevice = LocalDevice.getLocalDevice();
@@ -27,14 +32,12 @@ System.out.println(System.getProperties());
 				synchronized (lock) {
 					lock.wait();
 				}
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			System.out.println("Device Inquiry Completed. ");
 
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -46,8 +49,7 @@ System.out.println(System.getProperties());
 			String name;
 			try {
 				name = btDevice.getFriendlyName(false);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				name = btDevice.getBluetoothAddress();
 			}
 
@@ -70,5 +72,33 @@ System.out.println(System.getProperties());
 		public void servicesDiscovered(int arg0, ServiceRecord[] arg1) {
 		}
 
+	}
+
+	public Bluetooth(Component c) {
+		super(c);
+	}
+
+	@Override
+	public double typicalEmissionRange() {
+		return 10;
+	}
+
+	@Override
+	public String getName() {
+		return "bluetooth";
+	}
+
+	@Override
+	public boolean canContact(Component c) {
+		return false;
+	}
+
+	@Override
+	protected void sendImpl(Message msg) {
+		throw new NotYetImplementedException();
+	}
+
+	@Override
+	public void dispose(Link l) {
 	}
 }

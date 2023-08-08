@@ -1,5 +1,6 @@
 package idawi.demo.valentin;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -85,8 +86,8 @@ public class ChordService extends Service {
 	}
 
 	public Set<Component> hash(String key) {
-		var components = component.localView().links().stream().filter(l -> l.isActive()).map(l -> l.dest.component)
-				.toList();
+		var components = new ArrayList<>(
+				component.localView().g.findLinks(l -> l.isActive()).stream().map(l -> l.dest.component).toList());
 		components.remove(component);
 
 		int nbTargets = 2;

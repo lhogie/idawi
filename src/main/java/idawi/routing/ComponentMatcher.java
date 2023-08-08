@@ -10,13 +10,14 @@ import java.util.function.Predicate;
 import idawi.Component;
 import idawi.service.SystemService;
 import idawi.service.local_view.LocalViewService;
+import toools.SizeOf;
 
 /**
  * The matcher runs on the real component to check if it should try to execute
  * the requested operation.
  *
  */
-public abstract class ComponentMatcher implements Predicate<Component>, Serializable, URLable {
+public abstract class ComponentMatcher implements Predicate<Component>, Serializable, URLable, SizeOf {
 
 	public static final ComponentMatcher all = new all();
 
@@ -35,6 +36,11 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 		@Override
 		public String toURLElement() {
 			return "";
+		}
+
+		@Override
+		public long sizeOf() {
+			return 1;
 		}
 
 	};
@@ -59,6 +65,12 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 		public String toURLElement() {
 			return target.toString();
 		}
+
+		@Override
+		public long sizeOf() {
+			return target.size() * 8;
+		}
+
 	}
 
 	public static ComponentMatcher regex(String regex) {
@@ -81,6 +93,12 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 		public String toURLElement() {
 			return "regex:" + regex;
 		}
+
+		@Override
+		public long sizeOf() {
+			return SizeOf.sizeOf(regex);
+		}
+
 	}
 
 	public static ComponentMatcher atLeastNCores(int nbCores) {
@@ -96,13 +114,19 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 		@Override
 		public boolean test(Component c) {
-			return c.need(SystemService.class).nbCores >= n;
+			return c.service(SystemService.class).nbCores >= n;
 		}
 
 		@Override
 		public String toURLElement() {
 			return "minCores:" + n;
 		}
+
+		@Override
+		public long sizeOf() {
+			return 4;
+		}
+
 	}
 
 	public static ComponentMatcher fromString(String s, LocalViewService lookup) {
@@ -115,10 +139,10 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 			if (pos == -1) {
 				return multicast(new HashSet<Component>(Arrays.stream(s.split(" *, *")).map(ref -> {
-					var c = lookup.g.lookup(ref);
+					var c = lookup.g.findComponent(ref);
 
 					if (c == null) {
-						lookup.localTwin(c = new Component(ref, lookup));
+						lookup.g.add(c = new Component(ref, lookup));
 					}
 
 					return c;

@@ -30,7 +30,7 @@ public class Demo2_simple_deployment {
 		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
-		localComponent.need(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
+		localComponent.service(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
 				err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 
 // at this step the child is running on the remote host. We can interact with

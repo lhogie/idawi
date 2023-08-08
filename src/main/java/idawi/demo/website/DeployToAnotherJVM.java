@@ -15,6 +15,6 @@ public class DeployToAnotherJVM {
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component("b", a);
 
-		a.need(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
+		a.service(DeployerService.class, true).deployInNewJVM(req, feedback -> System.out.println(feedback));
 	}
 }

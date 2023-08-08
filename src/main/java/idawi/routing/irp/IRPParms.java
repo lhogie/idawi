@@ -103,7 +103,7 @@ public class IRPParms extends RoutingData {
 			components = null;
 		} else {
 			for (var n : names.split(" *, *")) {
-				components.add(service.component.localView().g.lookup(n));
+				components.add(service.component.localView().g.findComponent(n));
 			}
 		}
 	}

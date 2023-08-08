@@ -10,20 +10,23 @@ public class TimeFrame implements Serializable, SizeOf {
 	public static double TIMEOUT = 2;
 
 	public TimeFrame(double from) {
-		this(from, from);
+		this(from, Double.MAX_VALUE);
 	}
 
 	public TimeFrame(double from, double to) {
+		if (to <= from)
+			throw new IllegalStateException(to + " > " + from);
+
 		this.start = from;
 		this.end = to;
 	}
 
-	public boolean isOver() {
-		return RuntimeEngine.now() - end > TIMEOUT;
+	public boolean isClosed() {
+		return end < Double.MAX_VALUE;
 	}
 
 	public double duration() {
-		return end - start;
+		return isClosed() ? end - start : RuntimeEngine.now() - start;
 	}
 
 	@Override
@@ -45,7 +48,7 @@ public class TimeFrame implements Serializable, SizeOf {
 
 	public void end(double t) {
 		if (t <= start)
-			throw new IllegalStateException();
+			throw new IllegalStateException(t + " > " + start);
 
 		this.end = t;
 	}

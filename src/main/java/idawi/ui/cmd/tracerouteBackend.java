@@ -12,7 +12,7 @@ public class tracerouteBackend extends CommandBackend {
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
 		var parms = cmdline.findParameters();
-		var to = n.need(LocalViewService.class).g.lookupByRegexp(parms.get(0));
+		var to = n.service(LocalViewService.class).g.lookupByRegexp(parms.get(0));
 
 		for (var t : to) {
 			out.accept("ping " + t);

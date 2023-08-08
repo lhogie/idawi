@@ -16,6 +16,7 @@ import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
+import idawi.messaging.RoutingStrategy;
 import idawi.transport.TransportService;
 import toools.io.Cout;
 import toools.util.Date;
@@ -27,7 +28,6 @@ import toools.util.Date;
 
 public abstract class RoutingService<Parms extends RoutingData> extends Service implements BiConsumer<Message, Parms> {
 	protected final AtomicLong nbMsgReceived = new AtomicLong();
-
 	public final List<RoutingListener> listeners = new ArrayList<>();
 
 	public long nbMessagesInitiated;
@@ -74,9 +74,11 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 		send(value, dest, defaultData());
 	}
 
-	public void send(Object value, Destination dest, Parms parms) {
+	public void send(Object content, Destination dest, Parms parms) {
 		Objects.requireNonNull(dest.service());
-		accept(new Message(dest, value), parms);
+		var preferredRoutingStrategy = new RoutingStrategy(getClass(), parms);
+		var msg = new Message(dest, preferredRoutingStrategy, content);
+		accept(msg, parms);
 	}
 
 	public void send(Object value, MessageQDestination dest) {
@@ -238,7 +240,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 	}
 
 	public static final long nbReceptions(Stream<Component> cs) {
-		return transports(cs).map(r -> r.nbOfMsgReceived).reduce(0L, Long::sum).longValue();
+		return transports(cs).map(r -> r.nbMsgReceived).reduce(0L, Long::sum).longValue();
 	}
-	
+
 }

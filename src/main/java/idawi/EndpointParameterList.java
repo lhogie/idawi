@@ -13,7 +13,7 @@ public class EndpointParameterList extends ArrayList {
 		}
 	}
 
-	public void convertTo(Class<?>[] types) {
+	public void convertTo(Class<?>[] types, Class<? extends TypedInnerClassEndpoint> class1) {
 //	public void convertTo(AbstractOperation operation, Class<?>[] types, Iterable<Converter<?, ?>> converters) {
 		if (types.length != size())
 			throw new IllegalArgumentException("expecting types " + TextUtilities.toString(types)
@@ -28,13 +28,13 @@ public class EndpointParameterList extends ArrayList {
 				try {
 					set(i, Conversion.convert(initialObject, destinationClass));
 				} catch (Exception err) {
-					throw new RuntimeException("conversion error", err);
+					throw new RuntimeException(class1 + ": cannot convert from " + initialObject.getClass() + " to " + destinationClass);
 				}
 			}
 		}
 	}
 
-	public static EndpointParameterList from(Object content, Class<?>[] types) {
+	public static EndpointParameterList from(Object content, Class<?>[] types, Class<? extends TypedInnerClassEndpoint> class1) {
 		// method without parameters
 		if (content == null && types.length == 0) {
 			return new EndpointParameterList();
@@ -42,12 +42,12 @@ public class EndpointParameterList extends ArrayList {
 
 		if (content instanceof EndpointParameterList) {
 			var parmList = (EndpointParameterList) content;
-			parmList.convertTo(types);
+			parmList.convertTo(types, class1);
 			return parmList;
 		} else if (types.length == 1) {
 			var parmList = new EndpointParameterList();
 			parmList.add(content);
-			parmList.convertTo(types);
+			parmList.convertTo(types, class1);
 			return parmList;
 		} else {
 			throw new IllegalArgumentException("can't match " + content + " and " + Arrays.toString(types));

@@ -43,7 +43,7 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 		} else {
 			var last = last();
 
-			if (last.isOver()) {
+			if (last.isClosed()) {
 				add(new TimeFrame(RuntimeEngine.now()));
 			} else {
 				last.end(RuntimeEngine.now());
@@ -57,6 +57,6 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 	}
 
 	public boolean available() {
-		return isEmpty() ? false : !last().isOver();
+		return isEmpty() ? false : !last().isClosed();
 	}
 }
