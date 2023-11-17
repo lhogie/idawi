@@ -116,14 +116,13 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 	}
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
-			Parms parms, ComponentMatcher re, MessageQueue returnQ, Object initialInputData) {
+			Parms parms, ComponentMatcher matcher, MessageQueue returnQ, Object initialInputData) {
 
 		// Cout.debugSuperVisible("exec " + o.getSimpleName() + " " + initialInputData);
-
 		var dest = new MessageODestination(service, o);
 		dest.service = service;
 		dest.invocationDate = Date.timeNs();
-		dest.componentMatcher = re;
+		dest.componentMatcher = matcher;
 		var r = new RemotelyRunningEndpoint();
 
 		if (returnQ != null) {
@@ -151,8 +150,11 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 				new EndpointParameterList(parms)).returnQ.poll_sync(RPC_TIMEOUT);
 
 		if (r.content instanceof Throwable) {
-			throw r.content instanceof RuntimeException ? (RuntimeException) r.content
-					: new RuntimeException((Throwable) r.content);
+			if (r.content instanceof RuntimeException) {
+				throw (RuntimeException) r.content;
+			} else {
+				throw new RuntimeException((Throwable) r.content);
+			}
 		} else {
 			return r.content;
 		}
@@ -162,7 +164,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-//			Cout.debugSuperVisible("PING");
+			Cout.debugSuperVisible("PING");
 			var m = in.poll_sync();
 			// sends back the ping message to the caller
 			reply(m, m);

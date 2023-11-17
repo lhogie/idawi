@@ -17,7 +17,7 @@ class TopologyDisseminationEvent extends Event<PointInTime> {
 	@Override
 	public void run() {
 		c.routing().exec(LocalViewService.class, markLinkActive.class,
-				c.g.randomLinks(c.disseminationSampleSize, RuntimeEngine.prng));
+				c.g.pickNRandomLinks(c.disseminationSampleSize, RuntimeEngine.prng));
 		RuntimeEngine.offer(new TopologyDisseminationEvent(when.time + c.disseminationInterval, c));
 	}
 

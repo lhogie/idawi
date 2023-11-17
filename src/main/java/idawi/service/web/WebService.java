@@ -301,7 +301,7 @@ public class WebService extends Service {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		RoutingService r;
+		RoutingService<?> r;
 		RoutingData rp;
 		ComponentMatcher t;
 		Class<? extends Endpoint> o;
@@ -372,7 +372,7 @@ public class WebService extends Service {
 			boolean encrypt, double duration, double timeout, Function<MessageCollector, Object> whatToSendF,
 			Serializer serializer, OutputStream output, InputStream postDataInputStream, String resultDescription) {
 
-		System.out.println(resultDescription);
+		System.out.println("target: " +target);
 
 		var ro = routing.exec(service, operationID, routingParms, target, true, parms);
 		var aes = new AESEncrypter();
@@ -424,12 +424,14 @@ public class WebService extends Service {
 			}).start();
 		}
 
+		System.out.println("collecting...");
+
 		collector.collect(duration, timeout, c -> {
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(c);
 
 			var ir = new InformedResponse();
-			ir.msg = resultDescription;
+			ir.whatIsIt = resultDescription;
 			ir.response = what2send;
 
 			var bytes = serializer.toBytes(ir);
@@ -452,13 +454,16 @@ public class WebService extends Service {
 
 			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
 		});
+		
+		System.out.println("collecting completed");
+
 
 //			ro.dispose();
 
 	}
 
 	public static class InformedResponse {
-		String msg;
+		String whatIsIt;
 		Object response;
 	}
 

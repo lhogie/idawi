@@ -27,7 +27,7 @@ public class Main {
 
 		// create workers
 		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponent("w" + i)));
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponentByName("w" + i)));
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();

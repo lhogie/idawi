@@ -24,6 +24,8 @@ public class Message implements Serializable, SizeOf {
 	public Object content;
 
 	public final RoutingStrategy preferredRoutingStrategy;
+	
+	public boolean simulatedMessage = false;
 
 	public Message(Destination dest, RoutingStrategy preferredRoutingStrategy, Object content) {
 		if (dest == null)

@@ -21,7 +21,7 @@ public class MessageCollector {
 	public boolean deliverError = true;
 	private final MessageQueue q;
 
-	public static double DEFAULT_COLLECT_DURATION = 60;
+	public static double DEFAULT_COLLECT_DURATION = 1;
 
 	public MessageCollector(MessageQueue q) {
 		this.q = q;

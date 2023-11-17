@@ -14,7 +14,7 @@ class LinkFailEvent extends MobilityEvent {
 
 	@Override
 	public void run() {
-		var l = c.localView().g.randomLinks(prng);
+		var l = c.localView().g.pickRandomLink(prng);
 		c.localView().g.deactivateLink(l);
 		RuntimeEngine.offer(new NewLinkEvent(RuntimeEngine.now() + 1, c, prng));
 	}

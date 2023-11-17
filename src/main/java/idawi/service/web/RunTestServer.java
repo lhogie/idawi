@@ -1,10 +1,11 @@
 package idawi.service.web;
 
-import java.awt.Desktop;
-import java.net.URI;
 import java.util.ArrayList;
+import java.util.Random;
 
 import idawi.Component;
+import idawi.routing.BlindBroadcasting;
+import idawi.routing.RoutingService;
 import idawi.service.DemoService;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
@@ -12,7 +13,7 @@ import idawi.transport.Topologies;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 0;
+		int n = 1;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent("", n));
 
@@ -22,9 +23,16 @@ public class RunTestServer {
 		var ws = gateway.service(WebService.class);
 		ws.startHTTPServer();
 
-		Topologies.randomTree(components, (from, to) -> SharedMemoryTransport.class, components);
-		System.out.println("gw reaches: " + gateway.outLinks());
+		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
+				components, new Random());
 
-		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
+		System.out.println("gw outLinks: " + gateway.outLinks());
+
+		var c = components.get(0);
+		System.out.println("pinging");
+		var pong = c.bb().exec(BlindBroadcasting.class, RoutingService.ping.class, null).returnQ.poll_sync();
+		System.out.println("pong: " + pong);
+
+//		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}
 }

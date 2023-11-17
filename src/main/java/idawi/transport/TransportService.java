@@ -97,16 +97,17 @@ public abstract class TransportService extends Service {
 			var sentFromTwin = component.isDigitalTwin();
 			var loop = outLink.dest.component.equals(component);
 			var sentToTwin = outLink.dest.component.isDigitalTwin();
-			var sentToSimulatedNode = searchSimlatedComponent(outLink.dest.component);
+			var simulatedNodeTarget = searchSimlatedComponent(outLink.dest.component);
 
 			if (sentFromTwin) {
 				fakeSend(msg, outLink, outLink.dest);
-			} else if (sentToSimulatedNode != null) {
-				var to = sentToSimulatedNode.service(outLink.dest.getClass(), true);
+			} else if (simulatedNodeTarget != null) {
+				var to = simulatedNodeTarget.service(outLink.dest.getClass(), true);
 				fakeSend(msg, outLink, to);
 			} else if (loop) {
 				fakeSend(msg, outLink, outLink.dest);
 			} else {
+
 				sendImpl(msg);
 			}
 
@@ -132,6 +133,7 @@ public abstract class TransportService extends Service {
 				new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
 					@Override
 					public void run() {
+						System.out.println("fae sed");
 						try {
 							to.processIncomingMessage(msgClone);
 						} catch (Throwable e) {
@@ -141,7 +143,7 @@ public abstract class TransportService extends Service {
 				});
 	}
 
-	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
+	public final void multicast(Message msg, RoutingService r, RoutingData parms) {
 		send(msg, activeOutLinks(), r, parms);
 	}
 

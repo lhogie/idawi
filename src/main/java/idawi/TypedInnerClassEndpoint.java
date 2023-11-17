@@ -55,7 +55,7 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 //		if (true)throw new Error("test error ");
 		// Cout.debugSuperVisible("transaling");
 		var parms = EndpointParameterList.from(exeMsg.content, method.getParameterTypes(), getClass());
-		Cout.debugSuperVisible("calling");
+//		Cout.debugSuperVisible("calling");
 		Object r = method.invoke(this, parms.toArray());
 
 		if (method.getReturnType() != void.class) {

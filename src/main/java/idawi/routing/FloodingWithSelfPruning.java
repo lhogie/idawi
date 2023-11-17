@@ -39,7 +39,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 
 			// if I have neighbors that the source doesn't know
 			if (!Collections.difference(myNeighbors, srcNeighbors).isEmpty()) {
-				component.services(TransportService.class).forEach(t -> t.bcast(msg, this, p));
+				component.services(TransportService.class).forEach(t -> t.multicast(msg, this, p));
 			}
 		}
 	}

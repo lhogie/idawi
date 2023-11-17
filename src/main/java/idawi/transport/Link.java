@@ -10,10 +10,10 @@ import idawi.service.local_view.Info;
 public class Link extends Info {
 	// the network interface on the neighbor side
 	public final TransportService src, dest;
-	public final Activity activity = new Activity();
 	private boolean active = false;
 	public double latency;
 	public int throughput;
+	public final Activity activity = new Activity();
 
 	public Link(TransportService from, TransportService to) {
 		Objects.requireNonNull(this.src = from);
