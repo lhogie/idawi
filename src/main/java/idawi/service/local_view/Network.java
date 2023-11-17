@@ -1,24 +1,19 @@
 package idawi.service.local_view;
 
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.IdawiGraphvizDriver;
 import idawi.RuntimeEngine;
-import idawi.Stop;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
 import idawi.service.local_view.BFS.Routes;
@@ -26,12 +21,11 @@ import idawi.transport.Link;
 import idawi.transport.TransportService;
 import jdotgen.GraphvizDriver;
 import jdotgen.GraphvizDriver.OUTPUT_FORMAT;
-import toools.SizeOf;
-import toools.collections.Collections;
+import toools.Stop;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 
-public class Network implements Serializable, SizeOf {
+public class Network extends ThreadSafeNetworkDataStructure {
 	public class BFSCache extends HashMap<Component, Cache<BFSResult>> {
 		public BFSResult from(Component from) {
 			var cache = get(from);
@@ -45,144 +39,39 @@ public class Network implements Serializable, SizeOf {
 		}
 	}
 
-	private final List<Component> components = new ArrayList<>();
-	private Collection<Link> links = new ArrayList<>();
-
 	public final BFSCache bfs = new BFSCache();
-	public final List<NetworkTopologyListener> listeners = new ArrayList<>();
 
-	public synchronized void add(Component twin) {
-		// if (!twin.isDigitalTwin())
-		// throw new IllegalStateException();
-
-		components.add(twin);
-		listeners.forEach(l -> l.newComponent(twin));
-	}
-
+	@Override
 	public synchronized void clear() {
-		components.clear();
-		links.clear();
+		super.clear();
 		bfs.clear();
 	}
 
-	@Override
-	public synchronized long sizeOf() {
-		return SizeOf.sizeOf(components) + SizeOf.sizeOf(links);
-	}
-
-	public synchronized Link findALink(Predicate<Link> p) {
-		for (var l : links) {
-			if (p.test(l)) {
-				return l;
-			}
-		}
-
-		return null;
-	}
-
-	public synchronized Component findAComponent(Predicate<Component> p) {
-		for (var l : components) {
-			if (p.test(l)) {
-				return l;
-			}
-		}
-
-		return null;
-	}
-
-	public synchronized Link ensureExists(Link l) {
-		var r = findALinkLike(l);
-
-		if (r == null) {
-			if (findComponentLike(l.src.component) == null) {
-				add(l.src.component);
-			}
-
-			if (findComponentLike(l.dest.component) == null) {
-				add(l.dest.component);
-			}
-
-			links.add(r = l);
-		}
-
-		return r;
-	}
-
-	public synchronized int nbLinks() {
-		return links.size();
-	}
-
-	public synchronized Component pickRandomComponent(Random r) {
-		if (components.size() == 0) {
-			return null;
-		} else {
-			return components.get(r.nextInt(components.size()));
-		}
-	}
-
-	public synchronized Link randomLinks(Random prng) {
-		return Collections.pickRandomObject(links, prng);
-	}
-
-	public synchronized Collection<Link> randomLinks(int n,Random r) {
-		if (links.size() <= n) {
-			return new HashSet<>(links);
-		} else {
-			return Collections.pickRandomSubset(links, n, false, r);
-		}
-	}
-
-	public synchronized List<Component> lookupByRegexp(String re) {
+	public List<Component> lookupByRegexp(String re) {
 		return findComponents(c -> c.name().matches(re));
-	}
-
-	public synchronized Link forEachLink(Function<Link, Stop> f) {
-		for (var l : links) {
-			if (f.apply(l) == Stop.yes) {
-				return l;
-			}
-		}
-
-		return null;
-	}
-
-	public synchronized void forEachComponent(Function<Component, Stop> f) {
-		for (var c : components) {
-			if (f.apply(c) == Stop.yes) {
-				break;
-			}
-		}
 	}
 
 	public List<Link> snapshotAt(double time) {
 		return findLinks(l -> l.activity.availableAt(time));
 	}
 
-	public Link findALinkLike(Link link) {
-		return findALink(l -> l.equals(link));
-	}
-
 	public List<Link> findInactiveLinks() {
 		return findLinks(l -> !l.isActive());
 	}
 
-	public Component findComponent(String name) {
-		var a = new Holder<Component>();
+	public Component findComponentByName(String name) {
+		var a = new Component[1];
 
 		forEachComponent(c -> {
 			if (c.name().equals(name)) {
-				a.c = c;
+				a[0] = c;
 				return Stop.yes;
 			} else {
 				return Stop.no;
 			}
 		});
 
-		return a.c;
-	}
-
-	public Component findComponentLike(Component c) {
-		return findComponent(c.name());
+		return a[0];
 	}
 
 	public List<Link> findLinksTo(Component c) {
@@ -214,12 +103,12 @@ public class Network implements Serializable, SizeOf {
 			s.println(c);
 			return Stop.no;
 		});
-		
+
 		forEachLink(l -> {
 			s.println(l.src + " -> " + l.dest);
 			return Stop.no;
 		});
-		
+
 		return sw.toString();
 	}
 
@@ -254,12 +143,21 @@ public class Network implements Serializable, SizeOf {
 		}
 	}
 
-	static class Holder<E> {
-		public E c;
-	}
-
 	public Link markLinkActive(TransportService src, TransportService dest) {
 		return markLinkActive(new Link(src, dest));
+	}
+
+	public void markLinkActive(TransportService src, TransportService dest, boolean bothDirections) {
+		markLinkActive(src, dest);
+
+		if (bothDirections) {
+			markLinkActive(dest, src);
+		}
+	}
+
+	public void markLinkActive(Component src, Component dest, Class<? extends TransportService> t,
+			boolean bothDirections) {
+		markLinkActive(src.service(t, true), dest.service(t, true), bothDirections);
 	}
 
 	public Link markLinkActive(Link l) {

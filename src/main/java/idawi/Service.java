@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,8 +24,7 @@ import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
 import idawi.service.web.WebService;
-import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import idawi.transport.Link;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -36,14 +36,13 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	transient public final Class<? extends Service> id = getClass();
-	public final Component component;
+	public  Component component;
 	private boolean askToRun = true;
 //	transient protected final List<Thread> threads = new ArrayList<>();
 	transient private final Set<AbstractEndpoint> endpoints = new HashSet<>();
 	transient private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	transient private final Set<String> detachedQueues = new HashSet<>();
 	transient private final AtomicLong returnQueueIDGenerator = new AtomicLong();
-
 
 	transient private long nbMsgsReceived;
 
@@ -117,8 +116,6 @@ public class Service implements SizeOf, Serializable {
 			return null;
 		}
 	}
-
-
 
 	public String getDescription() {
 		return null;
@@ -456,5 +453,5 @@ public class Service implements SizeOf, Serializable {
 
 		return size;
 	}
-
+	
 }

@@ -62,7 +62,7 @@ public class IRP extends RoutingService<IRPParms> {
 			boolean outdated = msg.route.isEmpty() ? false : p.validityDuration > msg.route.duration();
 
 			if (!wentToFar && !outdated) {
-				component.services(TransportService.class).forEach(t -> t.bcast(msg, this, p));
+				component.services(TransportService.class).forEach(t -> t.multicast(msg, this, p));
 			}
 		}
 	}

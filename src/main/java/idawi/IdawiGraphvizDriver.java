@@ -15,6 +15,7 @@ import jdotgen.GraphVizNode.Shape;
 import jdotgen.GraphvizArc;
 import jdotgen.GraphvizDriver;
 import jdotgen.Props.Style;
+import toools.Stop;
 
 public class IdawiGraphvizDriver extends GraphvizDriver {
 	final Network g;

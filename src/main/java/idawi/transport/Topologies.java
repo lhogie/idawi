@@ -22,19 +22,24 @@ public class Topologies {
 			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
 		Delauney2 delaunay = new Delauney2();
 
-		for (var c : components) {
-			var loc = c.getLocation();
-			delaunay.insertPoint(new Point<>(loc.x, loc.y, c));
+		class P extends Point {
+			Component c;
+
+			P(Component c) {
+				var l = c.getLocation();
+				this.x = l.x;
+				this.y = l.y;
+				this.c = c;
+			}
 		}
 
-		/* retourne la liste des segments */
-		List<Point[]> edges = delaunay.computeEdges();
+		components.forEach(c -> delaunay.insertPoint(new P(c)));
 
-		for (var e : edges) {
-			var a = (Component) e[0].c;
-			var b = (Component) e[1].c;
+		for (var edge : delaunay.computeEdges()) {
+			var a = (Component) ((P) edge[0]).c;
+			var b = (Component) ((P) edge[1]).c;
 			consider(a, b, f.apply(a, b), inform);
-			consider(b, a, f.apply(a, b), inform);
+			consider(b, a, f.apply(b, a), inform);
 		}
 	}
 
@@ -48,30 +53,31 @@ public class Topologies {
 		}
 	}
 
-	public static List<Pair<Component>> pairsSortedByDistance(Collection<Component> components) {
-		class E {
-			Pair<Component> p;
-			double d;
+	public static class DistancedPair extends Pair<Component> {
+		double distance;
+
+		DistancedPair(Component a, Component b) {
+			super(a, b, false);
+			this.distance = distance(a, b);
 		}
+	}
 
-		var r = new ArrayList<E>();
-		var l = new ArrayList<>(components);
+	public static List<DistancedPair> pairsSortedByDistance(Collection<Component> components) {
+		var pairs = new ArrayList<DistancedPair>();
+		var componentList = new ArrayList<>(components);
+		int len = componentList.size();
 
-		for (int i = 0; i < l.size(); ++i) {
-			var a = l.get(i);
+		for (int i = 0; i < len; ++i) {
+			var a = componentList.get(i);
 
-			for (int j = i + 1; j < l.size(); ++j) {
-				var b = l.get(j);
-				E e = new E();
-				e.p = new Pair<>(a, b, true);
-				e.d = distance(a, b);
-				r.add(e);
+			for (int j = i + 1; j < len; ++j) {
+				var b = componentList.get(j);
+				pairs.add(new DistancedPair(a, b));
 			}
 		}
 
-		Collections.sort(r, (p1, p2) -> Double.compare(p1.d, p2.d));
-
-		return r.stream().map(p -> p.p).toList();
+		Collections.sort(pairs, (p1, p2) -> Double.compare(p1.distance, p2.distance));
+		return pairs;
 	}
 
 	public static List<Component> sortByDistanceTo(List<Component> l, Component from) {
@@ -188,14 +194,25 @@ public class Topologies {
 		return time;
 	}
 
-	public static void randomTree(List<Component> components,
-			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
-		int n = components.size();
+	public static class TreeO {
+		public Class<? extends TransportService> leaf2tree, tree2leaf;
+	}
+
+	public static interface TriConsumer<A, B, C>{
+		void accept(A a, B b, C c);
+	}
+	
+	public static void tree(List<Component> components, TriConsumer<Component, Component, TreeO> tc, Collection<Component> inform,
+			Random prng) {
+		final int n = components.size();
+		final var out = new TreeO();
 
 		for (int i = 1; i < n; ++i) {
-			var from = components.get(i);
-			var to = components.get(ThreadLocalRandom.current().nextInt(i));
-			consider(from, to, f.apply(from, to), inform);
+			var leaf = components.get(i);
+			var parent = components.get(prng.nextInt(i));
+			tc.accept(parent, leaf, out);
+			consider(leaf, parent, out.leaf2tree, inform);
+			consider(parent, leaf, out.tree2leaf, inform);
 		}
 	}
 
@@ -203,7 +220,9 @@ public class Topologies {
 			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
 		for (var a : components) {
 			for (var b : components) {
-				consider(a, b, f.apply(a, b), inform);
+				if (a != b) {
+					consider(a, b, f.apply(a, b), inform);
+				}
 			}
 		}
 	}

@@ -118,7 +118,7 @@ public class ChordService extends Service {
 
 	public class set extends TypedInnerClassEndpoint {
 		public void f(Item i) {
-			System.out.println("writing " + file(i.key));
+			System.out.println(component + " writing " + file(i.key));
 			file(i.key).setContent(i.content);
 		}
 

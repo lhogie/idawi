@@ -53,7 +53,7 @@ public abstract class Command extends CommandLineApplication {
 			if (p.equals("_")) {
 				peers.add(n);
 			} else {
-				var pp = n.service(LocalViewService.class).g.findComponent(p);
+				var pp = n.service(LocalViewService.class).g.findComponentByName(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

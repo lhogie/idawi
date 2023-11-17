@@ -5,8 +5,8 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.RemotelyRunningEndpoint;
+import idawi.RuntimeEngine;
 import idawi.service.DemoService;
-import idawi.service.local_view.Network;
 import idawi.transport.SharedMemoryTransport;
 
 public class TwoComponents {
@@ -14,8 +14,21 @@ public class TwoComponents {
 		var a = new Component("a");
 		var b = new Component("b");
 
-		Network.markLinkActive(a, b, SharedMemoryTransport.class, true, Set.of(a, b));
+		// Network.markLinkActive(a, b, t, true, Set.of(a, b));
+		Set.of(a, b).forEach(c -> c.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, true));
+
+		System.out.println(a.localView().localLinks());
+		System.out.println(b.localView().localLinks());
+
+		a.service(DemoService.class, true);
+		b.service(DemoService.class, true);
 		RemotelyRunningEndpoint r = a.bb().exec(DemoService.class, DemoService.stringLength.class, "salut");
-		System.out.println(r.returnQ.poll_sync().content);
+
+		System.out.println("collecting");
+		r.returnQ.collector().collect(c -> {
+			System.out.println("from " + c.messages.last().route.source() + ": " + c.messages.last().content);
+		});
+		System.out.println("done");
+		RuntimeEngine.threadPool.shutdown();
 	}
 }

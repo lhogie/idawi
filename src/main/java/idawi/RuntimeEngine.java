@@ -38,12 +38,6 @@ public class RuntimeEngine {
 
 	public static Plots plots;
 
-	private static Runnable r = () -> {
-		try {
-		} catch (Throwable err) {
-			err.printStackTrace();
-		}
-	};
 
 	public static void startInThread() {
 		threadPool.submit(() -> {
@@ -139,6 +133,7 @@ public class RuntimeEngine {
 	public static void offer(Event<PointInTime> newEvent) {
 		var sooner = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;
 		eventQueue.offer(newEvent);
+
 
 		if (controllerThread != null && sooner) {
 			controllerThread.interrupt();

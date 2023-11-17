@@ -54,7 +54,7 @@ public class Component implements SizeOf {
 		@Override
 		protected Object replaceAtDeserialization(Object o) {
 			if (o instanceof ComponentRepresentative) {
-				var alreadyIn = localView().g.findComponent(((ComponentRepresentative) o).name);
+				var alreadyIn = localView().g.findComponentByName(((ComponentRepresentative) o).name);
 				return alreadyIn != null ? alreadyIn : new Component(name, Component.this);
 			} else if (o instanceof LinkRepresentative) {
 				var r = (LinkRepresentative) o;

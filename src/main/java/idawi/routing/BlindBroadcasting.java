@@ -31,15 +31,16 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	synchronized public void accept(Message msg, RoutingData parms) {
 //		System.err.println(System.identityHashCode(this)+ alreadyReceivedMsgs.l.size() +  " messagesd eceived");
 		// the message was never received
-//		System.err.println(msg);
 
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
-			listeners.forEach(l -> l.messageForwarded(this, msg));
-
 			alreadyReceivedMsgs.add(msg.ID);
+			System.err.println("multicast ");
 			component.services(TransportService.class).forEach(t -> {
-				t.bcast(msg, this, parms);
+				System.err.println("multicast " + t);
+				t.multicast(msg, this, parms);
 			});
+
+			listeners.forEach(l -> l.messageForwarded(this, msg));
 		} else {
 			listeners.forEach(l -> l.messageDropped(this, msg));
 		}

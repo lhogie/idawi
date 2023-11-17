@@ -52,7 +52,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	public static class multicast extends ComponentMatcher {
 		Collection<Component> target;
 
-		multicast(Collection<Component> target) {
+		public multicast(Collection<Component> target) {
 			this.target = target;
 		}
 
@@ -96,7 +96,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 		@Override
 		public long sizeOf() {
-			return SizeOf.sizeOf(regex);
+			return regex.length() + 4;
 		}
 
 	}
@@ -106,20 +106,20 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	};
 
 	public static class minCores extends ComponentMatcher {
-		int n;
+		int nbCores;
 
-		minCores(int n) {
-			this.n = n;
+		public minCores(int n) {
+			this.nbCores = n;
 		}
 
 		@Override
 		public boolean test(Component c) {
-			return c.service(SystemService.class).nbCores >= n;
+			return c.service(SystemService.class).nbCores >= nbCores;
 		}
 
 		@Override
 		public String toURLElement() {
-			return "minCores:" + n;
+			return "minCores:" + nbCores;
 		}
 
 		@Override
@@ -138,15 +138,8 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 			int pos = s.indexOf('.');
 
 			if (pos == -1) {
-				return multicast(new HashSet<Component>(Arrays.stream(s.split(" *, *")).map(ref -> {
-					var c = lookup.g.findComponent(ref);
-
-					if (c == null) {
-						lookup.g.add(c = new Component(ref, lookup));
-					}
-
-					return c;
-				}).toList()));
+				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *"))
+						.map(name -> lookup.g.ensureExists(new Component(name, lookup))).toList()));
 			} else {
 				var prefix = s.substring(0, pos);
 				var value = s.substring(pos + 1);

@@ -18,11 +18,6 @@ public abstract class Event<W extends When> implements Runnable, Serializable {
 	@Override
 	public final String toString() {
 		String s = name == null ? getClass().getSimpleName() : name;
-
-		if (s == null || s.isEmpty()) {
-			s = getClass().getName();
-		}
-
 		return s + "@" + when;
 	}
 }

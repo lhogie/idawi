@@ -6,7 +6,6 @@ import idawi.messaging.Message;
 
 public class SharedMemoryTransport extends TransportService {
 
-
 	public SharedMemoryTransport(Component c) {
 		super(c);
 	}
@@ -23,6 +22,8 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void sendImpl(Message msg) {
+		System.out.println("send " + msg);
+
 		var c = msg.clone(component.serializer);
 
 		RuntimeEngine.threadPool.submit(() -> {
@@ -34,12 +35,9 @@ public class SharedMemoryTransport extends TransportService {
 		});
 	}
 
-
-
 	@Override
 	public void dispose(Link l) {
 //		l.activity.close();
 	}
-
 
 }

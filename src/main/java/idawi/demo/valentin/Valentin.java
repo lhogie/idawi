@@ -38,8 +38,7 @@ public class Valentin {
 				a.simulatedComponents.addAll(components);
 
 				for (var b : components) {
-					var btwin = b.twin(false);
-					lv.g.add(btwin);
+					var btwin = lv.g.ensureExists(b);
 					btwin.service(LocationService.class, true).location = b.getLocation().clone();
 				}
 			}
