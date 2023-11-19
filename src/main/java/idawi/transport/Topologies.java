@@ -15,6 +15,7 @@ import idawi.service.local_view.Network;
 import idawi.transport.delauney2.Delauney2;
 import idawi.transport.delauney2.Point;
 import toools.collection.Pair;
+import toools.function.TriConsumer;
 
 public class Topologies {
 
@@ -198,10 +199,6 @@ public class Topologies {
 		public Class<? extends TransportService> leaf2tree, tree2leaf;
 	}
 
-	public static interface TriConsumer<A, B, C>{
-		void accept(A a, B b, C c);
-	}
-	
 	public static void tree(List<Component> components, TriConsumer<Component, Component, TreeO> tc, Collection<Component> inform,
 			Random prng) {
 		final int n = components.size();

@@ -34,9 +34,7 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
-			System.err.println("multicast ");
 			component.services(TransportService.class).forEach(t -> {
-				System.err.println("multicast " + t);
 				t.multicast(msg, this, parms);
 			});
 

@@ -12,6 +12,7 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
+import toools.io.Cout;
 
 public abstract class TransportService extends Service {
 	public long nbMsgReceived = 0;
@@ -31,7 +32,7 @@ public abstract class TransportService extends Service {
 
 	// this is called by transport implementations
 	protected final void processIncomingMessage(Message msg) {
-//		Cout.debug(" " + component + " receives " + msg);
+		Cout.debug(" " + component + " receives " + msg);
 		++nbMsgReceived;
 		incomingTraffic += msg.sizeOf();
 		var last = msg.route.last();
@@ -86,8 +87,9 @@ public abstract class TransportService extends Service {
 
 	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
 
-		// Cout.debug(" " + component + " sends: " + msg);
-		for (var outLink : outLinks) {
+		 Cout.debug(" " + component + " sends: " + msg);
+
+		 for (var outLink : outLinks) {
 			msg.route.add(outLink, r);
 			++nbMsgSent;
 			outGoingTraffic += msg.sizeOf();
@@ -107,7 +109,6 @@ public abstract class TransportService extends Service {
 			} else if (loop) {
 				fakeSend(msg, outLink, outLink.dest);
 			} else {
-
 				sendImpl(msg);
 			}
 

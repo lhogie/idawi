@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import idawi.Component;
+import idawi.RuntimeEngine;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.service.DemoService;
@@ -30,6 +31,9 @@ public class RunTestServer {
 
 		var c = components.get(0);
 		System.out.println("pinging");
+		
+		RuntimeEngine.terminated = () -> false;
+		RuntimeEngine.start();
 		var pong = c.bb().exec(BlindBroadcasting.class, RoutingService.ping.class, null).returnQ.poll_sync();
 		System.out.println("pong: " + pong);
 

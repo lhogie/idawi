@@ -131,7 +131,7 @@ public class Valentin {
 		// stop after 20s
 		RuntimeEngine.terminated = () -> RuntimeEngine.now() > 100;
 		System.err.println("running");
-		RuntimeEngine.run();
+		RuntimeEngine.start();
 
 		RuntimeEngine.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
 	}

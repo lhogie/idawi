@@ -31,7 +31,7 @@ public class RuntimeEngine {
 	static long nbPastEvents = 0;
 	public static double startTime = -1;
 	public static double timeAcceleartionFactor = 1;
-	private static Thread controllerThread;
+//	private static Thread controllerThread;
 	public static Supplier<Boolean> terminated;
 
 	public static Directory directory;
@@ -42,19 +42,19 @@ public class RuntimeEngine {
 	public static void startInThread() {
 		threadPool.submit(() -> {
 			try {
-				run();
+				start();
 			} catch (Throwable err) {
 				err.printStackTrace();
 			}
 		});
 	}
 
-	public static long run() throws Throwable {
+	public static long start() throws Throwable {
 		startTime = Date.time();
 		controllerThread = Thread.currentThread();
 		listeners.forEach(l -> l.starting());
-
-		while (!terminated.get()) {
+		
+		while (terminated == null || !terminated.get()) {
 			var e = grabCloserEvent();
 
 			if (e == null) {
