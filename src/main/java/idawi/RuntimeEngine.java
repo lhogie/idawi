@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 
 import jexperiment.Plots;
 import toools.io.file.Directory;
-import toools.io.file.RegularFile;
 import toools.util.Date;
 
 public class RuntimeEngine {
@@ -31,13 +30,12 @@ public class RuntimeEngine {
 	static long nbPastEvents = 0;
 	public static double startTime = -1;
 	public static double timeAcceleartionFactor = 1;
-//	private static Thread controllerThread;
+	private static Thread controllerThread;
 	public static Supplier<Boolean> terminated;
 
 	public static Directory directory;
 
 	public static Plots plots;
-
 
 	public static void startInThread() {
 		threadPool.submit(() -> {
@@ -53,7 +51,7 @@ public class RuntimeEngine {
 		startTime = Date.time();
 		controllerThread = Thread.currentThread();
 		listeners.forEach(l -> l.starting());
-		
+
 		while (terminated == null || !terminated.get()) {
 			var e = grabCloserEvent();
 
@@ -128,12 +126,9 @@ public class RuntimeEngine {
 		return (Date.time() - startTime) * timeAcceleartionFactor;
 	}
 
-
-
 	public static void offer(Event<PointInTime> newEvent) {
 		var sooner = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;
 		eventQueue.offer(newEvent);
-
 
 		if (controllerThread != null && sooner) {
 			controllerThread.interrupt();

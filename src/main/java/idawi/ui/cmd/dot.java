@@ -1,18 +1,12 @@
 package idawi.ui.cmd;
 
-import toools.io.file.RegularFile;
-
 public class dot extends BackendedCommand {
 	public static void main(String[] args) throws Throwable {
-		new dot(null).run(args);
-	}
-
-	public dot(RegularFile launcher) {
-		super(launcher);
+		new dot().run(args);
 	}
 
 	@Override
-	public String getShortDescription() {
+	public String getDescription() {
 		return "prints the DOT text of the map of the network";
 	}
 }

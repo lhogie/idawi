@@ -6,45 +6,19 @@ import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.service.local_view.LocalViewService;
-import j4u.CommandLineApplication;
-import j4u.License;
 import toools.io.Cout;
-import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
-public abstract class Command extends CommandLineApplication {
+public abstract class IdawiCommand extends j4u.Command {
 
 	static {
 		Cout.timestamp();
-	}
-
-	public Command(RegularFile launcher) {
-		super(launcher);
 	}
 
 	public String getCommandName() {
 		return Clazz.classNameWithoutPackage(getClass().getName());
 	}
 
-	@Override
-	public String getAuthor() {
-		return "Luc Hogie";
-	}
-
-	@Override
-	public License getLicence() {
-		return License.ApacheLicenseV2;
-	}
-
-	@Override
-	public String getApplicationName() {
-		return "jThing";
-	}
-
-	@Override
-	public String getYear() {
-		return "2019-2020";
-	}
 
 	public static Set<Component> targetPeers(Component n, String list, Consumer<Object> out) {
 		Set<Component> peers = new HashSet<>();

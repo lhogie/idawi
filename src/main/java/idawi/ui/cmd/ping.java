@@ -3,20 +3,20 @@ package idawi.ui.cmd;
 import idawi.Component;
 import idawi.messaging.Message;
 import j4u.CommandLine;
+import j4u.CommandLineSpecification;
 import toools.io.Cout;
-import toools.io.file.RegularFile;
 import toools.progression.LongProcess;
 
 public class ping extends CommunicatingCommand {
 	public static void main(String[] args) throws Throwable {
-		new ping(null).run(args);
+		new ping().run(args);
 	}
 
-	public ping(RegularFile launcher) {
-		super(launcher);
-		addOption("--nbTimes", "-n", "[0-9]+", 1, "nb of pings");
-		addOption("--hide", null, null, null, "do not print each individual ping/pong");
-		addOption("--progress", "-p", null, null, "print progress statistics");
+	@Override
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--nbTimes", "-n", "[0-9]+", 1, "nb of pings");
+		spec.addOption("--hide", null, null, null, "do not print each individual ping/pong");
+		spec.addOption("--progress", "-p", null, null, "print progress statistics");
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class ping extends CommunicatingCommand {
 	}
 
 	@Override
-	public String getShortDescription() {
-		return "ping";
+	public String getDescription() {
+		return null;
 	}
 }

@@ -8,15 +8,15 @@ import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
 import idawi.ui.cmd.CommandsService.exec;
 import j4u.CommandLine;
+import j4u.CommandLineSpecification;
 import toools.io.Cout;
-import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
 public abstract class BackendedCommand extends CommunicatingCommand {
 
-	public BackendedCommand(RegularFile launcher) {
-		super(launcher);
-		addOption("--hook", "-k", ".+", null,
+	@Override
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--hook", "-k", ".+", null,
 				"the CDL description of the component which will be the entry point to the overlay");
 	}
 
@@ -31,24 +31,24 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		}
 
 		Cout.info("executing command");
-		var target = Command.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
+		var target = IdawiCommand.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 		var col = c.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
 				ComponentMatcher.multicast(target), true, backend).returnQ.collector();
-		
-		col.collect(1, 1, c2 -> {
-					var msg = c2.messages.last();
 
-					if (msg.isError()) {
-						((Throwable) msg.content).printStackTrace();
-					} else if (msg.isProgress()) {
-						System.out.println("progress; " + msg.content);
-					} else {
-						System.out.println(msg.content);
-					}
-				});
+		col.collect(1, 1, c2 -> {
+			var msg = c2.messages.last();
+
+			if (msg.isError()) {
+				((Throwable) msg.content).printStackTrace();
+			} else if (msg.isProgress()) {
+				System.out.println("progress; " + msg.content);
+			} else {
+				System.out.println(msg.content);
+			}
+		});
 
 		if (col.stop) {
 			System.err.println("not enough results!");

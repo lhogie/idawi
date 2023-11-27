@@ -1,19 +1,19 @@
 package idawi.ui.cmd;
 
-import toools.io.file.RegularFile;
+import j4u.CommandLineSpecification;
 
 public class ls extends BackendedCommand {
 	public static void main(String[] args) throws Throwable {
-		new ls(null).run(args);
-	}
-
-	public ls(RegularFile launcher) {
-		super(launcher);
-		addOption("--list-queues", "-q", null, null, "list queues in every service");
+		new ls().run(args);
 	}
 
 	@Override
-	public String getShortDescription() {
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--list-queues", "-q", null, null, "list queues in every service");
+	}
+
+	@Override
+	public String getDescription() {
 		return "list services";
 	}
 }
