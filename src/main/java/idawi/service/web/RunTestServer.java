@@ -23,6 +23,8 @@ public class RunTestServer {
 		var gateway = components.get(0);
 		var ws = gateway.service(WebService.class);
 		ws.startHTTPServer();
+		RuntimeEngine.terminated = () -> false;
+		RuntimeEngine.processEventQueue();
 
 		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
 				components, new Random());
@@ -32,8 +34,6 @@ public class RunTestServer {
 		var c = components.get(0);
 		System.out.println("pinging");
 		
-		RuntimeEngine.terminated = () -> false;
-		RuntimeEngine.start();
 		var pong = c.bb().exec(BlindBroadcasting.class, RoutingService.ping.class, null).returnQ.poll_sync();
 		System.out.println("pong: " + pong);
 

@@ -51,11 +51,11 @@ public abstract class TransportService extends Service {
 				System.err.println(
 						"component " + component + " does not have service " + msg.destination.service().getName());
 			} else {
-//				System.err.println(component + " DELIVER " + msg.route);
+				System.err.println(component + " DELIVER " + msg.route);
 				s.considerNewMessage(msg);
 			}
 		} else {
-			// System.err.println(component + " DROP " + msg.route);
+			 System.err.println(component + " DROP " + msg.route);
 		}
 
 		forward(msg);

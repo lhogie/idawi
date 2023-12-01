@@ -40,14 +40,14 @@ public class RuntimeEngine {
 	public static void startInThread() {
 		threadPool.submit(() -> {
 			try {
-				start();
+				processEventQueue();
 			} catch (Throwable err) {
 				err.printStackTrace();
 			}
 		});
 	}
 
-	public static long start() throws Throwable {
+	public static long processEventQueue() throws Throwable {
 		startTime = Date.time();
 		controllerThread = Thread.currentThread();
 		listeners.forEach(l -> l.starting());
@@ -127,14 +127,13 @@ public class RuntimeEngine {
 	}
 
 	public static void offer(Event<PointInTime> newEvent) {
-		var sooner = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;
+		var needInterrupt = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;
 		eventQueue.offer(newEvent);
+		listeners.forEach(l -> l.eventSubmitted(newEvent));
 
-		if (controllerThread != null && sooner) {
+		if (controllerThread != null && needInterrupt) {
 			controllerThread.interrupt();
 		}
-
-		listeners.forEach(l -> l.eventSubmitted(newEvent));
 	}
 
 	public static void offer(double date, String descr, Runnable r) {
@@ -158,7 +157,7 @@ public class RuntimeEngine {
 				return nbPastEvents;
 			}
 		} catch (InterruptedException e) {
-			throw new IllegalStateException();
+			throw new IllegalStateException(e);
 		}
 	}
 
