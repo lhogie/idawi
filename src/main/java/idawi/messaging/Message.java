@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
 import idawi.RemoteException;
-import idawi.Utils;
+import idawi.Instance;
 import idawi.routing.Destination;
 import idawi.routing.Route;
 import idawi.routing.RoutingData;
@@ -44,7 +44,7 @@ public class Message implements Serializable, SizeOf {
 	public boolean equals(Object o) {
 		if (o instanceof Message) {
 			Message m = (Message) o;
-			return ID == m.ID && route.equals(m.route) && Utils.equals(content, m.content);
+			return ID == m.ID && route.equals(m.route) && Instance.equals(content, m.content);
 		} else {
 			return false;
 		}

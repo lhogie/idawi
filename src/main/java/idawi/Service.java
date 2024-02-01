@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -24,7 +23,6 @@ import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
 import idawi.service.web.WebService;
-import idawi.transport.Link;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -32,11 +30,11 @@ import toools.util.Date;
 public class Service implements SizeOf, Serializable {
 
 	public static double now() {
-		return RuntimeEngine.now();
+		return Agenda.now();
 	}
 
 	transient public final Class<? extends Service> id = getClass();
-	public  Component component;
+	public Component component;
 	private boolean askToRun = true;
 //	transient protected final List<Thread> threads = new ArrayList<>();
 	transient private final Set<AbstractEndpoint> endpoints = new HashSet<>();
@@ -244,8 +242,8 @@ public class Service implements SizeOf, Serializable {
 
 		if (dest.premptive) {
 			e.run();
-		} else if (!RuntimeEngine.threadPool.isShutdown()) {
-			RuntimeEngine.offer(e);
+		} else if (!Instance.agenda.threadPool.isShutdown()) {
+			Instance.agenda.offer(e);
 		} else {
 			System.err.println("ignoring exec message: " + msg);
 		}
@@ -453,5 +451,5 @@ public class Service implements SizeOf, Serializable {
 
 		return size;
 	}
-	
+
 }

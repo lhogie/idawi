@@ -9,7 +9,6 @@ import java.util.List;
 
 import idawi.messaging.MessageQueue;
 import idawi.service.local_view.TypeOperationDescriptor;
-import toools.io.Cout;
 import toools.reflect.Clazz;
 
 public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
@@ -21,7 +20,6 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 	public TypedInnerClassEndpoint() {
 		this.method = findMain();
 	}
-
 
 	@Override
 	protected TypeOperationDescriptor createDescriptor() {

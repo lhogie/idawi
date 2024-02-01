@@ -2,7 +2,7 @@ package idawi.transport;
 
 import java.io.Serializable;
 
-import idawi.RuntimeEngine;
+import idawi.Agenda;
 import toools.SizeOf;
 
 public class TimeFrame implements Serializable, SizeOf {
@@ -26,7 +26,7 @@ public class TimeFrame implements Serializable, SizeOf {
 	}
 
 	public double duration() {
-		return isClosed() ? end - start : RuntimeEngine.now() - start;
+		return isClosed() ? end - start : Agenda.now() - start;
 	}
 
 	@Override

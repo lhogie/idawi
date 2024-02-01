@@ -94,10 +94,6 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 		return len() == 0;
 	}
 
-	public void removeLast() {
-		remove(len() - 1);
-	}
-
 	public Entry first() {
 		return get(0);
 	}

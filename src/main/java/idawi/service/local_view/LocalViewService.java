@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
+import idawi.Agenda;
 import idawi.Component;
-import idawi.RuntimeEngine;
 import idawi.TypedInnerClassEndpoint;
+import idawi.Instance;
 import idawi.messaging.Message;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
@@ -19,7 +20,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	public final List<DigitalTwinListener> listeners = new ArrayList<>();
 	public final Network g = new Network();
-	public final double disseminationInterval = 1;
+	public final double disseminationIntervalS = 0;
 	public int disseminationSampleSize = 50;
 	public boolean disseminateTopologyChangesWhenTheyOccur = false;
 
@@ -34,7 +35,7 @@ public class LocalViewService extends KnowledgeBase {
 		});
 
 		// periodically disseminate topology information
-		RuntimeEngine.offer(new TopologyDisseminationEvent(RuntimeEngine.now() + disseminationInterval, this));
+		scheduleNextDisseminationMessage();
 
 		// disseminate each local topology change as soon as they occur
 		g.listeners.add(new NetworkTopologyListener() {
@@ -66,6 +67,16 @@ public class LocalViewService extends KnowledgeBase {
 
 		// the component won't have twin
 //		components.add(component);
+	}
+
+	 void scheduleNextDisseminationMessage() {
+		 if (disseminate()) {
+				Instance.agenda.offer(new TopologyDisseminationEvent(Agenda.now() + disseminationIntervalS, this));
+		 }
+	}
+
+	public boolean disseminate() {
+		return disseminationIntervalS > 0;
 	}
 
 	@Override

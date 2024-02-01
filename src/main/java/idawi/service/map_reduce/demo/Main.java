@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 
 import idawi.Component;
 import idawi.EndpointParameterList;
-import idawi.RuntimeEngine;
+import idawi.Instance;
+import idawi.Agenda;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
@@ -82,7 +83,7 @@ public class Main {
 
 		System.out.println("result= " + finalResult.get());
 
-		RuntimeEngine.threadPool.shutdown();
+		Instance.agenda.threadPool.shutdown();
 	}
 
 }

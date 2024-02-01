@@ -1,6 +1,6 @@
 package idawi;
 
-public class RuntimeAdapter implements RuntimeListener {
+public class RuntimeAdapter implements AgendaListener {
 
 	@Override
 	public void eventSubmitted(Event<?> newEvent) {

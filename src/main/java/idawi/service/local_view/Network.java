@@ -13,7 +13,8 @@ import java.util.function.Predicate;
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.IdawiGraphvizDriver;
-import idawi.RuntimeEngine;
+import idawi.Instance;
+import idawi.Agenda;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
 import idawi.service.local_view.BFS.Routes;
@@ -225,17 +226,17 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Directory plot(Object label, Consumer<IdawiGraphvizDriver> customizer) {
-		var filename = String.format("%03f", RuntimeEngine.now()) + " " + label;
+		var filename = String.format("%03f", Agenda.now()) + " " + label;
 		var d = new IdawiGraphvizDriver(this);
 		customizer.accept(d);
 		var dot = d.toDot();
 
 		d.outputFormats.forEach(ext -> {
 			var bytes = GraphvizDriver.to(d.cfg, dot, OUTPUT_FORMAT.valueOf(ext));
-			new RegularFile(RuntimeEngine.directory, filename + "." + ext).setContent(bytes);
+			new RegularFile(Instance.directory, filename + "." + ext).setContent(bytes);
 		});
 
-		return RuntimeEngine.directory;
+		return Instance.directory;
 	}
 
 	public List<Link> findLinks(Predicate<Link> p) {

@@ -2,7 +2,7 @@ package idawi.transport;
 
 import java.util.ArrayList;
 
-import idawi.RuntimeEngine;
+import idawi.Agenda;
 import toools.SizeOf;
 
 public class Activity extends ArrayList<TimeFrame> implements SizeOf {
@@ -39,14 +39,14 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 
 	public void markActive() {
 		if (isEmpty()) {
-			add(new TimeFrame(RuntimeEngine.now()));
+			add(new TimeFrame(Agenda.now()));
 		} else {
 			var last = last();
 
 			if (last.isClosed()) {
-				add(new TimeFrame(RuntimeEngine.now()));
+				add(new TimeFrame(Agenda.now()));
 			} else {
-				last.end(RuntimeEngine.now());
+				last.end(Agenda.now());
 			}
 		}
 	}

@@ -2,8 +2,9 @@ package idawi.demo.valentin;
 
 import java.util.List;
 
+import idawi.Agenda;
 import idawi.Component;
-import idawi.RuntimeEngine;
+import idawi.Instance;
 import idawi.messaging.Message;
 import idawi.routing.TrafficListener;
 import idawi.service.LocationService;
@@ -30,7 +31,7 @@ public class Valentin {
 		public CloudEdgeFog(int n) {
 			components = Component.createNComponent("", n);
 			System.out.println("assign random locations to nodes");
-			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, RuntimeEngine.prng));
+			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, Instance.prng));
 
 			// build individual local views
 			for (var a : components) {
@@ -56,7 +57,7 @@ public class Valentin {
 
 			// link 1/4 of mobile devices to their closest hotspot
 			var mobileDevicesConnectedToHotspots = Collections.pickRandomSubset(mobileDevices, mobileDevices.size() / 4,
-					false, RuntimeEngine.prng);
+					false, Instance.prng);
 			mobileDevicesConnectedToHotspots.forEach(mobileDevice -> {
 				var closestHotspot = Topologies.sortByDistanceTo(hotspots, mobileDevice).get(0);
 				Network.markLinkActive(closestHotspot, mobileDevice, TCPDriver.class, true, components);
@@ -83,10 +84,10 @@ public class Valentin {
 
 		GraphvizDriver.path = "/usr/local/bin/";
 		GNUPlot.path = "/usr/local/bin/";
-		RuntimeEngine.setDirectory("$HOME/tmp/valentin").open();
+		Instance.setDirectory("$HOME/tmp/valentin").open();
 
 		// declares the plots we will draw
-		var trafficPlot = RuntimeEngine.plots.createPlot("Traffic", "time (s)", "#msg");
+		var trafficPlot = Instance.plots.createPlot("Traffic", "time (s)", "#msg");
 		var msgSentFct = trafficPlot.createFunction("#msg sent");
 		var msgReceivedFct = trafficPlot.createFunction("#msg received");
 		var trafficFct = trafficPlot.createFunction("trafficFct (bytes)");
@@ -103,8 +104,8 @@ public class Valentin {
 
 			@Override
 			public void newMessageReceived(TransportService t, Message msg) {
-				msgReceivedFct.instances(null).addMeasure(RuntimeEngine.now(), nbMsgReceived++);
-				trafficFct.instances(null).addMeasure(RuntimeEngine.now(), incomingTraffic += msg.sizeOf());
+				msgReceivedFct.instances(null).addMeasure(Agenda.now(), nbMsgReceived++);
+				trafficFct.instances(null).addMeasure(Agenda.now(), incomingTraffic += msg.sizeOf());
 			}
 		};
 
@@ -125,15 +126,15 @@ public class Valentin {
 
 		// ask a node 0 to inject an item into the DHT
 		net.components.forEach(c -> new ChordService(c));
-		RuntimeEngine.offer(2, "add item",
+		Instance.agenda.offer(2, "add item",
 				() -> c0.service(ChordService.class).store(new Item("item1", "value".getBytes())));
 
 		// stop after 20s
-		RuntimeEngine.terminated = () -> RuntimeEngine.now() > 100;
+		Agenda.terminated = () -> Agenda.now() > 100;
 		System.err.println("running");
-		RuntimeEngine.processEventQueue();
+		Instance.agenda.processEventQueue();
 
-		RuntimeEngine.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
+		Instance.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
 	}
 
 }

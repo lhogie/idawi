@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import idawi.Component;
-import idawi.RuntimeEngine;
+import idawi.Agenda;
 import idawi.service.local_view.Info;
 
 public class Link extends Info {
@@ -93,14 +93,14 @@ public class Link extends Info {
 	public void markActive() {
 		active = true;
 		if (activity.isEmpty()) {
-			activity.add(new TimeFrame(RuntimeEngine.now()));
+			activity.add(new TimeFrame(Agenda.now()));
 		} else {
 			var last = activity.last();
 
 			if (last.isClosed()) {
-				activity.add(new TimeFrame(RuntimeEngine.now()));
+				activity.add(new TimeFrame(Agenda.now()));
 			} else {
-				last.end(RuntimeEngine.now());
+				last.end(Agenda.now());
 			}
 		}
 	}

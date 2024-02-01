@@ -2,7 +2,7 @@ package idawi;
 
 import java.io.PrintStream;
 
-public interface RuntimeListener {
+public interface AgendaListener {
 
 	void eventSubmitted(Event<?> newEvent);
 
@@ -20,7 +20,7 @@ public interface RuntimeListener {
 
 	void interrupted();
 
-	public static class StdOutRuntimeListener implements RuntimeListener {
+	public static class StdOutRuntimeListener implements AgendaListener {
 
 		private PrintStream out;
 
@@ -30,7 +30,7 @@ public interface RuntimeListener {
 
 
 		private void print(String s) {
-			RuntimeEngine.stdout(s);
+			IO.stdout(s);
 		}
 
 		@Override
@@ -56,7 +56,7 @@ public interface RuntimeListener {
 
 		@Override
 		public void sleeping(double duration, Event<?> event) {
-			print(" * waiting " + Utils.prettyTime(duration) + " to execute " + event);
+			print(" * waiting " + Instance.prettyTime(duration) + " to execute " + event);
 		}
 
 		@Override
