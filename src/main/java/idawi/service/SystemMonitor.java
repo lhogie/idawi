@@ -6,9 +6,9 @@ import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Instance;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import toools.Systeem;
 
 public class SystemMonitor extends Service {
 	public Cache<SystemInfo> info = new Cache<>(1, () -> probe());
@@ -32,7 +32,6 @@ public class SystemMonitor extends Service {
 		super(peer);
 	}
 
-
 	public class get extends TypedInnerClassEndpoint {
 
 		@Override
@@ -47,7 +46,7 @@ public class SystemMonitor extends Service {
 
 	public SystemInfo probe() {
 		SystemInfo i = new SystemInfo();
-		i.loadAvg.add(Instance.loadRatio());
+		i.loadAvg.add(Systeem.loadRatio());
 
 		if (i.loadAvg.size() > 100) {
 			i.loadAvg.removeElements(0, 1);
@@ -65,7 +64,7 @@ public class SystemMonitor extends Service {
 		}
 
 		public double f() {
-			return Instance.loadRatio();
+			return Systeem.loadRatio();
 		}
 	}
 }

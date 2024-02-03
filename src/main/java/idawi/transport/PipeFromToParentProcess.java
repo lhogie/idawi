@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Base64;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.messaging.Message;
 
 public class PipeFromToParentProcess extends TransportService {
@@ -15,7 +15,7 @@ public class PipeFromToParentProcess extends TransportService {
 		super(me);
 		this.parent = parent;
 
-		Instance.agenda.threadPool.submit(() -> {
+		Idawi.agenda.threadPool.submit(() -> {
 			try {
 				while (true) {
 					processIncomingMessage((Message) component.serializer.read(System.in));

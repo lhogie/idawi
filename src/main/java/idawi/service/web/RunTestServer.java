@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.RoutingService;
@@ -25,7 +25,7 @@ public class RunTestServer {
 		var ws = gateway.service(WebService.class);
 		ws.startHTTPServer();
 		Agenda.terminated = () -> false;
-		Instance.agenda.processEventQueue();
+		Idawi.agenda.processEventQueue();
 
 		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
 				components, new Random());

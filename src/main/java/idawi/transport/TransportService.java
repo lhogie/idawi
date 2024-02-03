@@ -9,7 +9,7 @@ import idawi.PointInTime;
 import idawi.Agenda;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
@@ -131,7 +131,7 @@ public abstract class TransportService extends Service {
 		var msgClone = msg.clone(component.serializer);
 		double actualLatency = outLink.latency;
 
-		Instance.agenda.offer(
+		Idawi.agenda.offer(
 				new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
 					@Override
 					public void run() {

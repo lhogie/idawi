@@ -2,6 +2,8 @@ package idawi;
 
 import java.io.PrintStream;
 
+import toools.util.Date;
+
 public class IO {
 
 	public static void stdout(Object s) {
@@ -9,7 +11,7 @@ public class IO {
 	}
 
 	public static void stdout(PrintStream o, Object s) {
-		o.println(Instance.prettyTime(Agenda.now()) + "\t" + s);
+		o.println(Date.prettyTime(Agenda.now()) + "\t" + s);
 	}
 
 	public static void stderr(Object s) {

@@ -1,5 +1,7 @@
 package idawi;
 
+import toools.util.Date;
+
 public class PointInTime implements When, Comparable<PointInTime> {
 	public double time;
 
@@ -19,6 +21,6 @@ public class PointInTime implements When, Comparable<PointInTime> {
 
 	@Override
 	public String toString() {
-		return Instance.prettyTime(time);
+		return Date.prettyTime(time);
 	}
 }

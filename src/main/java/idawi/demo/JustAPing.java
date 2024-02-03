@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.routing.RoutingListener;
 import idawi.service.local_view.LocalViewService;
@@ -25,7 +25,7 @@ public class JustAPing {
 		System.out.println(a + " knows: " + a.service(LocalViewService.class).g.links());
 		System.out.println(b + " knows: " + b.service(LocalViewService.class).g.links());
 		
-		Instance.agenda.processEventQueue();
+		Idawi.agenda.processEventQueue();
 		
 		System.out.println("ping");
 		var pong = a.bb().ping(b).poll_sync();

@@ -3,7 +3,7 @@ package idawi.demo.valentin;
 import java.util.Random;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import toools.collections.Collections;
 
@@ -17,6 +17,6 @@ class LinkFailEvent extends MobilityEvent {
 	public void run() {
 		var l = c.localView().g.pickRandomLink(prng);
 		c.localView().g.deactivateLink(l);
-		Instance.agenda.offer(new NewLinkEvent(Agenda.now() + 1, c, prng));
+		Idawi.agenda.offer(new NewLinkEvent(Agenda.now() + 1, c, prng));
 	}
 }

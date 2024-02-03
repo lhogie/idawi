@@ -1,7 +1,7 @@
 package idawi.transport;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.messaging.Message;
 
@@ -27,7 +27,7 @@ public class SharedMemoryTransport extends TransportService {
 
 		var c = msg.clone(component.serializer);
 
-		Instance.agenda.threadPool.submit(() -> {
+		Idawi.agenda.threadPool.submit(() -> {
 			try {
 				c.route.last().link.dest.processIncomingMessage(c);
 			} catch (Throwable e) {

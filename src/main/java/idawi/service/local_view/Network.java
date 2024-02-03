@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.IdawiGraphvizDriver;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
@@ -233,10 +233,10 @@ public class Network extends ThreadSafeNetworkDataStructure {
 
 		d.outputFormats.forEach(ext -> {
 			var bytes = GraphvizDriver.to(d.cfg, dot, OUTPUT_FORMAT.valueOf(ext));
-			new RegularFile(Instance.directory, filename + "." + ext).setContent(bytes);
+			new RegularFile(Idawi.directory, filename + "." + ext).setContent(bytes);
 		});
 
-		return Instance.directory;
+		return Idawi.directory;
 	}
 
 	public List<Link> findLinks(Predicate<Link> p) {

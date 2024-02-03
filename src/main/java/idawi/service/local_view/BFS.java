@@ -1,7 +1,6 @@
 package idawi.service.local_view;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
 

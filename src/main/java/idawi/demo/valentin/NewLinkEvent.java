@@ -4,7 +4,7 @@ import java.util.Random;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.service.local_view.Network;
 import idawi.transport.WiFiDirect;
@@ -27,6 +27,6 @@ class NewLinkEvent extends MobilityEvent {
 
 		Network.markLinkActive(a, b, WiFiDirect.class, true, Set.of(a, b));
 
-		Instance.agenda.offer(new LinkFailEvent(Agenda.now() + 1, c, prng));
+		Idawi.agenda.offer(new LinkFailEvent(Agenda.now() + 1, c, prng));
 	}
 }

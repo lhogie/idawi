@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 import idawi.Agenda;
 import idawi.Component;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
@@ -71,7 +71,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	 void scheduleNextDisseminationMessage() {
 		 if (disseminate()) {
-				Instance.agenda.offer(new TopologyDisseminationEvent(Agenda.now() + disseminationIntervalS, this));
+				Idawi.agenda.offer(new TopologyDisseminationEvent(Agenda.now() + disseminationIntervalS, this));
 		 }
 	}
 

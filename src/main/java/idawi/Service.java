@@ -242,8 +242,8 @@ public class Service implements SizeOf, Serializable {
 
 		if (dest.premptive) {
 			e.run();
-		} else if (!Instance.agenda.threadPool.isShutdown()) {
-			Instance.agenda.offer(e);
+		} else if (!Idawi.agenda.threadPool.isShutdown()) {
+			Idawi.agenda.offer(e);
 		} else {
 			System.err.println("ignoring exec message: " + msg);
 		}

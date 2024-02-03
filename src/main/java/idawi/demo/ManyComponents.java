@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.Agenda;
 import idawi.routing.BlindBroadcasting;
 import idawi.service.local_view.LocalViewService;
@@ -52,7 +52,7 @@ public class ManyComponents {
 			nbMessages += c.service(TransportService.class).nbMsgReceived;
 		}
 
-		Instance.agenda.threadPool.awaitTermination(1, TimeUnit.SECONDS);
+		Idawi.agenda.threadPool.awaitTermination(1, TimeUnit.SECONDS);
 		System.out.println("nbMessages: " + nbMessages);
 	}
 }

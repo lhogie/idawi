@@ -7,9 +7,9 @@ import idawi.Component;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Instance;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
+import toools.Exceptioons;
 
 public class ErrorLog extends Service {
 	public final List<Throwable> errors = new ArrayList<>();
@@ -43,7 +43,7 @@ public class ErrorLog extends Service {
 	}
 
 	public void report(Throwable error) {
-		error = Instance.cause(error);
+		error = Exceptioons.cause(error);
 		error.printStackTrace();
 		errors.add(error);
 		component.	bb().exec(getClass(), registerError.class, null, ComponentMatcher.all, false, error);

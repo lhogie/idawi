@@ -4,7 +4,7 @@ import java.util.List;
 
 import idawi.Agenda;
 import idawi.Component;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.routing.TrafficListener;
 import idawi.service.LocationService;
@@ -31,7 +31,7 @@ public class Valentin {
 		public CloudEdgeFog(int n) {
 			components = Component.createNComponent("", n);
 			System.out.println("assign random locations to nodes");
-			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, Instance.prng));
+			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, Idawi.prng));
 
 			// build individual local views
 			for (var a : components) {
@@ -57,7 +57,7 @@ public class Valentin {
 
 			// link 1/4 of mobile devices to their closest hotspot
 			var mobileDevicesConnectedToHotspots = Collections.pickRandomSubset(mobileDevices, mobileDevices.size() / 4,
-					false, Instance.prng);
+					false, Idawi.prng);
 			mobileDevicesConnectedToHotspots.forEach(mobileDevice -> {
 				var closestHotspot = Topologies.sortByDistanceTo(hotspots, mobileDevice).get(0);
 				Network.markLinkActive(closestHotspot, mobileDevice, TCPDriver.class, true, components);
@@ -84,10 +84,10 @@ public class Valentin {
 
 		GraphvizDriver.path = "/usr/local/bin/";
 		GNUPlot.path = "/usr/local/bin/";
-		Instance.setDirectory("$HOME/tmp/valentin").open();
+		Idawi.setDirectory("$HOME/tmp/valentin").open();
 
 		// declares the plots we will draw
-		var trafficPlot = Instance.plots.createPlot("Traffic", "time (s)", "#msg");
+		var trafficPlot = Idawi.plots.createPlot("Traffic", "time (s)", "#msg");
 		var msgSentFct = trafficPlot.createFunction("#msg sent");
 		var msgReceivedFct = trafficPlot.createFunction("#msg received");
 		var trafficFct = trafficPlot.createFunction("trafficFct (bytes)");
@@ -126,15 +126,15 @@ public class Valentin {
 
 		// ask a node 0 to inject an item into the DHT
 		net.components.forEach(c -> new ChordService(c));
-		Instance.agenda.offer(2, "add item",
+		Idawi.agenda.offer(2, "add item",
 				() -> c0.service(ChordService.class).store(new Item("item1", "value".getBytes())));
 
 		// stop after 20s
 		Agenda.terminated = () -> Agenda.now() > 100;
 		System.err.println("running");
-		Instance.agenda.processEventQueue();
+		Idawi.agenda.processEventQueue();
 
-		Instance.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
+		Idawi.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
 	}
 
 }

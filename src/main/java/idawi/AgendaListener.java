@@ -2,6 +2,8 @@ package idawi;
 
 import java.io.PrintStream;
 
+import toools.util.Date;
+
 public interface AgendaListener {
 
 	void eventSubmitted(Event<?> newEvent);
@@ -56,7 +58,7 @@ public interface AgendaListener {
 
 		@Override
 		public void sleeping(double duration, Event<?> event) {
-			print(" * waiting " + Instance.prettyTime(duration) + " to execute " + event);
+			print(" * waiting " + Date.prettyTime(duration) + " to execute " + event);
 		}
 
 		@Override

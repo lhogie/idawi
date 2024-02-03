@@ -5,7 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.RemotelyRunningEndpoint;
-import idawi.Instance;
+import idawi.Idawi;
 import idawi.service.DemoService;
 import idawi.transport.SharedMemoryTransport;
 
@@ -29,6 +29,6 @@ public class TwoComponents {
 			System.out.println("from " + c.messages.last().route.source() + ": " + c.messages.last().content);
 		});
 		System.out.println("done");
-		Instance.agenda.threadPool.shutdown();
+		Idawi.agenda.threadPool.shutdown();
 	}
 }

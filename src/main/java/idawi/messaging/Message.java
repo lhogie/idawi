@@ -5,10 +5,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
 import idawi.RemoteException;
-import idawi.Instance;
 import idawi.routing.Destination;
 import idawi.routing.Route;
-import idawi.routing.RoutingData;
+import toools.Objeects;
 import toools.SizeOf;
 import toools.io.ser.Serializer;
 import toools.text.TextUtilities;
@@ -24,7 +23,7 @@ public class Message implements Serializable, SizeOf {
 	public Object content;
 
 	public final RoutingStrategy preferredRoutingStrategy;
-	
+
 	public boolean simulatedMessage = false;
 
 	public Message(Destination dest, RoutingStrategy preferredRoutingStrategy, Object content) {
@@ -44,7 +43,7 @@ public class Message implements Serializable, SizeOf {
 	public boolean equals(Object o) {
 		if (o instanceof Message) {
 			Message m = (Message) o;
-			return ID == m.ID && route.equals(m.route) && Instance.equals(content, m.content);
+			return ID == m.ID && route.equals(m.route) && Objeects.equals(content, m.content);
 		} else {
 			return false;
 		}
@@ -54,7 +53,6 @@ public class Message implements Serializable, SizeOf {
 	public int hashCode() {
 		throw new IllegalStateException("32-bit int hash code is not precise enough. Use the 64-bit ID instead");
 	}
-
 
 	@Override
 	public String toString() {
