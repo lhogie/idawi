@@ -32,7 +32,7 @@ public class IdawiGraphvizDriver extends GraphvizDriver {
 	public Function<Link, Style> linkStyle = l -> l.src.component.isDigitalTwin() || l.dest.component.isDigitalTwin()
 			? Style.dotted
 			: Style.solid;
-	public Function<Link, String> linkLabel = l -> l.toString();
+	public Function<Link, String> linkLabel = l -> l.getTransportName();
 	public Function<Link, Integer> linkWidth = l -> 1;
 
 	public IdawiGraphvizDriver(Network g) {
@@ -72,10 +72,10 @@ public class IdawiGraphvizDriver extends GraphvizDriver {
 	
 	@Override
 	protected void forEachArc(Consumer<GraphvizArc> arcConsumer) {
-		Set<Link> alreadyVisitedLinks = new HashSet<>();
+		Set<Link> ignoreLinks = new HashSet<>();
 
 		g.forEachLink(l -> {
-			if (showLink.apply(l) && !alreadyVisitedLinks.contains(l)) {
+			if (showLink.apply(l) && !ignoreLinks.contains(l)) {
 				var a = new GraphvizArc();
 
 				// search for the reverse link
@@ -84,7 +84,7 @@ public class IdawiGraphvizDriver extends GraphvizDriver {
 					a.directed = reverseLink == null;
 
 					if (!a.directed) {
-						alreadyVisitedLinks.add(reverseLink);
+						ignoreLinks.add(reverseLink);
 					}
 				}
 

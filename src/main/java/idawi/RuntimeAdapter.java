@@ -15,7 +15,7 @@ public class RuntimeAdapter implements AgendaListener {
 	}
 
 	@Override
-	public void newEventScheduledForExecution(Event<?> e) {
+	public void newEventInThreadPool(Event<?> e) {
 	}
 
 	@Override

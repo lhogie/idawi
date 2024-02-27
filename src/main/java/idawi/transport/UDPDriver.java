@@ -6,8 +6,10 @@ import java.net.DatagramSocket;
 import java.util.Collection;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.service.local_view.LocalViewService;
+import toools.math.MathsUtilities;
 
 public class UDPDriver extends IPDriver {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
@@ -106,4 +108,10 @@ public class UDPDriver extends IPDriver {
 	@Override
 	public void dispose(Link l) {
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
 }

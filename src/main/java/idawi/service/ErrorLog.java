@@ -18,7 +18,6 @@ public class ErrorLog extends Service {
 		super(peer);
 	}
 
-
 	public class registerError extends InnerClassEndpoint {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -46,7 +45,7 @@ public class ErrorLog extends Service {
 		error = Exceptioons.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		component.	bb().exec(getClass(), registerError.class, null, ComponentMatcher.all, false, error);
+		component.bb().exec(getClass(), registerError.class, null, ComponentMatcher.all, false, error, true);
 	}
 
 	public void report(String msg) {

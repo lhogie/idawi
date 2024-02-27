@@ -14,7 +14,7 @@ public class DeployToAnotherNode {
 		req.target = a.createDigitalTwinFor("b@musclotte");
 		req.ssh.host = "musclotte.inria.fr";
 
-		var ro = a.bb().exec(DeployerService.class, DeployerService.remote_deploy.class, req);
+		var ro = a.bb().exec(DeployerService.class, DeployerService.remote_deploy.class, req, true);
 
 		ro.returnQ.collector().collect(10, 10, c -> System.out.println(c.messages.last().content));
 	}

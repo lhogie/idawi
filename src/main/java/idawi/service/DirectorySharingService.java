@@ -83,7 +83,7 @@ public class DirectorySharingService extends Service {
 			var f = new RegularFile(dir, parms.name);
 			var inputStream = f.createReadingStream();
 			inputStream.skip(parms.seek);
-			Streams.split(inputStream, 1000, c -> reply(msg, c));
+			Streams.split(inputStream, 1000, c -> reply(msg, c, c.length == 0));
 		}
 
 		@Override

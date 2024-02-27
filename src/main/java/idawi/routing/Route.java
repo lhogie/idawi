@@ -16,11 +16,11 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 
 	private static final long serialVersionUID = 1L;
 
-	public boolean add(Entry r) {
-		if (!isEmpty() && !last().link.dest.component.equals(r.link.src.component))
-			throw new IllegalArgumentException("invalid route");
+	public boolean add(Entry newEntry) {
+		if (!isEmpty() && !last().link.dest.component.equals(newEntry.link.src.component))
+			throw new IllegalArgumentException("you try to add an entry that not chain");
 
-		return super.add(r);
+		return super.add(newEntry);
 	}
 
 	public static class ComponentSequence extends ArrayList<Component> {

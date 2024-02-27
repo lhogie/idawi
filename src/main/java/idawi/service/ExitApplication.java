@@ -29,7 +29,7 @@ public class ExitApplication extends Service {
 	}
 
 	public void killAll(int exitCode) {
-		component.bb().exec(ExitApplication.class, exit.class, null, ComponentMatcher.all, false, exitCode);
+		component.bb().exec(ExitApplication.class, exit.class, null, ComponentMatcher.all, false, exitCode, true);
 		component.forEachService(s -> s.dispose());
 
 		// don't quit immediately otherwise the kill message won't have the time to be sent

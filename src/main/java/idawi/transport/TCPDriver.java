@@ -11,7 +11,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 import toools.thread.Threads;
 
 public class TCPDriver extends IPDriver {
@@ -188,4 +190,10 @@ public class TCPDriver extends IPDriver {
 		} catch (IOException err) {
 		}
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000020, 0.000060, Idawi.prng);
+	}
+
 }

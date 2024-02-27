@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import idawi.messaging.EOT;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
@@ -29,8 +28,8 @@ import toools.util.Date;
 
 public class Service implements SizeOf, Serializable {
 
-	public static double now() {
-		return Agenda.now();
+	public double now() {
+		return Idawi.agenda.now();
 	}
 
 	transient public final Class<? extends Service> id = getClass();
@@ -58,6 +57,10 @@ public class Service implements SizeOf, Serializable {
 
 		registerEndpoint("friendlyName", q -> getFriendlyName());
 
+		registerInnerClassEndpoints();
+	}
+
+	private void registerInnerClassEndpoints() {
 		for (var innerClass : getClass().getClasses()) {
 			if (InnerClassEndpoint.class.isAssignableFrom(innerClass)) {
 				try {
@@ -168,7 +171,7 @@ public class Service implements SizeOf, Serializable {
 		return getClass().getName();
 	}
 
-	public void considerNewMessage(Message msg) {
+	public void process(Message msg) {
 		++nbMsgsReceived;
 
 		if (msg.destination instanceof MessageODestination) {
@@ -198,8 +201,7 @@ public class Service implements SizeOf, Serializable {
 
 		// report the error to the guy who asked
 		if (replyTo != null) {
-			component.bb().send(err, replyTo);
-			component.bb().send(EOT.instance, replyTo);
+			component.bb().send(err, true, replyTo);
 		}
 	}
 
@@ -226,9 +228,9 @@ public class Service implements SizeOf, Serializable {
 //					Cout.debug("REUTNED " + endpoint);
 
 					// tells the client the processing has completed
-					if (dest.replyTo != null) {
-						component.bb().send(EOT.instance, dest.replyTo);
-					}
+//					if (dest.replyTo != null) {
+//						component.bb().send(EOT.instance, dest.replyTo);
+//					}
 					endpoint.totalDuration += Date.time() - start;
 				} catch (Throwable exception) {
 					exception.printStackTrace();
@@ -243,7 +245,7 @@ public class Service implements SizeOf, Serializable {
 		if (dest.premptive) {
 			e.run();
 		} else if (!Idawi.agenda.threadPool.isShutdown()) {
-			Idawi.agenda.offer(e);
+			Idawi.agenda.schedule(e);
 		} else {
 			System.err.println("ignoring exec message: " + msg);
 		}
@@ -306,7 +308,7 @@ public class Service implements SizeOf, Serializable {
 			@Override
 			public void impl(MessageQueue in) throws Throwable {
 				var m = in.poll_sync();
-				userCode.accept(m, r -> reply(m, r));
+				userCode.accept(m, r -> reply(m, r, true));
 			}
 
 			@Override
@@ -316,12 +318,12 @@ public class Service implements SizeOf, Serializable {
 		});
 	}
 
-	protected void reply(Message m, Object o) {
-		var replyTo = m.destination.replyTo;
-		replyTo.componentMatcher = ComponentMatcher.unicast(m.route.source());
+	protected void reply(Message initialMsg, Object response, boolean eot) {
+		var replyTo = initialMsg.destination.replyTo;
+		replyTo.componentMatcher = ComponentMatcher.unicast(initialMsg.route.source());
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
-		component.bb().send(o, replyTo.componentMatcher, replyTo.service, replyTo.queueID);
+		component.bb().send(response, eot, replyTo.componentMatcher, replyTo.service, replyTo.queueID);
 	}
 
 	public void registerEndpoint(AbstractEndpoint o) {

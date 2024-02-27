@@ -2,8 +2,8 @@ package idawi.transport;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.Agenda;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 
 public class SharedMemoryTransport extends TransportService {
 
@@ -23,22 +23,20 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void sendImpl(Message msg) {
-		System.out.println("send " + msg);
+		var msgClone = msg.clone(component.serializer);
 
-		var c = msg.clone(component.serializer);
-
-		Idawi.agenda.threadPool.submit(() -> {
-			try {
-				c.route.last().link.dest.processIncomingMessage(c);
-			} catch (Throwable e) {
-				e.printStackTrace();
-			}
-		});
+		Idawi.agenda.scheduleNow(() -> msgClone.route.last().link.dest.processIncomingMessage(msgClone));
 	}
 
 	@Override
 	public void dispose(Link l) {
 //		l.activity.close();
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000000002, 0.000000009, Idawi.prng);
+	}
+
 
 }

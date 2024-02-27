@@ -11,9 +11,11 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.io.Utilities;
 import toools.io.Utilities.ReadUntilResult;
+import toools.math.MathsUtilities;
 import toools.thread.Q;
 import toools.thread.Threads;
 
@@ -136,4 +138,11 @@ public class PipesFromToChildrenProcess extends TransportService {
 		});
 
 	}
+
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
+
 }

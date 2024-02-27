@@ -104,8 +104,8 @@ public class Valentin {
 
 			@Override
 			public void newMessageReceived(TransportService t, Message msg) {
-				msgReceivedFct.instances(null).addMeasure(Agenda.now(), nbMsgReceived++);
-				trafficFct.instances(null).addMeasure(Agenda.now(), incomingTraffic += msg.sizeOf());
+				msgReceivedFct.instances(null).addMeasure(Idawi.agenda.now(), nbMsgReceived++);
+				trafficFct.instances(null).addMeasure(Idawi.agenda.now(), incomingTraffic += msg.sizeOf());
 			}
 		};
 
@@ -126,13 +126,13 @@ public class Valentin {
 
 		// ask a node 0 to inject an item into the DHT
 		net.components.forEach(c -> new ChordService(c));
-		Idawi.agenda.offer(2, "add item",
+		Idawi.agenda.scheduleAt(2, "add item",
 				() -> c0.service(ChordService.class).store(new Item("item1", "value".getBytes())));
 
 		// stop after 20s
-		Agenda.terminated = () -> Agenda.now() > 100;
+		Idawi.agenda.terminationCondition = () -> Idawi.agenda.now() > 100;
 		System.err.println("running");
-		Idawi.agenda.processEventQueue();
+		Idawi.agenda.start();
 
 		Idawi.plots.gnuplot(true, true, 1, false, AVGMODE.IterativeMean, "linespoints");
 	}

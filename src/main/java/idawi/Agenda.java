@@ -7,28 +7,35 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
 import toools.util.Date;
 
+/**
+ * Registers and executes events specified at given points in time. Each event
+ * is asynchronously executed in a thread.
+ */
+
 public class Agenda {
+	// an unlimited number of threads is required
 	public ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 //	public static AtomicDouble simulatedTime;
 	private PriorityBlockingQueue<Event<PointInTime>> eventQueue = new PriorityBlockingQueue<>(100,
 			(a, b) -> a.when.compareTo(b.when));
 
-	private static ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
+	public static List<AgendaListener> listeners = new ArrayList<>();
 
-	public final static List<AgendaListener> listeners = new ArrayList<>();
+	private List<Event<?>> scheduledEventsQueue = new ArrayList<>();
+	private long nbPastEvents = 0;
+	private double startTime = -1;
+	private double timeAccelarationFactor = 1;
+	private Thread controllerThread;
+	public Supplier<Boolean> terminationCondition;
+	private ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
 
-	private static List<Event<?>> scheduledEventsQueue = new ArrayList<>();
-	static long nbPastEvents = 0;
-	public static double startTime = -1;
-	public static double timeAcceleartionFactor = 1;
-	private static Thread controllerThread;
-	public static Supplier<Boolean> terminated;
+	public synchronized void start() {
+		if (isStarted())
+			throw new IllegalStateException("already started");
 
-	public void startInThread() {
 		threadPool.submit(() -> {
 			try {
 				processEventQueue();
@@ -36,63 +43,78 @@ public class Agenda {
 				err.printStackTrace();
 			}
 		});
-
-		IntStream.range(0, 6).mapToObj(i -> new ArrayList<Integer>()).toList();
-
-		var l = new ArrayList<Integer>();
-		IntStream.range(0, 6).mapToObj(i -> l).toList();
-
-		l.stream().map(i -> i * 6).toList();
-
 	}
 
-	public long processEventQueue() throws Throwable {
+	public synchronized boolean isStarted() {
+		return startTime > 0;
+	}
+
+	private void processEventQueue() throws Throwable {
 		startTime = Date.time();
 		controllerThread = Thread.currentThread();
 		listeners.forEach(l -> l.starting());
 
-		while (terminated == null || !terminated.get()) {
-			var e = grabCloserEvent();
+		while (terminationCondition == null || !terminationCondition.get()) {
 
-			if (e == null) {
-				// unblock those waiting for completion
-				stopQ.offer("");
-			}
+			try {
+				final var candidateEvent = eventQueue.peek();
 
-			listeners.forEach(l -> l.newEventScheduledForExecution(e));
+				if (candidateEvent == null) {
+					Thread.sleep(Long.MAX_VALUE);
+				} else {
+					double wait = candidateEvent.when.time - now();
 
-			// if (!threadPool.isShutdown())
-			threadPool.submit(new Runnable() {
-				Event<?> _e = e;
-				{
-					scheduledEventsQueue.add(e);
-				}
+					if (wait > 0) {
+						listeners.forEach(l -> l.sleeping(wait, candidateEvent));
+						Thread.sleep((long) (1000L * wait));
+					} else {
+						var e = eventQueue.poll();
 
-				@Override
-				public void run() {
-					try {
-						listeners.forEach(l -> l.eventProcessingStarts(_e));
-						_e.run();
-						++nbPastEvents;
-						scheduledEventsQueue.remove(_e);
-						listeners.forEach(l -> l.eventProcessingCompleted(_e));
-					} catch (Throwable err) {
-						err.printStackTrace();
-						stopQ.offer(err);
-						terminated = () -> true;
+						listeners.forEach(l -> l.newEventInThreadPool(candidateEvent));
+
+						// if (!threadPool.isShutdown())
+						threadPool.submit(new Runnable() {
+							final Event<?> _e = e;
+
+							{
+								scheduledEventsQueue.add(candidateEvent);
+							}
+
+							@Override
+							public void run() {
+								try {
+									listeners.forEach(l -> l.eventProcessingStarts(_e));
+									_e.run();
+									++nbPastEvents;
+									scheduledEventsQueue.remove(_e);
+									listeners.forEach(l -> l.eventProcessingCompleted(_e));
+								} catch (Throwable err) {
+									err.printStackTrace();
+									terminationCondition = () -> true;
+									stopQ.offer("");
+								} finally {
+									controllerThread.interrupt();
+								}
+							}
+						});
 					}
 				}
-			});
+
+			} catch (InterruptedException e) {
+				listeners.forEach(l -> l.interrupted());
+			}
 		}
 
+		// unblock someone waiting for completion
+		stopQ.offer("");
 		threadPool.shutdown();
 		controllerThread = null;
 		Thread.currentThread().interrupt();
 		listeners.forEach(l -> l.terminating(nbPastEvents));
-		return blockUntilSimulationHasCompleted();
+
 	}
 
-	private synchronized Event<PointInTime> grabCloserEvent() {
+	private Event<PointInTime> sleepsUntilNextEvent() {
 		while (controllerThread != null) {
 			var e = eventQueue.peek();
 
@@ -122,25 +144,35 @@ public class Agenda {
 		return null;
 	}
 
-	public static double now() {
-		if (startTime == -1)
-			return 0;
+	public void stop() {
+		if (!isStarted())
+			throw new IllegalStateException();
 
-		return (Date.time() - startTime) * timeAcceleartionFactor;
+		var a = controllerThread;
+		controllerThread = null;
+		a.interrupt();
 	}
 
-	public synchronized void offer(Event<PointInTime> newEvent) {
-		var needInterrupt = eventQueue.isEmpty() || newEvent.when.time < eventQueue.peek().when.time;
+	public double now() {
+		if (!isStarted())
+			return 0;
+
+		return (Date.time() - startTime) * timeAccelarationFactor;
+	}
+
+	public void schedule(Event<PointInTime> newEvent) {
+//		Cout.debug("schedule " + newEvent);
+
 		eventQueue.offer(newEvent);
 		listeners.forEach(l -> l.eventSubmitted(newEvent));
 
-		if (controllerThread != null && needInterrupt) {
+		if (controllerThread != null) {
 			controllerThread.interrupt();
 		}
 	}
 
-	public void offer(double date, String descr, Runnable r) {
-		offer(new Event<PointInTime>(descr, new PointInTime(date)) {
+	public void scheduleAt(double date, String descr, Runnable r) {
+		schedule(new Event<PointInTime>(descr, new PointInTime(date)) {
 
 			@Override
 			public void run() {
@@ -149,7 +181,17 @@ public class Agenda {
 		});
 	}
 
-	public long blockUntilSimulationHasCompleted() throws Throwable {
+	public void scheduleNow(Runnable r) {
+		schedule(new Event<PointInTime>(null, new PointInTime(now())) {
+
+			@Override
+			public void run() {
+				r.run();
+			}
+		});
+	}
+
+	public long waitForCompletion() throws Throwable {
 		try {
 			// stopPlatformThreads();
 			var o = stopQ.take();

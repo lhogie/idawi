@@ -15,6 +15,10 @@ public class DigitalTwinService extends Service {
 	public DigitalTwinService(Component c, LocalViewService owner) {
 		super(c);
 		Objects.requireNonNull(owner);
+
+		if (c == owner.component)
+			throw new IllegalArgumentException();
+
 		this.host = owner;
 	}
 

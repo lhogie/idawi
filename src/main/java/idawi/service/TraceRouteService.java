@@ -25,7 +25,7 @@ public class TraceRouteService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			reply(msg, msg.route);
+			reply(msg, msg.route, true);
 		}
 
 		@Override
@@ -41,7 +41,7 @@ public class TraceRouteService extends Service {
 	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
 		var map = new HashMap<Component, Route>();
 		component.bb().exec(TraceRouteService.class, traceroute.class, null, ComponentMatcher.multicast(targets), true,
-				null).returnQ.collector().collect(timeout, timeout, c -> {
+				null, true).returnQ.collector().collect(timeout, timeout, c -> {
 					var target = c.messages.last().route.source();
 					var route = (Route) c.messages.last().content;
 					map.put(target, route);

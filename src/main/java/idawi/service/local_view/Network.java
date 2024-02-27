@@ -12,9 +12,8 @@ import java.util.function.Predicate;
 
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
-import idawi.IdawiGraphvizDriver;
 import idawi.Idawi;
-import idawi.Agenda;
+import idawi.IdawiGraphvizDriver;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
 import idawi.service.local_view.BFS.Routes;
@@ -60,11 +59,11 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		return findLinks(l -> !l.isActive());
 	}
 
-	public Component findComponentByName(String name) {
+	public Component findComponent(Predicate<Component> p) {
 		var a = new Component[1];
 
 		forEachComponent(c -> {
-			if (c.name().equals(name)) {
+			if (p.test(c)) {
 				a[0] = c;
 				return Stop.yes;
 			} else {
@@ -75,12 +74,19 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		return a[0];
 	}
 
+	public Component findComponentByName(String name) {
+		return findComponent(c -> c.name().equals(name));
+	}
+
 	public List<Link> findLinksTo(Component c) {
 		return findLinks(l -> l.dest.component.equals(c));
 	}
 
 	public List<Link> findLinksTo(TransportService c) {
 		return findLinks(l -> l.dest.equals(c));
+	}
+	public List<Link> findLinksFrom(TransportService c) {
+		return findLinks(l -> l.src.equals(c));
 	}
 
 	public List<Link> findLinksConnecting(Component from, Component to) {
@@ -226,7 +232,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Directory plot(Object label, Consumer<IdawiGraphvizDriver> customizer) {
-		var filename = String.format("%03f", Agenda.now()) + " " + label;
+		var filename = String.format("%03f", Idawi.agenda.now()) + " " + label;
 		var d = new IdawiGraphvizDriver(this);
 		customizer.accept(d);
 		var dot = d.toDot();

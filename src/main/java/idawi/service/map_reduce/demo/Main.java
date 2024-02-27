@@ -43,7 +43,7 @@ public class Main {
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
 		var ro = mapper.defaultRoutingProtocol().exec(ServiceManager.class, ServiceManager.ensureStarted.class, null,
-				ComponentMatcher.multicast(workers), true, new EndpointParameterList(MapReduceService.class));
+				ComponentMatcher.multicast(workers), true, new EndpointParameterList(MapReduceService.class), true);
 		ro.returnQ.collector().collectUntilNEOT(1, workers.size());
 
 		// create tasks

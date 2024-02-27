@@ -1,9 +1,8 @@
 package idawi.service.local_view;
 
 import idawi.Event;
-import idawi.PointInTime;
 import idawi.Idawi;
-import idawi.Agenda;
+import idawi.PointInTime;
 import idawi.service.local_view.LocalViewService.markLinkActive;
 
 class TopologyDisseminationEvent extends Event<PointInTime> {
@@ -18,8 +17,7 @@ class TopologyDisseminationEvent extends Event<PointInTime> {
 	@Override
 	public void run() {
 		c.routing().exec(LocalViewService.class, markLinkActive.class,
-				c.g.pickNRandomLinks(c.disseminationSampleSize, Idawi.prng));
+				c.g.pickNRandomLinks(c.disseminationSampleSize, Idawi.prng), true);
 		c.scheduleNextDisseminationMessage();
 	}
-
 };

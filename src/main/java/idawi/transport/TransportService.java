@@ -1,16 +1,19 @@
 package idawi.transport;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.function.ToLongFunction;
 
 import idawi.Component;
 import idawi.Event;
+import idawi.Idawi;
 import idawi.PointInTime;
-import idawi.Agenda;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Idawi;
 import idawi.messaging.Message;
+import idawi.routing.AutoForgettingLongList;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import toools.io.Cout;
@@ -20,10 +23,16 @@ public abstract class TransportService extends Service {
 	public long nbMsgSent;
 	public long incomingTraffic;
 	public long outGoingTraffic;
+	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
-		c.localView().g.markLinkActive(this, this); // loopback
+	//	c.localView().g.markLinkActive(this, this); // loopback
+	}
+
+	@Override
+	public long sizeOf() {
+		return 8 * 4 + super.sizeOf() + alreadyKnownMsgs.sizeOf() + 8;
 	}
 
 	@Override
@@ -33,7 +42,9 @@ public abstract class TransportService extends Service {
 
 	// this is called by transport implementations
 	protected final void processIncomingMessage(Message msg) {
-		Cout.debug(" " + component + " receives " + msg);
+		alreadyKnownMsgs.add(msg.ID);
+
+		Cout.debug(this + " receives " + msg);
 		++nbMsgReceived;
 		incomingTraffic += msg.sizeOf();
 		var last = msg.route.last();
@@ -46,38 +57,43 @@ public abstract class TransportService extends Service {
 		// received
 		if (msg.destination.componentMatcher.test(component)
 				&& msg.route.recipients().filter(t -> t.component.equals(component)).count() == 1) {
-			var s = component.service(msg.destination.service(), msg.destination.autoStartService);
+			var targetService = component.service(msg.destination.service(), msg.destination.autoStartService);
 
-			if (s == null) {
+			if (targetService == null) {
 				System.err.println(
 						"component " + component + " does not have service " + msg.destination.service().getName());
 			} else {
-				System.err.println(component + " DELIVER " + msg.route);
-				s.considerNewMessage(msg);
+				targetService.process(msg);
 			}
-		} else {
-			 System.err.println(component + " DROP " + msg.route);
 		}
 
-		forward(msg);
+		if (!msgTargettedToMeOnly(msg.destination.componentMatcher)) {
+			considerForForwarding(msg);
+		}
 	}
 
-	private void forward(Message msg) {
+	private boolean msgTargettedToMeOnly(ComponentMatcher m) {
+		if (m instanceof ComponentMatcher.multicast) {
+			ComponentMatcher.multicast to = (ComponentMatcher.multicast) m;
+			return to.target.size() == 1 && to.target.contains(component);
+		} else {
+			return false;
+		}
+	}
+
+	private void considerForForwarding(Message msg) {
 		// search for the routing service it was initially sent
-		var rs = component.service(msg.preferredRoutingStrategy.routingService, true);
+		var rs = component.service(msg.routingStrategy.routingService, true);
 		RoutingData routingParms;
 
 		if (rs == null) {
 			rs = component.defaultRoutingProtocol();
 			routingParms = rs.defaultData();
 		} else {
-			routingParms = msg.preferredRoutingStrategy.parms;
+			routingParms = msg.routingStrategy.parms;
 		}
 
-		// no such routing protocol running here
-		// dunno what to do with the message
-		// so just pass it around
-		component.defaultRoutingProtocol().accept(msg, routingParms);
+		rs.accept(msg, routingParms);
 	}
 
 	public abstract String getName();
@@ -87,37 +103,44 @@ public abstract class TransportService extends Service {
 	protected abstract void sendImpl(Message msg);
 
 	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
+		Cout.debug(" " + component + " uses '" + getName() + "' to send: " + msg);
+		alreadyKnownMsgs.add(msg.ID);
 
-		 Cout.debug(" " + component + " sends: " + msg);
-
-		 for (var outLink : outLinks) {
+		var impactedLinks = new HashSet<>(outLinks.stream().flatMap(l -> l.impactedLinks().stream()).toList());
+		
+		for (var outLink : impactedLinks) {
 			msg.route.add(outLink, r);
 			++nbMsgSent;
 			outGoingTraffic += msg.sizeOf();
 
 			// sending from a real component to a digital twin in the only situation
-			// the network is involved
+			// the transport is really involved
 			var sentFromTwin = component.isDigitalTwin();
-			var loop = outLink.dest.component.equals(component);
 			var sentToTwin = outLink.dest.component.isDigitalTwin();
-			var simulatedNodeTarget = searchSimlatedComponent(outLink.dest.component);
+//			System.out.println(outLink.dest.component + "  and " + component);
+			var loop = outLink.dest.component.equals(component);
+			var simulatedNodeTarget = searchSimulatedComponent(outLink.dest.component);
 
 			if (sentFromTwin) {
 				fakeSend(msg, outLink, outLink.dest);
 			} else if (simulatedNodeTarget != null) {
 				var to = simulatedNodeTarget.service(outLink.dest.getClass(), true);
 				fakeSend(msg, outLink, to);
+			} else if (msg.simulate) {
+				fakeSend(msg, outLink, outLink.dest);
 			} else if (loop) {
 				fakeSend(msg, outLink, outLink.dest);
 			} else {
 				sendImpl(msg);
 			}
 
+			outLink.nbMsgs++;
+			outLink.traffic += msg.sizeOf();
 			msg.route.removeLast();
 		}
 	}
 
-	private Component searchSimlatedComponent(Component search) {
+	private Component searchSimulatedComponent(Component search) {
 		for (var c : component.simulatedComponents) {
 			if (c.equals(search)) {
 				return c;
@@ -129,13 +152,13 @@ public abstract class TransportService extends Service {
 
 	private void fakeSend(Message msg, Link outLink, TransportService to) {
 		var msgClone = msg.clone(component.serializer);
-		double actualLatency = outLink.latency;
+		double actualLatency = outLink.latency();
 
-		Idawi.agenda.offer(
+		Idawi.agenda.schedule(
 				new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
 					@Override
 					public void run() {
-						System.out.println("fae sed");
+//						Cout.debugSuperVisible(":)");
 						try {
 							to.processIncomingMessage(msgClone);
 						} catch (Throwable e) {
@@ -155,7 +178,7 @@ public abstract class TransportService extends Service {
 
 	@Override
 	public String getFriendlyName() {
-		return getName() + " transport";
+		return getName();
 	}
 
 	public long getNbMessagesReceived() {
@@ -185,5 +208,12 @@ public abstract class TransportService extends Service {
 	}
 
 	public abstract void dispose(Link l);
+
+	public static <T extends TransportService> long sum(Collection<Component> components, Class<T> transport,
+			ToLongFunction<T> f) {
+		return components.stream().flatMap(c -> c.services(transport).stream()).mapToLong(f).reduce(0, Long::sum);
+	}
+
+	public abstract double latency();
 
 }

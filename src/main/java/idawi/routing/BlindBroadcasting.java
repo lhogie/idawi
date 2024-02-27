@@ -8,7 +8,7 @@ import idawi.messaging.Message;
 import idawi.transport.TransportService;
 
 public class BlindBroadcasting extends RoutingService<RoutingData> {
-	public final AutoForgettingLongList alreadyReceivedMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	// public final BloomFilterForLong alreadyReceivedMsgs2 = new
 	// BloomFilterForLong(1000);
@@ -24,22 +24,21 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 
 	@Override
 	public long sizeOf() {
-		return super.sizeOf() + alreadyReceivedMsgs.sizeOf() + 8;
+		return super.sizeOf() + alreadyKnownMsgs.sizeOf() + 8;
 	}
 
 	@Override
 	synchronized public void accept(Message msg, RoutingData parms) {
-//		System.err.println(System.identityHashCode(this)+ alreadyReceivedMsgs.l.size() +  " messagesd eceived");
 		// the message was never received
-
-		if (!alreadyReceivedMsgs.contains(msg.ID)) {
-			alreadyReceivedMsgs.add(msg.ID);
+		if (!alreadyKnownMsgs.contains(msg.ID)) {
+			alreadyKnownMsgs.add(msg.ID);
 			component.services(TransportService.class).forEach(t -> {
 				t.multicast(msg, this, parms);
 			});
 
 			listeners.forEach(l -> l.messageForwarded(this, msg));
 		} else {
+			System.out.println(component + " dropped");
 			listeners.forEach(l -> l.messageDropped(this, msg));
 		}
 	}

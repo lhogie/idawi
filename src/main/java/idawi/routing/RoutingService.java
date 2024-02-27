@@ -26,10 +26,11 @@ import toools.util.Date;
  * to bench.
  */
 
-public abstract class RoutingService<Parms extends RoutingData> extends Service implements BiConsumer<Message, Parms> {
+public abstract class RoutingService<D extends RoutingData> extends Service implements BiConsumer<Message, D> {
 	protected final AtomicLong nbMsgReceived = new AtomicLong();
 	public final List<RoutingListener> listeners = new ArrayList<>();
 
+	
 	public long nbMessagesInitiated;
 
 	public RoutingService(Component node) {
@@ -39,6 +40,8 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 	public void accept(Message msg) {
 		accept(msg, defaultData());
 	}
+	
+
 
 	@Override
 	public String getFriendlyName() {
@@ -49,21 +52,21 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 		return component.services(TransportService.class);
 	}
 
-	protected Parms convert(RoutingData p) {
-		return (Parms) p;
+	protected D convert(RoutingData p) {
+		return (D) p;
 	}
 
-	public abstract ComponentMatcher naturalTarget(Parms parms);
+	public abstract ComponentMatcher naturalTarget(D parms);
 
 	public abstract String getAlgoName();
 
-	public abstract List<Parms> dataSuggestions();
+	public abstract List<D> dataSuggestions();
 
-	public Parms defaultData() {
+	public D defaultData() {
 		return dataSuggestions().get(0);
 	}
 
-	public void send(Object value, ComponentMatcher r, Class<? extends Service> s, String queueID) {
+	public void send(Object value, boolean eot, ComponentMatcher r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
 		++nbMessagesInitiated;
 		var dest = new MessageQDestination();
@@ -71,52 +74,53 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 		dest.service = s;
 		dest.componentMatcher = r;
 
-		send(value, dest, defaultData());
+		send(value, eot, dest, defaultData());
 	}
 
-	public void send(Object content, Destination dest, Parms parms) {
+	public void send(Object content, boolean eot, Destination dest, D parms) {
 		Objects.requireNonNull(dest.service());
 		var preferredRoutingStrategy = new RoutingStrategy(getClass(), parms);
 		var msg = new Message(dest, preferredRoutingStrategy, content);
+		msg.eot = eot;
 		accept(msg, parms);
 	}
 
-	public void send(Object value, MessageQDestination dest) {
-		send(value, dest, defaultData());
+	public void send(Object value, boolean eot, Destination dest) {
+		send(value, eot, dest, defaultData());
 	}
 
-	public void send(String value, RemotelyRunningEndpoint o) {
-		send(value, o.getOperationInputQueueDestination());
+	public void send(String value, boolean eot, RemotelyRunningEndpoint o) {
+		send(value, eot, o.getOperationInputQueueDestination());
 	}
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
-			Parms parms, ComponentMatcher re, boolean returnQ, Object initialInputData) {
-		return exec(service, o, parms, re, returnQ ? createUniqueQueue("returnQ") : null, initialInputData);
+			D parms, ComponentMatcher re, boolean returnQ, Object initialInputData, boolean eot) {
+		return exec(service, o, parms, re, returnQ ? createUniqueQueue("returnQ") : null, initialInputData, eot);
 	}
 
 	public RemotelyRunningEndpoint exec(Component to, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, Object initialInputData) {
-		return exec(service, o, null, ComponentMatcher.unicast(to), true, initialInputData);
+			Class<? extends InnerClassEndpoint> o, Object initialInputData, boolean eot) {
+		return exec(service, o, null, ComponentMatcher.unicast(to), true, initialInputData, eot);
 	}
 
-	public RemotelyRunningEndpoint exec(Component to, Class<? extends InnerClassEndpoint> o, Object initialInputData) {
+	public RemotelyRunningEndpoint exec(Component to, Class<? extends InnerClassEndpoint> o, Object initialInputData, boolean eot) {
 		return exec((Class<? extends Service>) o.getEnclosingClass(), o, null, ComponentMatcher.unicast(to), true,
-				initialInputData);
+				initialInputData, eot);
 	}
 
 	public RemotelyRunningEndpoint exec(Component to, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, Parms parms, Object initialInputData) {
-		return exec(service, o, parms, ComponentMatcher.unicast(to), true, initialInputData);
+			Class<? extends InnerClassEndpoint> o, D parms, Object initialInputData, boolean eot) {
+		return exec(service, o, parms, ComponentMatcher.unicast(to), true, initialInputData, eot);
 	}
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
-			Object initialInputData) {
-		Parms parms = defaultData();
-		return exec(service, o, parms, naturalTarget(parms), true, initialInputData);
+			Object initialInputData, boolean eot) {
+		D parms = defaultData();
+		return exec(service, o, parms, naturalTarget(parms), true, initialInputData, eot);
 	}
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
-			Parms parms, ComponentMatcher matcher, MessageQueue returnQ, Object initialInputData) {
+			D parms, ComponentMatcher matcher, MessageQueue returnQ, Object initialInputData, boolean eot) {
 
 		// Cout.debugSuperVisible("exec " + o.getSimpleName() + " " + initialInputData);
 		var dest = new MessageODestination(service, o);
@@ -133,7 +137,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 			dest.replyTo.service = r.returnQ.service.getClass();
 		}
 
-		send(initialInputData, dest, parms);
+		send(initialInputData, eot, dest, parms);
 		r.destination = dest;
 		return r;
 	}
@@ -147,7 +151,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 	public Object exec_rpc(Component to, Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
 			Object parms) {
 		var r = exec(service, o, defaultData(), ComponentMatcher.unicast(to), createUniqueQueue("returnQ"),
-				new EndpointParameterList(parms)).returnQ.poll_sync(RPC_TIMEOUT);
+				new EndpointParameterList(parms), true).returnQ.poll_sync(RPC_TIMEOUT);
 
 		if (r.content instanceof Throwable) {
 			if (r.content instanceof RuntimeException) {
@@ -159,6 +163,19 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 			return r.content;
 		}
 	}
+	
+	public class dummyService extends InnerClassEndpoint {
+
+		@Override
+		public void impl(MessageQueue in) throws Throwable {
+			Cout.debug(component + " reached");
+		}
+
+		@Override
+		public String getDescription() {
+			return "do nothing";
+		}
+	}
 
 	public class ping extends InnerClassEndpoint {
 
@@ -167,7 +184,7 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 			Cout.debugSuperVisible("PING");
 			var m = in.poll_sync();
 			// sends back the ping message to the caller
-			reply(m, m);
+			reply(m, m, true);
 		}
 
 		@Override
@@ -213,8 +230,8 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 		}
 	}
 
-	public MessageQueue ping(Set<Component> targets, Parms parms) {
-		return exec(getClass(), ping.class, parms, ComponentMatcher.multicast(targets), true, "ping test").returnQ;
+	public MessageQueue ping(Set<Component> targets, D parms) {
+		return exec(getClass(), ping.class, parms, ComponentMatcher.multicast(targets), true, "ping test", true).returnQ;
 	}
 
 	public MessageQueue ping(Set<Component> targets) {
@@ -225,8 +242,8 @@ public abstract class RoutingService<Parms extends RoutingData> extends Service 
 		return ping(Set.of(target), defaultData());
 	}
 
-	public MessageQueue ping(Parms parms) {
-		return exec(getClass(), ping.class, parms, naturalTarget(parms), true, "ping").returnQ;
+	public MessageQueue ping(D parms) {
+		return exec(getClass(), ping.class, parms, naturalTarget(parms), true, "ping", true).returnQ;
 	}
 
 	public MessageQueue ping() {

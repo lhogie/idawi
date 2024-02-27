@@ -29,11 +29,9 @@ import com.sun.net.httpserver.HttpServer;
 import idawi.Component;
 import idawi.Endpoint;
 import idawi.EndpointParameterList;
-import idawi.InnerClassEndpoint;
-import idawi.Agenda;
+import idawi.Idawi;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.Idawi;
 import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
@@ -369,13 +367,14 @@ public class WebService extends Service {
 	}
 
 	public void exec(RoutingService routing, RoutingData routingParms, ComponentMatcher target,
-			Class<? extends Service> service, Class<? extends Endpoint> operationID, EndpointParameterList parms, boolean compress,
-			boolean encrypt, double duration, double timeout, Function<MessageCollector, Object> whatToSendF,
-			Serializer serializer, OutputStream output, InputStream postDataInputStream, String resultDescription) {
+			Class<? extends Service> service, Class<? extends Endpoint> operationID, EndpointParameterList parms,
+			boolean compress, boolean encrypt, double duration, double timeout,
+			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
+			InputStream postDataInputStream, String resultDescription) {
 
-		System.out.println("target: " +target);
+		System.out.println("target: " + target);
 
-		var ro = routing.exec(service, operationID, routingParms, target, true, parms);
+		var ro = routing.exec(service, operationID, routingParms, target, true, parms, postDataInputStream == null);
 		var aes = new AESEncrypter();
 		SecretKey key = null;
 
@@ -418,8 +417,10 @@ public class WebService extends Service {
 						String serializerName = encodingsFromClient[0];
 						var ser = name2serializer.get(serializerName);
 						Object o = ser.fromBytes(content);
-						routing.send(o, ro.getOperationInputQueueDestination());
+						routing.send(o, false, ro.getOperationInputQueueDestination());
 					}
+
+					routing.send(null, true, ro.getOperationInputQueueDestination());
 				} catch (IOException e1) {
 				}
 			}).start();
@@ -455,9 +456,8 @@ public class WebService extends Service {
 
 			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
 		});
-		
-		System.out.println("collecting completed");
 
+		System.out.println("collecting completed");
 
 //			ro.dispose();
 

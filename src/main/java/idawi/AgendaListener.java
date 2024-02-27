@@ -12,7 +12,7 @@ public interface AgendaListener {
 
 	void eventProcessingCompleted(Event<?> e);
 
-	void newEventScheduledForExecution(Event<?> e);
+	void newEventInThreadPool(Event<?> e);
 
 	void sleeping(long waitTimeMs);
 
@@ -22,11 +22,11 @@ public interface AgendaListener {
 
 	void interrupted();
 
-	public static class StdOutRuntimeListener implements AgendaListener {
+	public static class PrintStreamRuntimeListener implements AgendaListener {
 
 		private PrintStream out;
 
-		public StdOutRuntimeListener(PrintStream out) {
+		public PrintStreamRuntimeListener(PrintStream out) {
 			this.out = out;
 		}
 
@@ -37,48 +37,48 @@ public interface AgendaListener {
 
 		@Override
 		public void eventSubmitted(Event<?> newEvent) {
-			print(" * new event submitted: " + newEvent);
+			print(" @ new event submitted: " + newEvent);
 		}
 
 		@Override
 		public void eventProcessingStarts(Event<?> e) {
-			print(" * eventProcessingStarts: " + e);
+			print(" @ eventProcessingStarts: " + e);
 		}
 
 		@Override
 		public void eventProcessingCompleted(Event<?> e) {
-			print(" * eventProcessingCompleted: " + e);
+			print(" @ eventProcessingCompleted: " + e);
 		}
 
 		@Override
-		public void newEventScheduledForExecution(Event<?> e) {
-			print(" * newEventScheduledForExecution: " + e);
+		public void newEventInThreadPool(Event<?> e) {
+			print(" @ newEventScheduledForExecution: " + e);
 
 		}
 
 		@Override
 		public void sleeping(double duration, Event<?> event) {
-			print(" * waiting " + Date.prettyTime(duration) + " to execute " + event);
+			print(" @ waiting " + Date.prettyTime(duration) + " to execute " + event);
 		}
 
 		@Override
 		public void interrupted() {
-			print(" * interrupted");
+			print(" @ interrupted");
 		}
 
 		@Override
 		public void sleeping(long waitTimeMs) {
-			print(" * sleeping: " + waitTimeMs + "s");
+			print(" @ sleeping: " + waitTimeMs + "s");
 		}
 
 		@Override
 		public void terminating(long nbPastEvents) {
-			print(" * terminating: " + nbPastEvents + " events processed");
+			print(" @ terminating: " + nbPastEvents + " events processed");
 		}
 
 		@Override
 		public void starting() {
-			print(" * starting");
+			print(" @ starting");
 		}
 
 	}

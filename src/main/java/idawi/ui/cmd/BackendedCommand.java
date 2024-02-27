@@ -36,7 +36,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
 		var col = c.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
-				ComponentMatcher.multicast(target), true, backend).returnQ.collector();
+				ComponentMatcher.multicast(target), true, backend, true).returnQ.collector();
 
 		col.collect(1, 1, c2 -> {
 			var msg = c2.messages.last();

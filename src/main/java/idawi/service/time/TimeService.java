@@ -31,7 +31,7 @@ public class TimeService extends Service {
 			((SettableTimeModel) model).setTime(newTime);
 
 			if (bcast) {
-				component.bb().send(now2(), null);
+				component.bb().send(now2(), true, null);
 			}
 		}
 

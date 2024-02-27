@@ -31,6 +31,7 @@ import idawi.transport.Link;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
 import toools.SizeOf;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
@@ -208,6 +209,11 @@ public class Component implements SizeOf {
 		return (List<S>) services.stream().filter(s -> id.isAssignableFrom(s.getClass())).toList();
 	}
 
+	public <S extends Service> List<S> services(Predicate<Service> p) {
+		return (List<S>) services.stream().filter(p).toList();
+	}
+
+	
 	public <S extends Service> S service(Class<S> c) {
 		return service(c, false);
 	}
@@ -219,7 +225,12 @@ public class Component implements SizeOf {
 			}
 		}
 
-		return autoload ? start(c) : null;
+		if (autoload) {
+		//	Cout.debug("starting " + c + " on " + this);
+			return start(c);
+		} else {
+			return null;
+		}
 	}
 
 	public boolean has(Class<? extends Service> c) {
@@ -250,7 +261,7 @@ public class Component implements SizeOf {
 	}
 
 	public double now() {
-		return Service.now();
+		return Idawi.agenda.now();
 		// var ts = lookup(TimeService.class);
 		// return ts == null ? Date.time() : ts.now();
 	}
@@ -320,5 +331,16 @@ public class Component implements SizeOf {
 	public String name() {
 		return name;
 	}
+	
+	public TransportService alreadyReceivedMsg(long ID) {
+		for (var t : services(TransportService.class)){
+			if (t.alreadyKnownMsgs.contains(ID)) {
+				return t;
+			}
+		}
+		
+		return null;
+	}
+
 
 }

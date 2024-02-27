@@ -24,9 +24,6 @@ public class ExternalCommandsService extends Service {
 		super(t);
 	}
 
-	
-
-
 	public class has extends TypedInnerClassEndpoint {
 		public boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
@@ -64,14 +61,9 @@ public class ExternalCommandsService extends Service {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
-
-						if (b.length == 0) {
-							break;
-						} else {
-							reply(parmMsg, b);
-						}
+						reply(parmMsg, b, b.length == 0);
 					} catch (IOException e) {
-						reply(parmMsg, e);
+						reply(parmMsg, e, true);
 						break;
 					}
 				}
@@ -108,9 +100,9 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public void exec(Component to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
-		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(ExternalCommandsService.class, exec.class, null,
-				null, true, cmdLine);
+	public void exec(Component to, InputStream stdin, OutputStream out, String... cmdLine) throws IOException {
+		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(ExternalCommandsService.class, exec.class,
+				null, null, true, cmdLine, true);
 		boolean eofIN = false;
 
 		while (true) {
@@ -125,13 +117,8 @@ public class ExternalCommandsService extends Service {
 			}
 
 			if (!eofIN) {
-				var wav = in.readNBytes(1000);
-
-				if (wav.length == 0) {
-					eofIN = true;
-				} else {
-					component.defaultRoutingProtocol().send(wav, s.getOperationInputQueueDestination());
-				}
+				var wav = stdin.readNBytes(1000);
+				component.defaultRoutingProtocol().send(wav, wav.length == 0, s.getOperationInputQueueDestination());
 			}
 		}
 	}

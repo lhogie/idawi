@@ -6,6 +6,7 @@ import java.util.Base64;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 
 public class PipeFromToParentProcess extends TransportService {
 	public boolean suicideIfLoseParent = true;
@@ -67,4 +68,10 @@ public class PipeFromToParentProcess extends TransportService {
 
 		System.out.close();
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
 }

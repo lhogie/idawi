@@ -94,8 +94,8 @@ public class DeployerService extends Service {
 		var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
 
 		System.err.println(reqs);
-		deployRemotely(reqs, stdout -> reply(trigger, stdout), stderr -> reply(trigger, stderr),
-				peerOk -> reply(trigger, peerOk));
+		deployRemotely(reqs, stdout -> reply(trigger, stdout, false), stderr -> reply(trigger, stderr, false),
+				peerOk -> reply(trigger, peerOk, false));
 
 		System.err.println("done");
 	}
@@ -112,9 +112,9 @@ public class DeployerService extends Service {
 			var req = (Collection<Component>) msg.content;
 			List<Component> components = new ArrayList<>();
 			deployInThisJVM(req, peerOk -> components.add(peerOk));
-			reply(msg, req.size() + " compoennts created");
+			reply(msg, req.size() + " components created", false);
 			Topologies.chain(components, (a, b) -> SharedMemoryTransport.class, components);
-			reply(msg, "chained");
+			reply(msg, "chained", true);
 		}
 
 		@Override
@@ -133,7 +133,7 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
 			var reqs = (Collection<ExtraJVMDeploymentRequest>) trigger.content;
-			deployInNewJVMs(reqs, line -> reply(trigger, line), ok -> reply(trigger, ok));
+			deployInNewJVMs(reqs, line -> reply(trigger, line, false), ok -> reply(trigger, ok, false));
 		}
 
 	}
@@ -232,8 +232,8 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
 			var reqs = (Collection<RemoteDeploymentRequest>) trigger.content;
-			deployRemotely(reqs, line -> reply(trigger, line), line -> reply(trigger, "stderr: " + line),
-					ok -> reply(trigger, ok));
+			deployRemotely(reqs, line -> reply(trigger, line, false), line -> reply(trigger, "stderr: " + line, false),
+					ok -> reply(trigger, ok, false));
 		}
 	}
 

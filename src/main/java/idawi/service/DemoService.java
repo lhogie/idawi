@@ -11,7 +11,6 @@ import idawi.InnerClassEndpoint;
 import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.messaging.EOT;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
@@ -50,7 +49,7 @@ public class DemoService extends Service {
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
-				reply(tg, new Random().nextInt());
+				reply(tg, new Random().nextInt(), i == n - 1);
 				Threads.sleepMs(1000);
 			}
 		}
@@ -79,16 +78,18 @@ public class DemoService extends Service {
 			while (true) {
 				var msg = in.poll_async();
 
-				if (msg.content instanceof EOT) {
+				if (msg.isEOT()) {
 					break;
 				}
 
 				String line = (String) msg.content;
 
 				if (line.matches(re)) {
-					reply(trigger, line);
+					reply(trigger, line, false);
 				}
 			}
+
+			reply(trigger, null, true);
 		}
 
 		@Override
@@ -105,10 +106,10 @@ public class DemoService extends Service {
 
 		var s = new BlindBroadcasting(a);
 		RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b),
-				true, "");
+				true, "", true);
 
 		for (int i = 0; i < 50; ++i) {
-			s.send("" + i, o);
+			s.send("" + i, i == 49, o);
 		}
 
 		o.returnQ.collector().collect(c -> c.messages.last().getClass());
@@ -166,9 +167,10 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
+			int n = (Integer) m.content;
 
-			for (int i = 0; i < (Integer) m.content; ++i) {
-				reply(m, i);
+			for (int i = 0; i < n; ++i) {
+				reply(m, i, i == n - 1);
 			}
 		}
 	}
@@ -193,7 +195,7 @@ public class DemoService extends Service {
 			var p = (Range) m.content;
 
 			for (int i = p.a; i < p.b; ++i) {
-				reply(m, i);
+				reply(m, i, i == p.b - 1);
 			}
 		}
 	}
@@ -235,8 +237,8 @@ public class DemoService extends Service {
 			int target = (Integer) msg.content;
 
 			for (int i = 0; i < target; ++i) {
-				reply(msg, i);
-				reply(msg, new ProgressRatio(i, target));
+				reply(msg, i, false);
+				reply(msg, new ProgressRatio(i, target), i == target - 1);
 			}
 		}
 	}
@@ -258,26 +260,26 @@ public class DemoService extends Service {
 				var d = rand.nextDouble();
 
 				if (d < 0.1) {
-					reply(msg, new ProgressRatio(i, target));
+					reply(msg, new ProgressRatio(i, target), false);
 				} else if (d < 0.2) {
-					reply(msg, rand.nextInt());
+					reply(msg, rand.nextInt(), false);
 				} else if (d < 0.2) {
-					reply(msg, new Error("test error"));
+					reply(msg, new Error("test error"), false);
 				} else if (d < 0.2) {
-					reply(msg, ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100));
+					reply(msg, ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100), false);
 				} else if (d < 0.3) {
-					reply(msg, Chart.random());
+					reply(msg, Chart.random(), false);
 				} else if (d < 0.4) {
-					reply(msg, Graph.random());
+					reply(msg, Graph.random(), false);
 				} else if (d < 0.4) {
-					reply(msg, new ProgressMessage("I'm still working!"));
+					reply(msg, new ProgressMessage("I'm still working!"), false);
 				} else {
 				}
 
 				Threads.sleep(rand.nextDouble());
 			}
 
-			reply(msg, new ProgressRatio(target, target));
+			reply(msg, new ProgressRatio(target, target), true);
 		}
 	}
 

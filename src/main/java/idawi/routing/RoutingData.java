@@ -9,8 +9,6 @@ public abstract class RoutingData implements Serializable, SizeOf, URLable {
 
 	public abstract void fromString(String s, RoutingService service);
 
-	
-
 	@Override
 	public String toString() {
 		return getClass().getName() + ": " + toURLElement();

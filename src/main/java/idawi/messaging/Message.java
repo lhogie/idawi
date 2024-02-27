@@ -22,17 +22,20 @@ public class Message implements Serializable, SizeOf {
 	public Destination destination;
 	public Object content;
 
-	public final RoutingStrategy preferredRoutingStrategy;
+	public final RoutingStrategy routingStrategy;
 
 	public boolean simulatedMessage = false;
+	public boolean eot = false;
 
-	public Message(Destination dest, RoutingStrategy preferredRoutingStrategy, Object content) {
+	public boolean simulate = true;
+
+	public Message(Destination dest, RoutingStrategy routingStrategy, Object content) {
 		if (dest == null)
 			throw new NullPointerException();
 
 		this.destination = dest;
 		this.content = content;
-		this.preferredRoutingStrategy = preferredRoutingStrategy;
+		this.routingStrategy = routingStrategy;
 	}
 
 	public Message clone(Serializer ser) {
@@ -80,7 +83,7 @@ public class Message implements Serializable, SizeOf {
 	}
 
 	public boolean isEOT() {
-		return content instanceof EOT;
+		return eot;
 	}
 
 	public boolean isResult() {
@@ -93,7 +96,7 @@ public class Message implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + destination.sizeOf() + preferredRoutingStrategy.sizeOf() + route.sizeOf() + SizeOf.sizeOf(content);
+		return 8 + destination.sizeOf() + routingStrategy.sizeOf() + route.sizeOf() + SizeOf.sizeOf(content);
 	}
 
 }

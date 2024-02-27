@@ -50,15 +50,11 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		var exeMsg = in.poll_sync();
-//		if (true)throw new Error("test error ");
-		// Cout.debugSuperVisible("transaling");
 		var parms = EndpointParameterList.from(exeMsg.content, method.getParameterTypes(), getClass());
-//		Cout.debugSuperVisible("calling");
 		Object r = method.invoke(this, parms.toArray());
 
 		if (method.getReturnType() != void.class) {
-			service.component.bb().send(r, exeMsg.destination.replyTo);
-//			service.component.bb().send(EOT.instance, input.replyTo);
+			service.component.bb().send(r, true, exeMsg.destination.replyTo);
 		}
 	}
 }

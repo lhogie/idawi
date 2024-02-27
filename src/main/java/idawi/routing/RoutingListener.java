@@ -8,7 +8,7 @@ import idawi.messaging.Message;
 
 public interface RoutingListener {
 
-	static RoutingListener stdout = new RoutingListener.Stdout();
+	public final static RoutingListener stdout = new RoutingListener.PrintTo(System.out);
 
 	public static void debug_on(Component... cc) {
 		debug_on(Stream.of(cc));
@@ -27,18 +27,26 @@ public interface RoutingListener {
 
 	void messageForwarded(RoutingService s, Message msg);
 
-	public final class Stdout implements RoutingListener {
-		PrintStream out = System.out;
+	public final class PrintTo implements RoutingListener {
+		public final PrintStream out;
+
+		public PrintTo(PrintStream o) {
+			this.out = o;
+		}
 
 		@Override
 		public void messageDropped(RoutingService s, Message msg) {
-			out.println(s + " *** drops " + Long.toHexString(msg.ID));
+			print(s + " *** dropped: " + Long.toHexString(msg.ID));
+		}
+
+		protected void print(Object o) {
+			out.println("routing: " + o);
 		}
 
 		@Override
 		public void messageForwarded(RoutingService s, Message msg) {
 			// out.println(s + " *** forwards " + Long.toHexString(msg.ID));
-			out.println(s + " *** forwards " + msg);
+			print(s + " *** forwarded: " + msg);
 		}
 	};
 }

@@ -50,7 +50,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	}
 
 	public static class multicast extends ComponentMatcher {
-		Collection<Component> target;
+		public Collection<Component> target;
 
 		public multicast(Collection<Component> target) {
 			this.target = target;

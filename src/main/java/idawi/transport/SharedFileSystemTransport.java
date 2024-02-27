@@ -5,11 +5,13 @@ import java.util.Random;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
+import toools.math.MathsUtilities;
 import toools.thread.Threads;
 
 public class SharedFileSystemTransport extends TransportService {
@@ -76,4 +78,10 @@ public class SharedFileSystemTransport extends TransportService {
 	@Override
 	public void dispose(Link l) {
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.1, 1, Idawi.prng);
+	}
+
 }

@@ -36,15 +36,15 @@ public class MapReduceService extends Service {
 			Cout.debug(":) received " + msg);
 			var t = (Task) msg.content;
 			Cout.debug("received2 " + msg);
-			reply(msg, new ProgressMessage("processing task " + t.id));
+			reply(msg, new ProgressMessage("processing task " + t.id), false);
 			t.mapReduceService = MapReduceService.this;
 			Result r = new Result<>();
 			r.receptionDate = Date.time();
 			r.taskID = t.id;
-			r.value = t.compute(something -> reply(msg, something));
+			r.value = t.compute(something -> reply(msg, something, false));
 			r.completionDate = Date.time();
-			reply(msg, new ProgressMessage("sending result " + t.id));
-			reply(msg, r);
+			reply(msg, new ProgressMessage("sending result " + t.id), false);
+			reply(msg, r, true);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class MapReduceService extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					component.bb().exec(getClass(), taskProcessor.class, null, task.to, q, task);
+					component.defaultRoutingProtocol().exec(getClass(), taskProcessor.class, null, task.to, q, task, true);
 				}
 			}
 

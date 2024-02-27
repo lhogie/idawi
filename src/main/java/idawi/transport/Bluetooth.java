@@ -8,8 +8,10 @@ import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
+import toools.math.MathsUtilities;
 
 public class Bluetooth extends WirelessTransport {
 
@@ -100,5 +102,10 @@ public class Bluetooth extends WirelessTransport {
 
 	@Override
 	public void dispose(Link l) {
+	}
+
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.034, 0.200, Idawi.prng);
 	}
 }

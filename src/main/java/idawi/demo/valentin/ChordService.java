@@ -40,7 +40,7 @@ public class ChordService extends Service {
 
 		// async multicast the item to all targets
 		var target = ComponentMatcher.multicast(h);
-		rp.exec(ChordService.class, set.class, rp.defaultData(), target, null, item);
+		rp.exec(ChordService.class, set.class, rp.defaultData(), target, null, item, true);
 	}
 
 	public Set<String> localKeys() {
@@ -58,7 +58,7 @@ public class ChordService extends Service {
 		for (var c : hosts) {
 			// sync call
 			var msg = rp.exec(ChordService.class, get.class, rp.defaultData(), ComponentMatcher.unicast(c), true,
-					key).returnQ.poll_sync();
+					key, true).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {
 				return (Item) msg.content;
@@ -80,7 +80,7 @@ public class ChordService extends Service {
 
 	public List<ItemLocation> search(String k, double searchDuration) {
 		// SYNC multicast the key to all targets
-		return rp.exec(ChordService.class, get.class, k).returnQ.collector().collectDuring(searchDuration).messages
+		return rp.exec(ChordService.class, get.class, k, true).returnQ.collector().collectDuring(searchDuration).messages
 				.stream().filter(msg -> msg.content instanceof Item)
 				.map(msg -> new ItemLocation((Item) msg.content, msg.route.source())).toList();
 	}
@@ -146,7 +146,7 @@ public class ChordService extends Service {
 			for (var f : directory.listRegularFiles()) {
 				if (file2ItemKey(f).equals(k)) {
 					var i = new Item(k, file(k).getContent());
-					reply(execMsg, i);
+					reply(execMsg, i, true);
 					return;
 				}
 			}

@@ -47,9 +47,9 @@ public class Topologies {
 	public static void connect2Nclosests(List<Component> components, int n,
 			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
 
-		for (var a : components) {
-			for (var b : sortByDistanceTo(components, a).subList(1, 1 + n)) {
-				consider(a, b, f.apply(a, b), inform);
+		for (var c : components) {
+			for (var b : sortByDistanceTo(components, c).subList(1, 1 + n)) {
+				consider(c, b, f.apply(c, b), inform);
 			}
 		}
 	}
@@ -121,6 +121,18 @@ public class Topologies {
 			var b = components.get(i);
 			consider(a, b, f.apply(a, b), inform);
 			consider(b, a, f.apply(a, b), inform);
+		}
+	}
+
+
+	public static void dchain(List<Component> components,
+			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
+		int n = components.size();
+
+		for (int i = 1; i < n; ++i) {
+			var a = components.get(i - 1);
+			var b = components.get(i);
+			consider(a, b, f.apply(a, b), inform);
 		}
 	}
 
@@ -199,8 +211,8 @@ public class Topologies {
 		public Class<? extends TransportService> leaf2tree, tree2leaf;
 	}
 
-	public static void tree(List<Component> components, TriConsumer<Component, Component, TreeO> tc, Collection<Component> inform,
-			Random prng) {
+	public static void tree(List<Component> components, TriConsumer<Component, Component, TreeO> tc,
+			Collection<Component> inform, Random prng) {
 		final int n = components.size();
 		final var out = new TreeO();
 

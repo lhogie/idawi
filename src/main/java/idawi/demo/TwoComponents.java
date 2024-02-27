@@ -22,7 +22,7 @@ public class TwoComponents {
 
 		a.service(DemoService.class, true);
 		b.service(DemoService.class, true);
-		RemotelyRunningEndpoint r = a.bb().exec(DemoService.class, DemoService.stringLength.class, "salut");
+		RemotelyRunningEndpoint r = a.bb().exec(DemoService.class, DemoService.stringLength.class, "salut", true);
 
 		System.out.println("collecting");
 		r.returnQ.collector().collect(c -> {

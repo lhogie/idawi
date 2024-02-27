@@ -44,7 +44,7 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkActivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.involves(component)) {
-					routing().exec(LocalViewService.class, markLinkActive.class, List.of(l));
+					routing().exec(LocalViewService.class, markLinkActive.class, List.of(l), true);
 				}
 			}
 
@@ -52,7 +52,7 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkDeactivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.involves(component)) {
-					routing().exec(LocalViewService.class, makeLinkInactive.class, List.of(l));
+					routing().exec(LocalViewService.class, makeLinkInactive.class, List.of(l), true);
 				}
 			}
 
@@ -71,7 +71,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	 void scheduleNextDisseminationMessage() {
 		 if (disseminate()) {
-				Idawi.agenda.offer(new TopologyDisseminationEvent(Agenda.now() + disseminationIntervalS, this));
+				Idawi.agenda.schedule(new TopologyDisseminationEvent(Idawi.agenda.now() + disseminationIntervalS, this));
 		 }
 	}
 

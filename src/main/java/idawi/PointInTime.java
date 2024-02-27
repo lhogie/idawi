@@ -11,7 +11,7 @@ public class PointInTime implements When, Comparable<PointInTime> {
 
 	@Override
 	public boolean test(Event<?> t) {
-		return time <= Service.now();
+		return time <= Idawi.agenda.now();
 	}
 
 	@Override

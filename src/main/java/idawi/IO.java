@@ -11,11 +11,11 @@ public class IO {
 	}
 
 	public static void stdout(PrintStream o, Object s) {
-		o.println(Date.prettyTime(Agenda.now()) + "\t" + s);
+		o.println(Date.prettyTime(Idawi.agenda.now()) + "\t" + s);
 	}
 
 	public static void stderr(Object s) {
-		System.err.println(String.format("%.3f", Agenda.now()) + "\t" + s);
+		System.err.println(String.format("%.3f", Idawi.agenda.now()) + "\t" + s);
 	}
 
 }
