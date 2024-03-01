@@ -55,6 +55,14 @@ The following tutorial shows and explains the very basic concepts in *Idawi*. It
 We recommend you to install *Idawi* using a package manager (like Maven), which will manage the dependancies for you.
 Version history can be found [there](https://search.maven.org/artifact/io.github.lhogie/idawi).
 
+If you want to work on the source code, you will need to consider the satellite projects:
+- https://github.com/lhogie/jExperiment
+- https://github.com/lhogie/toools
+- https://github.com/lhogie/jdotgen
+- https://github.com/lhogie/jaseto
+- https://github.com/lhogie/java4unix
+
+
 ## Creating components
 Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application domain.
 Technically, within a given JVM, a component is plain Java object (POJO).
