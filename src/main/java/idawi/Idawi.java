@@ -11,6 +11,7 @@ public class Idawi {
 	public static final Agenda agenda = new Agenda();
 
 	public static Directory directory;
+	public static boolean enableEncryption = false;
 
 	public static Directory setDirectory(String name) {
 		directory = new Directory(name);

@@ -11,7 +11,7 @@ import idawi.service.DemoService.stringLength;
 public class BasicExample {
 	public static void main(String[] args) throws IOException {
 // creates a component in this JVM
-		var c1 = new Component("c1");
+		var c1 = new Component();
 
 // prints the list of its builtin services
 		c1.forEachService(s -> System.out.println(s));
@@ -24,12 +24,16 @@ public class BasicExample {
 
 // we'll put another component in a different JVM
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new Component("other component");
+		req.target = new Component();
 
 		c1.service(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
 
 // asks the other component to compute something
 		var l = c1.bb().exec_rpc(req.target, DemoService.class, stringLength.class, "Hello Idawi!");
 		System.out.println(l);
+		
+		
 	}
+	
+
 }

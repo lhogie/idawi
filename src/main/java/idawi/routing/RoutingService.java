@@ -168,7 +168,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-			Cout.debug(component + " reached");
+			Cout.debugSuperVisible(component + " received: " + in.poll_sync());
 		}
 
 		@Override

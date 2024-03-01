@@ -24,7 +24,7 @@ public class PingPong {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		things.add(new Component("root"));
+		things.add(new Component());
 
 		for (int i = 1; i < 350; ++i) {
 			// Thing t = things.get(ThreadLocalRandom.current().nextInt(things.size()));
@@ -33,7 +33,8 @@ public class PingPong {
 			// gets the deployment service
 			DeployerService deployer = t.service(DeployerService.class);
 
-			var c = new Component("t" + i);
+			var c = new Component();
+			c.friendlyName = "t" + i;
 
 			// and asks it to deploy a new thing within the JVM
 			List<Component> newThings = deployer.deployInThisJVM(Set.of(c), ok -> System.out.println(ok + " is ready"));

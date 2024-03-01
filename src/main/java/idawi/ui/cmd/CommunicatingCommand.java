@@ -26,7 +26,7 @@ public abstract class CommunicatingCommand extends IdawiCommand {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(getCommandName());
+		Component localNode = new Component();
 
 		int repeat = Integer.valueOf(cmdLine.getOptionValue("--repeat"));
 
@@ -50,5 +50,5 @@ public abstract class CommunicatingCommand extends IdawiCommand {
 		return 0;
 	}
 
-	protected abstract int work(Component c, CommandLine cmdLine, double timeout) throws Throwable;
+	protected abstract int work(Component localNode, CommandLine cmdLine, double timeout) throws Throwable;
 }

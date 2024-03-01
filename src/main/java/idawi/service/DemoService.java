@@ -20,6 +20,7 @@ import idawi.service.local_view.Network;
 import idawi.service.web.Graph;
 import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
+import toools.SizeOf;
 import toools.io.Cout;
 import toools.math.MathsUtilities;
 import toools.net.NetUtilities;
@@ -100,8 +101,8 @@ public class DemoService extends Service {
 	}
 
 	public static void main(String[] args) {
-		Component a = new Component("a");
-		Component b = new Component("b");
+		Component a = new Component();
+		Component b = new Component();
 		Network.markLinkActive(a, b, SharedMemoryTransport.class, true, Set.of(a, b));
 
 		var s = new BlindBroadcasting(a);
@@ -175,13 +176,18 @@ public class DemoService extends Service {
 		}
 	}
 
-	public static class Range implements Serializable {
+	public static class Range implements Serializable, SizeOf {
 		public Range(int i, int j) {
 			this.a = i;
 			this.b = j;
 		}
 
 		int a, b;
+
+		@Override
+		public long sizeOf() {
+			return 8;
+		}
 	}
 
 	public class countFromAtoB extends InnerClassEndpoint {

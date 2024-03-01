@@ -1,98 +1,149 @@
 package idawi;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import javax.crypto.SecretKey;
 
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ForceBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.routing.irp.IRP;
+import idawi.security.AES;
+import idawi.security.RSA;
 import idawi.service.DigitalTwinService;
 import idawi.service.Location;
 import idawi.service.LocationService;
 import idawi.service.ServiceManager;
 import idawi.service.local_view.LocalViewService;
-import idawi.service.web.AESEncrypter;
 import idawi.service.web.WebService;
 import idawi.transport.Link;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
 import toools.SizeOf;
-import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 
 public class Component implements SizeOf {
 
-	static class ComponentRepresentative implements Serializable {
-		String name;
-	}
-
-	static class LinkRepresentative implements Serializable {
-		Component srcC;
-		Class<? extends TransportService> srcT;
-		Component destC;
-		Class<? extends TransportService> destT;
-	}
-
 	// used to serialized messages for transport
-	public Serializer serializer = new JavaSerializer() {
+	public transient Serializer serializer = new Serializer() {
+		static class E implements Serializable {
+			PublicKey publicKey;
+			byte[] encryptedAESKey;
+			byte[] data;
+		}
 
 		@Override
-		protected Object replaceAtDeserialization(Object o) {
-			if (o instanceof ComponentRepresentative) {
-				var alreadyIn = localView().g.findComponentByName(((ComponentRepresentative) o).name);
-				return alreadyIn != null ? alreadyIn : new Component(name, Component.this);
-			} else if (o instanceof LinkRepresentative) {
-				var r = (LinkRepresentative) o;
-				var src = r.srcC.service(r.srcT, true);
-				var dest = r.destC.service(r.destT, true);
-				var l = localView().g.findALinkConnecting(src, dest);
-				return l != null ? l : new Link(src, dest);
+		public Object read(InputStream is) throws IOException {
+			E e = (E) javaSerializer.read(is);
+
+			if (e.encryptedAESKey == null) {
+				return javaSerializer.fromBytes(e.data);
 			} else {
-				return o;
+				var plainAESKey = rsa.decode(e.publicKey, e.encryptedAESKey);
+				Key aesKey = (Key) javaSerializer.fromBytes(plainAESKey);
+				var plainMsg = AES.decode(e.data, aesKey);
+				return javaSerializer.fromBytes(plainMsg);
 			}
 		}
 
 		@Override
-		protected Object replaceAtSerialization(Object o) {
-			if (o instanceof Component) {
-				var cr = new ComponentRepresentative();
-				cr.name = ((Component) o).name;
-				return cr;
-			} else if (o instanceof Link) {
-				var l = (Link) o;
-				var r = new LinkRepresentative();
-				r.srcC = l.src.component;
-				r.srcT = l.src.getClass();
-				r.destC = l.dest.component;
-				r.destT = l.dest.getClass();
-				return r;
+		public void write(Object o, OutputStream os) throws IOException {
+			E e = new E();
+			e.publicKey = rsa.keyPair.getPublic();
+
+			if (rsa.keyPair.getPrivate() == null) {
+				e.data = javaSerializer.toBytes(o);
 			} else {
-				return super.replaceAtSerialization(o);
+				var aesKey = AES.getRandomKey(128);
+				e.encryptedAESKey = rsa.encode(javaSerializer.toBytes(aesKey));
+				e.data = AES.encode(javaSerializer.toBytes(o), aesKey);
 			}
+
+			javaSerializer.write(e, os);
 		}
+
+		@Override
+		public String getMIMEType() {
+			return "idawi";
+		}
+
+		@Override
+		public boolean isBinary() {
+			return true;
+		}
+
+		private JavaSerializer javaSerializer = new JavaSerializer() {
+
+			static class ComponentRepresentative implements Serializable {
+				PublicKey key;
+			}
+
+			static class LinkRepresentative implements Serializable {
+				Component srcC;
+				Class<? extends TransportService> srcT;
+				Component destC;
+				Class<? extends TransportService> destT;
+			}
+
+			@Override
+			protected Object replaceAtDeserialization(Object o) {
+				if (o instanceof ComponentRepresentative) {
+					var key = ((ComponentRepresentative) o).key;
+					var alreadyIn = localView().g.findComponentByPublicKey(key);
+					return alreadyIn != null ? alreadyIn : new Component(key).turnToDigitalTwin(Component.this);
+				} else if (o instanceof LinkRepresentative) {
+					var r = (LinkRepresentative) o;
+					var src = r.srcC.service(r.srcT, true);
+					var dest = r.destC.service(r.destT, true);
+					var l = localView().g.findALinkConnecting(src, dest);
+					return l != null ? l : new Link(src, dest);
+				} else {
+					return o;
+				}
+			}
+
+			@Override
+			protected Object replaceAtSerialization(Object o) {
+				if (o instanceof Component) {
+					var cr = new ComponentRepresentative();
+					cr.key = ((Component) o).id();
+					return cr;
+				} else if (o instanceof Link) {
+					var l = (Link) o;
+					var r = new LinkRepresentative();
+					r.srcC = l.src.component;
+					r.srcT = l.src.getClass();
+					r.destC = l.dest.component;
+					r.destT = l.dest.getClass();
+					return r;
+				} else {
+					return super.replaceAtSerialization(o);
+				}
+			}
+		};
 	};
 
-	public static List<Component> createNComponent(String prefix, int n) {
+	public static List<Component> createNComponent(int n) {
 		var components = new ArrayList<Component>();
 
 		for (int i = 0; i < n; ++i) {
-			components.add(new Component(prefix + i, true));
+			components.add(new Component());
 		}
 
 		return components;
@@ -101,41 +152,32 @@ public class Component implements SizeOf {
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
-	static AESEncrypter aes = new AESEncrypter();
-
-	SecretKey key = null;
+	RSA rsa = new RSA();
 	final Set<Service> services = new HashSet<>();
 //	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
 	public final Set<Component> dependantChildren = new HashSet<>();
 	public Component deployer;
-	private String name;
 	public boolean autonomous = false;
 	public final List<TrafficListener> trafficListeners = new ArrayList<>();
 	public Set<Component> simulatedComponents = new HashSet<>();
+	public String friendlyName;
 
 	public Component() {
-		this(Long.toHexString(new Random().nextLong()), false);
+		rsa.random(Idawi.enableEncryption);
 	}
 
-	public Component(String name) {
-		Objects.requireNonNull(name);
-		this.name = name;
+	public Component(PublicKey k) {
+		rsa.keyPair = new KeyPair(k, null);
 	}
 
-	public Component(String name, boolean installBaseServices) {
-		this(name);
-
-		if (installBaseServices) {
-			addBasicServices();
-		}
-
-		// descriptorRegistry.add(descriptor());
-//		componentsInThisJVM.put(ref, this);
+	public Component turnToDigitalTwin(Component host) {
+		var s = new DigitalTwinService(this);
+		s.host = host.localView();
+		return this;
 	}
 
 	public Component twin(boolean includeServices) {
-		var twin = new Component(name);
-		new DigitalTwinService(twin, localView());
+		var twin = new Component(rsa.keyPair.getPublic());
 
 		if (includeServices) {
 			for (var s : services) {
@@ -151,16 +193,6 @@ public class Component implements SizeOf {
 		return twin;
 	}
 
-	public Component(String name, LocalViewService host) {
-		this(name, false);
-		new DigitalTwinService(this, host);
-	}
-
-	// makes a digital twin
-	public Component(String name, Component realComponent) {
-		this(name, realComponent.localView());
-	}
-
 	public void addBasicServices() {
 		new LocalViewService(this);
 		new WebService(this);
@@ -169,10 +201,6 @@ public class Component implements SizeOf {
 		new IRP(this);
 		new ServiceManager(this);
 		new ForceBroadcasting(this);
-	}
-
-	public Component createDigitalTwinFor(String id) {
-		return new Component(id, localView());
 	}
 
 	public boolean isDigitalTwin() {
@@ -213,7 +241,6 @@ public class Component implements SizeOf {
 		return (List<S>) services.stream().filter(p).toList();
 	}
 
-	
 	public <S extends Service> S service(Class<S> c) {
 		return service(c, false);
 	}
@@ -226,7 +253,7 @@ public class Component implements SizeOf {
 		}
 
 		if (autoload) {
-		//	Cout.debug("starting " + c + " on " + this);
+			// Cout.debug("starting " + c + " on " + this);
 			return start(c);
 		} else {
 			return null;
@@ -251,13 +278,22 @@ public class Component implements SizeOf {
 
 	@Override
 	public String toString() {
-		var n = name == null ? "unnamed" : name.toString();
-		return isDigitalTwin() ? dt().host.component + "/" + n : n;
+		var name = friendlyName;
+
+		if (name == null) {
+			if (id() == null) {
+				name = "*unnamed*";
+			} else {
+				name = new String(id().getEncoded());
+			}
+		}
+
+		return isDigitalTwin() ? dt().host.component + "/" + name : name;
 	}
 
 	@Override
 	public int hashCode() {
-		return name.hashCode();
+		return id().hashCode();
 	}
 
 	public double now() {
@@ -291,9 +327,9 @@ public class Component implements SizeOf {
 	@Override
 	public long sizeOf() {
 		long sum = 8; // dts
-		sum += key == null ? 0 : key.getEncoded().length;
+		sum += rsa.keyPair.getPublic().getEncoded().length + rsa.keyPair.getPrivate().getEncoded().length;
 		sum += 8;
-		sum += SizeOf.sizeOf(name);
+		sum += SizeOf.sizeOf(id());
 		sum += 8;
 
 		for (var s : services) {
@@ -305,10 +341,11 @@ public class Component implements SizeOf {
 
 	public Long longHash() {
 		long h = 1125899906842597L;
-		int len = name.length();
+		String s = new String(id().getEncoded());
+		int len = s.length();
 
 		for (int i = 0; i < len; i++) {
-			h = 31 * h + name.charAt(i);
+			h = 31 * h + s.charAt(i);
 		}
 
 		return h;
@@ -321,26 +358,29 @@ public class Component implements SizeOf {
 	@Override
 	public boolean equals(Object o) {
 		var c = (Component) o;
-		return c.name().equals(name);
+		return c.id().equals(id());
 	}
 
 	public DigitalTwinService dt() {
 		return service(DigitalTwinService.class);
 	}
 
-	public String name() {
-		return name;
+	public PublicKey id() {
+		return rsa.keyPair.getPublic();
 	}
-	
+
 	public TransportService alreadyReceivedMsg(long ID) {
-		for (var t : services(TransportService.class)){
+		for (var t : services(TransportService.class)) {
 			if (t.alreadyKnownMsgs.contains(ID)) {
 				return t;
 			}
 		}
-		
+
 		return null;
 	}
 
+	public String friendlyName() {
+		return friendlyName;
+	}
 
 }

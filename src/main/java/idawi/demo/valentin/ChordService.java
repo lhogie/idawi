@@ -27,7 +27,7 @@ public class ChordService extends Service {
 
 	public ChordService(Component c) {
 		super(c);
-		directory = new Directory(pathToLocalContents, c.name());
+		directory = new Directory(pathToLocalContents, new String(c.id().getEncoded()));
 		directory.mkdirs();
 	}
 
@@ -57,8 +57,8 @@ public class ChordService extends Service {
 		// try all components in a sequence
 		for (var c : hosts) {
 			// sync call
-			var msg = rp.exec(ChordService.class, get.class, rp.defaultData(), ComponentMatcher.unicast(c), true,
-					key, true).returnQ.poll_sync();
+			var msg = rp.exec(ChordService.class, get.class, rp.defaultData(), ComponentMatcher.unicast(c), true, key,
+					true).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {
 				return (Item) msg.content;
@@ -80,8 +80,8 @@ public class ChordService extends Service {
 
 	public List<ItemLocation> search(String k, double searchDuration) {
 		// SYNC multicast the key to all targets
-		return rp.exec(ChordService.class, get.class, k, true).returnQ.collector().collectDuring(searchDuration).messages
-				.stream().filter(msg -> msg.content instanceof Item)
+		return rp.exec(ChordService.class, get.class, k, true).returnQ.collector()
+				.collectDuring(searchDuration).messages.stream().filter(msg -> msg.content instanceof Item)
 				.map(msg -> new ItemLocation((Item) msg.content, msg.route.source())).toList();
 	}
 

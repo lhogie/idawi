@@ -88,7 +88,7 @@ public class MessageList extends ArrayList<Message> {
 		MessageList results = resultMessages();
 
 		if (results.size() < n)
-			throw new IllegalStateException("no " + n + " result(s) in this list");
+			throw new IllegalStateException("no " + n + " result(s) in this list. Only " + results.size());
 
 		return results;
 	}

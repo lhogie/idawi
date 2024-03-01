@@ -195,7 +195,7 @@ public class DeployerService extends Service {
 	}
 
 	public List<Component> deployInThisJVM(String... ids) {
-		var l = Arrays.stream(ids).map(i -> new Component(i)).toList();
+		var l = Arrays.stream(ids).map(i -> new Component()).toList();
 		return deployInThisJVM(l);
 	}
 
@@ -203,7 +203,7 @@ public class DeployerService extends Service {
 		var r = new ArrayList<Component>();
 
 		for (var twin : twins) {
-			var realComponent = new Component(twin.toString());
+			var realComponent = new Component();
 			realComponent.deployer = component;
 			var from = component.service(SharedMemoryTransport.class, true);
 			var to = realComponent.service(SharedMemoryTransport.class, true);
@@ -303,10 +303,10 @@ public class DeployerService extends Service {
 			var req = (ExtraJVMDeploymentRequest) new JavaSerializer<>().read(System.in);
 
 			System.out.println("instantiating component");
-			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.name());
+			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.id());
 			child.addBasicServices();
 			child.deployer = req.parent;
-			new DigitalTwinService(req.parent, child.localView());
+			req.parent.turnToDigitalTwin(child);
 //			child.otherComponentsSharingFilesystem.addAll(deployInfo.peersSharingFileSystem);
 
 			// create the pipe to the parent
@@ -403,7 +403,7 @@ public class DeployerService extends Service {
 
 			private RemoteDeploymentRequest findByName(String name, Iterable<RemoteDeploymentRequest> nodes) {
 				for (RemoteDeploymentRequest p : nodes) {
-					if (p.target.name().equals(name)) {
+					if (p.target.id().equals(name)) {
 						return p;
 					}
 				}

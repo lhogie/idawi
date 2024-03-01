@@ -20,7 +20,7 @@ public class Centralized {
 		var rand = new Random();
 
 		for (int i = 0; i < n; ++i) {
-			var a = new Component("" + i);
+			var a = new Component();
 			new SimulatedLocationService(a);
 			a.service(Bluetooth.class, true).emissionRange = rand.nextDouble(100);
 			var ls = a.service(SimulatedLocationService.class, true);

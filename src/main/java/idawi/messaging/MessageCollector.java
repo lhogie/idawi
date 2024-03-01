@@ -17,7 +17,6 @@ public class MessageCollector {
 	public boolean stop;
 	public final Set<Component> blacklist = new HashSet<>();
 	public boolean deliverProgress = true;
-	public boolean deliverEOT = true;
 	public boolean deliverError = true;
 	private final MessageQueue q;
 
@@ -50,11 +49,6 @@ public class MessageCollector {
 						messages.add(msg);
 						userCode.accept(this);
 					}
-				} else if (msg.isEOT()) {
-					if (deliverEOT) {
-						messages.add(msg);
-						userCode.accept(this);
-					}
 				} else if (msg.isError()) {
 					if (deliverError) {
 						messages.add(msg);
@@ -76,7 +70,7 @@ public class MessageCollector {
 	}
 
 	public List<Object> collectNResults(double timeout, int n) {
-		collect(timeout, timeout, c -> c.stop = c.messages.count(m -> m.isResult()) > n);
+		collect(timeout, timeout, c -> c.stop = c.messages.count(m -> m.isResult()) >= n);
 		return messages.throwAnyError().resultMessages(n).stream().map(m -> m.content).toList();
 	}
 

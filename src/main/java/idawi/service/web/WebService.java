@@ -38,6 +38,7 @@ import idawi.routing.ComponentMatcher;
 import idawi.routing.FloodingWithSelfPruning;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
+import idawi.security.AES;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
 import idawi.service.local_view.LocalViewService;
@@ -375,7 +376,7 @@ public class WebService extends Service {
 		System.out.println("target: " + target);
 
 		var ro = routing.exec(service, operationID, routingParms, target, true, parms, postDataInputStream == null);
-		var aes = new AESEncrypter();
+		var aes = new AES();
 		SecretKey key = null;
 
 		// Cout.debugSuperVisible("collecting...");
@@ -407,7 +408,7 @@ public class WebService extends Service {
 								content = unbase64(content);
 							} else if (encoding.equals("aes")) {
 								try {
-									content = aes.decrypt(content, key);
+									content = aes.decode(content, key);
 								} catch (Exception e) {
 									throw new IllegalStateException(e);
 								}
@@ -447,7 +448,7 @@ public class WebService extends Service {
 
 			if (encrypt) {
 				try {
-					bytes = aes.encrypt(bytes, key);
+					bytes = aes.encode(bytes, key);
 					encodingsToClient.add("aes");
 				} catch (Exception e) {
 					System.err.println(e.getMessage());

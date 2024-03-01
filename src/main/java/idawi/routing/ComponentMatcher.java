@@ -86,7 +86,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 		@Override
 		public boolean test(Component t) {
-			return regex.matches(t.name());
+			return regex.matches(t.friendlyName);
 		}
 
 		@Override
@@ -138,8 +138,17 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 			int pos = s.indexOf('.');
 
 			if (pos == -1) {
-				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *"))
-						.map(name -> lookup.g.ensureExists(new Component(name, lookup))).toList()));
+				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *")).map(name -> {
+					var c = lookup.g.findComponentByFriendlyName(name);
+
+					if (c == null) {
+						c = new Component();
+						c.friendlyName = name;
+						lookup.g.ensureExists(c);
+					}
+
+					return c;
+				}).toList()));
 			} else {
 				var prefix = s.substring(0, pos);
 				var value = s.substring(pos + 1);

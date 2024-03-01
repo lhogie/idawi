@@ -20,11 +20,15 @@ public class ping extends CommunicatingCommand {
 	}
 
 	@Override
-	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
+	protected int work(Component localComponent, CommandLine cmdLine, double timeout) throws Throwable {
 		int n = Integer.valueOf(getOptionValue(cmdLine, "--nbTimes"));
 		boolean printIndividualPings = !isOptionSpecified(cmdLine, "--hide");
 		boolean progress = isOptionSpecified(cmdLine, "--progress");
-		var peers = cmdLine.findParameters().stream().map(s -> new Component(s)).toList();
+		var peers = cmdLine.findParameters().stream().map(s -> {
+			var c = new Component();
+			c.friendlyName = s;
+			return c;
+		}).toList();
 
 		for (var p : peers) {
 			Cout.info("pinging: " + p);
@@ -49,7 +53,7 @@ public class ping extends CommunicatingCommand {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = c.bb().ping(p).poll_sync();
+				Message pong = localComponent.bb().ping(p).poll_sync();
 
 				if (pong == null) {
 					if (printIndividualPings) {

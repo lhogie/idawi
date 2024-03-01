@@ -1,12 +1,11 @@
 package idawi.test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.InnerClassEndpoint;
-import idawi.RuntimeEngine;
 import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.messaging.MessageQueue;
@@ -52,12 +51,12 @@ public class Demo4_deploy_local_peers {
 
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws Throwable {
 
 		// creates 50 components in the local JVM
-		Component initialThing = new Component("0");
+		Component initialThing = new Component();
 		List<Component> things = new ArrayList<>();
-		var l = Component.createNComponent("c-", 50);
+		var l = Component.createNComponent(50);
 		initialThing.service(DeployerService.class).deployInThisJVM(l, peerOk -> things.add(peerOk));
 		Topologies.chain(things, (a, b) -> SharedMemoryTransport.class, things);
 		Component last = things.get(things.size() - 1);
@@ -70,9 +69,9 @@ public class Demo4_deploy_local_peers {
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
 		initialThing.defaultRoutingProtocol().exec(DummyService.class, op.class, null, ComponentMatcher.unicast(last),
-				true, "hello!");
+				true, "hello!", true);
 		s.wait.poll_sync();
 		System.out.println("completed");
-		RuntimeEngine.threadPool.shutdown();
+		Idawi.agenda.stop();
 	}
 }

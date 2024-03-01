@@ -2,7 +2,6 @@ package idawi.demo.valentin;
 
 import java.util.List;
 
-import idawi.Agenda;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
@@ -29,7 +28,7 @@ public class Valentin {
 		private List<Component> hotspots;
 
 		public CloudEdgeFog(int n) {
-			components = Component.createNComponent("", n);
+			components = Component.createNComponent(n);
 			System.out.println("assign random locations to nodes");
 			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, Idawi.prng));
 

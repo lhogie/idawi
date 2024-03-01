@@ -17,25 +17,26 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 	@Override
 	protected void specifyCmdLine(CommandLineSpecification spec) {
 		spec.addOption("--hook", "-k", ".+", null,
-				"the CDL description of the component which will be the entry point to the overlay");
+				"the friendly name of the component which will be the entry point to the overlay");
 	}
 
 	@Override
-	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
-		var hook = new Component(getOptionValue(cmdLine, "--hook"));
+	protected int work(Component localNode, CommandLine cmdLine, double timeout) throws Throwable {
+		var hook = new Component();
+		hook.friendlyName = getOptionValue(cmdLine, "--hook");
 		Cout.info("connecting to overlay via " + hook);
 
-		if (c.bb().ping(hook) == null) {
+		if (localNode.bb().ping(hook) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
 
 		Cout.info("executing command");
-		var target = IdawiCommand.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
+		var target = IdawiCommand.targetPeers(localNode, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var col = c.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
+		var col = localNode.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
 				ComponentMatcher.multicast(target), true, backend, true).returnQ.collector();
 
 		col.collect(1, 1, c2 -> {

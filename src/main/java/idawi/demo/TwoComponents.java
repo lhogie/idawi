@@ -11,8 +11,8 @@ import idawi.transport.SharedMemoryTransport;
 
 public class TwoComponents {
 	public static void main(String[] args) throws IOException {
-		var a = new Component("a");
-		var b = new Component("b");
+		var a = new Component();
+		var b = new Component();
 
 		// Network.markLinkActive(a, b, t, true, Set.of(a, b));
 		Set.of(a, b).forEach(c -> c.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, true));

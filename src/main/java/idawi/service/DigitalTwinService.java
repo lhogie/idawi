@@ -1,7 +1,5 @@
 package idawi.service;
 
-import java.util.Objects;
-
 import idawi.Component;
 import idawi.Service;
 import idawi.service.local_view.ComponentInfo;
@@ -12,14 +10,8 @@ public class DigitalTwinService extends Service {
 	private ComponentInfo c = new ComponentInfo(component.now());
 	public LocalViewService host;
 
-	public DigitalTwinService(Component c, LocalViewService owner) {
+	public DigitalTwinService(Component c) {
 		super(c);
-		Objects.requireNonNull(owner);
-
-		if (c == owner.component)
-			throw new IllegalArgumentException();
-
-		this.host = owner;
 	}
 
 	public void kill() {

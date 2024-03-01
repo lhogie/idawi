@@ -27,7 +27,7 @@ public class SSH {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var c2 = new Component("c2");
+		var c2 = new Component();
 		var deployReq = new RemoteDeploymentRequest();
 		deployReq.ssh.host = "musclotte.inria.fr";
 

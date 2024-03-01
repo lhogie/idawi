@@ -2,6 +2,7 @@ package idawi.service.local_view;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,9 +47,9 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		super.clear();
 		bfs.clear();
 	}
-
+	
 	public List<Component> lookupByRegexp(String re) {
-		return findComponents(c -> c.name().matches(re));
+		return findComponents(c -> c.friendlyName().matches(re));
 	}
 
 	public List<Link> snapshotAt(double time) {
@@ -74,8 +75,12 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		return a[0];
 	}
 
-	public Component findComponentByName(String name) {
-		return findComponent(c -> c.name().equals(name));
+	public Component findComponentByPublicKey(PublicKey k) {
+		return findComponent(c -> c.id().equals(k));
+	}
+	
+	public Component findComponentByFriendlyName(String name) {
+		return findComponent(c -> c.friendlyName().equals(name));
 	}
 
 	public List<Link> findLinksTo(Component c) {

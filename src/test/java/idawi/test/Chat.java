@@ -27,12 +27,11 @@ public class Chat extends Service implements Swingable {
 		textInput.addActionListener(e -> {
 			String text = textInput.getText().trim();
 			conversationPane.append("> ");
-			peer.bb().exec(Chat.class, receiveMsg.class, null, ComponentMatcher.all, false, text);
+			peer.bb().exec(Chat.class, receiveMsg.class, null, ComponentMatcher.all, false, text, true);
 			textInput.setText("");
 		});
 	}
 
-	
 	class receiveMsg extends TypedInnerClassEndpoint {
 
 		public void f(String msg) {

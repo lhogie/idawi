@@ -17,12 +17,10 @@ import idawi.messaging.Message;
 
 public class Demo1_multi_jvm {
 	public static void main(String[] args) throws IOException {
-		final int basePort = 4000;
-
-		Component t1 = new Component("c1");
+		Component t1 = new Component();
 
 		var req = new ExtraJVMDeploymentRequest();
-		req.target = new Component("c2");
+		req.target = new Component();
 
 		t1.service(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
 

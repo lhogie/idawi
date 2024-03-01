@@ -14,11 +14,11 @@ public class Demo2_simple_deployment_into_another_JVM {
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
 
 // creates a *local* peer that will drive the deployment
-		var localComponent = new Component("parent");
+		var localComponent = new Component();
 
 // describes the child peer that will be deployed to
 		var childDeployment = new ExtraJVMDeploymentRequest();
-		childDeployment.target = new Component("child");
+		childDeployment.target = new Component();
 
 // deploy
 		localComponent.service(DeployerService.class).deployInNewJVMs(Set.of(childDeployment),

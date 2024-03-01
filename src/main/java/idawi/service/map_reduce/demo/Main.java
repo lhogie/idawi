@@ -9,7 +9,6 @@ import java.util.stream.IntStream;
 import idawi.Component;
 import idawi.EndpointParameterList;
 import idawi.Idawi;
-import idawi.Agenda;
 import idawi.deploy.DeployerService;
 import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
@@ -24,11 +23,11 @@ import toools.thread.AtomicDouble;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
-		Component mapper = new Component("mapper");
+		Component mapper = new Component();
 
 		// create workers
 		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponentByName("w" + i)));
+		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponentByFriendlyName("w" + i)));
 
 		var reqs = workers.stream().map(w -> {
 			var r = new ExtraJVMDeploymentRequest();

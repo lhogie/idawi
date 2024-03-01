@@ -8,10 +8,10 @@ import idawi.deploy.DeployerService.RemoteDeploymentRequest;
 
 public class DeployToAnotherNode {
 	public static void main(String[] args) throws IOException {
-		var a = new Component("a");
+		var a = new Component();
 
 		var req = new RemoteDeploymentRequest();
-		req.target = a.createDigitalTwinFor("b@musclotte");
+		req.target = new Component();
 		req.ssh.host = "musclotte.inria.fr";
 
 		var ro = a.bb().exec(DeployerService.class, DeployerService.remote_deploy.class, req, true);

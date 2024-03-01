@@ -87,7 +87,7 @@ public class Message implements Serializable, SizeOf {
 	}
 
 	public boolean isResult() {
-		return !isError() && !isProgress() && !isEOT();
+		return !isError() && !isProgress();
 	}
 
 	public Component sender() {

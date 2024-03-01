@@ -8,6 +8,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
+import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -36,6 +37,8 @@ public class Agenda {
 		if (isStarted())
 			throw new IllegalStateException("already started");
 
+		startTime = Date.time();
+
 		threadPool.submit(() -> {
 			try {
 				processEventQueue();
@@ -50,7 +53,6 @@ public class Agenda {
 	}
 
 	private void processEventQueue() throws Throwable {
-		startTime = Date.time();
 		controllerThread = Thread.currentThread();
 		listeners.forEach(l -> l.starting());
 
@@ -144,7 +146,7 @@ public class Agenda {
 		return null;
 	}
 
-	public void stop() {
+	public void stop() throws Throwable {
 		if (!isStarted())
 			throw new IllegalStateException();
 
@@ -161,7 +163,7 @@ public class Agenda {
 	}
 
 	public void schedule(Event<PointInTime> newEvent) {
-//		Cout.debug("schedule " + newEvent);
+		Cout.debug("schedule " + newEvent);
 
 		eventQueue.offer(newEvent);
 		listeners.forEach(l -> l.eventSubmitted(newEvent));
@@ -204,5 +206,13 @@ public class Agenda {
 		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+	public void scheduleTerminationAt(double date, Runnable terminationCode) {
+		Idawi.agenda.scheduleAt(date, "termination", () -> {
+			Idawi.agenda.terminationCondition = () -> true;
+			Cout.debugSuperVisible(Idawi.agenda.now() + " THIS IS THE END");
+			terminationCode.run();
+		});
 	}
 }

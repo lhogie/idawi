@@ -16,7 +16,7 @@ public class RunTestServer {
 	public static void main(String[] args) throws Throwable {
 		int n = 1;
 		var components = new ArrayList<Component>();
-		components.addAll(Component.createNComponent("", n));
+		components.addAll(Component.createNComponent(n));
 
 		components.forEach(c -> new DemoService(c));
 
@@ -36,7 +36,7 @@ public class RunTestServer {
 
 		var pong = c.bb().exec(BlindBroadcasting.class, RoutingService.ping.class, null, true).returnQ.poll_sync();
 		System.out.println("pong: " + pong);
-		Idawi.agenda.waitForCompletion();
+		Idawi.agenda.stop();
 
 //		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}

@@ -27,7 +27,7 @@ public abstract class IdawiCommand extends j4u.Command {
 			if (p.equals("_")) {
 				peers.add(n);
 			} else {
-				var pp = n.service(LocalViewService.class).g.findComponentByName(p);
+				var pp = n.service(LocalViewService.class).g.findComponentByFriendlyName(p);
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

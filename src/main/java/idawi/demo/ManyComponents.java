@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.Agenda;
 import idawi.routing.BlindBroadcasting;
 import idawi.service.local_view.LocalViewService;
 import idawi.service.local_view.Network;
@@ -21,7 +20,7 @@ public class ManyComponents {
 		System.out.println("start");
 
 		// creates components
-		var components = Component.createNComponent("c", 100);
+		var components = Component.createNComponent(100);
 
 		for (var c : components) {
 			new SharedMemoryTransport(c);

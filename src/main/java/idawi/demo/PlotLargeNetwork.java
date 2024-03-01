@@ -3,14 +3,12 @@ package idawi.demo;
 import java.util.ArrayList;
 import java.util.Set;
 
-import idawi.AgendaListener;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
 import idawi.routing.RoutingService.dummyService;
-import idawi.service.DigitalTwinService;
 import idawi.service.LocationService;
 import idawi.service.local_view.LocalViewService;
 import idawi.transport.Topologies;
@@ -24,22 +22,21 @@ public class PlotLargeNetwork {
 	public static void main(String[] args) throws Throwable {
 		Idawi.directory = new Directory("$HOME/idawi/test");
 		Idawi.directory.mkdirs();
-		Idawi.directory.open();
 
 		GraphvizDriver.path = "/usr/local/bin/";
 
 		var r = new ArrayList<Component>();
 
 		for (int i = 0; i < 50; ++i) {
-			var c = new Component("" + i);
+			var c = new Component();
 			r.add(c);
 			c.service(BlindBroadcasting.class, true);
 		}
 
-		var owner = r.get(0).localView();
+		var owner = r.get(0);
 
 		for (int i = 1; i < 50; ++i) {
-			new DigitalTwinService(r.get(i), owner);
+			r.get(i).turnToDigitalTwin(owner);
 		}
 
 		LocationService.assignRandomLocations(r, 1000, 1000, 40);
@@ -48,23 +45,26 @@ public class PlotLargeNetwork {
 
 		r.get(0).bb().exec(RoutingService.class, dummyService.class, null, ComponentMatcher.all, false, null, true);
 
-		Idawi.agenda.terminationCondition = () -> r.getLast().service(BlindBroadcasting.class).alreadyKnownMsgs
-				.size() > 0;
-//		Idawi.agenda.listeners.add(new AgendaListener.PrintStreamRuntimeListener(System.out));
+		Idawi.agenda.scheduleTerminationAt(5, () -> {
+			System.out.println("plotting");
+
+			r.get(0).service(LocalViewService.class).g.plot("test", d -> {
+				d.cfg = DOTCFG.POS;
+				d.linkLabel = l -> l.nbMsgs == 0 ? "" : "" + l.nbMsgs;
+				d.linkStyle = l -> l.nbMsgs == 0 ? Style.dotted : Style.solid;
+//				d.componentWidth = c -> 0.01d;
+				d.componentPenWidth = c -> 1;
+				d.componentStyle = c -> c.service(BlindBroadcasting.class).alreadyKnownMsgs.size() == 0 ? Style.dotted
+						: Style.solid;
+			});
+
+			Idawi.directory.open();
+		});
+
 		Idawi.agenda.start();
 		System.out.println("started");
-		Idawi.agenda.waitForCompletion();
-		System.out.println("plotting");
-
-		r.get(0).service(LocalViewService.class).g.plot("test", d -> {
-			d.cfg = DOTCFG.POS;
-			d.linkLabel = l -> l.nbMsgs == 0 ? "" : "" + l.nbMsgs;
-//			d.linkStyle = l -> l.nbMsgs == 0 ? Style.dotted : Style.solid;
-//			d.componentWidth = c -> 0.01d;
-			d.componentPenWidth = c -> 1;
-			d.componentStyle = c -> c.service(BlindBroadcasting.class).alreadyKnownMsgs.size() == 0 ? Style.dotted
-					: Style.solid;
-		});
+		Idawi.agenda.stop();
+		System.out.println("stopped");
 
 	}
 }
