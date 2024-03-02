@@ -9,6 +9,7 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -122,7 +123,7 @@ public class Component implements SizeOf {
 			protected Object replaceAtSerialization(Object o) {
 				if (o instanceof Component) {
 					var cr = new ComponentRepresentative();
-					cr.key = ((Component) o).id();
+					cr.key = ((Component) o).rsa.keyPair.getPublic();
 					return cr;
 				} else if (o instanceof Link) {
 					var l = (Link) o;
@@ -281,10 +282,12 @@ public class Component implements SizeOf {
 		var name = friendlyName;
 
 		if (name == null) {
-			if (id() == null) {
+			var pk = publicKey();
+
+			if (pk == null) {
 				name = "*unnamed*";
 			} else {
-				name = new String(id().getEncoded());
+				name = new String(Base64.getEncoder().encode(pk.getEncoded()));
 			}
 		}
 
@@ -293,7 +296,7 @@ public class Component implements SizeOf {
 
 	@Override
 	public int hashCode() {
-		return id().hashCode();
+		return toString().hashCode();
 	}
 
 	public double now() {
@@ -329,7 +332,7 @@ public class Component implements SizeOf {
 		long sum = 8; // dts
 		sum += rsa.keyPair.getPublic().getEncoded().length + rsa.keyPair.getPrivate().getEncoded().length;
 		sum += 8;
-		sum += SizeOf.sizeOf(id());
+		sum += SizeOf.sizeOf(friendlyName);
 		sum += 8;
 
 		for (var s : services) {
@@ -341,7 +344,7 @@ public class Component implements SizeOf {
 
 	public Long longHash() {
 		long h = 1125899906842597L;
-		String s = new String(id().getEncoded());
+		String s = new String(rsa.keyPair.getPublic().getEncoded());
 		int len = s.length();
 
 		for (int i = 0; i < len; i++) {
@@ -355,18 +358,18 @@ public class Component implements SizeOf {
 		return localView().g.findLinks(l -> l.src.component.equals(this));
 	}
 
+	public PublicKey publicKey() {
+		return rsa != null && rsa.keyPair != null ? rsa.keyPair.getPublic() : null;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		var c = (Component) o;
-		return c.id().equals(id());
+		return c.publicKey().equals(publicKey());
 	}
 
 	public DigitalTwinService dt() {
 		return service(DigitalTwinService.class);
-	}
-
-	public PublicKey id() {
-		return rsa.keyPair.getPublic();
 	}
 
 	public TransportService alreadyReceivedMsg(long ID) {
@@ -377,10 +380,6 @@ public class Component implements SizeOf {
 		}
 
 		return null;
-	}
-
-	public String friendlyName() {
-		return friendlyName;
 	}
 
 }

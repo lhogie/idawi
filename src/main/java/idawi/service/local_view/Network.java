@@ -49,7 +49,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 	
 	public List<Component> lookupByRegexp(String re) {
-		return findComponents(c -> c.friendlyName().matches(re));
+		return findComponents(c -> c.friendlyName.matches(re));
 	}
 
 	public List<Link> snapshotAt(double time) {
@@ -76,11 +76,11 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Component findComponentByPublicKey(PublicKey k) {
-		return findComponent(c -> c.id().equals(k));
+		return findComponent(c -> c.publicKey() != null && c.publicKey().equals(k));
 	}
 	
 	public Component findComponentByFriendlyName(String name) {
-		return findComponent(c -> c.friendlyName().equals(name));
+		return findComponent(c -> c.friendlyName.equals(name));
 	}
 
 	public List<Link> findLinksTo(Component c) {

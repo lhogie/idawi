@@ -56,9 +56,6 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 		}
 	}
 
-
-
-	
 	public synchronized int nbLinks() {
 		return links.size();
 	}
@@ -124,7 +121,7 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 	}
 
 	public Component find(Component a) {
-		return findAComponent(b -> b.id().equals(a.id()));
+		return findAComponent(b -> b.publicKey().equals(a.publicKey()));
 	}
 
 }

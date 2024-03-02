@@ -1,6 +1,6 @@
 MSG="for Idawi: "$*
 
-for P in jdotgen jExperiment toools jaseto java4unix
+for P in jdotgen jExperiment toools jaseto java4unix idawi
 do
 	echo '***' $P
 		git -C ../$P/ add .

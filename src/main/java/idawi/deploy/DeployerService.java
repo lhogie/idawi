@@ -303,7 +303,7 @@ public class DeployerService extends Service {
 			var req = (ExtraJVMDeploymentRequest) new JavaSerializer<>().read(System.in);
 
 			System.out.println("instantiating component");
-			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.id());
+			var child = req.target.getClass().getConstructor(String.class).newInstance(req.target.publicKey());
 			child.addBasicServices();
 			child.deployer = req.parent;
 			req.parent.turnToDigitalTwin(child);
@@ -403,7 +403,7 @@ public class DeployerService extends Service {
 
 			private RemoteDeploymentRequest findByName(String name, Iterable<RemoteDeploymentRequest> nodes) {
 				for (RemoteDeploymentRequest p : nodes) {
-					if (p.target.id().equals(name)) {
+					if (p.target.friendlyName.equals(name)) {
 						return p;
 					}
 				}

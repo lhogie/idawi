@@ -27,7 +27,7 @@ public class ChordService extends Service {
 
 	public ChordService(Component c) {
 		super(c);
-		directory = new Directory(pathToLocalContents, new String(c.id().getEncoded()));
+		directory = new Directory(pathToLocalContents, c.friendlyName);
 		directory.mkdirs();
 	}
 

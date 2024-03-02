@@ -23,7 +23,7 @@ public class IdawiGraphvizDriver extends GraphvizDriver {
 	public Function<Link, Boolean> showLink = c -> true;
 
 	public Function<Component, Integer> componentPenWidth = c -> 1;
-	public Function<Component, String> componentLabel = c -> c.friendlyName();
+	public Function<Component, String> componentLabel = c -> c.friendlyName;
 	public Function<Component, String> componentID = c -> c.toString();
 	public Function<Component, Shape> componentShape = c -> Shape.circle;
 	public Function<Component, Style> componentStyle = c -> Style.solid;

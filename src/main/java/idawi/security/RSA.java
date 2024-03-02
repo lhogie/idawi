@@ -30,7 +30,7 @@ public class RSA {
 	public void random(boolean enableEncryption) {
 		try {
 			var keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-			keyPairGenerator.initialize(2048);
+			keyPairGenerator.initialize(512);
 			this.keyPair = keyPairGenerator.generateKeyPair();
 			
 			if (enableEncryption) {

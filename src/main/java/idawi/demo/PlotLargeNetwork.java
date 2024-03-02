@@ -61,9 +61,10 @@ public class PlotLargeNetwork {
 			Idawi.directory.open();
 		});
 
+		Idawi.enableEncryption = false;
 		Idawi.agenda.start();
 		System.out.println("started");
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 		System.out.println("stopped");
 
 	}

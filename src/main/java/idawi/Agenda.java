@@ -146,14 +146,7 @@ public class Agenda {
 		return null;
 	}
 
-	public void stop() throws Throwable {
-		if (!isStarted())
-			throw new IllegalStateException();
-
-		var a = controllerThread;
-		controllerThread = null;
-		a.interrupt();
-	}
+	
 
 	public double now() {
 		if (!isStarted())
@@ -206,6 +199,15 @@ public class Agenda {
 		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+	
+	public void stop() throws Throwable {
+		if (!isStarted())
+			throw new IllegalStateException();
+
+		var a = controllerThread;
+		controllerThread = null;
+		a.interrupt();
 	}
 
 	public void scheduleTerminationAt(double date, Runnable terminationCode) {

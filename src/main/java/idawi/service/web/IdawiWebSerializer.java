@@ -23,7 +23,7 @@ public class IdawiWebSerializer extends JasetoSerializer {
 			@Override
 			public Node createNode(Object o) {
 				if (o instanceof Route) {
-					return new ArrayNode(((Route) o).components().stream().map(c -> c.id()).toArray(), this);
+					return new ArrayNode(((Route) o).components().stream().map(c -> c.toString()).toArray(), this);
 				} else if (o instanceof URLContentException) {
 					var node = new ThrowableNode(o, this);
 					node.removeKey(ThrowableNode.STACK_TRACE);
@@ -36,7 +36,5 @@ public class IdawiWebSerializer extends JasetoSerializer {
 			}
 
 		});
-		
-		
 	}
 }
