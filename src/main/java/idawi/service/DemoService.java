@@ -230,6 +230,19 @@ public class DemoService extends Service {
 			throw new Error("this is a test error");
 		}
 	}
+	
+	public class quitAll extends InnerClassEndpoint {
+		@Override
+		public String getDescription() {
+			return null;
+		}
+
+		@Override
+		public void impl(MessageQueue in) {
+			Cout.debugSuperVisible(component + ".System.exit(0)");
+			System.exit(0);
+		}
+	}
 
 	public class sendProgressInformation extends InnerClassEndpoint {
 		@Override

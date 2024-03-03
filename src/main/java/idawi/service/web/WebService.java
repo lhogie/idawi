@@ -57,6 +57,7 @@ import toools.io.ser.ToStringSerializer;
 import toools.io.ser.XMLSerializer;
 import toools.io.ser.YAMLSerializer;
 import toools.net.NetUtilities;
+import toools.reflect.Clazz;
 import toools.text.TextUtilities;
 
 public class WebService extends Service {
@@ -301,13 +302,13 @@ public class WebService extends Service {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		RoutingService<?> r;
-		RoutingData rp;
-		ComponentMatcher t;
-		Class<? extends Endpoint> o;
-		Class<? extends Service> service;
-		EndpointParameterList op = new EndpointParameterList();
-		String description;
+		final RoutingService<?> r;
+		final RoutingData rp;
+		final ComponentMatcher t;
+		final Class<? extends Endpoint> o;
+		final Class<? extends Service> service;
+		final EndpointParameterList op = new EndpointParameterList();
+		final String description;
 
 		if (path.isEmpty()) {// show available routing protocols
 			r = component.defaultRoutingProtocol();
@@ -350,7 +351,7 @@ public class WebService extends Service {
 			rp = routingsParms(r, path.get(1));
 			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
 			service = (Class<? extends Service>) Class.forName(path.get(3));
-			o = (Class<? extends Endpoint>) Class.forName(service.getClass().getName() + "$" + path.get(4));
+			o = (Class<? extends Endpoint>) Clazz.innerClass(service, path.get(4));
 			op.addAll(path.subList(5, path.size()));
 			description = r.webShortcut() + "/" + rp.toURLElement() + "/" + t + "/" + service.getName() + "/"
 					+ o.getSimpleName() + "/" + TextUtilities.concat("/", op) + "?compress=" + compress + ",encrypt="
@@ -432,12 +433,8 @@ public class WebService extends Service {
 		collector.collect(duration, timeout, c -> {
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(c);
-
-			var ir = new InformedResponse();
-			ir.whatIsIt = resultDescription;
-			ir.response = what2send;
-
-			var bytes = serializer.toBytes(ir);
+			c.contentDescription = resultDescription;
+			var bytes = serializer.toBytes(what2send);
 			encodingsToClient.add(serializer.getMIMEType());
 			boolean base64 = serializer.isBinary() || compress || encrypt;
 
@@ -464,10 +461,6 @@ public class WebService extends Service {
 
 	}
 
-	public static class InformedResponse {
-		String whatIsIt;
-		Object response;
-	}
 
 	private String name(Function<MessageCollector, Object> whatToSendF) {
 		for (var e : whatToSendMap.entrySet()) {

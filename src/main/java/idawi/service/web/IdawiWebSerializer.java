@@ -1,5 +1,9 @@
 package idawi.service.web;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import idawi.Component;
 import idawi.routing.Route;
 import jaseto.ArrayNode;
@@ -15,6 +19,12 @@ public class IdawiWebSerializer extends JasetoSerializer {
 			public String classname(Class<?> o) {
 				if (URLContentException.class.isAssignableFrom(o)) {
 					return "URL error";
+				} else if (List.class.isAssignableFrom(o)) {
+					return "list";
+				} else if (Set.class.isAssignableFrom(o)) {
+					return "set";
+				} else if (Collection.class.isAssignableFrom(o)) {
+					return "collection";
 				}
 
 				return super.classname(o);

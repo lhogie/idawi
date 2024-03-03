@@ -19,6 +19,7 @@ public class MessageCollector {
 	public boolean deliverProgress = true;
 	public boolean deliverError = true;
 	private final MessageQueue q;
+	public Object contentDescription;
 
 	public static double DEFAULT_COLLECT_DURATION = 1;
 

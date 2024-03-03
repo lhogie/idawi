@@ -5,38 +5,34 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.routing.BlindBroadcasting;
-import idawi.routing.RoutingService;
 import idawi.service.DemoService;
+import idawi.service.ServiceManager;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
 
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 1;
+		int n = 3;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent(n));
-
 		components.forEach(c -> new DemoService(c));
-
-		var gateway = components.get(0);
-		var ws = gateway.service(WebService.class);
-		ws.startHTTPServer();
-		Idawi.agenda.terminationCondition = () -> false;
-		Idawi.agenda.start();
+		components.forEach(c -> new ServiceManager(c));
 
 		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
 				components, new Random());
+		
+		for (int i = 0; i < n; ++i) {
+			components.get(i).friendlyName= "c" + i;
+		}
 
-		System.out.println("gw outLinks: " + gateway.outLinks());
+		var gateway = components.getFirst();
+		var ws = gateway.service(WebService.class, true);
+		ws.startHTTPServer();
 
-		var c = components.get(0);
-		System.out.println("pinging");
-
-		var pong = c.bb().exec(BlindBroadcasting.class, RoutingService.ping.class, null, true).returnQ.poll_sync();
-		System.out.println("pong: " + pong);
-		Idawi.agenda.stop();
+		Idawi.agenda.terminationCondition = () -> false;
+		Idawi.agenda.start();
+		Idawi.agenda.waitForCompletion();
 
 //		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}
