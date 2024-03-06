@@ -30,9 +30,10 @@ public class Agenda {
 	private double startTime = -1;
 	private double timeAccelarationFactor = 1;
 	private Thread controllerThread;
-	public Supplier<Boolean> terminationCondition;
+	private Supplier<Boolean> terminationCondition;
 	private ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
 
+	
 	public synchronized void start() {
 		if (isStarted())
 			throw new IllegalStateException("already started");
@@ -166,6 +167,15 @@ public class Agenda {
 		}
 	}
 
+	public void setTerminationCondition(Supplier<Boolean> c) {
+		this.terminationCondition = c;
+		
+		if (controllerThread != null) {
+			controllerThread.interrupt();
+		}
+	}
+
+	
 	public void scheduleAt(double date, String descr, Runnable r) {
 		schedule(new Event<PointInTime>(descr, new PointInTime(date)) {
 

@@ -17,9 +17,10 @@ public class JustAPing {
 
 		a.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, false);
 
-		Idawi.agenda.terminationCondition  = () -> Idawi.agenda.now() > 1;
+		Idawi.agenda.setTerminationCondition(() -> Idawi.agenda.now() > 1);
 		Idawi.agenda.start();
-		a.bb().exec(RoutingService.class, RoutingService.dummyService.class, null, ComponentMatcher.unicast(b), false, null, true);
+		a.bb().exec(RoutingService.class, RoutingService.dummyService.class, null, ComponentMatcher.unicast(b), false,
+				null, true);
 		Idawi.agenda.waitForCompletion();
 	}
 }

@@ -48,7 +48,7 @@ public class LucTests {
 		Idawi.agenda.start();
 		Message pong = c1.bb().ping(c2).poll_sync();
 		System.out.println(pong);
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 	}
 
 	@org.junit.Test
@@ -73,7 +73,7 @@ public class LucTests {
 
 		// clean
 		Component.componentsInThisJVM.clear();
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class LucTests {
 
 		var req = new ExtraJVMDeploymentRequest();
 		req.target = new Component();
-		c1.service(DeployerService.class).deployInNewJVM(req, msg -> System.out.println(msg));
+		c1.service(DeployerService.class, true).deployInNewJVM(req, msg -> System.out.println(msg));
 
 		for (int i = 0; i < 100; ++i) {
 			Message pong = c1.bb().ping(req.target).poll_sync();
@@ -94,7 +94,7 @@ public class LucTests {
 			assertNotEquals(null, pong);
 		}
 
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 	}
 
 	@Test
@@ -114,18 +114,18 @@ public class LucTests {
 				(int) c1.service(BlindBroadcasting.class, true).exec_rpc(c2, DemoService.stringLength.class, "salut"));
 		Cout.debugSuperVisible(2);
 
-		assertEquals(53,
-				(int) c1.bb().exec(c2, DemoService.countFrom1toN.class, 100, true).returnQ
-						.collector().collectNResults(100).get(53));
+		assertEquals(53, (int) c1.bb().exec(c2, DemoService.countFrom1toN.class, 100, true).returnQ.collector()
+				.collectNResults(100).get(53));
 		Cout.debugSuperVisible(3);
 
-		assertEquals(7, (int) c1.bb().exec(c2, DemoService.countFromAtoB.class, new DemoService.Range(0, 13), true).returnQ
-				.collector().collectNResults(13).get(7));
+		assertEquals(7,
+				(int) c1.bb().exec(c2, DemoService.countFromAtoB.class, new DemoService.Range(0, 13), true).returnQ
+						.collector().collectNResults(13).get(7));
 		Cout.debugSuperVisible(4);
 
 		// assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
 
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 
 	}
 
@@ -135,7 +135,7 @@ public class LucTests {
 
 		Cout.debugSuperVisible("Starting test waitingFirst");
 		var root = new Component();
-		List<Component> others = root.service(DeployerService.class).deployInThisJVM("c1", "c2");
+		List<Component> others = root.service(DeployerService.class, true).deployInThisJVM("c1", "c2");
 
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
@@ -145,7 +145,7 @@ public class LucTests {
 
 		System.out.println(first);
 //		assertEquals(7, (Double) );
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 
 	}
 
@@ -170,7 +170,7 @@ public class LucTests {
 		// be sure it got an answer
 		assertNotEquals(null, pong);
 
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 	}
 
 	@Test
@@ -180,12 +180,15 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting signature test");
 		Component c1 = new Component();
 		Component c2 = new Component();
+		new DemoService(c2);
 		Network.markLinkActive(c1, c2, SharedMemoryTransport.class, true, Set.of(c1, c2));
 
 		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new EndpointParameterList("hello"), true);
 		var c = rom.returnQ.collector();
 		c.collect(5, 5, cc -> {
-			cc.stop = !cc.messages.resultMessages().isEmpty();
+			Cout.debugSuperVisible(cc.messages.last());
+			cc.stop = !cc.messages.isEmpty();
+			Idawi.agenda.setTerminationCondition(() -> cc.stop);
 		});
 
 		var l = c.messages;
@@ -193,7 +196,7 @@ public class LucTests {
 		assertEquals(5, len);
 
 		// clean
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 
 	}
 
@@ -207,7 +210,7 @@ public class LucTests {
 		ws.startHTTPServer();
 		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1);
 		// clean
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 
 	}
 
@@ -226,7 +229,7 @@ public class LucTests {
 		assertNotEquals(pong, null);
 
 		// clean
-		Idawi.agenda.stop();
+		Idawi.agenda.waitForCompletion();
 
 	}
 

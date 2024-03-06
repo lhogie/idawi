@@ -24,10 +24,11 @@ public class Message implements Serializable, SizeOf {
 
 	public final RoutingStrategy routingStrategy;
 
-	public boolean simulatedMessage = false;
 	public boolean eot = false;
 
 	public boolean simulate = true;
+
+	public boolean alertServiceNotAvailable = true;
 
 	public Message(Destination dest, RoutingStrategy routingStrategy, Object content) {
 		if (dest == null)

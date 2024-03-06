@@ -44,6 +44,6 @@ public class JustAMessage {
 
 		Idawi.agenda.stop();
 
-		System.out.println("alreadyReceivedMsgs=" + a.service(SharedMemoryTransport.class).alreadyKnownMsgs);
+		System.out.println("alreadyReceivedMsgs=" + a.alreadyKnownMsgs);
 	}
 }

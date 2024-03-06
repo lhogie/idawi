@@ -19,7 +19,6 @@ import idawi.Component;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
-import idawi.service.DigitalTwinService;
 import idawi.service.SystemService;
 import idawi.service.local_view.ComponentInfo;
 import idawi.service.local_view.LocalViewService;
@@ -258,14 +257,30 @@ public class DeployerService extends Service {
 				startJVMs(nasGroup, feedback);
 			}
 		};
-
 	}
 
 	private static void rsyncBinaries(SSHParms ssh, Consumer<String> rsyncOut, Consumer<String> rsyncErr)
 			throws IOException {
 		ClassPath.retrieveSystemClassPath().rsyncTo(ssh, remoteClassDir, rsyncOut, rsyncErr);
+
+		var d = jreDir();
+
+		if (d == null)
+			throw new IllegalStateException(
+					System.getProperty("java.specification.version") + "Java can't be found in $HOME/jre/");
+
 		RSync.rsyncTo(ssh, List.of(Directory.getHomeDirectory().getChildDirectory("jre")), remoteJREDir, rsyncOut,
 				rsyncErr);
+	}
+
+	private static Directory jreDir() {
+		for (var dd : new Directory("$HOME/jre/").listDirectories()) {
+			if (dd.getName().startsWith("jdk " + System.getProperty("java.specification.version"))) {
+				return dd;
+			}
+		}
+
+		return null;
 	}
 
 	private void startJVMs(Set<RemoteDeploymentRequest> nasGroup, Consumer<String> feedback) {
@@ -275,7 +290,9 @@ public class DeployerService extends Service {
 			protected void process(RemoteDeploymentRequest req) throws IOException {
 				LongProcess startingNode = new LongProcess("starting node in JVM on " + req.target + " via SSH", null,
 						-1, line -> feedback.accept(line));
-				Process p = SSHUtils.exec(req.ssh, "jre/jdk-$(uname -s)-$(uname -m)/bin/java", "-cp",
+				var remoteJREDir = "jre/jdk " + System.getProperty("java.specification.version")
+						+ " $(uname -s) $(uname -m)";
+				Process p = SSHUtils.exec(req.ssh, remoteJREDir + "/bin/java", "-cp",
 						remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)", DeployerService.class.getName(),
 						"run_by_a_node");
 

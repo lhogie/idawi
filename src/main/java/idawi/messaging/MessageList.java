@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import idawi.Component;
 import idawi.RemoteException;
 import idawi.routing.Route;
+import toools.exceptions.ExceptionSet;
 
 public class MessageList extends ArrayList<Message> {
 	private static final long serialVersionUID = 1L;
@@ -148,6 +149,12 @@ public class MessageList extends ArrayList<Message> {
 		}
 
 		return this;
+	}
+
+	public void throwAllErrors() {
+		var errs = new ExceptionSet();
+		errs.exceptions.addAll(errors());
+		throw errs;
 	}
 
 	public MessageList throwAnyError_Runtime() {

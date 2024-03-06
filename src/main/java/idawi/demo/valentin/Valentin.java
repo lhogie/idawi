@@ -129,7 +129,7 @@ public class Valentin {
 				() -> c0.service(ChordService.class).store(new Item("item1", "value".getBytes())));
 
 		// stop after 20s
-		Idawi.agenda.terminationCondition = () -> Idawi.agenda.now() > 100;
+		Idawi.agenda.setTerminationCondition(() -> Idawi.agenda.now() > 100);
 		System.err.println("running");
 		Idawi.agenda.start();
 

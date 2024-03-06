@@ -54,7 +54,7 @@ public class PlotLargeNetwork {
 				d.linkStyle = l -> l.nbMsgs == 0 ? Style.dotted : Style.solid;
 //				d.componentWidth = c -> 0.01d;
 				d.componentPenWidth = c -> 1;
-				d.componentStyle = c -> c.service(BlindBroadcasting.class).alreadyKnownMsgs.size() == 0 ? Style.dotted
+				d.componentStyle = c -> c.alreadyKnownMsgs.size() == 0 ? Style.dotted
 						: Style.solid;
 			});
 

@@ -20,6 +20,7 @@ public class Demo2_simple_deployment {
 	public static void main(String[] args) throws IOException {
 // prints out the Java version
 		System.out.println("You are using JDK " + System.getProperty("java.version"));
+		System.out.println(System.getProperties());
 
 // creates a *local* peer that will drive the deployment
 		var localComponent = new Component();
@@ -30,7 +31,7 @@ public class Demo2_simple_deployment {
 		childDeployment.ssh.host = "algothe.inria.fr";
 
 // deploy
-		localComponent.service(DeployerService.class).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
+		localComponent.service(DeployerService.class, true).deployRemotely(Set.of(childDeployment), out -> System.out.println(out),
 				err -> System.err.println(err), ok -> System.out.println("peer ok: " + ok));
 
 // at this step the child is running on the remote host. We can interact with

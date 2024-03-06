@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import idawi.routing.AutoForgettingLongList;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ForceBroadcasting;
 import idawi.routing.RoutingService;
@@ -40,7 +41,11 @@ import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
 
 public class Component implements SizeOf {
+	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	
 
+	
+	
 	// used to serialized messages for transport
 	public transient Serializer serializer = new Serializer() {
 		static class E implements Serializable {
@@ -339,8 +344,9 @@ public class Component implements SizeOf {
 			sum += 8 + s.sizeOf();
 		}
 
-		return sum;
+		return sum + alreadyKnownMsgs.sizeOf() + 8;
 	}
+	
 
 	public Long longHash() {
 		long h = 1125899906842597L;
@@ -372,14 +378,6 @@ public class Component implements SizeOf {
 		return service(DigitalTwinService.class);
 	}
 
-	public TransportService alreadyReceivedMsg(long ID) {
-		for (var t : services(TransportService.class)) {
-			if (t.alreadyKnownMsgs.contains(ID)) {
-				return t;
-			}
-		}
 
-		return null;
-	}
 
 }

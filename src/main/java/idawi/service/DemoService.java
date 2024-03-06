@@ -239,7 +239,7 @@ public class DemoService extends Service {
 
 		@Override
 		public void impl(MessageQueue in) {
-			Cout.debugSuperVisible(component + ".System.exit(0)");
+			Cout.debugSuperVisible(in.poll_sync().route + ".System.exit(0)");
 			System.exit(0);
 		}
 	}

@@ -1,5 +1,7 @@
 package idawi;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -14,8 +16,13 @@ import toools.reflect.Clazz;
 public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 	private final Method method;
 
-	// will be set by the service class
-//	Service service;
+	@Target(ElementType.METHOD)
+	public @interface realComponent {
+	}
+
+	@Target(ElementType.METHOD)
+	public @interface digitalTwin {
+	}
 
 	public TypedInnerClassEndpoint() {
 		this.method = findMain();
@@ -48,7 +55,6 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 	@Override
 	public final void impl(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-
 		var exeMsg = in.poll_sync();
 		var parms = EndpointParameterList.from(exeMsg.content, method.getParameterTypes(), getClass());
 		Object r = method.invoke(this, parms.toArray());
@@ -57,4 +63,10 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 			service.component.bb().send(r, true, exeMsg.destination.replyTo);
 		}
 	}
+
+	@Override
+	public void digitalTwin(MessageQueue q) throws Throwable {
+		impl(q);
+	}
+
 }

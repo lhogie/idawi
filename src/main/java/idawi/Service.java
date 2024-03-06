@@ -223,14 +223,12 @@ public class Service implements SizeOf, Serializable {
 				try {
 					final double start = Date.time();
 					endpoint.nbCalls++;
-//					Cout.debug("CALLING " + endpoint);
-					endpoint.impl(inputQ_final);
-//					Cout.debug("REUTNED " + endpoint);
 
-					// tells the client the processing has completed
-//					if (dest.replyTo != null) {
-//						component.bb().send(EOT.instance, dest.replyTo);
-//					}
+					if (component.isDigitalTwin()) {
+						endpoint.digitalTwin(inputQ_final);
+					} else {
+						endpoint.impl(inputQ_final);
+					}
 					endpoint.totalDuration += Date.time() - start;
 				} catch (Throwable exception) {
 					exception.printStackTrace();

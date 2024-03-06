@@ -29,7 +29,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	@Override
 	public void accept(Message msg, SPPParm p) {
 		// the message was never received
-		if (component.alreadyReceivedMsg(msg.ID) == null) {
+		if (!component.alreadyKnownMsgs.contains(msg.ID)) {
 			var myNeighbors = component.outLinks().stream().map(n -> n.dest.component).toList();
 
 			if (msg.route.isEmpty()) {

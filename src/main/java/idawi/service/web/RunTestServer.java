@@ -21,16 +21,16 @@ public class RunTestServer {
 
 		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
 				components, new Random());
-		
+
 		for (int i = 0; i < n; ++i) {
-			components.get(i).friendlyName= "c" + i;
+			components.get(i).friendlyName = "c" + i;
 		}
 
 		var gateway = components.getFirst();
 		var ws = gateway.service(WebService.class, true);
 		ws.startHTTPServer();
 
-		Idawi.agenda.terminationCondition = () -> false;
+		Idawi.agenda.setTerminationCondition(() -> false);
 		Idawi.agenda.start();
 		Idawi.agenda.waitForCompletion();
 

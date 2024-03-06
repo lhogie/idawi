@@ -23,16 +23,16 @@ public abstract class TransportService extends Service {
 	public long nbMsgSent;
 	public long incomingTraffic;
 	public long outGoingTraffic;
-	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+//	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
-	//	c.localView().g.markLinkActive(this, this); // loopback
+		// c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
 	public long sizeOf() {
-		return 8 * 4 + super.sizeOf() + alreadyKnownMsgs.sizeOf() + 8;
+		return 8 * 4 + super.sizeOf();
 	}
 
 	@Override
@@ -41,9 +41,7 @@ public abstract class TransportService extends Service {
 	}
 
 	// this is called by transport implementations
-	protected final void processIncomingMessage(Message msg) {
-		alreadyKnownMsgs.add(msg.ID);
-
+	protected synchronized final void processIncomingMessage(Message msg) {
 		Cout.debug(this + " receives " + msg);
 		++nbMsgReceived;
 		incomingTraffic += msg.sizeOf();
@@ -55,20 +53,27 @@ public abstract class TransportService extends Service {
 
 		// if the message was targeted to this component and its the first time it is
 		// received
-		if (msg.destination.componentMatcher.test(component)
-				&& msg.route.recipients().filter(t -> t.component.equals(component)).count() == 1) {
+		if (msg.destination.componentMatcher.test(component) && !component.alreadyKnownMsgs.contains(msg.ID)) {
 			var targetService = component.service(msg.destination.service(), msg.destination.autoStartService);
 
 			if (targetService == null) {
-				System.err.println(
-						"component " + component + " does not have service " + msg.destination.service().getName());
+				if (msg.alertServiceNotAvailable) {
+					reply(msg, "no such service", true);
+				} else {
+					System.err.println(
+							"component " + component + " does not have service " + msg.destination.service().getName());
+				}
 			} else {
 				targetService.process(msg);
 			}
 		}
 
-		if (!msgTargettedToMeOnly(msg.destination.componentMatcher)) {
-			considerForForwarding(msg);
+		synchronized (component) {
+			if (!msgTargettedToMeOnly(msg.destination.componentMatcher)) {
+				considerForForwarding(msg);
+			}
+
+			component.alreadyKnownMsgs.add(msg.ID);
 		}
 	}
 
@@ -104,10 +109,10 @@ public abstract class TransportService extends Service {
 
 	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
 		Cout.debug(" " + component + " uses '" + getName() + "' to send: " + msg);
-		alreadyKnownMsgs.add(msg.ID);
+		component.alreadyKnownMsgs.add(msg.ID);
 
 		var impactedLinks = new HashSet<>(outLinks.stream().flatMap(l -> l.impactedLinks().stream()).toList());
-		
+
 		for (var outLink : impactedLinks) {
 			msg.route.add(outLink, r);
 			++nbMsgSent;

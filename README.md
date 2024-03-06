@@ -1,3 +1,6 @@
+
+
+
 # Description
 
 *Idawi* is a Java middleware for decentralized applications, as they can be found in the Internet Of Things (IOT), in the fog, in Mobile Ad hoc Networks (MANETs), etc. 
