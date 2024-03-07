@@ -273,14 +273,21 @@ public class DeployerService extends Service {
 				rsyncErr);
 	}
 
-	private static Directory jreDir() {
-		for (var dd : new Directory("$HOME/jre/").listDirectories()) {
-			if (dd.getName().startsWith("jdk " + System.getProperty("java.specification.version"))) {
-				return dd;
-			}
-		}
+	public static class JRE {
+		final int[] version;
+		final String arch;
+		final String os;
 
-		return null;
+		public JRE(Directory d) {
+			var e = d.getName().split(" ");
+			version = Arrays.stream(e[1].split("\\.")).mapToInt(s -> Integer.valueOf(s)).toArray();
+			this.os = e[2];
+			this.arch = e[3];
+		}
+	}
+
+	private static List<JRE> jreDir() {
+		return new Directory("$HOME/jre/").listDirectories().stream().map(d -> new JRE(d)).toList();
 	}
 
 	private void startJVMs(Set<RemoteDeploymentRequest> nasGroup, Consumer<String> feedback) {

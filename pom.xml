@@ -9,8 +9,8 @@
 	<description>A P2P middleware for distributed/parallel applications</description>
 	<url>https://github.com/lhogie/idawi</url>
 	<properties>
-		<maven.compiler.target>18</maven.compiler.target>
-		<maven.compiler.source>18</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.source>21</maven.compiler.source>
 	</properties>
 	<licenses>
 		<license>
