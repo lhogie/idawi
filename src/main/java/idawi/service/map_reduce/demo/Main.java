@@ -2,7 +2,6 @@ package idawi.service.map_reduce.demo;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -10,7 +9,6 @@ import idawi.Component;
 import idawi.EndpointParameterList;
 import idawi.Idawi;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher;
 import idawi.service.ServiceManager;
@@ -25,19 +23,9 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 		Component mapper = new Component();
 
+		DeployerService deployer = mapper.service(DeployerService.class, true);
 		// create workers
-		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.localView().g.findComponentByFriendlyName("w" + i)));
-
-		var reqs = workers.stream().map(w -> {
-			var r = new ExtraJVMDeploymentRequest();
-			r.target = w;
-			return r;
-		}).toList();
-
-		// deploy JVMs
-		mapper.service(DeployerService.class).deployInNewJVMs(reqs, stdout -> System.out.println(stdout),
-				ok -> System.out.println("peer ok: " + ok));
+		var workers = IntStream.range(0, 5).mapToObj(i -> deployer.newLocalJVM()).toList();
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);

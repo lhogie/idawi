@@ -10,16 +10,14 @@ import toools.math.MathsUtilities;
 
 public class PipeFromToParentProcess extends TransportService {
 	public boolean suicideIfLoseParent = true;
-	private final Component parent;
 
-	public PipeFromToParentProcess(Component me, Component parent) {
+	public PipeFromToParentProcess(Component me) {
 		super(me);
-		this.parent = parent;
 
 		Idawi.agenda.threadPool.submit(() -> {
 			try {
 				while (true) {
-					processIncomingMessage((Message) component.serializer.read(System.in));
+					processIncomingMessage((Message) component.secureSerializer.read(System.in));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -37,7 +35,7 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	public void send(Object o) {
-		sendBytes(component.serializer.toBytes(o));
+		sendBytes(component.secureSerializer.toBytes(o));
 	}
 
 	public static void sendBytes(byte[] bytes) {
@@ -51,16 +49,9 @@ public class PipeFromToParentProcess extends TransportService {
 		return "pipe to parent";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return parent.equals(c);
-	}
-
+	
 	@Override
 	public void dispose(Link l) {
-		if (!l.dest.component.equals(parent))
-			throw new IllegalStateException();
-
 		try {
 			System.in.close();
 		} catch (IOException e) {

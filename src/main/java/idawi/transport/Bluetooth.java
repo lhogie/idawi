@@ -90,10 +90,6 @@ public class Bluetooth extends WirelessTransport {
 		return "bluetooth";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return false;
-	}
 
 	@Override
 	protected void sendImpl(Message msg) {

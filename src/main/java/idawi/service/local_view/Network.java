@@ -33,7 +33,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 
 			if (cache == null) {
 				put(from, cache = new Cache<>(5,
-						() -> BFS.bfs(Network.this, from, 10, Integer.MAX_VALUE, avoid -> false, avoid -> false)));
+						() -> BFS.bfs(Network.this, from, 10, Integer.MAX_VALUE, ignoreComponent -> false, ignoreLink -> false)));
 			}
 
 			return cache.get();
@@ -47,7 +47,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		super.clear();
 		bfs.clear();
 	}
-	
+
 	public List<Component> lookupByRegexp(String re) {
 		return findComponents(c -> c.friendlyName.matches(re));
 	}
@@ -78,7 +78,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	public Component findComponentByPublicKey(PublicKey k) {
 		return findComponent(c -> c.publicKey() != null && c.publicKey().equals(k));
 	}
-	
+
 	public Component findComponentByFriendlyName(String name) {
 		return findComponent(c -> c.friendlyName.equals(name));
 	}
@@ -90,6 +90,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	public List<Link> findLinksTo(TransportService c) {
 		return findLinks(l -> l.dest.equals(c));
 	}
+
 	public List<Link> findLinksFrom(TransportService c) {
 		return findLinks(l -> l.src.equals(c));
 	}

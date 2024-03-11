@@ -103,7 +103,6 @@ public abstract class TransportService extends Service {
 
 	public abstract String getName();
 
-	public abstract boolean canContact(Component c);
 
 	protected abstract void sendImpl(Message msg);
 
@@ -124,13 +123,9 @@ public abstract class TransportService extends Service {
 			var sentToTwin = outLink.dest.component.isDigitalTwin();
 //			System.out.println(outLink.dest.component + "  and " + component);
 			var loop = outLink.dest.component.equals(component);
-			var simulatedNodeTarget = searchSimulatedComponent(outLink.dest.component);
 
 			if (sentFromTwin) {
 				fakeSend(msg, outLink, outLink.dest);
-			} else if (simulatedNodeTarget != null) {
-				var to = simulatedNodeTarget.service(outLink.dest.getClass(), true);
-				fakeSend(msg, outLink, to);
 			} else if (msg.simulate) {
 				fakeSend(msg, outLink, outLink.dest);
 			} else if (loop) {
@@ -145,18 +140,9 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	private Component searchSimulatedComponent(Component search) {
-		for (var c : component.simulatedComponents) {
-			if (c.equals(search)) {
-				return c;
-			}
-		}
-
-		return null;
-	}
 
 	private void fakeSend(Message msg, Link outLink, TransportService to) {
-		var msgClone = msg.clone(component.serializer);
+		var msgClone = msg.clone(component.secureSerializer);
 		double actualLatency = outLink.latency();
 
 		Idawi.agenda.schedule(

@@ -1,15 +1,12 @@
 package idawi.test;
 
-import java.io.IOException;
-
 import idawi.Component;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.service.DemoService;
 import idawi.service.DemoService.stringLength;
 
 public class BasicExample {
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Throwable {
 // creates a component in this JVM
 		var c1 = new Component();
 
@@ -23,17 +20,13 @@ public class BasicExample {
 		System.out.println(deployer.endpoints());
 
 // we'll put another component in a different JVM
-		var req = new ExtraJVMDeploymentRequest();
-		req.target = new Component();
 
-		c1.service(DeployerService.class).deployInNewJVM(req, feedback -> System.out.println(feedback));
+		var c2 = c1.service(DeployerService.class).deployInNewJVM(feedback -> System.out.println(feedback));
 
 // asks the other component to compute something
-		var l = c1.bb().exec_rpc(req.target, DemoService.class, stringLength.class, "Hello Idawi!");
+		var l = c1.bb().exec_rpc(c2, DemoService.class, stringLength.class, "Hello Idawi!");
 		System.out.println(l);
-		
-		
+
 	}
-	
 
 }

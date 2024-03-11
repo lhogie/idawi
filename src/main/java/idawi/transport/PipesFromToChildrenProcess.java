@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import idawi.Component;
@@ -29,63 +29,80 @@ public class PipesFromToChildrenProcess extends TransportService {
 		public Q waitForChild = new Q<>(1);
 		public long base64Len;
 		public Process process;
+		
+		public Component f() throws Throwable {
+			var r = waitForChild.poll_sync();
+			
+			if (r instanceof Throwable) {
+				throw (Throwable) r;
+			} else if (r instanceof Component) {
+				return (Component) r;
+			} else {
+				throw new IllegalStateException("what to do with that? " + r);
+			}
+		}
 	}
 
 	// the mark that announces a binary message coming from child stdout
 	public static final String base64ObjectMark = "--- BASE64 OBJECT --> ";
 
-	private final Map<Component, Entry> child_entry = new HashMap<>();
+	private final Set<Entry> child_entry = new HashSet<>();
 
 	public PipesFromToChildrenProcess(Component c) {
 		super(c);
 	}
 
-	public Entry add(Component child, Process p) throws IOException {
+	public Entry add(Process p) throws IOException {
 		var e = new Entry();
 		e.stdout = p.getInputStream();
 		e.stderr = p.getErrorStream();
 		e.stdin = p.getOutputStream();
-		e.child = child;
+//		e.child = child;
 		e.run = true;
 		e.process = p;
 
 		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stdout, System.out));
 		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stderr, System.err));
 
-		child_entry.put(child, e);
+		child_entry.add(e);
 		return e;
 	}
 
 	public Collection<Component> actualNeighbors() {
-		return child_entry.keySet();
+		return child_entry.stream().map(e -> e.child).toList();
 	}
 
 	static int nbW = 0;
 
 	@Override
 	protected void sendImpl(Message msg) {
-		var n = msg.route.last().link;
-		var e = child_entry.get(n);
+		var n = msg.route.last().link.dest.component;
+		var e = findEntry(n);
 
 		if (e == null)
 			throw new IllegalStateException("can't send to " + n);
 
 		try {
-			component.serializer.write(msg, e.stdin);
+			component.secureSerializer.write(msg, e.stdin);
 			e.stdin.flush();
 		} catch (IOException err) {
 			throw new RuntimeException(err);
 		}
 	}
 
-	@Override
-	public String getName() {
-		return "pipe to child processes";
+	private Entry findEntry(Component n) {
+		for (var e : child_entry) {
+			if (e.child == n) {
+				return e;
+			}
+		}
+
+		return null;
 	}
 
 	@Override
-	public boolean canContact(Component c) {
-		return child_entry.containsKey(c);
+	public String getName() {
+		return "pipe to child processes";
 	}
 
 	private void processChildStandardStream(Entry e, InputStream from, PrintStream to) {
@@ -97,12 +114,19 @@ public class PipesFromToChildrenProcess extends TransportService {
 				var base64 = line.substring(base64ObjectMark.length()); // get the rest of the line
 				e.base64Len += base64.length();
 				var bytes = Base64.getDecoder().decode(base64);
-				var o = component.serializer.fromBytes(bytes);
+				var o = component.secureSerializer.fromBytes(bytes);
 
 				if (o instanceof Message) {
-					processIncomingMessage((Message) o);
+					var m = (Message) o;
+
+					if (e.child == null) {
+						e.child = m.route.last().link.src.component;
+						e.waitForChild.add_sync(o);
+					}
+
+					processIncomingMessage(m);
 				} else {
-					e.waitForChild.add_sync(o);
+					throw new IllegalStateException("not a message: " + o);
 				}
 			} else {
 				to.println(e.child + "> " + line);
@@ -118,7 +142,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 	public long base64Len() {
 		long sum = 0;
 
-		for (var e : child_entry.values()) {
+		for (var e : child_entry) {
 			sum += e.base64Len;
 		}
 
@@ -127,7 +151,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 
 	@Override
 	public void dispose(Link l) {
-		Entry e = child_entry.get(l.dest.component);
+		Entry e = findEntry(l.dest.component);
 		e.process.destroy();
 
 		Stream.of(e.stderr, e.stdin, e.stdout).forEach(s -> {
@@ -143,6 +167,5 @@ public class PipesFromToChildrenProcess extends TransportService {
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
 	}
-
 
 }

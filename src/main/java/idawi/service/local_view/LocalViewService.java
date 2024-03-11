@@ -5,16 +5,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-import idawi.Agenda;
 import idawi.Component;
-import idawi.TypedInnerClassEndpoint;
 import idawi.Idawi;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.service.DigitalTwinService;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
+import toools.io.Cout;
 
 public class LocalViewService extends KnowledgeBase {
 
@@ -69,10 +69,10 @@ public class LocalViewService extends KnowledgeBase {
 //		components.add(component);
 	}
 
-	 void scheduleNextDisseminationMessage() {
-		 if (disseminate()) {
-				Idawi.agenda.schedule(new TopologyDisseminationEvent(Idawi.agenda.now() + disseminationIntervalS, this));
-		 }
+	void scheduleNextDisseminationMessage() {
+		if (disseminate()) {
+			Idawi.agenda.schedule(new TopologyDisseminationEvent(Idawi.agenda.now() + disseminationIntervalS, this));
+		}
 	}
 
 	public boolean disseminate() {
@@ -101,6 +101,17 @@ public class LocalViewService extends KnowledgeBase {
 		@Override
 		public String getDescription() {
 			return "get the description for a particular component";
+		}
+	}
+
+	public class acceptHello extends TypedInnerClassEndpoint {
+		public void f(Network n) {
+			Cout.debug("DT merge not yet implemented");
+		}
+
+		@Override
+		public String getDescription() {
+			return "feeds local DT with newly received data";
 		}
 	}
 
@@ -151,6 +162,12 @@ public class LocalViewService extends KnowledgeBase {
 		public String getDescription() {
 			return "mark that link active";
 		}
+	}
+
+	public Object helloMessage() {
+		var bfs = g.bfs.get(component).get();
+		return bfs.visitOrder.stream().filter(l -> bfs.distances.getLong(l.dest.component) < 2)
+				.map(l -> l.dest.component).toList();
 	}
 
 }

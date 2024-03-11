@@ -2,6 +2,7 @@ package idawi.service.local_view;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 
 import idawi.Component;
@@ -11,13 +12,14 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 public class BFS {
 	public static class BFSResult {
-		public BFSResult(Component src) {
-			this.predecessors = new PredecessorTable(src);
-		}
-
 		public Object2LongMap<Component> distances = new Object2LongOpenHashMap<>();
 		public PredecessorTable predecessors;
 		public int nbVerticesVisited;
+		public List<Link> visitOrder = new ArrayList<>();
+
+		public BFSResult(Component src) {
+			this.predecessors = new PredecessorTable(src);
+		}
 
 		@Override
 		public String toString() {
@@ -126,6 +128,9 @@ public class BFS {
 
 			if (!ignoreComponent.test(c)) {
 				links.findLinks(l -> l.src.component.equals(c)).forEach(l -> {
+					if (r.visitOrder != null) {
+						r.visitOrder.add(l);
+					}
 
 					if (!ignoreLink.test(l) && l.isActive()) {
 						var succ = l.dest.component;

@@ -16,14 +16,11 @@ public class SharedMemoryTransport extends TransportService {
 		return "shared mem";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return c != null;
-	}
+
 
 	@Override
 	protected void sendImpl(Message msg) {
-		var msgClone = msg.clone(component.serializer);
+		var msgClone = msg.clone(component.secureSerializer);
 
 		Idawi.agenda.scheduleNow(() -> msgClone.route.last().link.dest.processIncomingMessage(msgClone));
 	}

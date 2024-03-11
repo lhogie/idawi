@@ -35,7 +35,6 @@ public class Valentin {
 			// build individual local views
 			for (var a : components) {
 				var lv = a.service(LocalViewService.class, true);
-				a.simulatedComponents.addAll(components);
 
 				for (var b : components) {
 					var btwin = lv.g.ensureExists(b);

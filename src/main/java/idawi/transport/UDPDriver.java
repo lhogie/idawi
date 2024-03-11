@@ -29,7 +29,7 @@ public class UDPDriver extends IPDriver {
 		if (socket == null)
 			return;
 
-		byte[] buf = component.serializer.toBytes(msg);
+		byte[] buf = component.secureSerializer.toBytes(msg);
 		// Cout.debugSuperVisible("sending to " + neighbors);
 
 		// System.out.println(n.toHTML());
@@ -54,10 +54,7 @@ public class UDPDriver extends IPDriver {
 
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return super.canContact(c) && c.dt().info().udpPort != null;
-	}
+
 
 	@Override
 	protected void startServer() {
@@ -78,7 +75,7 @@ public class UDPDriver extends IPDriver {
 					try {
 						// Cout.info("reading packet");
 						socket.receive(p);
-						Message msg = (Message) component.serializer.fromBytes(p.getData());
+						Message msg = (Message) component.secureSerializer.fromBytes(p.getData());
 						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
 						processIncomingMessage(msg);

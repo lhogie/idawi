@@ -18,10 +18,6 @@ public class WiFiDirect extends WirelessTransport {
 		return "Wi-Fi";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return true;
-	}
 
 	@Override
 	protected void sendImpl(Message msg) {

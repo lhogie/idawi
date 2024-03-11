@@ -1,23 +1,21 @@
 package idawi.service.local_view;
 
 import idawi.Event;
-import idawi.Idawi;
 import idawi.PointInTime;
-import idawi.service.local_view.LocalViewService.markLinkActive;
+import idawi.service.local_view.LocalViewService.acceptHello;
 
 class TopologyDisseminationEvent extends Event<PointInTime> {
 
-	private final LocalViewService c;
+	private final LocalViewService localView;
 
-	public TopologyDisseminationEvent(double w, LocalViewService c) {
+	public TopologyDisseminationEvent(double w, LocalViewService lv) {
 		super(new PointInTime(w));
-		this.c = c;
+		this.localView = lv;
 	}
 
 	@Override
 	public void run() {
-		c.routing().exec(LocalViewService.class, markLinkActive.class,
-				c.g.pickNRandomLinks(c.disseminationSampleSize, Idawi.prng), true);
-		c.scheduleNextDisseminationMessage();
+		localView.routing().exec(LocalViewService.class, acceptHello.class, localView.helloMessage(), true);
+		localView.scheduleNextDisseminationMessage();
 	}
 };

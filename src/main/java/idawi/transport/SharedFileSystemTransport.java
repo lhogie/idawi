@@ -51,7 +51,7 @@ public class SharedFileSystemTransport extends TransportService {
 		Directory toDir = new Directory(baseDirectory, to.toString());
 		toDir.ensureExists();
 		RegularFile f = new RegularFile(toDir, filename + ".ser");
-		byte[] bytes = component.serializer.toBytes(msg);
+		byte[] bytes = component.secureSerializer.toBytes(msg);
 		f.setContent(bytes);
 	}
 
@@ -60,14 +60,10 @@ public class SharedFileSystemTransport extends TransportService {
 		return "shared-directory driver";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return c != null;
-	}
 
 	protected Message extract(RegularFile f) {
 		try {
-			Message msg = (Message) component.serializer.fromBytes(f.getContent());
+			Message msg = (Message) component.secureSerializer.fromBytes(f.getContent());
 			return msg;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

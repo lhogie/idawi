@@ -14,7 +14,6 @@ import idawi.EndpointParameterList;
 import idawi.Idawi;
 import idawi.Service;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
@@ -83,12 +82,10 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test manyMessages");
 		Component c1 = new Component();
 
-		var req = new ExtraJVMDeploymentRequest();
-		req.target = new Component();
-		c1.service(DeployerService.class, true).deployInNewJVM(req, msg -> System.out.println(msg));
+		var target = c1.service(DeployerService.class, true).deployInNewJVM(msg -> System.out.println(msg));
 
 		for (int i = 0; i < 100; ++i) {
-			Message pong = c1.bb().ping(req.target).poll_sync();
+			Message pong = c1.bb().ping(target).poll_sync();
 
 			// be sure c1 got an answer
 			assertNotEquals(null, pong);
@@ -159,12 +156,10 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var req = new ExtraJVMDeploymentRequest();
-		req.target = new Component();
-		master.service(DeployerService.class).deployInNewJVM(req, fdbck -> System.out.println(fdbck));
+		var c = master.service(DeployerService.class).deployInNewJVM(fdbck -> System.out.println(fdbck));
 
 		// asks the master to ping the other component
-		Message pong = new Service(master).component.bb().ping(req.target).poll_sync();
+		Message pong = new Service(master).component.bb().ping(c).poll_sync();
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer

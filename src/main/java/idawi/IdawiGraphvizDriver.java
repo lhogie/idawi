@@ -65,11 +65,11 @@ public class IdawiGraphvizDriver extends GraphvizDriver {
 				additionalCustomizing(c, n);
 				nodeConsumer.accept(n);
 			}
-			
+
 			return Stop.no;
 		});
 	}
-	
+
 	@Override
 	protected void forEachArc(Consumer<GraphvizArc> arcConsumer) {
 		Set<Link> ignoreLinks = new HashSet<>();

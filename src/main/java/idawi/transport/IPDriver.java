@@ -49,10 +49,6 @@ public abstract class IPDriver extends TransportService {
 		}
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return !c.dt().info().inetAddresses.isEmpty();
-	}
 
 	private void stop() {
 		stopServer();
