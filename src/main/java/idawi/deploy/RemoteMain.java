@@ -2,8 +2,11 @@ package idawi.deploy;
 
 import java.io.IOException;
 
+import org.checkerframework.checker.units.qual.m;
+
 import idawi.Component;
 import idawi.Idawi;
+import idawi.messaging.Message;
 import idawi.service.local_view.LocalViewService;
 import idawi.transport.PipeFromToParentProcess;
 import toools.io.ser.JavaSerializer;
@@ -30,9 +33,10 @@ public class RemoteMain {
 
 			// create the pipe to the parent
 			child.service(PipeFromToParentProcess.class, true);
-			child.service(LocalViewService.class, true);
+			var m =new Message(null, null, child);
+			PipeFromToParentProcess.sendBytes(child.secureSerializer.toBytes(m));
 
-			PipeFromToParentProcess.sendBytes(child.secureSerializer.toBytes(child));
+			child.service(LocalViewService.class, true);
 
 			// prevents the JVM to quit
 			while (true) {

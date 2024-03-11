@@ -13,8 +13,8 @@ public class Demo2_simple_deployment_into_another_JVM {
 		var localComponent = new Component();
 
 // deploy
-		var child = localComponent.service(DeployerService.class).newLocalJVM();
-
+		var child = localComponent.service(DeployerService.class, true).newLocalJVM();
+System.out.println("new child: " + child);
 // at this step the child is running on the remote host. We can interact with
 // it.
 		var pong = localComponent.bb().ping(child).poll_sync(3);

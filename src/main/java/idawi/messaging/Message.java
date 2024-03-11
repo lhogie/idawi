@@ -31,9 +31,6 @@ public class Message implements Serializable, SizeOf {
 	public boolean alertServiceNotAvailable = true;
 
 	public Message(Destination dest, RoutingStrategy routingStrategy, Object content) {
-		if (dest == null)
-			throw new NullPointerException();
-
 		this.destination = dest;
 		this.content = content;
 		this.routingStrategy = routingStrategy;

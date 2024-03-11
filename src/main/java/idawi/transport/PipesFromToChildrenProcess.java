@@ -31,7 +31,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 		public Process process;
 		
 		public Component f() throws Throwable {
-			var r = waitForChild.poll_sync();
+			var r = ((Message) waitForChild.poll_sync()).content;
 			
 			if (r instanceof Throwable) {
 				throw (Throwable) r;
@@ -126,7 +126,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 
 					processIncomingMessage(m);
 				} else {
-					throw new IllegalStateException("not a message: " + o);
+					throw new IllegalStateException("not a message " + o);
 				}
 			} else {
 				to.println(e.child + "> " + line);
