@@ -7,7 +7,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import toools.io.OnDiskMap;
 
 public class KeyValueService extends Service {
@@ -16,26 +16,20 @@ public class KeyValueService extends Service {
 
 	public KeyValueService(Component peer) {
 		super(peer);
-		registerOperation(new get());
-		registerOperation(new contains());
-		registerOperation(new keys());
-		registerOperation(new nbKeys());
-		registerOperation(new remove());
-		registerOperation(new clear());
 	}
 
-	public class get extends TypedInnerClassOperation {
+	public class get extends TypedInnerClassEndpoint {
 		public List<Object> get(List<Object> keys) throws Throwable {
 			return keys.stream().map(k -> map.get(k)).toList();
 		}
 
 		@Override
 		public String getDescription() {
-			return "gets a value";
+			return "gets one or more values";
 		}
 	}
 
-	public class keys extends TypedInnerClassOperation {
+	public class keys extends TypedInnerClassEndpoint {
 		public Set<Object> get() throws Throwable {
 			return map.keySet();
 		}
@@ -46,7 +40,7 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class nbKeys extends TypedInnerClassOperation {
+	public class nbKeys extends TypedInnerClassEndpoint {
 		public int get() throws Throwable {
 			return map.size();
 		}
@@ -57,7 +51,7 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class clear extends TypedInnerClassOperation {
+	public class clear extends TypedInnerClassEndpoint {
 		public void f() throws Throwable {
 			map.clear();
 		}
@@ -68,7 +62,7 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class remove extends TypedInnerClassOperation {
+	public class remove extends TypedInnerClassEndpoint {
 		public void f(List<Object> keys) throws Throwable {
 			map.keySet().removeAll(keys);
 		}
@@ -79,7 +73,7 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class contains extends TypedInnerClassOperation {
+	public class contains extends TypedInnerClassEndpoint {
 		public List<Boolean> f(List<Object> keys) throws Throwable {
 			return keys.stream().map(k -> map.containsKey(k)).toList();
 		}

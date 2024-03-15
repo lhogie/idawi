@@ -1,19 +1,19 @@
 package idawi.ui.cmd;
 
-import toools.io.file.RegularFile;
+import j4u.CommandLineSpecification;
 
 public class ln extends BackendedCommand {
 	public static void main(String[] args) throws Throwable {
-		new ln(null).run(args);
-	}
-
-	public ln(RegularFile launcher) {
-		super(launcher);
-		addOption("--protocols", "-p", null, null, "show protocols involved");
+		new ln().run(args);
 	}
 
 	@Override
-	public String getShortDescription() {
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--protocols", "-p", null, null, "show protocols involved");
+	}
+
+	@Override
+	public String getDescription() {
 		return "list neighbors";
 	}
 }

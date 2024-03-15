@@ -11,6 +11,6 @@ public class RandomAllocator<R> implements Allocator<R> {
 	@Override
 	public void assign(List<Task<R>> tasks, List<Component> workers) {
 		var r = new Random();
-		tasks.forEach(t -> t.to = ComponentMatcher.among(Set.of(workers.get(r.nextInt(workers.size())))));
+		tasks.forEach(t -> t.to = ComponentMatcher.multicast(Set.of(workers.get(r.nextInt(workers.size())))));
 	}
 }

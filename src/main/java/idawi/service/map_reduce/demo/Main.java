@@ -2,15 +2,13 @@ package idawi.service.map_reduce.demo;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import idawi.Component;
-import idawi.OperationParameterList;
-import idawi.Service;
+import idawi.EndpointParameterList;
+import idawi.Idawi;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.ExtraJVMDeploymentRequest;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher;
 import idawi.service.ServiceManager;
@@ -23,28 +21,17 @@ import toools.thread.AtomicDouble;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
-		Component mapper = new Component("mapper");
-		var clientService = new Service(mapper);
+		Component mapper = new Component();
 
+		DeployerService deployer = mapper.service(DeployerService.class, true);
 		// create workers
-		var workers = new HashSet<Component>();
-		IntStream.range(0, 1).forEach(i -> workers.add(mapper.digitalTwinService().lookup("w" + i)));
-
-		var reqs = workers.stream().map(w -> {
-			var r = new ExtraJVMDeploymentRequest();
-			r.target = w;
-			return r;
-		}).toList();
-
-		// deploy JVMs
-		mapper.lookup(DeployerService.class).deployInNewJVMs(reqs, stdout -> System.out.println(stdout),
-				ok -> System.out.println("peer ok: " + ok));
+		var workers = IntStream.range(0, 5).mapToObj(i -> deployer.newLocalJVM()).toList();
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
-		var ro = mapper.defaultRoutingProtocol().exec(ServiceManager.ensureStarted.class, null,
-				 ComponentMatcher.among(workers), true, new OperationParameterList(MapReduceService.class));
-		ro.returnQ.c().collectUntilNEOT(1, workers.size());
+		var ro = mapper.defaultRoutingProtocol().exec(ServiceManager.class, ServiceManager.ensureStarted.class, null,
+				ComponentMatcher.multicast(workers), true, new EndpointParameterList(MapReduceService.class), true);
+		ro.returnQ.collector().collectUntilNEOT(1, workers.size());
 
 		// create tasks
 		List<Task<Integer>> tasks = new ArrayList<>();
@@ -83,7 +70,7 @@ public class Main {
 
 		System.out.println("result= " + finalResult.get());
 
-		Component.stopPlatformThreads();
+		Idawi.agenda.threadPool.shutdown();
 	}
 
 }

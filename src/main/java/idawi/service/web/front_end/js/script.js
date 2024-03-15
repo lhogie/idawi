@@ -44,9 +44,5 @@ window.onload = function () {
             finallink += "/" + params
         document.getElementById("requestfield").value = finallink
 
-
-
-
-
     }
 }

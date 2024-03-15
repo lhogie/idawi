@@ -1,6 +1,7 @@
 package idawi.routing;
 
 import idawi.Service;
+import toools.SizeOf;
 
 public class MessageQDestination extends Destination { 
 	public Class<? extends Service> service;
@@ -20,6 +21,11 @@ public class MessageQDestination extends Destination {
 	@Override
 	public String toString() {
 		return "to queue " + super.toString();
+	}
+
+	@Override
+	public long sizeOf() {
+		return super.sizeOf() + 8 + 1 + SizeOf.sizeOf(queueID);
 	}
 
 }

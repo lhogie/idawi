@@ -6,45 +6,50 @@ import idawi.Component;
 import idawi.messaging.Message;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
+import idawi.ui.cmd.CommandsService.exec;
 import j4u.CommandLine;
+import j4u.CommandLineSpecification;
 import toools.io.Cout;
-import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
 public abstract class BackendedCommand extends CommunicatingCommand {
 
-	public BackendedCommand(RegularFile launcher) {
-		super(launcher);
-		addOption("--hook", "-k", ".+", null,
-				"the CDL description of the component which will be the entry point to the overlay");
+	@Override
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--hook", "-k", ".+", null,
+				"the friendly name of the component which will be the entry point to the overlay");
 	}
 
 	@Override
-	protected int work(Component c, CommandLine cmdLine, double timeout) throws Throwable {
-		var hook = new Component(getOptionValue(cmdLine, "--hook"));
+	protected int work(Component localNode, CommandLine cmdLine, double timeout) throws Throwable {
+		var hook = new Component();
+		hook.friendlyName = getOptionValue(cmdLine, "--hook");
 		Cout.info("connecting to overlay via " + hook);
 
-		if (c.bb().ping(hook) == null) {
+		if (localNode.bb().ping(hook) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
 
 		Cout.info("executing command");
-		var target = Command.targetPeers(c, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
+		var target = IdawiCommand.targetPeers(localNode, cmdLine.findParameters().get(0), msg -> Cout.warning(msg));
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var col = c.defaultRoutingProtocol().exec(CommandsService.exec.class, null,
-				 ComponentMatcher.among(target), true, backend).returnQ.collect(1, 1, c2 -> {
-					var msg = c2.messages.last();
-					if (msg.isError()) {
-						((Throwable) msg.content).printStackTrace();
-					} else if (msg.isProgress()) {
-						System.out.println("progress; " + msg.content);
-					} else {
-						System.out.println(msg.content);
-					}
-				});
+		var col = localNode.defaultRoutingProtocol().exec(CommandsService.class, exec.class, null,
+				ComponentMatcher.multicast(target), true, backend, true).returnQ.collector();
+
+		col.collect(1, 1, c2 -> {
+			var msg = c2.messages.last();
+
+			if (msg.isError()) {
+				((Throwable) msg.content).printStackTrace();
+			} else if (msg.isProgress()) {
+				System.out.println("progress; " + msg.content);
+			} else {
+				System.out.println(msg.content);
+			}
+		});
 
 		if (col.stop) {
 			System.err.println("not enough results!");
@@ -62,9 +67,10 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 	private void newReturn(Message feedback, Set<Component> peers) {
 
 		if (feedback.content instanceof ProgressMessage) {
-			progress(feedback.route.initialEmission().transport.component, (ProgressMessage) feedback.content);
+			progress(feedback.route.source(), (ProgressMessage) feedback.content);
 		} else if (feedback.content instanceof Throwable) {
-			System.err.println("the following error occured on " + feedback.route.initialEmission());
+			// System.err.println("the following error occured on " +
+			// feedback.route.initialEmission());
 			((Throwable) feedback.content).printStackTrace();
 		} else {
 			String text = feedback.content.toString();
@@ -74,9 +80,9 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 			if (peers == null || peers.size() > 1) {
 				// if it's a multiline message
 				if (text.contains("\n")) {
-					System.out.println(feedback.route.initialEmission() + " says:");
+					System.out.println(feedback.route.source() + " says:");
 				} else {
-					System.out.print(feedback.route.initialEmission() + " says: \t");
+					System.out.print(feedback.route.source() + " says: \t");
 				}
 			}
 

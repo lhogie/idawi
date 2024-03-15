@@ -5,10 +5,10 @@ import java.io.Serializable;
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.Utils;
+import idawi.TypedInnerClassEndpoint;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import toools.Systeem;
 
 public class SystemMonitor extends Service {
 	public Cache<SystemInfo> info = new Cache<>(1, () -> probe());
@@ -30,11 +30,9 @@ public class SystemMonitor extends Service {
 
 	public SystemMonitor(Component peer) {
 		super(peer);
-		registerOperation(new get());
-		registerOperation(new loadAvg());
 	}
 
-	public class get extends TypedInnerClassOperation {
+	public class get extends TypedInnerClassEndpoint {
 
 		@Override
 		public String getDescription() {
@@ -48,7 +46,7 @@ public class SystemMonitor extends Service {
 
 	public SystemInfo probe() {
 		SystemInfo i = new SystemInfo();
-		i.loadAvg.add(Utils.loadRatio());
+		i.loadAvg.add(Systeem.loadRatio());
 
 		if (i.loadAvg.size() > 100) {
 			i.loadAvg.removeElements(0, 1);
@@ -58,7 +56,7 @@ public class SystemMonitor extends Service {
 		return i;
 	}
 
-	public class loadAvg extends TypedInnerClassOperation {
+	public class loadAvg extends TypedInnerClassEndpoint {
 
 		@Override
 		public String getDescription() {
@@ -66,7 +64,7 @@ public class SystemMonitor extends Service {
 		}
 
 		public double f() {
-			return Utils.loadRatio();
+			return Systeem.loadRatio();
 		}
 	}
 }

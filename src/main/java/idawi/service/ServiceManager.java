@@ -1,36 +1,26 @@
 package idawi.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.ServiceDescriptor;
+import idawi.TypedInnerClassEndpoint;
 import idawi.routing.RoutingService;
-import toools.io.Cout;
-import toools.reflect.Clazz;
+import idawi.service.local_view.ServiceInfo;
 
 public class ServiceManager extends Service {
 
 	public ServiceManager(Component peer) {
 		super(peer);
-		registerOperation(new ensureStarted());
-		registerOperation(new has());
-		registerOperation(new list());
-		registerOperation(new start());
-		registerOperation(new stop());
-		registerOperation(new listRoutingServices());
-		registerOperation(new listServices());
-		registerOperation(new listOperations());
 	}
+
+
 	
-	
-	public class listRoutingServices extends TypedInnerClassOperation {
-		public List<String> f() {
-			return component.services(RoutingService.class).stream().map(s -> s.getClass().getName()).toList();
+	public class listRoutingServices extends TypedInnerClassEndpoint {
+		public List<?> f() {
+			return component.services(RoutingService.class).stream().map(s -> s.getClass()).toList();
 		}
 
 		@Override
@@ -38,24 +28,21 @@ public class ServiceManager extends Service {
 			return "listRoutingServices";
 		}
 	}
-	
-	public class listServices extends TypedInnerClassOperation {
-		public List<String> f() {
-			return component.services().stream().map(s -> s.getClass().getName()).toList();
+
+	public class listServices extends TypedInnerClassEndpoint {
+		public List<?> f() {
+			return component.services().stream().map(s -> s.getClass()).toList();
 		}
 
 		@Override
 		public String getDescription() {
-			return "listServices";
+			return "gives the ID the services available on the local component";
 		}
 	}
-	
-	public class listOperations extends TypedInnerClassOperation {
+
+	public class listOperations extends TypedInnerClassEndpoint {
 		public List<String> f(Class<? extends Service> serviceName) {
-			Service s = component.lookup(serviceName);
-			var l= new ArrayList<>(s.operations().stream().map(o -> o.getName()).toList());
-			l.sort((a, b)->a.compareTo(b));
-			return l;
+			return component.service(serviceName).endpoints().stream().map(o -> o.getName()).sorted().toList();
 		}
 
 		@Override
@@ -63,21 +50,10 @@ public class ServiceManager extends Service {
 			return "listServices";
 		}
 	}
-	
-	public class start extends TypedInnerClassOperation {
-		public ServiceDescriptor f(Class<? extends Service> serviceID) {
-			if (component.lookup(serviceID) != null) {
-				throw new IllegalArgumentException("service already running");
-			}
 
-			var constructor = Clazz.getConstructor(serviceID, Component.class);
-
-			if (constructor == null)
-				throw new IllegalStateException(
-						serviceID + " does not have constructor (" + Component.class.getName() + ")");
-
-			Service s = Clazz.makeInstance(constructor, component);
-			return s.descriptor();
+	public class start extends TypedInnerClassEndpoint {
+		public ServiceInfo f(Class<? extends Service> serviceID) {
+			return component.start(serviceID).descriptor();
 		}
 
 		@Override
@@ -87,10 +63,9 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class stop extends TypedInnerClassOperation {
+	public class stop extends TypedInnerClassEndpoint {
 		public void stop(Class<? extends Service> serviceID) {
-			Service s = component.lookup(serviceID);
-			component.removeService(s);
+			component.services(serviceID).forEach(s -> s.dispose());
 		}
 
 		@Override
@@ -100,23 +75,20 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class list extends TypedInnerClassOperation {
-		public Set<String> list() {
-			Set<String> r = new HashSet<>();
-			component.forEachService(s -> r.add(s.id.getName()));
-			return r;
+	public class list extends TypedInnerClassEndpoint {
+		public Set<String> get() {
+			return component.services().stream().map(s -> s.id.getName()).collect(Collectors.toSet());
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "list services available in this component";
 		}
 	}
 
-	public class has extends TypedInnerClassOperation {
+	public class has extends TypedInnerClassEndpoint {
 		public boolean has(Class serviceID) {
-			return component.lookup(serviceID) != null;
+			return component.service(serviceID) != null;
 		}
 
 		@Override
@@ -125,16 +97,10 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public void ensureStarted(Class serviceID) {
-		lookup(ensureStarted.class).f(serviceID);
-	}
-
-	public class ensureStarted extends TypedInnerClassOperation {
+	public class ensureStarted extends TypedInnerClassEndpoint {
 		public void f(Class serviceID) {
 //			Cout.debugSuperVisible("ensure started " + serviceID);
-			if (!lookup(has.class).has(serviceID)) {
-				lookup(start.class).f(serviceID);
-			}
+			component.service(serviceID);
 		}
 
 		@Override

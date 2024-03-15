@@ -1,31 +1,32 @@
 package idawi.ui.cmd;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.RemoteDeploymentRequest;
+import toools.net.SSHParms;
 
 public class deployBackend extends CommandBackend {
 
 	@Override
-	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
+	public void runOnServer(Component localComponent, Consumer<Object> out) throws Throwable {
 
-		var peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream().map(s -> new Component(s))
-				.toList();
-		peers.remove(n);
+		List<SSHParms> peers = Arrays.asList(cmdline.getOptionValue("--to").split(" *, *")).stream()
+				.map(s -> SSHParms.fromSSHString(s)).toList();
+
+//		peers.removeLinksHeadingTo(n);
 
 		if (peers.isEmpty()) {
 			out.accept("no peer");
 			return;
 		}
 
-		boolean suicideWhenParentDie = !cmdline.isOptionSpecified("--autonomous");
-		var reqs = RemoteDeploymentRequest.from(peers);
-		reqs.forEach(r -> r.target.info.suicideWhenParentDie = suicideWhenParentDie);
+		boolean autonomous = cmdline.isOptionSpecified("--autonomous");
 
-		n.lookup(DeployerService.class).deployRemotely(reqs, sdtout -> out.accept(sdtout),
-				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"));
+		localComponent.service(DeployerService.class).deployViaSSH(peers, sdtout -> out.accept(sdtout),
+				stderr -> out.accept("error: " + stderr), peerOk -> out.accept(peerOk + " is ready"),
+				err -> err.printStackTrace());
 	}
 }

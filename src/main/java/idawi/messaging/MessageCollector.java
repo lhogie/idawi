@@ -17,11 +17,11 @@ public class MessageCollector {
 	public boolean stop;
 	public final Set<Component> blacklist = new HashSet<>();
 	public boolean deliverProgress = true;
-	public boolean deliverEOT = true;
 	public boolean deliverError = true;
 	private final MessageQueue q;
+	public Object contentDescription;
 
-	public static double DEFAULT_COLLECT_DURATION = 60;
+	public static double DEFAULT_COLLECT_DURATION = 1;
 
 	public MessageCollector(MessageQueue q) {
 		this.q = q;
@@ -35,7 +35,7 @@ public class MessageCollector {
 		return Date.time() - startDate;
 	}
 
-	public void collect(final double initialCollectDuration, final double initialTimeout,
+	public MessageCollector collect(final double initialCollectDuration, final double initialTimeout,
 			Consumer<MessageCollector> userCode) {
 		this.startDate = Date.time();
 		this.endDate = startDate + initialCollectDuration;
@@ -44,14 +44,9 @@ public class MessageCollector {
 		while (remainingTime() > 0 && !stop) {
 			var msg = q.poll_sync(Math.min(remainingTime(), initialTimeout));
 
-			if (msg != null && !blacklist.contains(msg.route.initialEmission().transport.component)) {
+			if (msg != null && !msg.route.components().stream().anyMatch(c -> blacklist.contains(c))) {
 				if (msg.isProgress()) {
 					if (deliverProgress) {
-						messages.add(msg);
-						userCode.accept(this);
-					}
-				} else if (msg.isEOT()) {
-					if (deliverEOT) {
 						messages.add(msg);
 						userCode.accept(this);
 					}
@@ -68,6 +63,7 @@ public class MessageCollector {
 		}
 
 		q.detach();
+		return this;
 	}
 
 	public Object collectOneResult(double timeout) {
@@ -75,7 +71,7 @@ public class MessageCollector {
 	}
 
 	public List<Object> collectNResults(double timeout, int n) {
-		collect(timeout, timeout, c -> c.stop = c.messages.count(m -> m.isResult()) > n);
+		collect(timeout, timeout, c -> c.stop = c.messages.count(m -> m.isResult()) >= n);
 		return messages.throwAnyError().resultMessages(n).stream().map(m -> m.content).toList();
 	}
 
@@ -97,6 +93,10 @@ public class MessageCollector {
 		var timeout = MessageCollector.DEFAULT_COLLECT_DURATION;
 		collect(timeout, timeout, c -> c.stop = !p.test(c));
 		return this;
+	}
+
+	public MessageCollector collectDuring(double durationS) {
+		return collectWhile(c -> c.duration() < durationS);
 	}
 
 	public void collect(Consumer<MessageCollector> collector) {

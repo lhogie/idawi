@@ -1,191 +1,113 @@
 package idawi.routing;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.transport.Link;
 import idawi.transport.TransportService;
+import toools.SizeOf;
 
-public class Route implements Serializable {
+public class Route extends ArrayList<Entry> implements SizeOf {
+
 	private static final long serialVersionUID = 1L;
 
-	public Emission initialEmission;
+	public boolean add(Entry newEntry) {
+		if (!isEmpty() && !last().link.dest.component.equals(newEntry.link.src.component))
+			throw new IllegalArgumentException("you try to add an entry that not chain");
 
-	public void add(Reception r) {
-		if (isEmpty())
-			throw new IllegalStateException("can't start with a reception");
-
-		var e = ((Emission) last());
-		e.subsequentReception = r;
-		r.previousEmission = e;
+		return super.add(newEntry);
 	}
 
-	public void add(Emission e) {
-		if (initialEmission == null) {
-			initialEmission = e;
-			e.previousReception = e.subsequentReception = null;
-		} else {
-			var r = ((Reception) last());
-			r.forward = e;
-			e.previousReception = r;
+	public static class ComponentSequence extends ArrayList<Component> {
+		public ComponentSequence distinct() {
+			return stream().distinct().collect(collector());
+		}
+
+		public static Collector<Component, ComponentSequence, ComponentSequence> collector() {
+			return Collector.of(ComponentSequence::new, (c, t) -> c.add(t), (left, right) -> {
+				left.addAll(right);
+				return left;
+			});
 		}
 	}
 
-	public List<Emission> emissions() {
-		var r = new ArrayList<Emission>();
-		var e = initialEmission;
+	public ComponentSequence components() {
+		var components = new ComponentSequence();
+		forEach(e -> components.add(e.link.src.component));
+		components.add(last().link.dest.component);
+		return components;
+	}
 
-		while (e != null) {
-			r.add(e);
-			e = e.nextEmission();
+	public Stream<TransportService> recipients() {
+		return stream().map(e -> e.link.dest);
+	}
+
+	public Set<Class<? extends TransportService>> transportClasses() {
+		var r = new HashSet<Class<? extends TransportService>>();
+		forEach(e -> {
+			r.add(e.link.src.getClass());
+			r.add(e.link.dest.getClass());
+		});
+		return r;
+	}
+
+	public Entry getr(int rewind) {
+		if (isEmpty())
+			throw new IllegalStateException("route is empty");
+
+		return get(size() - 1 - rewind);
+	}
+
+	public Entry last() {
+		return getr(0);
+	}
+
+	public List<TransportService> transports() {
+		var r = new ArrayList<TransportService>();
+
+		for (var e : this) {
+			r.add(e.link.src);
+			r.add(e.link.dest);
 		}
 
 		return r;
 	}
 
-	public List<Reception> receptions() {
-		return emissions().stream().filter(e -> e.subsequentReception != null).map(e -> e.subsequentReception).toList();
+	public Component source() {
+		return get(0).link.src.component;
 	}
 
-	public List<Component> components() {
-		var components = new ArrayList<Component>();
-		components.add(initialEmission.transport.component);
-		Reception r = initialEmission.subsequentReception;
-
-		while (r != null) {
-			components.add(r.transport.component);
-			r = r.nextReception();
-		}
-
-		return components;
-	}
-
-	public List<TransportService> transports() {
-		return emissions().stream().map(e -> e.transport()).toList();
-	}
-
-	public Emission initialEmission() {
-		return initialEmission;
-	}
-
-	public RouteEvent last() {
-		RouteEvent e = initialEmission;
-
-		while (e != null && e.hasNext()) {
-			e = e.next();
-		}
-
-		return e;
-	}
-
-	public Reception lastReception() {
-		var last = last();
-
-		if (last instanceof Reception) {
-			return (Reception) last;
-		} else {
-			return ((Emission) last).previousReception;
-		}
-	}
-
-	public Emission lastEmission() {
-		if (initialEmission == null) {
-			return null;
-		}
-
-		var last = last();
-		return last instanceof Emission ? (Emission) last : ((Reception) last).previousEmission;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder();
-		b.append(nbEvents() + " event(s), ");
-		int i = 0;
-		RouteEvent e = initialEmission;
-
-		while (e != null) {
-			b.append("e " + i++ + ": " + e);
-
-			if (e.hasNext()) {
-				b.append(", ");
-			}
-
-			e = e.next();
-		}
-
-		return b.toString();
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		var r = (Route) o;
-		RouteEvent e = initialEmission;
-		RouteEvent oe = r.initialEmission;
-
-		while (true) {
-			if (e == null && oe == null) {
-				return true;
-			} else if (e == null || oe == null) {
-				return false;
-			} else if (!o.equals(oe)) {
-				return false;
-			}
-
-			e = e.next();
-			oe = oe.next();
-		}
-	}
-
-	public int nbEvents() {
-		return initialEmission == null ? 0 : 1 + initialEmission.remaining();
+	public int len() {
+		return size();
 	}
 
 	public double duration() {
-		return last().date() - initialEmission().date();
-	}
-
-	public Iterable<RouteEvent> events() {
-		return () -> new Iterator<RouteEvent>() {
-			RouteEvent e = initialEmission;
-
-			@Override
-			public boolean hasNext() {
-				return e != null;
-			}
-
-			@Override
-			public RouteEvent next() {
-				var r = e;
-				e = e.next();
-				return r;
-			}
-		};
-	}
-
-	public List<RouteEvent> eventList() {
-		var l = new ArrayList<RouteEvent>();
-		RouteEvent i = initialEmission;
-
-		while (i != null && i.hasNext()) {
-			l.add(i);
-			i = i.next();
-		}
-
-		return l;
+		return last().receptionDate - get(0).emissionDate;
 	}
 
 	public boolean isEmpty() {
-		return nbEvents() == 0;
+		return len() == 0;
 	}
 
-	public void removeLast() {
-		if (nbEvents() == 1) {
-			this.initialEmission = null;
-		} else {
-			lastEmission().previousReception.forward = null;
-		}
+	public Entry first() {
+		return get(0);
+	}
+
+	public void add(Link l, RoutingService p) {
+		add(new Entry(l, p.getClass()));
+	}
+
+	public long howManyTimesFound(Component component) {
+		return components().stream().filter(c -> c.equals(component)).count();
+	}
+
+	@Override
+	public long sizeOf() {
+		return SizeOf.sizeOf(this);
 	}
 }

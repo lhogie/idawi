@@ -11,9 +11,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
@@ -45,8 +45,9 @@ public class Bencher extends Service {
 
 	public Bencher(Component node) {
 		super(node);
-		registerOperation(new localBench());
 	}
+
+
 
 	@Override
 	public String getFriendlyName() {
@@ -59,26 +60,27 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(localBench.class, null, ComponentMatcher.all, true, parms).returnQ.c().collect(c -> {
-			var r = c.messages.last();
+		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms, true).returnQ.collector().collect(c -> {
+			var m = c.messages.last();
 
-			if (r.content instanceof String) {
-				msg.accept(r.route.initialEmission().transport.component, (String) r.content);
-			} else if (r.content instanceof Results) {
-				map.put(r.route.initialEmission().transport.component, (Results) r.content);
+			if (m.content instanceof String) {
+				msg.accept(m.route.source(), (String) m.content);
+			} else if (m.content instanceof Results) {
+				map.put(m.route.source(), (Results) m.content);
 			}
 		});
 
 		return map;
 	}
 
-	public class localBench extends TypedInnerClassOperation {
+
+	public class localBench extends TypedInnerClassEndpoint {
 		public Results f(int size) {
 			Results r = new Results();
 			Q<Object> q = new Q<>(4);
-			
+
 			localBench(size, out -> {
-				if (! (out instanceof ProgressMessage)) {
+				if (!(out instanceof ProgressMessage)) {
 					q.add_sync(out);
 				}
 			});
@@ -97,13 +99,14 @@ public class Bencher extends Service {
 
 	}
 
-	public class localBench2 extends InnerClassOperation {
+
+	public class localBench2 extends InnerClassEndpoint {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			int size = (int) m.content;
-			localBench(size, r -> reply(m, r));
+			localBench(size, r -> reply(m, r, true));
 		}
 
 		@Override

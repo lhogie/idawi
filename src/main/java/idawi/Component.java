@@ -1,10 +1,9 @@
 package idawi;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.lang.reflect.InvocationTargetException;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -13,80 +12,102 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import javax.crypto.SecretKey;
-
-import idawi.knowledge_base.ComponentInfo;
-import idawi.knowledge_base.DigitalTwinService;
-import idawi.knowledge_base.MiscKnowledgeBase;
+import idawi.routing.AutoForgettingLongList;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.FloodingWithSelfPruning;
 import idawi.routing.ForceBroadcasting;
 import idawi.routing.RoutingService;
+import idawi.routing.TrafficListener;
 import idawi.routing.irp.IRP;
+import idawi.service.DigitalTwinService;
 import idawi.service.Location;
 import idawi.service.LocationService;
 import idawi.service.ServiceManager;
-import idawi.service.graph.ThreeDRendering;
-import idawi.service.time.TimeService;
-import idawi.service.web.AESEncrypter;
+import idawi.service.local_view.LocalViewService;
 import idawi.service.web.WebService;
-import idawi.transport.Neighborhood;
+import idawi.transport.Link;
 import idawi.transport.SharedMemoryTransport;
-import idawi.transport.TransportService;
 import toools.SizeOf;
 import toools.io.file.Directory;
-import toools.util.Date;
+import toools.security.SecureSerializer;
 
-public class Component implements SizeOf, Externalizable {
-	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
-	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
+public class Component implements SizeOf {
 
-	static AESEncrypter aes = new AESEncrypter();
+	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
-	public static List<Component> create(String prefix, int n) {
-		var r = new ArrayList<Component>();
+	// used to serialized messages for transport
+	public final transient SecureSerializer secureSerializer;
 
-		for (int i = 0; i < n; ++i) {
-			r.add(new Component(prefix + i));
+	final Set<Service> services = new HashSet<>();
+	public boolean autonomous = false;
+	public final List<TrafficListener> trafficListeners = new ArrayList<>();
+	public String friendlyName;
+
+//	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
+//	public final Set<Component> dependantChildren = new HashSet<>();
+//	public Component deployer;
+//	public Set<Component> simulatedComponents = new HashSet<>();
+
+	
+	public Component() {
+		secureSerializer = new SecureSerializer(new IdawiSerializer(this), Idawi.enableEncryption);
+	}
+
+	public Component(PublicKey k) {
+		secureSerializer = new SecureSerializer(k, new IdawiSerializer(this));
+	}
+
+	public Component turnToDigitalTwin(Component host) {
+		var s = new DigitalTwinService(this);
+		s.host = host.localView();
+		return this;
+	}
+
+	public Component twin(boolean includeServices) {
+		var twin = new Component(secureSerializer.publicKey());
+
+		if (includeServices) {
+			for (var s : services) {
+				try {
+					s.getClass().getConstructor(Component.class).newInstance(twin);
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
-		return r;
+		return twin;
 	}
 
-	public transient ComponentInfo info;
-
-	transient SecretKey key = null;
-
-	transient final Set<Service> services = new HashSet<>();
-//	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
-	transient public final Set<Component> dependantChildren = new HashSet<>();
-	transient public Component parent;
-	public String ref;
-
-	public Component() {
-		this(null);
-	}
-
-	public Component(String ref) {
-		this.ref = ref;
-
+	public void addBasicServices() {
+		new LocalViewService(this);
 		new WebService(this);
 		new SharedMemoryTransport(this);
-		new DigitalTwinService(this);
 		new BlindBroadcasting(this);
 		new IRP(this);
 		new ServiceManager(this);
-		new ThreeDRendering(this);
 		new ForceBroadcasting(this);
-		
-		// descriptorRegistry.add(descriptor());
-//		componentsInThisJVM.put(ref, this);
+	}
+
+	public boolean isDigitalTwin() {
+		return has(DigitalTwinService.class);
+	}
+
+	public <S extends Service> S start(Class<S> serviceID) {
+		if (!services(serviceID).isEmpty())
+			throw new IllegalArgumentException("service already running");
+
+		try {
+			return serviceID.getConstructor(Component.class).newInstance(this);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	public void dispose() {
 		// componentsInThisJVM.remove(this);
 		services.forEach(s -> s.dispose());
-		dependantChildren.forEach(t -> t.dispose());
 	}
 
 	public Collection<Service> services() {
@@ -98,31 +119,34 @@ public class Component implements SizeOf, Externalizable {
 	}
 
 	public <S extends Service> List<S> services(Class<S> id) {
-		List<S> l = new ArrayList<>();
-
-		for (var s : services) {
-			if (id.isAssignableFrom(s.getClass())) {
-				l.add((S) s);
-			}
-		}
-
-		return l;
+		return (List<S>) services.stream().filter(s -> id.isAssignableFrom(s.getClass())).toList();
 	}
 
-	public <S extends Service> S lookup(Class<S> id) {
+	public <S extends Service> List<S> services(Predicate<Service> p) {
+		return (List<S>) services.stream().filter(p).toList();
+	}
+
+	public <S extends Service> S service(Class<S> c) {
+		return service(c, false);
+	}
+
+	public <S extends Service> S service(Class<S> c, boolean autoload) {
 		for (var s : services) {
-			if (id.isAssignableFrom(s.getClass())) {
+			if (c.isAssignableFrom(s.getClass())) {
 				return (S) s;
 			}
 		}
 
-		return null;
+		if (autoload) {
+			// Cout.debug("starting " + c + " on " + this);
+			return start(c);
+		} else {
+			return null;
+		}
 	}
 
-	public <O extends InnerClassOperation> O operation(Class<O> id) {
-		var serviceClass = InnerClassOperation.serviceClass(id);
-		var service = lookup(serviceClass);
-		return service.lookup(id);
+	public boolean has(Class<? extends Service> c) {
+		return service(c, false) != null;
 	}
 
 	public void forEachService(Predicate<Service> predicate, Consumer<Service> h) {
@@ -133,142 +157,116 @@ public class Component implements SizeOf, Externalizable {
 		});
 	}
 
-	public <S extends Service> void forEachServiceOfClass(Class<S> serviceID, Consumer<S> h) {
+	public <S> void forEachService(Class<S> serviceID, Consumer<S> h) {
 		forEachService(s -> serviceID.isInstance(s), s -> h.accept((S) s));
-	}
-
-	public <S extends InnerClassOperation> S lookupOperation(Class<? extends S> c) {
-		var sc = (Class<? extends Service>) c.getDeclaringClass();
-		var service = lookup(sc);
-
-		if (service == null)
-			throw new IllegalArgumentException("service " + sc.getName() + " cannot be found");
-
-		var o = service.lookup(c);
-		return o;
 	}
 
 	@Override
 	public String toString() {
-		return ref.toString();
+		var name = friendlyName;
+
+		if (name == null) {
+			var pk = publicKey();
+
+			if (pk == null) {
+				name = "*unnamed*";
+			} else {
+				name = new String(Base64.getEncoder().encode(pk.getEncoded()));
+			}
+		}
+
+		return isDigitalTwin() ? dt().host.component + "/" + name : name;
 	}
 
 	@Override
 	public int hashCode() {
-		return ref.hashCode();
-	}
-
-	public static void stopPlatformThreads() {
-		Service.threadPool.shutdown();
-	}
-
-	public void removeService(Service s) {
-		s.dispose();
-		services.remove(s.id);
-	}
-
-	public ComponentInfo descriptor() {
-		return lookup(MiscKnowledgeBase.class).componentInfo();
+		return toString().hashCode();
 	}
 
 	public double now() {
-		var ts = lookup(TimeService.class);
-		return ts == null ? Date.time() : ts.now();
+		return Idawi.agenda.now();
+		// var ts = lookup(TimeService.class);
+		// return ts == null ? Date.time() : ts.now();
 	}
 
-	public DigitalTwinService digitalTwinService() {
-		return lookup(DigitalTwinService.class);
-	}
-
-	public MiscKnowledgeBase knowledgeBase() {
-		return lookup(MiscKnowledgeBase.class);
+	public LocalViewService localView() {
+		var dt = dt();
+		return dt == null ? service(LocalViewService.class, true) : dt.host;
 	}
 
 	public RoutingService defaultRoutingProtocol() {
-		return lookup(BlindBroadcasting.class);
-	}
-
-	public FloodingWithSelfPruning fwsp() {
-		return lookup(FloodingWithSelfPruning.class);
+		return bb();
 	}
 
 	public BlindBroadcasting bb() {
-		return lookup(BlindBroadcasting.class);
+		return service(BlindBroadcasting.class, true);
 	}
 
 	public IRP irp() {
-		return lookup(IRP.class);
+		return service(IRP.class, true);
 	}
 
 	public Location getLocation() {
-		var locationService = lookup(LocationService.class);
+		var locationService = service(LocationService.class);
 		return locationService == null ? null : locationService.location;
 	}
 
 	@Override
 	public long sizeOf() {
 		long sum = 8; // dts
-		sum += key == null ? 0 : key.getEncoded().length;
+		sum += secureSerializer.sizeOf();
 		sum += 8;
-		sum += SizeOf.sizeOf(ref);
+		sum += SizeOf.sizeOf(friendlyName);
 		sum += 8;
 
 		for (var s : services) {
 			sum += 8 + s.sizeOf();
 		}
 
-		return sum;
+		return sum + alreadyKnownMsgs.sizeOf() + 8;
 	}
 
 	public Long longHash() {
 		long h = 1125899906842597L;
-		int len = ref.length();
+		String s = new String(publicKey().getEncoded());
+		int len = s.length();
 
 		for (int i = 0; i < len; i++) {
-			h = 31 * h + ref.charAt(i);
+			h = 31 * h + s.charAt(i);
 		}
 
 		return h;
 	}
 
-	public int nbNeighbors() {
-		return services(TransportService.class).stream().map(s -> s.neighborhood().size()).reduce((t, u) -> t + u)
-				.get();
+	public List<Link> outLinks() {
+		return localView().g.findLinks(l -> l.src.component.equals(this));
 	}
 
-	public Neighborhood neighbors() {
-		return Neighborhood.merge(services(TransportService.class).stream().map(t -> t.neighborhood()).toList()
-				.toArray(new Neighborhood[0]));
-	}
-
-	public Collection<TransportService> ins() {
-		var r = new HashSet<TransportService>();
-
-		for (var c : lookup(DigitalTwinService.class).components) {
-			for (var t : c.services(TransportService.class)) {
-				for (var n : t.neighborhood().infos()) {
-					if (n.dest.component.equals(this)) {
-						r.add(t);
-					}
-				}
-			}
-		}
-
-		return r;
-	}
-
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(ref);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		ref = in.readUTF();
+	public PublicKey publicKey() {
+		return secureSerializer.publicKey();
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof Component && o.hashCode() == hashCode();
+		var c = (Component) o;
+		return c.publicKey().equals(publicKey());
 	}
+
+	public DigitalTwinService dt() {
+		return service(DigitalTwinService.class);
+	}
+
+	public static List<Component> createNComponent(int n) {
+		var components = new ArrayList<Component>();
+
+		for (int i = 0; i < n; ++i) {
+			components.add(new Component());
+		}
+
+		return components;
+	}
+
+	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
+	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
+
 }

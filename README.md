@@ -1,3 +1,6 @@
+
+
+
 # Description
 
 *Idawi* is a Java middleware for decentralized applications, as they can be found in the Internet Of Things (IOT), in the fog, in Mobile Ad hoc Networks (MANETs), etc. 
@@ -5,7 +8,7 @@ Because who can do more can do less, it can also be used for usual distributed c
 *Idawi* is extensively described in this [working paper](https://hal.archives-ouvertes.fr/hal-03562184) and in the following publications on:
 - [the Web micro-service infrastructure](https://hal.science/hal-04075895)  (CIoT'2023)
 - [decentralized deployment](https://hal.science/hal-03886521v1) (FMCIoT'2022)
-- [the middleware](https://hal.science/hal-03863333v1) (Middlewedge'2022)
+- [the middleware itself](https://hal.science/hal-03863333v1) (Middlewedge'2022)
 	
 To make a long story short, it provides a **structuring framework** and algorithms for the construction and operation of decentralized systems. 
 
@@ -27,14 +30,15 @@ Here are some of his features of interest:
 - it is able to do **emulation**
 
 
-Team members:
+Curent team members:
 - [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
-- Paul Gros (Engineering & Master2 degree intern in srping 2023)
-- [Lidaou Denis ASSOTI](https://www.linkedin.com/in/denisassoti/) (Engineering & Master2 degree intern in srping 2023)
--  (Engineering & Master2 degree intern in srping 2023)
--  (Engineering & Master2 degree intern in srping 2023)
--  (Engineering & Master2 degree intern in srping 2023)
--  (Engineering & Master2 degree intern in srping 2023)
+- Gregory Jannin (Master1 spring 2024)
+- Salma Talib (Master1 spring 2024)
+
+Former students who worked on the project:
+- Andranik Arakelov (Licence3 autumn 2023)
+- Paul Gros (Engineering & Master2 degree intern in spring 2023)
+- [Lidaou Denis Assoti](https://www.linkedin.com/in/denisassoti/) (Engineering & Master2 degree intern in spring 2023)
 - Eliel Wotobe (Master1 degree intern in autumn 2022)
 - [Saad El Din Ahmed](https://www.linkedin.com/in/saadeldinahmed) (Master1 degree intern in spring 2022)
 - Mamadou Camara (Master degree intern in spring 2022)
@@ -53,6 +57,14 @@ The following tutorial shows and explains the very basic concepts in *Idawi*. It
 
 We recommend you to install *Idawi* using a package manager (like Maven), which will manage the dependancies for you.
 Version history can be found [there](https://search.maven.org/artifact/io.github.lhogie/idawi).
+
+If you want to work on the source code, you will need to consider the satellite projects:
+- https://github.com/lhogie/jExperiment
+- https://github.com/lhogie/toools
+- https://github.com/lhogie/jdotgen
+- https://github.com/lhogie/jaseto
+- https://github.com/lhogie/java4unix
+
 
 ## Creating components
 Components are first-class citizens in *Idawi*. They aim a representing logical (business) entities in the user application domain.

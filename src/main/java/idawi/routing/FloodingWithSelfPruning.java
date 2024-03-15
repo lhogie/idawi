@@ -12,8 +12,6 @@ import toools.collections.Collections;
 
 public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 
-	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
-
 	public FloodingWithSelfPruning(Component node) {
 		super(node);
 	}
@@ -22,24 +20,31 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	public String getAlgoName() {
 		return "Flooding With Self Pruning";
 	}
+
 	@Override
 	public String webShortcut() {
 		return "fwsp";
 	}
 
-
 	@Override
 	public void accept(Message msg, SPPParm p) {
 		// the message was never received
-		if (!alreadyReceivedMsgs.contains(msg.ID)) {
-			alreadyReceivedMsgs.add(msg.ID);
-			var myNeighbors = component.neighbors().stream().map(n -> n.dest.component).toList();
-			var routingParms = convert(msg.currentRoutingParameters());
-			var srcNeighbors = routingParms.neighbors;
+		if (!component.alreadyKnownMsgs.contains(msg.ID)) {
+			var myNeighbors = component.outLinks().stream().map(n -> n.dest.component).toList();
 
-			// if I have neighbors that the source doesn't know
-			if (!Collections.difference(myNeighbors, srcNeighbors).isEmpty()) {
-				component.services(TransportService.class).forEach(t -> t.bcast(msg, this, p));
+			if (msg.route.isEmpty()) {
+				component.services(TransportService.class).forEach(t -> t.multicast(msg, this, p));
+			} else {
+				var srcNeighbors = convert(msg.route.last().routing.parms).neighbors;
+				var newNeighbors = Collections.difference(myNeighbors, srcNeighbors);
+
+				// if I have neighbors that the source doesn't know
+				if (!newNeighbors.isEmpty()) {
+					// finds the links to these neighbors
+					var links = newNeighbors.stream()
+							.flatMap(n -> component.localView().g.findLinksConnecting(component, n).stream()).toList();
+					component.services(TransportService.class).forEach(t -> t.send(msg, links, this, p));
+				}
 			}
 		}
 	}
@@ -47,7 +52,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	@Override
 	public SPPParm defaultData() {
 		var p = new SPPParm();
-		p.neighbors = component.neighbors().stream().map(i -> i.dest.component).toList();
+		p.neighbors = component.outLinks().stream().map(i -> i.dest.component).toList();
 		return p;
 	}
 

@@ -6,7 +6,9 @@ import java.util.Properties;
 import idawi.Binaries;
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
+import idawi.service.local_view.ComponentInfo;
+import idawi.service.time.TimeService;
 
 /**
  * Sends an empty message on a queue that is created specifically for the peer
@@ -16,16 +18,40 @@ import idawi.TypedInnerClassOperation;
 public class SystemService extends Service {
 
 	public int nbCores;
+	private ComponentInfo localInfo;
 
 	public SystemService(Component node) {
 		super(node);
-		registerOperation(new binaryFetchBytes());
-		registerOperation(new binarySize());
-		registerOperation(new systemProperties());
 		this.nbCores = Runtime.getRuntime().availableProcessors();
 	}
 
-	public class binaryFetchBytes extends TypedInnerClassOperation {
+
+	public ComponentInfo localComponentInfo() {
+		if (localInfo == null || localInfo.reliability(component.now()) < 0.1) {
+			localInfo = new ComponentInfo(component.now());
+			localInfo.component = component;
+			localInfo.location = component.getLocation();
+			localInfo.timeModel = component.service(TimeService.class).model;
+			localInfo.systemInfo = component.service(SystemMonitor.class).info.get();
+			component.forEachService(s -> localInfo.services.add(s.descriptor()));
+		}
+
+		return localInfo;
+	}
+
+	public class info extends TypedInnerClassEndpoint {
+
+		public ComponentInfo get() throws IOException {
+			return localComponentInfo();
+		}
+
+		@Override
+		public String getDescription() {
+			return "return an updated description of the host component";
+		}
+	}
+
+	public class binaryFetchBytes extends TypedInnerClassEndpoint {
 
 		public byte[] fetch(long[] offsets) throws IOException {
 			return Binaries.proofOfBinaries(offsets);
@@ -37,7 +63,7 @@ public class SystemService extends Service {
 		}
 	}
 
-	public class binaryHash extends TypedInnerClassOperation {
+	public class binaryHash extends TypedInnerClassEndpoint {
 
 		public long fetch(long[] offsets) throws IOException {
 			return Binaries.hashBinaries();
@@ -49,7 +75,7 @@ public class SystemService extends Service {
 		}
 	}
 
-	public class binarySize extends TypedInnerClassOperation {
+	public class binarySize extends TypedInnerClassEndpoint {
 
 		public long get() throws IOException {
 			return Binaries.binarySize();
@@ -61,7 +87,7 @@ public class SystemService extends Service {
 		}
 	}
 
-	public class systemProperties extends TypedInnerClassOperation {
+	public class systemProperties extends TypedInnerClassEndpoint {
 
 		public Properties get() throws IOException {
 			return System.getProperties();

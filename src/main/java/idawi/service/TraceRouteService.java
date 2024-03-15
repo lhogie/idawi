@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
@@ -19,14 +19,13 @@ import idawi.routing.Route;
 public class TraceRouteService extends Service {
 	public TraceRouteService(Component node) {
 		super(node);
-		registerOperation(new traceroute());
 	}
 
-	public class traceroute extends InnerClassOperation {
+	public class traceroute extends InnerClassEndpoint {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			reply(msg, msg.route);
+			reply(msg, msg.route, true);
 		}
 
 		@Override
@@ -36,14 +35,14 @@ public class TraceRouteService extends Service {
 	}
 
 	public Route traceRoute(Component t, double timeout) {
-		return (Route) component.bb().exec_rpc(t, TraceRouteService.traceroute.class, null);
+		return (Route) component.bb().exec_rpc(t, TraceRouteService.class, traceroute.class, null);
 	}
 
 	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
 		var map = new HashMap<Component, Route>();
-		component.bb().exec(TraceRouteService.traceroute.class, null, ComponentMatcher.among(targets), true,
-				null).returnQ.collect(timeout, timeout, c -> {
-					var target = c.messages.last().route.initialEmission().transport.component;
+		component.bb().exec(TraceRouteService.class, traceroute.class, null, ComponentMatcher.multicast(targets), true,
+				null, true).returnQ.collector().collect(timeout, timeout, c -> {
+					var target = c.messages.last().route.source();
 					var route = (Route) c.messages.last().content;
 					map.put(target, route);
 					c.stop = c.messages.senders().equals(targets);

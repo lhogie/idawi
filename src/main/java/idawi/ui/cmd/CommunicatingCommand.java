@@ -2,22 +2,20 @@ package idawi.ui.cmd;
 
 import idawi.Component;
 import j4u.CommandLine;
-import j4u.License;
+import j4u.CommandLineSpecification;
 import toools.io.Cout;
-import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
-public abstract class CommunicatingCommand extends Command {
+public abstract class CommunicatingCommand extends IdawiCommand {
 
 	static {
 		Cout.timestamp();
 	}
 
-	public CommunicatingCommand(RegularFile launcher) {
-		super(launcher);
-		addOption("--timeout", "-t", ".*", 1, "timeout in second");
-		addOption("--repeat", "-r", "[0-9]+", "1", "repeats the command the given number of times");
-
+	@Override
+	protected void specifyCmdLine(CommandLineSpecification spec) {
+		spec.addOption("--timeout", "-t", ".*", 1, "timeout in second");
+		spec.addOption("--repeat", "-r", "[0-9]+", "1", "repeats the command the given number of times");
 	}
 
 	public String getCommandName() {
@@ -28,7 +26,7 @@ public abstract class CommunicatingCommand extends Command {
 	public int runScript(CommandLine cmdLine) throws Throwable {
 		double timeout = Double.valueOf(getOptionValue(cmdLine, "--timeout"));
 
-		Component localNode = new Component(getCommandName());
+		Component localNode = new Component();
 
 		int repeat = Integer.valueOf(cmdLine.getOptionValue("--repeat"));
 
@@ -52,25 +50,5 @@ public abstract class CommunicatingCommand extends Command {
 		return 0;
 	}
 
-	protected abstract int work(Component c, CommandLine cmdLine, double timeout) throws Throwable;
-
-	@Override
-	public String getAuthor() {
-		return "Luc Hogie";
-	}
-
-	@Override
-	public License getLicence() {
-		return License.ApacheLicenseV2;
-	}
-
-	@Override
-	public String getApplicationName() {
-		return "Idawi";
-	}
-
-	@Override
-	public String getYear() {
-		return "2019-2020";
-	}
+	protected abstract int work(Component localNode, CommandLine cmdLine, double timeout) throws Throwable;
 }

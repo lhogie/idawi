@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.Streams;
 import idawi.service.DemoService.waiting;
@@ -23,16 +23,10 @@ public class DirectorySharingService extends Service {
 
 	public DirectorySharingService(Component t) {
 		super(t);
-		registerOperation(new delete());
-		registerOperation(new downloadFile());
-		registerOperation(new listFiles());
-		registerOperation(new exists());
-		registerOperation(new pathToLocalFiles());
-		registerOperation(new size());
-		registerOperation(new upload());
 	}
+	
 
-	public class pathToLocalFiles extends TypedInnerClassOperation {
+	public class pathToLocalFiles extends TypedInnerClassEndpoint {
 		public String pathToLocalFiles() {
 			return dir.getPath();
 		}
@@ -43,7 +37,7 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class listFiles extends TypedInnerClassOperation {
+	public class listFiles extends TypedInnerClassEndpoint {
 		public Set<String> listFiles() throws IOException {
 			dir.ensureExists();
 			List<AbstractFile> files = dir.retrieveTree();
@@ -81,7 +75,7 @@ public class DirectorySharingService extends Service {
 		long len = Long.MAX_VALUE;
 	}
 
-	public class downloadFile extends TypedInnerClassOperation {
+	public class downloadFile extends TypedInnerClassEndpoint {
 		public void downloadFile(MessageQueue q) throws IOException {
 			var msg = q.poll_sync();
 			var parms = (DownloadFileParms) msg.content;
@@ -89,7 +83,7 @@ public class DirectorySharingService extends Service {
 			var f = new RegularFile(dir, parms.name);
 			var inputStream = f.createReadingStream();
 			inputStream.skip(parms.seek);
-			Streams.split(inputStream, 1000, c -> reply(msg, c));
+			Streams.split(inputStream, 1000, c -> reply(msg, c, c.length == 0));
 		}
 
 		@Override
@@ -99,7 +93,7 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class upload extends TypedInnerClassOperation {
+	public class upload extends TypedInnerClassEndpoint {
 		public void upload(String name, boolean append, InputStream in) throws IOException {
 			dir.ensureExists();
 			var fos = new RegularFile(dir, name).createWritingStream(append);
@@ -114,7 +108,7 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class exists extends TypedInnerClassOperation {
+	public class exists extends TypedInnerClassEndpoint {
 		public boolean exists(String name) {
 			dir.ensureExists();
 			return new RegularFile(dir, name).exists();
@@ -127,7 +121,7 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class delete extends TypedInnerClassOperation {
+	public class delete extends TypedInnerClassEndpoint {
 		public void delete(String name) {
 			dir.ensureExists();
 			new RegularFile(dir, name).delete();
@@ -139,7 +133,7 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class size extends TypedInnerClassOperation {
+	public class size extends TypedInnerClassEndpoint {
 		public long size(String name) {
 			dir.ensureExists();
 			return new RegularFile(name).getSize();

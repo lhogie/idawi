@@ -1,25 +1,24 @@
 package idawi.transport;
 
+import java.io.IOException;
 import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 
 public class PipeFromToParentProcess extends TransportService {
-	private final boolean suicideIfLoseParent;
-	private final Set<Component> parent;
+	public boolean suicideIfLoseParent = true;
 
-	public PipeFromToParentProcess(Component me, Component parent, boolean suicideWhenParentDies) {
+	public PipeFromToParentProcess(Component me) {
 		super(me);
-		this.suicideIfLoseParent = suicideWhenParentDies;
-		this.parent = Collections.singleton(parent);
 
-		new Thread(() -> {
+		Idawi.agenda.threadPool.submit(() -> {
 			try {
-				processIncomingMessage((Message) serializer.read(System.in));
+				while (true) {
+					processIncomingMessage((Message) component.secureSerializer.read(System.in));
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 
@@ -27,32 +26,22 @@ public class PipeFromToParentProcess extends TransportService {
 					System.exit(0);
 				}
 			}
-		}).start();
+		});
 	}
 
 	@Override
-	public Set<Component> actualNeighbors() {
-		return parent;
+	protected void sendImpl(Message msg) {
+		send(msg);
 	}
 
-	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
-		if (!neighbors.equals(actualNeighbors()))
-			throw new IllegalStateException();
-
-		bcastImpl(msg);
+	public void send(Object o) {
+		sendBytes(component.secureSerializer.toBytes(o));
 	}
 
-	@Override
-	protected void bcastImpl(Message msg) {
-		sysout(msg);
-	}
-
-	public static void sysout(Object o) {
-		var bytes = serializer.toBytes(o);
+	public static void sendBytes(byte[] bytes) {
 		var base64 = new String(Base64.getEncoder().encode(bytes));
 		base64 = base64.replace("\n", "");
-		System.out.println(PipeFromToChildProcess.base64ObjectMark + base64);
+		System.out.println(PipesFromToChildrenProcess.base64ObjectMark + base64);
 	}
 
 	@Override
@@ -60,9 +49,20 @@ public class PipeFromToParentProcess extends TransportService {
 		return "pipe to parent";
 	}
 
+	
 	@Override
-	public boolean canContact(Component c) {
-		return parent.contains(c);
+	public void dispose(Link l) {
+		try {
+			System.in.close();
+		} catch (IOException e) {
+		}
+
+		System.out.close();
+	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
 	}
 
 }

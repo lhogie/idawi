@@ -1,16 +1,17 @@
 package idawi.transport;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
+import toools.math.MathsUtilities;
 import toools.thread.Threads;
 
 public class SharedFileSystemTransport extends TransportService {
@@ -44,20 +45,14 @@ public class SharedFileSystemTransport extends TransportService {
 	}
 
 	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
-		for (var n : neighbors) {
-			String filename = String.valueOf(Math.abs(new Random().nextLong()));
-			Directory toDir = new Directory(baseDirectory, n.toString());
-			toDir.ensureExists();
-			RegularFile f = new RegularFile(toDir, filename + ".ser");
-			byte[] bytes = serializer.toBytes(msg);
-			f.setContent(bytes);
-		}
-	}
-
-	@Override
-	protected void bcastImpl(Message msg) {
-		throw new NotYetImplementedException();
+	protected void sendImpl(Message msg) {
+		var to = msg.route.last().link.dest.component;
+		String filename = String.valueOf(Math.abs(new Random().nextLong()));
+		Directory toDir = new Directory(baseDirectory, to.toString());
+		toDir.ensureExists();
+		RegularFile f = new RegularFile(toDir, filename + ".ser");
+		byte[] bytes = component.secureSerializer.toBytes(msg);
+		f.setContent(bytes);
 	}
 
 	@Override
@@ -65,22 +60,24 @@ public class SharedFileSystemTransport extends TransportService {
 		return "shared-directory driver";
 	}
 
-	@Override
-	public boolean canContact(Component c) {
-		return c != null;
-	}
 
 	protected Message extract(RegularFile f) {
 		try {
-			Message msg = (Message) serializer.fromBytes(f.getContent());
+			Message msg = (Message) component.secureSerializer.fromBytes(f.getContent());
 			return msg;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
+
 	@Override
-	public Set<Component> actualNeighbors() {
-		return null;
+	public void dispose(Link l) {
 	}
+	
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.1, 1, Idawi.prng);
+	}
+
 }

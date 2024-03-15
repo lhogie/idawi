@@ -2,11 +2,11 @@ package idawi.routing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import idawi.Component;
 import idawi.messaging.Message;
-import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
@@ -22,24 +22,22 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	public String getAlgoName() {
 		return "P2P routing";
 	}
+
 	@Override
 	public String webShortcut() {
 		return "ir";
 	}
 
-
 	@Override
 	public void accept(Message msg, IRTo p) {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
-			var routingInfo = (IRTo) msg.currentRoutingParameters();
+			var routingInfo = (IRTo) msg.route.last().routing.parms;
 			var remainingRoute = routingInfo.route;
 
 			var relay = remainingRoute == null ? null : remainingRoute.remove(0);
-
-			for (var t : component.services(TransportService.class)) {
-				t.multicast(msg, relay == null ? null : Set.of(t.find(relay)), this, p);
-			}
+			component.localView().g.findLinksConnecting(component, relay)
+					.forEach(l -> l.src.send(msg, relay == null ? null : Set.of(l), this, p));
 		}
 	}
 
@@ -49,7 +47,8 @@ public class ImposedRoute extends RoutingService<IRTo> {
 		l.add(new IRTo());
 		{
 			var t = new IRTo();
-			t.route.addAll(component.digitalTwinService().components);
+			t.route.addAll(Set.of(component.localView().g.pickRandomComponent(new Random()),
+					component.localView().g.pickRandomComponent(new Random())));
 			l.add(t);
 
 		}
@@ -58,7 +57,6 @@ public class ImposedRoute extends RoutingService<IRTo> {
 
 	@Override
 	public ComponentMatcher naturalTarget(IRTo parms) {
-		// TODO Auto-generated method stub
-		return null;
+		return ComponentMatcher.all;
 	}
 }

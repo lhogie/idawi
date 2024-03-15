@@ -9,6 +9,6 @@ import idawi.routing.ComponentMatcher;
 public class All2AllAllocator<R> implements Allocator<R> {
 	@Override
 	public void assign(List<Task<R>> tasks, List<Component> workers) {
-		tasks.forEach(t -> t.to =  ComponentMatcher.among(new HashSet<>(workers)));
+		tasks.forEach(t -> t.to =  ComponentMatcher.multicast(new HashSet<>(workers)));
 	}
 }

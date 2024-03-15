@@ -25,16 +25,10 @@ public class MessageQueue extends Q<Message> {
 	}
 
 
-	public MessageCollector c() {
+	public MessageCollector collector() {
 		return new MessageCollector(this);
 	}
 
-	public MessageCollector collect(final double initialDuration, final double initialTimeout,
-			Consumer<MessageCollector> collector) {
-		var c = new MessageCollector(this);
-		c.collect(initialDuration, initialTimeout, collector);
-		return c;
-	}
 
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {

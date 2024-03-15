@@ -9,6 +9,7 @@ import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 
 /**
  * 
@@ -23,16 +24,17 @@ public class PingPong {
 
 		// creates the things in the local JVM
 		List<Component> things = new ArrayList<>();
-		things.add(new Component("root"));
+		things.add(new Component());
 
 		for (int i = 1; i < 350; ++i) {
 			// Thing t = things.get(ThreadLocalRandom.current().nextInt(things.size()));
 			Component t = things.get(i - 1);
 
 			// gets the deployment service
-			DeployerService deployer = t.lookup(DeployerService.class);
+			DeployerService deployer = t.service(DeployerService.class);
 
-			var c = new Component("t" + i);
+			var c = new Component();
+			c.friendlyName = "t" + i;
 
 			// and asks it to deploy a new thing within the JVM
 			List<Component> newThings = deployer.deployInThisJVM(Set.of(c), ok -> System.out.println(ok + " is ready"));
@@ -42,7 +44,7 @@ public class PingPong {
 			things.add(newThings.get(0));
 		}
 
-		SharedMemoryTransport.chain(things, SharedMemoryTransport.class);
+		Topologies.chain(things, (a, b) -> SharedMemoryTransport.class, things);
 
 		Component first = things.get(0);
 		Component last = things.get(things.size() - 1);

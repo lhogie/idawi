@@ -17,7 +17,7 @@ public class BFSRoutingParms extends RoutingData {
 		recipients = new HashSet<>();
 
 		for (var n : s.split(" *, *")) {
-			var c = service.component.digitalTwinService().lookup(n);
+			var c = service.component.localView().g.findComponentByFriendlyName(n);
 
 			if (c != null) {
 				recipients.add(c);
