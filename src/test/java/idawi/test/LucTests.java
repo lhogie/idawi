@@ -82,7 +82,7 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test manyMessages");
 		Component c1 = new Component();
 
-		var target = c1.service(DeployerService.class, true).deployInNewJVM(msg -> System.out.println(msg));
+		var target = c1.service(DeployerService.class, true).newLocalJVM();
 
 		for (int i = 0; i < 100; ++i) {
 			Message pong = c1.bb().ping(target).poll_sync();
@@ -132,7 +132,7 @@ public class LucTests {
 
 		Cout.debugSuperVisible("Starting test waitingFirst");
 		var root = new Component();
-		List<Component> others = root.service(DeployerService.class, true).deployInThisJVM("c1", "c2");
+		List<Component> others = Component.createNComponent(2);
 
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
@@ -156,7 +156,7 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var c = master.service(DeployerService.class).deployInNewJVM(fdbck -> System.out.println(fdbck));
+		var c = master.service(DeployerService.class).newLocalJVM();
 
 		// asks the master to ping the other component
 		Message pong = new Service(master).component.bb().ping(c).poll_sync();

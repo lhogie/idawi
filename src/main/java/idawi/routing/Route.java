@@ -18,7 +18,7 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 
 	public boolean add(Entry newEntry) {
 		if (!isEmpty() && !last().link.dest.component.equals(newEntry.link.src.component))
-			throw new IllegalArgumentException("you try to add an entry that not chain");
+			throw new IllegalArgumentException("you try to add an entry "+ newEntry + " that not chain. Route : " + this);
 
 		return super.add(newEntry);
 	}
@@ -99,7 +99,7 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 	}
 
 	public void add(Link l, RoutingService p) {
-		add(new Entry(l, p.getClass()));
+		add(new Entry(l, p));
 	}
 
 	public long howManyTimesFound(Component component) {

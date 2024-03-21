@@ -28,7 +28,7 @@ public class Demo3_multi_deployment {
 				rsyncErr -> System.err.println("rsync: " + rsyncErr), ok -> {
 					children.add(ok);
 					System.out.println("peer ok: " + ok);
-				});
+				}, err -> err.printStackTrace());
 
 		long pingTime = System.currentTimeMillis();
 		MessageList pongs = t.bb().ping(new HashSet<>(children)).collector().collect(1000, 1000, c -> {

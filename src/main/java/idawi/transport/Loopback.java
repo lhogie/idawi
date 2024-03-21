@@ -5,17 +5,17 @@ import java.util.Collection;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
-import toools.math.MathsUtilities;
 
-public class SharedMemoryTransport extends TransportService {
+public class Loopback extends TransportService {
 
-	public SharedMemoryTransport(Component c) {
+	public Loopback(Component c) {
 		super(c);
+		c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
 	public String getName() {
-		return "shared mem";
+		return "loopback";
 	}
 
 	@Override
@@ -25,21 +25,19 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	public double latency() {
-		return MathsUtilities.pickRandomBetween(0.000000002, 0.000000009, Idawi.prng);
+		return 0;
 	}
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
 		var msgClone = (Message) serializer.fromBytes(msg);
-
-		for (var l : outLinks) {
-			Idawi.agenda.scheduleNow(() -> l.dest.processIncomingMessage(msgClone));
-		}
+		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
 	}
 
 	@Override
 	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
+		var msgClone = (Message) serializer.fromBytes(msg);
+		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
 	}
 
 }

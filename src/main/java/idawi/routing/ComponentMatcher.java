@@ -35,15 +35,14 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 		@Override
 		public String toURLElement() {
-			return "";
+			return "*";
 		}
 
 		@Override
 		public long sizeOf() {
 			return 1;
 		}
-
-	};
+	}
 
 	public static ComponentMatcher multicast(Collection<Component> target) {
 		return new multicast(target);
@@ -74,13 +73,13 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	}
 
 	public static ComponentMatcher regex(String regex) {
-		return new regex(regex);
+		return new matchesFriendlyName(regex);
 	}
 
-	public static class regex extends ComponentMatcher {
+	public static class matchesFriendlyName extends ComponentMatcher {
 		String regex;
 
-		regex(String regex) {
+		matchesFriendlyName(String regex) {
 			this.regex = regex;
 		}
 
@@ -114,7 +113,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 
 		@Override
 		public boolean test(Component c) {
-			return c.service(SystemService.class).nbCores >= nbCores;
+			return c.service(SystemService.class, true).nbCores >= nbCores;
 		}
 
 		@Override
@@ -138,17 +137,8 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 			int pos = s.indexOf('.');
 
 			if (pos == -1) {
-				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *")).map(name -> {
-					var c = lookup.g.findComponentByFriendlyName(name);
-
-					if (c == null) {
-						c = new Component();
-						c.friendlyName = name;
-						lookup.g.ensureExists(c);
-					}
-
-					return c;
-				}).toList()));
+				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *")).map(name -> lookup.g
+						.findComponent(c -> c.friendlyName.equals(name), true, c -> c.friendlyName = name)).toList()));
 			} else {
 				var prefix = s.substring(0, pos);
 				var value = s.substring(pos + 1);

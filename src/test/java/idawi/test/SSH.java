@@ -33,7 +33,7 @@ public class SSH {
 
 		c1.service(DeployerService.class).deployViaSSH(Set.of(ssh),
 				rsyncOut -> System.out.println("rsync: " + rsyncOut),
-				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"));
+				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"), err -> err.printStackTrace());
 
 		// asks the master to ping the other component
 		Message pong = c1.bb().ping(c2).poll_sync();

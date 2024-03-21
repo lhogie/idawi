@@ -22,6 +22,7 @@ import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
 import idawi.service.web.WebService;
+import idawi.transport.Vault;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -32,7 +33,6 @@ public class Service implements SizeOf, Serializable {
 		return Idawi.agenda.now();
 	}
 
-	transient public final Class<? extends Service> id = getClass();
 	public Component component;
 	private boolean askToRun = true;
 //	transient protected final List<Thread> threads = new ArrayList<>();
@@ -124,7 +124,7 @@ public class Service implements SizeOf, Serializable {
 
 	public Directory directory() {
 		if (this.directory == null) {
-			this.directory = new Directory(Component.directory, "/services/" + id);
+			this.directory = new Directory(Component.directory, "/services/" + getClass());
 		}
 
 		return this.directory;
@@ -212,6 +212,12 @@ public class Service implements SizeOf, Serializable {
 		// input queue of another running endpoint
 		if (inputQ == null) {
 			inputQ = createQueue(dest.queueID());
+		}
+
+		// decrypt if necessary
+		while (msg.content instanceof Vault) {
+			msg.content = msg.route.last().link.dest.serializer
+					.fromBytes(((Vault) msg.content).decode(msg.route.last().link.src.component.publicKey()));
 		}
 
 		inputQ.add_sync(msg);
@@ -378,7 +384,7 @@ public class Service implements SizeOf, Serializable {
 
 	@Override
 	public String toString() {
-		return component + "/" + id.getSimpleName();
+		return component + "/" + getClass().getSimpleName();
 	}
 
 	protected MessageQueue createQueue(String qid) {
@@ -418,7 +424,7 @@ public class Service implements SizeOf, Serializable {
 
 	public ServiceInfo descriptor() {
 		var d = new ServiceInfo();
-		d.clazz = id;
+		d.clazz = getClass();
 		d.description = getDescription();
 		endpoints.forEach(o -> d.endpoints.add(o.descriptor()));
 		d.nbMessagesReceived = nbMsgsReceived;

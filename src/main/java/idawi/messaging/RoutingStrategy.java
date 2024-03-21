@@ -10,8 +10,8 @@ public class RoutingStrategy implements Serializable, SizeOf {
 	public final Class<? extends RoutingService> routingService;
 	public final RoutingData parms;
 
-	public RoutingStrategy(Class<? extends RoutingService> routingService, RoutingData parms2) {
-		this.routingService = routingService;
+	public RoutingStrategy(RoutingService routingService, RoutingData parms2) {
+		this.routingService = routingService.getClass();
 		this.parms = parms2;
 	}
 

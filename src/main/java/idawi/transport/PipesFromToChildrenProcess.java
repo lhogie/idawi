@@ -29,10 +29,10 @@ public class PipesFromToChildrenProcess extends TransportService {
 		public Q waitForChild = new Q<>(1);
 		public long base64Len;
 		public Process process;
-		
+
 		public Component f() throws Throwable {
 			var r = ((Message) waitForChild.poll_sync()).content;
-			
+
 			if (r instanceof Throwable) {
 				throw (Throwable) r;
 			} else if (r instanceof Component) {
@@ -74,22 +74,6 @@ public class PipesFromToChildrenProcess extends TransportService {
 
 	static int nbW = 0;
 
-	@Override
-	protected void sendImpl(Message msg) {
-		var n = msg.route.last().link.dest.component;
-		var e = findEntry(n);
-
-		if (e == null)
-			throw new IllegalStateException("can't send to " + n);
-
-		try {
-			component.secureSerializer.write(msg, e.stdin);
-			e.stdin.flush();
-		} catch (IOException err) {
-			throw new RuntimeException(err);
-		}
-	}
-
 	private Entry findEntry(Component n) {
 		for (var e : child_entry) {
 			if (e.child == n) {
@@ -114,7 +98,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 				var base64 = line.substring(base64ObjectMark.length()); // get the rest of the line
 				e.base64Len += base64.length();
 				var bytes = Base64.getDecoder().decode(base64);
-				var o = component.secureSerializer.fromBytes(bytes);
+				var o = serializer.fromBytes(bytes);
 
 				if (o instanceof Message) {
 					var m = (Message) o;
@@ -166,6 +150,35 @@ public class PipesFromToChildrenProcess extends TransportService {
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		for (var l : outLinks) {
+			var n = l.dest.component;
+			var e = findEntry(n);
+
+			if (e == null)
+				throw new IllegalStateException("can't send to " + n);
+
+			send(msg, e);
+		}
+	}
+
+	private void send(byte[] msg, Entry e) {
+		try {
+			e.stdin.write(msg);
+			e.stdin.flush();
+		} catch (IOException err) {
+			throw new RuntimeException(err);
+		}
+	}
+
+	@Override
+	protected void bcast(byte[] msg) {
+		for (var e : child_entry) {
+			send(msg, e);
+		}
 	}
 
 }

@@ -12,7 +12,7 @@ public class lsBackend extends CommandBackend {
 		boolean lsQueues = cmdline.isOptionSpecified("-q");
 
 		for (Service s : thing.services()) {
-			out.accept(s.getFriendlyName() + " (" + s.id + ")");
+			out.accept(s.getFriendlyName() + " (" + s.getClass() + ")");
 
 			if (lsQueues) {
 				for (var od : s.descriptor().endpoints) {

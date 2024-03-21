@@ -3,6 +3,7 @@ package idawi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -31,9 +32,8 @@ public class Agenda {
 	private double timeAccelarationFactor = 1;
 	private Thread controllerThread;
 	private Supplier<Boolean> terminationCondition;
-	private ArrayBlockingQueue stopQ = new ArrayBlockingQueue(1);
+	private BlockingQueue stopQ = new ArrayBlockingQueue(1);
 
-	
 	public synchronized void start() {
 		if (isStarted())
 			throw new IllegalStateException("already started");
@@ -47,6 +47,25 @@ public class Agenda {
 				err.printStackTrace();
 			}
 		});
+
+		//startPeriodicDummyActivity(1);
+	}
+
+	private void startPeriodicDummyActivity(double period) {
+		class OKEvent extends Event<PointInTime> {
+
+			OKEvent(double when) {
+				super(new PointInTime(when));
+				name = "just acticity";
+			}
+
+			@Override
+			public void run() {
+				schedule(new OKEvent(Idawi.agenda.now() + period));
+			}
+		}
+
+		schedule(new OKEvent(1));
 	}
 
 	public synchronized boolean isStarted() {
@@ -114,40 +133,8 @@ public class Agenda {
 		controllerThread = null;
 		Thread.currentThread().interrupt();
 		listeners.forEach(l -> l.terminating(nbPastEvents));
-
 	}
 
-	private Event<PointInTime> sleepsUntilNextEvent() {
-		while (controllerThread != null) {
-			var e = eventQueue.peek();
-
-			try {
-				if (e == null) {
-					listeners.forEach(l -> l.sleeping(Double.MAX_VALUE, null));
-					Thread.sleep(Long.MAX_VALUE);
-				} else {
-					double wait = e.when.time - now();
-
-					if (wait > 0) {
-						listeners.forEach(l -> l.sleeping(wait, e));
-						Thread.sleep((long) (1000L * wait));
-					}
-
-					if (wait < 0) {
-//						System.err.println("go backward: " + wait);
-					}
-
-					return eventQueue.poll();
-				}
-			} catch (InterruptedException interupt) {
-				listeners.forEach(l -> l.interrupted());
-			}
-		}
-
-		return null;
-	}
-
-	
 
 	public double now() {
 		if (!isStarted())
@@ -157,7 +144,7 @@ public class Agenda {
 	}
 
 	public void schedule(Event<PointInTime> newEvent) {
-		Cout.debug("schedule " + newEvent);
+//		Cout.debug("schedule " + newEvent);
 
 		eventQueue.offer(newEvent);
 		listeners.forEach(l -> l.eventSubmitted(newEvent));
@@ -169,13 +156,12 @@ public class Agenda {
 
 	public void setTerminationCondition(Supplier<Boolean> c) {
 		this.terminationCondition = c;
-		
+
 		if (controllerThread != null) {
 			controllerThread.interrupt();
 		}
 	}
 
-	
 	public void scheduleAt(double date, String descr, Runnable r) {
 		schedule(new Event<PointInTime>(descr, new PointInTime(date)) {
 
@@ -210,7 +196,7 @@ public class Agenda {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public void stop() throws Throwable {
 		if (!isStarted())
 			throw new IllegalStateException();
@@ -222,9 +208,9 @@ public class Agenda {
 
 	public void scheduleTerminationAt(double date, Runnable terminationCode) {
 		Idawi.agenda.scheduleAt(date, "termination", () -> {
-			Idawi.agenda.terminationCondition = () -> true;
 			Cout.debugSuperVisible(Idawi.agenda.now() + " THIS IS THE END");
 			terminationCode.run();
+			Idawi.agenda.terminationCondition = () -> true;
 		});
 	}
 }

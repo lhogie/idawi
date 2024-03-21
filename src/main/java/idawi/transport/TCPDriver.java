@@ -41,8 +41,6 @@ public class TCPDriver extends IPDriver {
 		return "TCP";
 	}
 
-
-
 	@Override
 	protected void startServer() {
 		while (true) {
@@ -68,7 +66,7 @@ public class TCPDriver extends IPDriver {
 		new Thread(() -> {
 			try {
 				while (true) {
-					Message msg = (Message) component.secureSerializer.read(is);
+					Message msg = (Message) serializer.read(is);
 					var from = msg.route.last().link.src.component;
 
 					synchronized (neighbor_socket) {
@@ -105,31 +103,6 @@ public class TCPDriver extends IPDriver {
 		try {
 			s.close();
 		} catch (IOException e1) {
-		}
-	}
-
-	@Override
-	protected void sendImpl(Message msg) {
-		Entry entry = null;
-		TransportService n = msg.route.last().link.dest;
-
-		synchronized (neighbor_socket) {
-			entry = neighbor_socket.get(n);
-
-			// there is no connection to this peer yet
-			// try to establish one
-			if (entry == null) {
-				entry = createSocket(n.component);
-			}
-		}
-
-		// if a connection could be obtained
-		if (entry != null) {
-			try {
-				component.secureSerializer.write(msg, entry.os);
-			} catch (IOException e) {
-				errorOn(entry.socket);
-			}
 		}
 	}
 
@@ -187,10 +160,41 @@ public class TCPDriver extends IPDriver {
 		} catch (IOException err) {
 		}
 	}
-	
+
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.000020, 0.000060, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		for (var l : outLinks) {
+			Entry entry = null;
+
+			synchronized (neighbor_socket) {
+				entry = neighbor_socket.get(l.dest.component);
+
+				// there is no connection to this peer yet
+				// try to establish one
+				if (entry == null) {
+					entry = createSocket(l.dest.component);
+				}
+			}
+
+			// if a connection could be obtained
+			if (entry != null) {
+				try {
+					entry.os.write(msg);
+				} catch (IOException e) {
+					errorOn(entry.socket);
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void bcast(byte[] msg) {
+		multicast(msg, activeOutLinks());
 	}
 
 }

@@ -2,8 +2,6 @@ package idawi.deploy;
 
 import java.io.IOException;
 
-import org.checkerframework.checker.units.qual.m;
-
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
@@ -32,9 +30,9 @@ public class RemoteMain {
 			var child = new Component();
 
 			// create the pipe to the parent
-			child.service(PipeFromToParentProcess.class, true);
-			var m =new Message(null, null, child);
-			PipeFromToParentProcess.sendBytes(child.secureSerializer.toBytes(m));
+			var pipe = child.service(PipeFromToParentProcess.class, true);
+			var m = new Message(null, null, child);
+			PipeFromToParentProcess.sendBytes(pipe.serializer.toBytes(m));
 
 			child.service(LocalViewService.class, true);
 

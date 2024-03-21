@@ -30,7 +30,6 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	protected final AtomicLong nbMsgReceived = new AtomicLong();
 	public final List<RoutingListener> listeners = new ArrayList<>();
 
-	
 	public long nbMessagesInitiated;
 
 	public RoutingService(Component node) {
@@ -40,8 +39,6 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	public void accept(Message msg) {
 		accept(msg, defaultData());
 	}
-	
-
 
 	@Override
 	public String getFriendlyName() {
@@ -56,7 +53,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 		return (D) p;
 	}
 
-	public abstract ComponentMatcher naturalTarget(D parms);
+	public abstract ComponentMatcher defaultMatcher(D parms);
 
 	public abstract String getAlgoName();
 
@@ -79,7 +76,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 
 	public void send(Object content, boolean eot, Destination dest, D parms) {
 		Objects.requireNonNull(dest.service());
-		var preferredRoutingStrategy = new RoutingStrategy(getClass(), parms);
+		var preferredRoutingStrategy = new RoutingStrategy(this, parms);
 		var msg = new Message(dest, preferredRoutingStrategy, content);
 		msg.eot = eot;
 		accept(msg, parms);
@@ -103,7 +100,8 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 		return exec(service, o, null, ComponentMatcher.unicast(to), true, initialInputData, eot);
 	}
 
-	public RemotelyRunningEndpoint exec(Component to, Class<? extends InnerClassEndpoint> o, Object initialInputData, boolean eot) {
+	public RemotelyRunningEndpoint exec(Component to, Class<? extends InnerClassEndpoint> o, Object initialInputData,
+			boolean eot) {
 		return exec((Class<? extends Service>) o.getEnclosingClass(), o, null, ComponentMatcher.unicast(to), true,
 				initialInputData, eot);
 	}
@@ -116,28 +114,55 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
 			Object initialInputData, boolean eot) {
 		D parms = defaultData();
-		return exec(service, o, parms, naturalTarget(parms), true, initialInputData, eot);
+		return exec(service, o, parms, defaultMatcher(parms), true, initialInputData, eot);
+	}
+
+	public class ExecRequest {
+		Class<? extends Service> service;
+		Class<? extends InnerClassEndpoint> o;
+		D parms;
+		ComponentMatcher matcher;
+		MessageQueue returnQ;
+		boolean eot;
+		public boolean alertServiceNotAvailable = true;
+		public boolean autoStartService = false;
+		Object initialInputData;
 	}
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
 			D parms, ComponentMatcher matcher, MessageQueue returnQ, Object initialInputData, boolean eot) {
+		var r = new ExecRequest();
+		r.service = service;
+		r.o = o;
+		r.parms = parms;
+		r.matcher = matcher;
+		r.returnQ = returnQ;
+		r.initialInputData = initialInputData;
+		r.eot = eot;
+		return exec(r);
+
+	}
+
+	public RemotelyRunningEndpoint exec(ExecRequest er) {
 
 		// Cout.debugSuperVisible("exec " + o.getSimpleName() + " " + initialInputData);
-		var dest = new MessageODestination(service, o);
-		dest.service = service;
+		var dest = new MessageODestination(er.service, er.o);
+		dest.service = er.service;
 		dest.invocationDate = Date.timeNs();
-		dest.componentMatcher = matcher;
+		dest.componentMatcher = er.matcher;
+		dest.alertServiceNotAvailable = er.alertServiceNotAvailable;
+		dest.autoStartService = er.autoStartService;
 		var r = new RemotelyRunningEndpoint();
 
-		if (returnQ != null) {
-			r.returnQ = returnQ;
+		if (er.returnQ != null) {
+			r.returnQ = er.returnQ;
 			dest.replyTo = new MessageQDestination();
 			dest.replyTo.componentMatcher = ComponentMatcher.unicast(component);
 			dest.replyTo.queueID = r.returnQ.name;
 			dest.replyTo.service = r.returnQ.service.getClass();
 		}
 
-		send(initialInputData, eot, dest, parms);
+		send(er.initialInputData, er.eot, dest, er.parms);
 		r.destination = dest;
 		return r;
 	}
@@ -163,7 +188,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 			return r.content;
 		}
 	}
-	
+
 	public class dummyService extends InnerClassEndpoint {
 
 		@Override
@@ -231,7 +256,8 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	}
 
 	public MessageQueue ping(Set<Component> targets, D parms) {
-		return exec(getClass(), ping.class, parms, ComponentMatcher.multicast(targets), true, "ping test", true).returnQ;
+		return exec(getClass(), ping.class, parms, ComponentMatcher.multicast(targets), true, "ping test",
+				true).returnQ;
 	}
 
 	public MessageQueue ping(Set<Component> targets) {
@@ -243,7 +269,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	}
 
 	public MessageQueue ping(D parms) {
-		return exec(getClass(), ping.class, parms, naturalTarget(parms), true, "ping", true).returnQ;
+		return exec(getClass(), ping.class, parms, defaultMatcher(parms), true, "ping", true).returnQ;
 	}
 
 	public MessageQueue ping() {

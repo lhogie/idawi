@@ -42,8 +42,8 @@ public class BFS {
 			public double reliability(double now) {
 				double r = 1;
 
-				for (var i : RRoute.this) {
-					r *= i.reliability(now);
+				for (Link i : RRoute.this) {
+					r *= i.asInfo().reliability(now);
 				}
 
 				return r;
@@ -64,7 +64,7 @@ public class BFS {
 		}
 	}
 
-	public static class Routes extends Info {
+	public static class RouteList extends Info {
 		private ArrayList<RRoute> routes = new ArrayList<RRoute>();
 		public boolean disjoint;
 

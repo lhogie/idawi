@@ -10,9 +10,8 @@ public class Entry implements Serializable, SizeOf {
 	public Link link;
 	public double emissionDate, receptionDate;
 	public RoutingStrategy routing;
-	
-	
-	public Entry(Link l, Class<? extends RoutingService> routing) {
+
+	public Entry(Link l, RoutingService routing) {
 		this.link = l;
 		this.routing = new RoutingStrategy(routing, null);
 	}
@@ -21,16 +20,13 @@ public class Entry implements Serializable, SizeOf {
 		return receptionDate - emissionDate;
 	}
 
-
-
 	@Override
 	public String toString() {
 		return link.toString();
 	}
 
-
 	@Override
 	public long sizeOf() {
-		return 8 + 16  + routing.sizeOf();
+		return 8 + 16 + routing.sizeOf();
 	}
 }

@@ -39,7 +39,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(RandomWalkData parms) {
+	public ComponentMatcher defaultMatcher(RandomWalkData parms) {
 		return ComponentMatcher.all;
 	}
 }

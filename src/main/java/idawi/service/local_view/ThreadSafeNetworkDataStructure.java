@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -26,6 +27,11 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 		links.clear();
 	}
 
+	public void add(Component c){
+		components.add(c);
+	}
+
+	
 	@Override
 	public synchronized long sizeOf() {
 		return SizeOf.sizeOf(components) + SizeOf.sizeOf(links);
@@ -35,22 +41,10 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 		var existing = search(l);
 
 		if (existing == null) {
-			l.src.component = ensureExists(l.src.component);
-			l.dest.component = ensureExists(l.dest.component);
+			l.src.component = findComponent(c -> c.equals(l.src.component), true, null);
+			l.dest.component = findComponent(c -> c.equals(l.dest.component), true, null);
 			links.add(existing = l);
 			return l;
-		} else {
-			return existing;
-		}
-	}
-
-	public synchronized Component ensureExists(Component c) {
-		var existing = find(c);
-
-		if (existing == null) {
-			components.add(c);
-			listeners.forEach(l -> l.newComponent(c));
-			return c;
 		} else {
 			return existing;
 		}
@@ -116,12 +110,24 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 		return forEachLink(l -> Stop.stopIf(p.test(l)));
 	}
 
-	public Component findAComponent(Predicate<Component> p) {
-		return forEachComponent(l -> Stop.stopIf(p.test(l)));
-	}
+	public synchronized Component findComponent(Predicate<Component> p, boolean autoCreate,
+			Consumer<Component> newComponentInitalizer) {
+		var c = forEachComponent(a -> Stop.stopIf(p.test(a)));
 
-	public Component find(Component a) {
-		return findAComponent(b -> b.publicKey().equals(a.publicKey()));
+		if (c == null && autoCreate) {
+			c = new Component();
+
+			if (newComponentInitalizer != null) {
+				newComponentInitalizer.accept(c);
+			}
+
+			components.add(c);
+
+			for (var l : listeners)
+				l.newComponent(c);
+		}
+
+		return c;
 	}
 
 }

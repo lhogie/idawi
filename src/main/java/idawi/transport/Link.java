@@ -7,18 +7,50 @@ import java.util.function.Predicate;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.service.local_view.Info;
-import toools.io.Cout;
+import idawi.service.local_view.Infoable;
+import toools.SizeOf;
 
-public class Link extends Info {
+public class Link implements Infoable, SizeOf {
 	// the network interface on the neighbor side
-	public final TransportService src, dest;
+	public TransportService src, dest;
+	public Info info;
+	public Activity activity;
+	private boolean active = false;
+	public long nbMsgs;
+	public long traffic;
 	public double latency;
-	public int throughput;
-	public final Activity activity = new Activity();
+	public boolean toBeResolved;
+
+	public Link(TransportService from) {
+		this(from, null);
+		this.toBeResolved = true;
+	}
 
 	public Link(TransportService from, TransportService to) {
-		Objects.requireNonNull(this.src = from);
-		Objects.requireNonNull(this.dest = to);
+		Objects.requireNonNull(from);
+		this.src = from;
+		this.dest = to;
+		info = new Info() {
+			@Override
+			public final boolean involves(Component d) {
+				return src.component.equals(d) || dest.component.equals(d);
+			}
+
+			@Override
+			public long sizeOf() {
+				return super.sizeOf() + 32 + activity.sizeOf();
+			}
+
+			@Override
+			public void exposeComponent(Predicate<Component> p) {
+				p.test(dest.component);
+			}
+		};
+	}
+
+	@Override
+	public long sizeOf() {
+		return info.sizeOf() + 16 + activity.sizeOf() + 25;
 	}
 
 	public List<Link> impactedLinks() {
@@ -29,21 +61,6 @@ public class Link extends Info {
 
 	public boolean headsTo(Component c) {
 		return c.equals(dest.component);
-	}
-
-	@Override
-	public final boolean involves(Component d) {
-		return src.component.equals(d) || dest.component.equals(d);
-	}
-
-	@Override
-	public long sizeOf() {
-		return super.sizeOf() + 32 + activity.sizeOf();
-	}
-
-	@Override
-	public void exposeComponent(Predicate<Component> p) {
-		p.test(dest.component);
 	}
 
 	@Override
@@ -58,10 +75,10 @@ public class Link extends Info {
 	}
 
 	public Class<? extends TransportService> getCommonTransport() {
-		if (src.getClass() == dest.getClass()) {
-			return src.getClass();
-		} else {
+		if (src == null || dest == null || src.getClass() != dest.getClass()) {
 			return null;
+		} else {
+			return src.getClass();
 		}
 	}
 
@@ -101,17 +118,13 @@ public class Link extends Info {
 		return src.component.equals(dest.component);
 	}
 
-	private boolean active = false;
-	public long nbMsgs;
-	public long traffic;
-
 	public boolean isActive() {
 		return active;// activity.available();
 	}
 
 	public void markActive() {
 		active = true;
-
+/*
 		if (activity.isEmpty()) {
 			activity.add(new TimeFrame(Idawi.agenda.now()));
 		} else {
@@ -123,6 +136,7 @@ public class Link extends Info {
 				last.end(Idawi.agenda.now());
 			}
 		}
+		*/
 	}
 
 	public void markInactive() {
@@ -131,6 +145,11 @@ public class Link extends Info {
 
 	public double latency() {
 		return src.latency();
+	}
+
+	@Override
+	public Info asInfo() {
+		return info;
 	}
 
 }

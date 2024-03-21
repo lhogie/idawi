@@ -1,6 +1,7 @@
 package idawi;
 
 import java.lang.reflect.InvocationTargetException;
+import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -28,34 +29,29 @@ import idawi.transport.Link;
 import idawi.transport.SharedMemoryTransport;
 import toools.SizeOf;
 import toools.io.file.Directory;
-import toools.security.SecureSerializer;
+import toools.text.NameList;
 
 public class Component implements SizeOf {
 
 	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
-	// used to serialized messages for transport
-	public final transient SecureSerializer secureSerializer;
-
 	final Set<Service> services = new HashSet<>();
 	public boolean autonomous = false;
 	public final List<TrafficListener> trafficListeners = new ArrayList<>();
-	public String friendlyName;
+	public String friendlyName = NameList.next();
+	public KeyPair keyPair;
+	public double birthDate = Idawi.agenda.now();
 
 //	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
 //	public final Set<Component> dependantChildren = new HashSet<>();
 //	public Component deployer;
 //	public Set<Component> simulatedComponents = new HashSet<>();
 
+	public Component()
+	{
+		//new Error().printStackTrace();
+	}
 	
-	public Component() {
-		secureSerializer = new SecureSerializer(new IdawiSerializer(this), Idawi.enableEncryption);
-	}
-
-	public Component(PublicKey k) {
-		secureSerializer = new SecureSerializer(k, new IdawiSerializer(this));
-	}
-
 	public Component turnToDigitalTwin(Component host) {
 		var s = new DigitalTwinService(this);
 		s.host = host.localView();
@@ -63,7 +59,7 @@ public class Component implements SizeOf {
 	}
 
 	public Component twin(boolean includeServices) {
-		var twin = new Component(secureSerializer.publicKey());
+		var twin = new Component();
 
 		if (includeServices) {
 			for (var s : services) {
@@ -178,11 +174,6 @@ public class Component implements SizeOf {
 		return isDigitalTwin() ? dt().host.component + "/" + name : name;
 	}
 
-	@Override
-	public int hashCode() {
-		return toString().hashCode();
-	}
-
 	public double now() {
 		return Idawi.agenda.now();
 		// var ts = lookup(TimeService.class);
@@ -214,7 +205,6 @@ public class Component implements SizeOf {
 	@Override
 	public long sizeOf() {
 		long sum = 8; // dts
-		sum += secureSerializer.sizeOf();
 		sum += 8;
 		sum += SizeOf.sizeOf(friendlyName);
 		sum += 8;
@@ -224,6 +214,30 @@ public class Component implements SizeOf {
 		}
 
 		return sum + alreadyKnownMsgs.sizeOf() + 8;
+	}
+
+	public List<Link> outLinks() {
+		return localView().g.findLinks(l -> l.src.component.equals(this));
+	}
+
+	public PublicKey publicKey() {
+		return keyPair == null ? null : keyPair.getPublic();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		return hashCode() == ((Component) o).hashCode();
+	}
+
+	@Override
+	public int hashCode() {
+		if (publicKey() != null) {
+			return publicKey().hashCode();
+		} else if (friendlyName != null) {
+			return friendlyName.hashCode();
+		} else {
+			return Double.hashCode(birthDate);
+		}
 	}
 
 	public Long longHash() {
@@ -236,20 +250,6 @@ public class Component implements SizeOf {
 		}
 
 		return h;
-	}
-
-	public List<Link> outLinks() {
-		return localView().g.findLinks(l -> l.src.component.equals(this));
-	}
-
-	public PublicKey publicKey() {
-		return secureSerializer.publicKey();
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		var c = (Component) o;
-		return c.publicKey().equals(publicKey());
 	}
 
 	public DigitalTwinService dt() {

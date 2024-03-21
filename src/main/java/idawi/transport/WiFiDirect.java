@@ -1,5 +1,7 @@
 package idawi.transport;
 
+import java.util.Collection;
+
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
@@ -20,11 +22,6 @@ public class WiFiDirect extends WirelessTransport {
 
 
 	@Override
-	protected void sendImpl(Message msg) {
-		throw new NotYetImplementedException();
-	}
-
-	@Override
 	public void dispose(Link l) {
 	}
 
@@ -36,6 +33,16 @@ public class WiFiDirect extends WirelessTransport {
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.010, 0.030, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		throw new NotYetImplementedException();
+	}
+
+	@Override
+	protected void bcast(byte[] msg) {
+		throw new NotYetImplementedException();
 	}
 
 }

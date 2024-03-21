@@ -57,7 +57,6 @@ public class Demo4_deploy_local_peers {
 		Component initialThing = new Component();
 		List<Component> things = new ArrayList<>();
 		var l = Component.createNComponent(50);
-		initialThing.service(DeployerService.class).deployInThisJVM(l, peerOk -> things.add(peerOk));
 		Topologies.chain(things, (a, b) -> SharedMemoryTransport.class, things);
 		Component last = things.get(things.size() - 1);
 

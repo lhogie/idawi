@@ -116,7 +116,7 @@ public class IRP extends RoutingService<IRPParms> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(IRPParms parms) {
+	public ComponentMatcher defaultMatcher(IRPParms parms) {
 		var p = (IRPParms) parms;
 		return ComponentMatcher.multicast(p.components);
 	}

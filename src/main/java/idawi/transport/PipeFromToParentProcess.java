@@ -2,6 +2,7 @@ package idawi.transport;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Collection;
 
 import idawi.Component;
 import idawi.Idawi;
@@ -17,7 +18,7 @@ public class PipeFromToParentProcess extends TransportService {
 		Idawi.agenda.threadPool.submit(() -> {
 			try {
 				while (true) {
-					processIncomingMessage((Message) component.secureSerializer.read(System.in));
+					processIncomingMessage((Message) serializer.read(System.in));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -30,12 +31,12 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
-	protected void sendImpl(Message msg) {
-		send(msg);
+	protected void bcast(byte[] msgBytes) {
+		send(msgBytes);
 	}
 
-	public void send(Object o) {
-		sendBytes(component.secureSerializer.toBytes(o));
+	public void send(byte[] o) {
+		sendBytes(o);
 	}
 
 	public static void sendBytes(byte[] bytes) {
@@ -49,7 +50,6 @@ public class PipeFromToParentProcess extends TransportService {
 		return "pipe to parent";
 	}
 
-	
 	@Override
 	public void dispose(Link l) {
 		try {
@@ -59,10 +59,15 @@ public class PipeFromToParentProcess extends TransportService {
 
 		System.out.close();
 	}
-	
+
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
+		send(msgBytes);
 	}
 
 }

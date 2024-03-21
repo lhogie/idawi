@@ -16,7 +16,7 @@ public class Demo1_multi_jvm {
 	public static void main(String[] args) throws Throwable {
 		Component t1 = new Component();
 
-		var c = t1.service(DeployerService.class).deployInNewJVM(fdbck -> System.out.println(fdbck));
+		var c = t1.service(DeployerService.class).newLocalJVM();
 
 		Message pong = t1.bb().ping(c).poll_sync();
 		System.out.println("pong duration: " + pong.route.duration());

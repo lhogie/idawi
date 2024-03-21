@@ -7,7 +7,6 @@ import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.routing.TrafficListener;
 import idawi.service.LocationService;
-import idawi.service.local_view.LocalViewService;
 import idawi.service.local_view.Network;
 import idawi.transport.TCPDriver;
 import idawi.transport.Topologies;
@@ -31,16 +30,6 @@ public class Valentin {
 			components = Component.createNComponent(n);
 			System.out.println("assign random locations to nodes");
 			components.forEach(c -> c.service(LocationService.class, true).location.random(1000, Idawi.prng));
-
-			// build individual local views
-			for (var a : components) {
-				var lv = a.service(LocalViewService.class, true);
-
-				for (var b : components) {
-					var btwin = lv.g.ensureExists(b);
-					btwin.service(LocationService.class, true).location = b.getLocation().clone();
-				}
-			}
 
 			System.out.println("generates a random topology involving/informing all components");
 

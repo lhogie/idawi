@@ -52,7 +52,7 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(RoutingData parms) {
+	public ComponentMatcher defaultMatcher(RoutingData parms) {
 		return null;
 	}
 

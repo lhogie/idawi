@@ -1,5 +1,6 @@
 package idawi.transport;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -45,14 +46,8 @@ public class SharedFileSystemTransport extends TransportService {
 	}
 
 	@Override
-	protected void sendImpl(Message msg) {
-		var to = msg.route.last().link.dest.component;
-		String filename = String.valueOf(Math.abs(new Random().nextLong()));
-		Directory toDir = new Directory(baseDirectory, to.toString());
-		toDir.ensureExists();
-		RegularFile f = new RegularFile(toDir, filename + ".ser");
-		byte[] bytes = component.secureSerializer.toBytes(msg);
-		f.setContent(bytes);
+	protected void bcast(byte[] msg) {
+		multicast(msg, activeOutLinks());
 	}
 
 	@Override
@@ -63,7 +58,7 @@ public class SharedFileSystemTransport extends TransportService {
 
 	protected Message extract(RegularFile f) {
 		try {
-			Message msg = (Message) component.secureSerializer.fromBytes(f.getContent());
+			Message msg = (Message) serializer.fromBytes(f.getContent());
 			return msg;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -78,6 +73,18 @@ public class SharedFileSystemTransport extends TransportService {
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.1, 1, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		for (var  l : outLinks) {
+			String filename = String.valueOf(Math.abs(new Random().nextLong()));
+			Directory toDir = new Directory(baseDirectory, l.dest.component.toString());
+			toDir.ensureExists();
+			RegularFile f = new RegularFile(toDir, filename + ".ser");
+			f.setContent(msg);
+		}
+
 	}
 
 }

@@ -9,6 +9,8 @@ public class MessageODestination extends Destination {
 	public boolean premptive;
 	public long invocationDate;
 	public long instanceID;
+	public boolean alertServiceNotAvailable = true;
+	public boolean autoStartService = false;
 
 	public MessageODestination(Class<? extends Service> service, Class<? extends InnerClassEndpoint> operationID) {
 		if (service == null)

@@ -273,7 +273,7 @@ public class WebService extends Service {
 			var dataText = TextUtilities.prefixEachLineBy(new String(data), "data: ");
 			out.write(dataText.getBytes());
 			out.write('\n');
-			out.write('\n');
+			out.write('\n'); // end of event
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

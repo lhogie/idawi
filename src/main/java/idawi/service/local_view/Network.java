@@ -17,7 +17,7 @@ import idawi.Idawi;
 import idawi.IdawiGraphvizDriver;
 import idawi.service.local_view.BFS.BFSResult;
 import idawi.service.local_view.BFS.RRoute;
-import idawi.service.local_view.BFS.Routes;
+import idawi.service.local_view.BFS.RouteList;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
 import jdotgen.GraphvizDriver;
@@ -32,14 +32,15 @@ public class Network extends ThreadSafeNetworkDataStructure {
 			var cache = get(from);
 
 			if (cache == null) {
-				put(from, cache = new Cache<>(5,
-						() -> BFS.bfs(Network.this, from, 10, Integer.MAX_VALUE, ignoreComponent -> false, ignoreLink -> false)));
+				put(from, cache = new Cache<>(5, () -> BFS.bfs(Network.this, from, 10, Integer.MAX_VALUE,
+						ignoreComponent -> false, ignoreLink -> false)));
 			}
 
 			return cache.get();
 		}
 	}
 
+	
 	public final BFSCache bfs = new BFSCache();
 
 	@Override
@@ -60,27 +61,14 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		return findLinks(l -> !l.isActive());
 	}
 
-	public Component findComponent(Predicate<Component> p) {
-		var a = new Component[1];
 
-		forEachComponent(c -> {
-			if (p.test(c)) {
-				a[0] = c;
-				return Stop.yes;
-			} else {
-				return Stop.no;
-			}
-		});
 
-		return a[0];
+	public Component findComponentByPublicKey(PublicKey k, boolean autoCreate) {
+		return findComponent(c -> c.publicKey() != null && c.publicKey().equals(k), autoCreate, null);
 	}
 
-	public Component findComponentByPublicKey(PublicKey k) {
-		return findComponent(c -> c.publicKey() != null && c.publicKey().equals(k));
-	}
-
-	public Component findComponentByFriendlyName(String name) {
-		return findComponent(c -> c.friendlyName.equals(name));
+	public Component findComponentByFriendlyName(String name, boolean autoCreate) {
+		return findComponent(c -> c.friendlyName != null && c.friendlyName.equals(name), autoCreate, null);
 	}
 
 	public List<Link> findLinksTo(Component c) {
@@ -133,8 +121,8 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		return BFS.bfs(this, src, maxDistance, Integer.MAX_VALUE, c -> false, c -> false).predecessors.pathTo(dest);
 	}
 
-	public Routes findDisjointRoutes(Component src, Component dest, int maxDistance, Predicate<Routes> enough) {
-		var routes = new Routes();
+	public RouteList findDisjointRoutes(Component src, Component dest, int maxDistance, Predicate<RouteList> enough) {
+		var routes = new RouteList();
 		routes.disjoint = true;
 		var ignore = new HashSet<Component>();
 		var bfs = BFS.bfs(this, src, maxDistance, Integer.MAX_VALUE, c -> false, c -> false);
@@ -170,6 +158,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 
 	public void markLinkActive(Component src, Component dest, Class<? extends TransportService> t,
 			boolean bothDirections) {
+
 		markLinkActive(src.service(t, true), dest.service(t, true), bothDirections);
 	}
 

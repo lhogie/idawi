@@ -1,5 +1,7 @@
 package idawi.transport;
 
+import java.util.Collection;
+
 import javax.bluetooth.DeviceClass;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.DiscoveryListener;
@@ -9,7 +11,6 @@ import javax.bluetooth.ServiceRecord;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 import toools.math.MathsUtilities;
 
@@ -90,9 +91,13 @@ public class Bluetooth extends WirelessTransport {
 		return "bluetooth";
 	}
 
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		throw new NotYetImplementedException();
+	}
 
 	@Override
-	protected void sendImpl(Message msg) {
+	protected void bcast(byte[] msg) {
 		throw new NotYetImplementedException();
 	}
 

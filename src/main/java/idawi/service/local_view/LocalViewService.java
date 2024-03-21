@@ -27,6 +27,9 @@ public class LocalViewService extends KnowledgeBase {
 	public LocalViewService(Component component) {
 		super(component);
 
+		// the component won't have a local twin of itself
+		g.add(component);
+
 		component.trafficListeners.add(new TrafficListener() {
 			@Override
 			public void newMessageReceived(TransportService t, Message m) {
@@ -43,7 +46,7 @@ public class LocalViewService extends KnowledgeBase {
 			@Override
 			public void linkActivated(Link l) {
 				// if this is a local link
-				if (disseminateTopologyChangesWhenTheyOccur && l.involves(component)) {
+				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
 					routing().exec(LocalViewService.class, markLinkActive.class, List.of(l), true);
 				}
 			}
@@ -51,7 +54,7 @@ public class LocalViewService extends KnowledgeBase {
 			@Override
 			public void linkDeactivated(Link l) {
 				// if this is a local link
-				if (disseminateTopologyChangesWhenTheyOccur && l.involves(component)) {
+				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
 					routing().exec(LocalViewService.class, makeLinkInactive.class, List.of(l), true);
 				}
 			}
@@ -64,9 +67,6 @@ public class LocalViewService extends KnowledgeBase {
 			public void componentHasGone(Component a) {
 			}
 		});
-
-		// the component won't have twin
-//		components.add(component);
 	}
 
 	void scheduleNextDisseminationMessage() {

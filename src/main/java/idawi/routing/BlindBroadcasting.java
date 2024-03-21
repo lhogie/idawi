@@ -21,18 +21,13 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 		return "blind broadcasting";
 	}
 
-
 	@Override
 	synchronized public void accept(Message msg, RoutingData parms) {
 		// the message was never received
 		if (!component.alreadyKnownMsgs.contains(msg.ID)) {
-			component.services(TransportService.class).forEach(t -> {
-				t.multicast(msg, this, parms);
-			});
-
+			component.services(TransportService.class).forEach(t -> t.multicast(msg, this, parms));
 			listeners.forEach(l -> l.messageForwarded(this, msg));
 		} else {
-			System.out.println(component + " dropped");
 			listeners.forEach(l -> l.messageDropped(this, msg));
 		}
 	}
@@ -45,7 +40,7 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(RoutingData parms) {
+	public ComponentMatcher defaultMatcher(RoutingData parms) {
 		return ComponentMatcher.all;
 	}
 }

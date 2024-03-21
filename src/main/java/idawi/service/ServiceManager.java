@@ -77,7 +77,7 @@ public class ServiceManager extends Service {
 
 	public class list extends TypedInnerClassEndpoint {
 		public Set<String> get() {
-			return component.services().stream().map(s -> s.id.getName()).collect(Collectors.toSet());
+			return component.services().stream().map(s -> s.getClass().getName()).collect(Collectors.toSet());
 		}
 
 		@Override

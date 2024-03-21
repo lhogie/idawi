@@ -1,5 +1,8 @@
 package idawi.service.local_view;
 
-public interface Infoable {
+import toools.SizeOf;
+
+public interface Infoable  {
 	Info asInfo();
+	
 }

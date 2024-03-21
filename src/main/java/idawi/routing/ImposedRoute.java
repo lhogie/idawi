@@ -56,7 +56,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(IRTo parms) {
+	public ComponentMatcher defaultMatcher(IRTo parms) {
 		return ComponentMatcher.all;
 	}
 }

@@ -66,7 +66,7 @@ public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(ForceRoutingParms parms) {
+	public ComponentMatcher defaultMatcher(ForceRoutingParms parms) {
 		return ComponentMatcher.all;
 	}
 

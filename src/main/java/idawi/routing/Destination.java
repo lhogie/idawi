@@ -8,7 +8,6 @@ import toools.SizeOf;
 public abstract class Destination implements Serializable, SizeOf {
 	public ComponentMatcher componentMatcher;
 	public MessageQDestination replyTo;
-	public boolean autoStartService = false;
 
 	public abstract Class<? extends Service> service();
 
