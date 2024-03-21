@@ -3,11 +3,15 @@ package idawi.transport;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Collection;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 
 public class UDPDriver extends IPDriver {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
@@ -20,48 +24,6 @@ public class UDPDriver extends IPDriver {
 	@Override
 	public String getProtocolName() {
 		return "UDP";
-	}
-
-	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> relays) {
-		if (socket == null)
-			return;
-
-		byte[] buf = serializer.toBytes(msg);
-		// Cout.debugSuperVisible("sending to " + neighbors);
-
-		for (var relay : relays) {
-			// System.out.println(n.toHTML());
-
-			if (msg.route.isEmpty())
-				throw new IllegalStateException("empty route");
-
-			DatagramPacket p = new DatagramPacket(buf, buf.length);
-			p.setAddress(relay.dest.component.info.inetAddresses.get(0));
-			// System.out.println(relay.inetAddresses.get(0) + ":" +
-			// relay.udpPort);
-			p.setPort(relay.dest.component.info.udpPort);
-
-			try {
-				socket.send(p);
-				// System.out.println(n.inetAddresses.get(0));
-				// System.out.println(n.udpPort);
-			} catch (IOException e1) {
-			}
-		}
-	}
-
-	@Override
-	protected void bcastImpl(Message msg) {
-		if (socket == null)
-			return;
-
-		multicastImpl(msg, neighborhood().infos());
-	}
-
-	@Override
-	public boolean canContact(Component c) {
-		return super.canContact(c) && c.info.udpPort != null;
 	}
 
 	@Override
@@ -86,7 +48,6 @@ public class UDPDriver extends IPDriver {
 						Message msg = (Message) serializer.fromBytes(p.getData());
 						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
-						component.services(DigitalTwinService.class).forEach(s -> s.feedWith(msg.route));
 						processIncomingMessage(msg);
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -111,7 +72,43 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	public Collection<Component> actualNeighbors() {
-		return null;
+	public void dispose(Link l) {
+	}
+
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+	}
+
+	@Override
+	protected void bcast(byte[] msgBytes) {
+		try {
+			for (var ni : NetworkInterface.networkInterfaces().toList()) {
+				for (var ia : ni.getInterfaceAddresses()) {
+					udpSend(msgBytes, ia.getBroadcast(), getPort());
+				}
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
+		for (var l : outLinks) {
+			var i = l.dest.component.dt().info();
+			udpSend(msgBytes, i.inetAddresses.get(0), i.udpPort);
+		}
+	}
+
+	private void udpSend(byte[] buf, InetAddress ip, int port) {
+		DatagramPacket p = new DatagramPacket(buf, buf.length);
+		p.setAddress(ip);
+		p.setPort(getPort());
+
+		try {
+			socket.send(p);
+		} catch (IOException e1) {
+		}
 	}
 }

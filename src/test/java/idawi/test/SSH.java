@@ -9,9 +9,9 @@ import org.junit.Test;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
-import idawi.deploy.DeployerService.RemoteDeploymentRequest;
 import idawi.messaging.Message;
 import toools.io.Cout;
+import toools.net.SSHParms;
 
 public class SSH {
 	public static void main(String[] args) throws Exception {
@@ -27,13 +27,13 @@ public class SSH {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var c2 = new Component("c2");
-		var deployReq = new RemoteDeploymentRequest();
-		deployReq.ssh.host = "musclotte.inria.fr";
+		var c2 = new Component();
+		var ssh = new SSHParms();
+		ssh.host = "musclotte.inria.fr";
 
-		c1.lookup(DeployerService.class).deployRemotely(Set.of(deployReq),
+		c1.service(DeployerService.class).deployViaSSH(Set.of(ssh),
 				rsyncOut -> System.out.println("rsync: " + rsyncOut),
-				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"));
+				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"), err -> err.printStackTrace());
 
 		// asks the master to ping the other component
 		Message pong = c1.bb().ping(c2).poll_sync();

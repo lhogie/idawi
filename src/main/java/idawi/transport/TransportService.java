@@ -1,119 +1,208 @@
 package idawi.transport;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.ToLongFunction;
 
 import idawi.Component;
+import idawi.Event;
+import idawi.Idawi;
+import idawi.IdawiSerializer;
+import idawi.PointInTime;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
-import idawi.routing.Emission;
-import idawi.routing.Reception;
+import idawi.routing.ComponentMatcher.multicast;
+import idawi.routing.Entry;
+import idawi.routing.MessageODestination;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
+import idawi.service.EncryptionService;
 import toools.io.Cout;
-import toools.io.ser.JavaSerializer;
-import toools.io.ser.Serializer;
 
 public abstract class TransportService extends Service {
-	public static Serializer serializer = new JavaSerializer();
-	public long nbOfMsgReceived = 0;
+	public long nbMsgReceived = 0;
+	public long nbMsgSent;
+	public long incomingTraffic;
+	public long outGoingTraffic;
+	// used to serialized messages for transport
+	public final transient IdawiSerializer serializer;
 
-	private Neighborhood neighborhood = new Neighborhood();
+//	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
-		registerOperation(new getNbMessagesReceived());
-		registerOperation(new neighbors());
+		serializer = new IdawiSerializer(this);
+//		 c.localView().g.markLinkActive(this, this); // loopback
 	}
 
-	public OutNeighbor find(Component c) {
-		for (var neighbor : neighborhood) {
-			if (neighbor.dest.component.equals(c)) {
-				return neighbor;
-			}
-		}
+	@Override
+	public long sizeOf() {
+		return 8 * 4 + super.sizeOf();
+	}
 
-		return null;
+	@Override
+	public String toString() {
+		return component + "/" + getName();
 	}
 
 	// this is called by transport implementations
-	protected final void processIncomingMessage(Message msg) {
-//		Cout.debug("received: " + msg);
-		++nbOfMsgReceived;
-		var reception = new Reception(this);
-		msg.route.add(reception);
+	protected synchronized final void processIncomingMessage(Message msg) {
+		Vault vault = msg.content instanceof Vault ? (Vault) msg.content : null;
+		Cout.debug(this + " receives " + msg);
+		++nbMsgReceived;
+		incomingTraffic += msg.sizeOf();
+		Entry last = msg.route.last();
+//		last.link.dest = this;
+		last.receptionDate = component.now();
+		last.link.latency = last.duration();
 
-		var kb = component.lookup(DigitalTwinService.class);
+		component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
-		for (var e : msg.route.events()) {
-			e.transport = kb.twinTransport(e.transport);
+		boolean loopback = msg.route.getFirst().link.src.component.equals(component);
+		// if the message was targeted to this component and its the first time it is
+		// received
+		if (msg.destination.componentMatcher.test(component) && (!component.alreadyKnownMsgs.contains(msg.ID) || allowLoopback)) {
+			var dest = (MessageODestination) msg.destination;
+			var targetService = component.service(dest.service(), dest.autoStartService);
+
+			if (targetService == null) {
+				if (dest.alertServiceNotAvailable && dest.replyTo != null) {
+					reply(msg, "no such service", true);
+				} else {
+					System.err.println(
+							"component " + component + " does not have service " + msg.destination.service().getName());
+				}
+			} else {
+				targetService.process(msg);
+			}
 		}
 
-		component.forEachServiceOfClass(DigitalTwinService.class, s -> s.feedWith(msg.route));
+		synchronized (component) {
+			boolean msgTargettedToMeOnly = msg.destination.componentMatcher instanceof multicast to
+					&& to.target.size() == 1 && to.target.contains(component);
 
-		// if the message was target to this component
-		if (msg.destination.componentTarget.test(component)) {
-			var s = component.lookup(msg.destination.service());
+			if (!msgTargettedToMeOnly) {
+				if (vault != null) {
+					msg.content = vault;
+				}
 
-			if (s == null)
-				Cout.debugSuperVisible(
-						"component " + component + " does not have service " + msg.destination.service());
-			else
-			s.considerNewMessage(msg);
+				considerForForwarding(msg);
+			}
+
+			component.alreadyKnownMsgs.add(msg.ID);
 		}
+	}
 
-		// search for the same routing service
-		var rs = component.lookup(reception.previousEmission().routingProtocol());
+	private void considerForForwarding(Message msg) {
+		// search for the routing service it was initially sent
+		var rs = component.service(msg.routingStrategy.routingService, true);
+		RoutingData routingParms;
 
-		// no such routing protocol running here
 		if (rs == null) {
-			// dunno what to do with the message
-			// so just pass it around
-			component.bb().accept(msg, msg.currentRoutingParameters());
+			rs = component.defaultRoutingProtocol();
+			routingParms = rs.defaultData();
 		} else {
-			rs.accept(msg, msg.currentRoutingParameters());
+			routingParms = msg.routingStrategy.parms;
 		}
+
+		rs.accept(msg, routingParms);
 	}
 
 	public abstract String getName();
 
-	public abstract boolean canContact(Component c);
+	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
 
-	public Neighborhood neighborhood() {
-		return neighborhood;
+	protected abstract void bcast(byte[] msgBytes);
+
+	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
+		Cout.debug(" " + component + " uses '" + getName() + "' to send: " + msg);
+		component.alreadyKnownMsgs.add(msg.ID);
+		var sentFromTwin = component.isDigitalTwin();
+		++nbMsgSent;
+		outGoingTraffic += msg.sizeOf();
+
+		// add a link heading to an unknown destination
+		msg.route.add(new Entry(new Link(this), r));
+
+		if (outLinks == null) {
+			bcast(msgToBytes(msg));
+		} else {
+			Set<Link> realSend = new HashSet<Link>();
+			Set<Link> fakeEmissions = new HashSet<Link>();
+
+			for (var outLink : outLinks) {
+				// sending from a real component to a digital twin in the only situation
+				// the transport is really involved
+				var loop = outLink.dest.component.equals(component);
+
+				if (sentFromTwin || msg.simulate || loop) {
+					fakeEmissions.add(outLink);
+				} else {
+					realSend.add(outLink);
+				}
+
+				outLink.nbMsgs++;
+			}
+
+			var msgBytes = msgToBytes(msg);
+			multicast(msgBytes, realSend);
+			fakeSend(msg, fakeEmissions);
+		}
 	}
 
-	protected abstract void multicastImpl(Message msg, Collection<OutNeighbor> throughSpecificNeighbors);
+	private byte[] msgToBytes(Message msg) {
+		var es = component.service(EncryptionService.class);
 
-	protected abstract void bcastImpl(Message msg);
+		// if need to encrypt
+		if (es != null) {
+			msg.content = new Vault(msg.content, es.rsa, serializer);
+			throw new IllegalStateException();
+		}
 
-	public final void multicast(Message msg, Collection<OutNeighbor> throughSpecificNeighbors, RoutingService r,
-			RoutingData parms) {
-//		Cout.debug("multicast: " + msg);
-		msg.route.add(new Emission(r, parms, this));
-		multicastImpl(msg, throughSpecificNeighbors);
-		msg.route.removeLast();
+		return serializer.toBytes(msg);
 	}
 
-	public final void bcast(Message msg, RoutingService r, RoutingData parms) {
-//		Cout.debug("bcast: " + msg);
+	private void fakeSend(Message msg, Set<Link> fakeEmissions) {
+		for (var l : fakeEmissions) {
+			var msgClone = msg.clone(serializer);
+			double actualLatency = l.latency();
 
-		msg.route.add(new Emission(r, parms, this));
-		bcastImpl(msg);
-		msg.route.removeLast();
+			Idawi.agenda.schedule(
+					new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
+						@Override
+						public void run() {
+//							Cout.debugSuperVisible(":)");
+							try {
+								l.dest.processIncomingMessage(msgClone);
+							} catch (Throwable e) {
+								e.printStackTrace();
+							}
+						}
+					});
+		}
+	}
+
+	public final void multicast(Message msg, RoutingService r, RoutingData parms) {
+		send(msg, activeOutLinks(), r, parms);
+	}
+
+	public List<Link> activeOutLinks() {
+		return component.localView().g.findLinks(l -> l.isActive() && l.src.equals(this));
 	}
 
 	@Override
 	public String getFriendlyName() {
-		return getName() + " transport";
+		return getName();
 	}
 
 	public long getNbMessagesReceived() {
-		return nbOfMsgReceived;
+		return nbMsgReceived;
 	}
 
-	public class getNbMessagesReceived extends TypedInnerClassOperation {
+	public class getNbMessagesReceived extends TypedInnerClassEndpoint {
 		public long f() {
 			return getNbMessagesReceived();
 		}
@@ -124,9 +213,9 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	public class neighbors extends TypedInnerClassOperation {
-		public Neighborhood f() {
-			return neighborhood();
+	public class neighbors extends TypedInnerClassEndpoint {
+		public List<Link> f() {
+			return activeOutLinks();
 		}
 
 		@Override
@@ -135,10 +224,13 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	public abstract Collection<Component> actualNeighbors();
+	public abstract void dispose(Link l);
 
-	@Override
-	public String toString() {
-		return getName();
+	public static <T extends TransportService> long sum(Collection<Component> components, Class<T> transport,
+			ToLongFunction<T> f) {
+		return components.stream().flatMap(c -> c.services(transport).stream()).mapToLong(f).reduce(0, Long::sum);
 	}
+
+	public abstract double latency();
+
 }

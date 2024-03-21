@@ -2,21 +2,17 @@ package idawi.service.time;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
-import idawi.messaging.Message;
-import idawi.routing.BlindBroadcasting;
+import idawi.TypedInnerClassEndpoint;
 
 public class TimeService extends Service {
 	public TimeModel model = new ComputerClockTimeModel();
 
 	public TimeService(Component peer) {
 		super(peer);
-		registerOperation(new getTime());
-		registerOperation(new setTime());
-		registerOperation(new getModel());
 	}
 
-	public class getTime extends TypedInnerClassOperation {
+
+	public class getTime extends TypedInnerClassEndpoint {
 		public Time f() {
 			return now2();
 		}
@@ -27,7 +23,7 @@ public class TimeService extends Service {
 		}
 	}
 
-	public class setTime extends TypedInnerClassOperation {
+	public class setTime extends TypedInnerClassEndpoint {
 		public void f(double newTime, boolean bcast) {
 			if (!(model instanceof SettableTimeModel))
 				throw new IllegalStateException("use a settable time model");
@@ -35,7 +31,7 @@ public class TimeService extends Service {
 			((SettableTimeModel) model).setTime(newTime);
 
 			if (bcast) {
-				component.bb().send(now2(), null);
+				component.bb().send(now2(), true, null);
 			}
 		}
 
@@ -45,7 +41,7 @@ public class TimeService extends Service {
 		}
 	}
 
-	public class getModel extends TypedInnerClassOperation {
+	public class getModel extends TypedInnerClassEndpoint {
 		public TimeModel f() {
 			return model;
 		}
@@ -56,9 +52,7 @@ public class TimeService extends Service {
 		}
 	}
 
-	public double now() {
-		return model.getTime();
-	}
+
 
 	public Time now2() {
 		return new Time(model.getTime(), model);

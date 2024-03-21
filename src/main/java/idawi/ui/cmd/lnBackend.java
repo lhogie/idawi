@@ -8,6 +8,6 @@ public class lnBackend extends CommandBackend {
 
 	@Override
 	public void runOnServer(Component n, Consumer<Object> out) throws Throwable {
-		n.neighbors().forEach(p -> out.accept(p));
+		n.outLinks().forEach(p -> out.accept(p));
 	}
 }

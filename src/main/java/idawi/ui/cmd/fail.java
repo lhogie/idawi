@@ -1,18 +1,12 @@
 package idawi.ui.cmd;
 
-import toools.io.file.RegularFile;
-
 public class fail extends BackendedCommand {
 	public static void main(String[] args) throws Throwable {
-		new fail(null).run(args);
-	}
-
-	public fail(RegularFile launcher) {
-		super(launcher);
+		new fail().run(args);
 	}
 
 	@Override
-	public String getShortDescription() {
+	public String getDescription() {
 		return "simulates an error on the peers";
 	}
 }

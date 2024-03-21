@@ -21,12 +21,12 @@ public class OAR extends Service {
 
 	public OAR(Component peer) {
 		super(peer);
-		registerOperation("submit", (msg, out) -> {
+		registerEndpoint("submit", (msg, out) -> {
 			String requirements = (String) msg.content;
 			submit(requirements);
 		});
 
-		registerOperation("submit", (msg, returns) -> {
+		registerEndpoint("submit", (msg, returns) -> {
 			String requirements = (String) msg.content;
 			submit(requirements);
 		});

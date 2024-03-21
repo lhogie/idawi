@@ -1,5 +1,7 @@
 package idawi.transport;
 
+import java.util.Collection;
+
 import javax.bluetooth.DeviceClass;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.DiscoveryListener;
@@ -7,11 +9,17 @@ import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 
-public class Bluetooth {
+import idawi.Component;
+import idawi.Idawi;
+import toools.exceptions.NotYetImplementedException;
+import toools.math.MathsUtilities;
+
+public class Bluetooth extends WirelessTransport {
+
 	private static final Object lock = new Object();
 
 	public static void main(String[] args) {
-System.out.println(System.getProperties());
+		System.out.println(System.getProperties());
 		try {
 			// 1
 			LocalDevice localDevice = LocalDevice.getLocalDevice();
@@ -27,14 +35,12 @@ System.out.println(System.getProperties());
 				synchronized (lock) {
 					lock.wait();
 				}
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			System.out.println("Device Inquiry Completed. ");
 
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -46,8 +52,7 @@ System.out.println(System.getProperties());
 			String name;
 			try {
 				name = btDevice.getFriendlyName(false);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				name = btDevice.getBluetoothAddress();
 			}
 
@@ -70,5 +75,38 @@ System.out.println(System.getProperties());
 		public void servicesDiscovered(int arg0, ServiceRecord[] arg1) {
 		}
 
+	}
+
+	public Bluetooth(Component c) {
+		super(c);
+	}
+
+	@Override
+	public double typicalEmissionRange() {
+		return 10;
+	}
+
+	@Override
+	public String getName() {
+		return "bluetooth";
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		throw new NotYetImplementedException();
+	}
+
+	@Override
+	protected void bcast(byte[] msg) {
+		throw new NotYetImplementedException();
+	}
+
+	@Override
+	public void dispose(Link l) {
+	}
+
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.034, 0.200, Idawi.prng);
 	}
 }

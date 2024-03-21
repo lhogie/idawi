@@ -11,7 +11,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
+import idawi.routing.Destination;
 import idawi.routing.MessageQDestination;
 import toools.SizeOf;
 
@@ -34,17 +35,11 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	private final Map<String, Set<MessageQDestination>> topic_subscribers = new HashMap<>();
+	private final Map<String, Set<Destination>> topic_subscribers = new HashMap<>();
 	public final Map<String, List<Publication>> topic_history = new HashMap<>();
 
 	public PublishSubscribeService(Component peer) {
 		super(peer);
-		registerOperation(new Publish());
-		registerOperation(new ListSubscribers());
-		registerOperation(new ListTopics());
-		registerOperation(new subscribe());
-		registerOperation(new unsubscribe());
-		registerOperation(new LookupPublication());
 	}
 
 	@Override
@@ -57,8 +52,8 @@ public class PublishSubscribeService extends Service {
 		return "publish/subscribe";
 	}
 
-	public class subscribe extends TypedInnerClassOperation {
-		public void exec(String topic, MessageQDestination subscriber) throws Throwable {
+	public class subscribe extends TypedInnerClassEndpoint {
+		public void exec(String topic, Destination subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).add(subscriber);
 		}
@@ -69,7 +64,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class unsubscribe extends TypedInnerClassOperation {
+	public class unsubscribe extends TypedInnerClassEndpoint {
 		public void exec(String topic, MessageQDestination subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
@@ -82,7 +77,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class ListTopics extends TypedInnerClassOperation {
+	public class ListTopics extends TypedInnerClassEndpoint {
 		public List<String> exec() throws Throwable {
 			return new ArrayList(topic_history.keySet());
 		}
@@ -93,8 +88,8 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class ListSubscribers extends TypedInnerClassOperation {
-		public Map<String, Set<MessageQDestination>> exec(String topic) throws Throwable {
+	public class ListSubscribers extends TypedInnerClassEndpoint {
+		public Map<String, Set<Destination>> exec(String topic) throws Throwable {
 			return topic_subscribers;
 		}
 
@@ -104,7 +99,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class Publish extends TypedInnerClassOperation {
+	public class Publish extends TypedInnerClassEndpoint {
 		public void exec(String topic, Object content) throws Throwable {
 			publish(content, topic);
 		}
@@ -115,7 +110,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class LookupPublication extends TypedInnerClassOperation {
+	public class LookupPublication extends TypedInnerClassEndpoint {
 		public Publication exec(long ID) throws Throwable {
 			return lookup(ID);
 		}
@@ -150,7 +145,7 @@ public class PublishSubscribeService extends Service {
 
 		// notify subscribers
 		topic_subscribers.get(topic)
-				.forEach(subscriber -> component.defaultRoutingProtocol().send(publication, subscriber));
+				.forEach(subscriber -> component.defaultRoutingProtocol().send(o, true, subscriber));
 	}
 
 	private void ensureTopicExists(String topic) {

@@ -11,6 +11,10 @@ import toools.io.ser.Serializer;
 public class JasetoSerializer<E> extends Serializer<E> {
 	Jaseto j = new Jaseto();
 
+	public JasetoSerializer(Jaseto j) {
+		this.j = j;
+	}
+
 	@Override
 	public E read(InputStream is) throws IOException {
 		throw new NotYetImplementedException();
@@ -18,8 +22,8 @@ public class JasetoSerializer<E> extends Serializer<E> {
 
 	@Override
 	public void write(E o, OutputStream os) throws IOException {
-		j.registry.map.clear();
-		os.write(j.toJSON(o).getBytes());
+		j.registry.clear();
+		os.write(j.toNode(o).toJSON().getBytes());
 	}
 
 	@Override

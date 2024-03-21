@@ -11,8 +11,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 import idawi.Component;
-import idawi.knowledge_base.DigitalTwinService;
+import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.math.MathsUtilities;
 import toools.thread.Threads;
 
 public class TCPDriver extends IPDriver {
@@ -41,11 +42,6 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	public boolean canContact(Component c) {
-		return super.canContact(c) && c.info.tcpPort != null;
-	}
-
-	@Override
 	protected void startServer() {
 		while (true) {
 			try {
@@ -71,7 +67,7 @@ public class TCPDriver extends IPDriver {
 			try {
 				while (true) {
 					Message msg = (Message) serializer.read(is);
-					var from = msg.route.last().transport().component;
+					var from = msg.route.last().link.src.component;
 
 					synchronized (neighbor_socket) {
 						Entry e = neighbor_socket.get(from);
@@ -110,49 +106,12 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	@Override
-	protected void multicastImpl(Message msg, Collection<OutNeighbor> neighbors) {
-		for (var n : neighbors) {
-			Entry entry = null;
-
-			synchronized (neighbor_socket) {
-				entry = neighbor_socket.get(n);
-
-				// there is no connection to this peer yet
-				// try to establish one
-				if (entry == null) {
-					entry = createSocket(n.dest.component);
-				}
-			}
-
-			// if a connection could be obtained
-			if (entry != null) {
-				try {
-					serializer.write(msg, entry.os);
-				} catch (IOException e) {
-					errorOn(entry.socket);
-				}
-			}
-		}
-	}
-
-	@Override
-	protected void bcastImpl(Message msg) {
-		for (var entry : neighbor_socket.values()) {
-			try {
-				serializer.write(msg, entry.os);
-			} catch (IOException e) {
-				errorOn(entry.socket);
-			}
-		}
-	}
-
 	protected Entry createSocket(Component to) {
-		for (var ip : to.info.inetAddresses) {
+		for (var ip : to.dt().info().inetAddresses) {
 			Entry entry = null;
 
 			try {
-				var socket = new Socket(ip, to.info.tcpPort);
+				var socket = new Socket(ip, to.dt().info().tcpPort);
 				neighbor_socket.put(to, entry = new Entry(socket));
 				newSocket(socket);
 				return entry;
@@ -190,8 +149,52 @@ public class TCPDriver extends IPDriver {
 		return ss != null;
 	}
 
-	@Override
 	public Collection<Component> actualNeighbors() {
 		return neighbor_socket.keySet();
 	}
+
+	@Override
+	public void dispose(Link l) {
+		try {
+			neighbor_socket.get(l.dest.component).socket.close();
+		} catch (IOException err) {
+		}
+	}
+
+	@Override
+	public double latency() {
+		return MathsUtilities.pickRandomBetween(0.000020, 0.000060, Idawi.prng);
+	}
+
+	@Override
+	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		for (var l : outLinks) {
+			Entry entry = null;
+
+			synchronized (neighbor_socket) {
+				entry = neighbor_socket.get(l.dest.component);
+
+				// there is no connection to this peer yet
+				// try to establish one
+				if (entry == null) {
+					entry = createSocket(l.dest.component);
+				}
+			}
+
+			// if a connection could be obtained
+			if (entry != null) {
+				try {
+					entry.os.write(msg);
+				} catch (IOException e) {
+					errorOn(entry.socket);
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void bcast(byte[] msg) {
+		multicast(msg, activeOutLinks());
+	}
+
 }

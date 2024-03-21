@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.InnerClassOperation;
-import idawi.RemotelyRunningOperation;
+import idawi.InnerClassEndpoint;
+import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassOperation;
+import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
@@ -22,12 +22,9 @@ public class ExternalCommandsService extends Service {
 
 	public ExternalCommandsService(Component t) {
 		super(t);
-		registerOperation(new commands());
-		registerOperation(new exec());
-		registerOperation(new has());
 	}
 
-	public class has extends TypedInnerClassOperation {
+	public class has extends TypedInnerClassEndpoint {
 		public boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
 			return f != null && f.exists();
@@ -40,7 +37,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class commands extends TypedInnerClassOperation {
+	public class commands extends TypedInnerClassEndpoint {
 		public Set<String> f() {
 			return commandName2executableFile.keySet();
 		}
@@ -52,7 +49,7 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class exec extends InnerClassOperation {
+	public class exec extends InnerClassEndpoint {
 		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
@@ -60,22 +57,17 @@ public class ExternalCommandsService extends Service {
 			var stdout = p.getInputStream();
 			var stdin = p.getOutputStream();
 
-			newThread(() -> {
+			new Thread(() -> {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
-
-						if (b.length == 0) {
-							break;
-						} else {
-							reply(parmMsg, b);
-						}
+						reply(parmMsg, b, b.length == 0);
 					} catch (IOException e) {
-						reply(parmMsg, e);
+						reply(parmMsg, e, true);
 						break;
 					}
 				}
-			});
+			}).start();
 
 			while (true) {
 				var msg = in.poll_sync();
@@ -108,9 +100,9 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public void exec(Component to, InputStream in, OutputStream out, String... cmdLine) throws IOException {
-		RemotelyRunningOperation s = component.defaultRoutingProtocol().exec(ExternalCommandsService.exec.class, null,
-				null, true, cmdLine);
+	public void exec(Component to, InputStream stdin, OutputStream out, String... cmdLine) throws IOException {
+		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(ExternalCommandsService.class, exec.class,
+				null, null, true, cmdLine, true);
 		boolean eofIN = false;
 
 		while (true) {
@@ -125,13 +117,8 @@ public class ExternalCommandsService extends Service {
 			}
 
 			if (!eofIN) {
-				var wav = in.readNBytes(1000);
-
-				if (wav.length == 0) {
-					eofIN = true;
-				} else {
-					component.defaultRoutingProtocol().send(wav, s.getOperationInputQueueDestination());
-				}
+				var wav = stdin.readNBytes(1000);
+				component.defaultRoutingProtocol().send(wav, wav.length == 0, s.getOperationInputQueueDestination());
 			}
 		}
 	}

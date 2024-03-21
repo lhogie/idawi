@@ -19,10 +19,10 @@ public class SimulatedLocationService extends LocationService {
 	}
 
 	public void move() {
-		Time now = component.lookup(TimeService.class).now2();
+		Time now = component.service(TimeService.class).now2();
 
 		if (lastMoveDate == null) {
-			lastMoveDate = component.lookup(TimeService.class).now2();
+			lastMoveDate = component.service(TimeService.class).now2();
 		} else {
 			now.ensureSameModel(lastMoveDate);
 			double duration = now.value - lastMoveDate.value;

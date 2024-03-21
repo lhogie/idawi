@@ -1,33 +1,42 @@
 package idawi.service.web;
 
-import java.awt.Desktop;
-import java.net.URI;
 import java.util.ArrayList;
+import java.util.Random;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.service.DemoService;
+import idawi.service.ServiceManager;
+import idawi.transport.Loopback;
 import idawi.transport.SharedMemoryTransport;
+import idawi.transport.Topologies;
 
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
 		int n = 5;
 		var components = new ArrayList<Component>();
-		components.add(new Component("gw"));
+		components.addAll(Component.createNComponent(n));
 
 		for (int i = 0; i < n; ++i) {
-			components.add(new Component("Component" + i));
+		var c = components.get(i);
+			c.friendlyName = "c" + i;
+			new Loopback(c);
+			new DemoService(c);
+			new ServiceManager(c);
 		}
 
-		components.forEach(c -> new DemoService(c));
+		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
+				components, new Random());
 
-		var gateway = components.get(0);
-		var ws = gateway.lookup(WebService.class);
-		ws.startHTTPServer();
+		var gateway = components.getFirst();
+		gateway.friendlyName = "gw";
+		var ws = gateway.service(WebService.class, true).startHTTPServer();
 
-		SharedMemoryTransport.randomTree(components, SharedMemoryTransport.class);
-		System.out.println("gw reaches: " + gateway.neighbors());
+		Idawi.agenda.setTerminationCondition(() -> false);
+		Idawi.agenda.start();
+		Idawi.agenda.waitForCompletion();
 
-		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
+//		Desktop.getDesktop().browse(new URI("http://localhost:8081/"));
 	}
 }

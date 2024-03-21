@@ -1,39 +1,50 @@
 package idawi.service.web;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import idawi.Component;
 import idawi.routing.Route;
-import jaseto.DefaultCustomizer;
+import jaseto.ArrayNode;
+import jaseto.Jaseto;
 import jaseto.Node;
+import jaseto.ThrowableNode;
 
 public class IdawiWebSerializer extends JasetoSerializer {
 	public IdawiWebSerializer() {
-		j.customizer = new DefaultCustomizer() {
+		super(new Jaseto() {
 
 			@Override
-			public Object substitute(Object o) {
-				if (o instanceof Component) {
-					return o.toString();
-				} else if (o instanceof Route) {
-					return ((Route) o).components().stream().map(c -> c.ref).toList();
+			public String classname(Class<?> o) {
+				if (URLContentException.class.isAssignableFrom(o)) {
+					return "URL error";
+				} else if (List.class.isAssignableFrom(o)) {
+					return "list";
+				} else if (Set.class.isAssignableFrom(o)) {
+					return "set";
+				} else if (Collection.class.isAssignableFrom(o)) {
+					return "collection";
 				}
 
-				return o;
+				return super.classname(o);
 			}
 
-			//@Override
-			public Node alter(Node n) {
-				if (!n.path().equals(".content")) {
-					// n.removeKey("#class");
+			@Override
+			public Node createNode(Object o) {
+				if (o instanceof Route) {
+					return new ArrayNode(((Route) o).components().stream().map(c -> c.toString()).toArray(), this);
+				} else if (o instanceof URLContentException) {
+					var node = new ThrowableNode(o, this);
+					node.removeKey(ThrowableNode.STACK_TRACE);
+					return node;
+				} else if (o instanceof Component) {
+					return toNode(o.toString());
 				}
 
-				/*
-				 * if (//n.value instanceof Collection) { var on = (ObjectNode) n; var elements
-				 * = (ArrayNode) on.map.remove("elements"); elements.children.forEach(c ->
-				 * on.map.put("", c)); }
-				 */
-
-				return n;
+				return super.createNode(o);
 			}
-		};
+
+		});
 	}
 }

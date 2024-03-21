@@ -22,12 +22,12 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 
 	@Override
 	public void accept(Message msg, RandomWalkData p) {
-		var relays = new ArrayList<>(component.neighbors().infos());
+		var relays = component.outLinks();
 		Collections.shuffle(relays);
 		var randomRelays = p.n < relays.size() ? relays.subList(0, p.n) : relays;
 
 		for (var t : transports()) {
-			t.multicast(msg, randomRelays, this, p);
+			t.send(msg, randomRelays, this, p);
 		}
 	}
 
@@ -39,7 +39,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public ComponentMatcher naturalTarget(RandomWalkData parms) {
-		return c -> true;
+	public ComponentMatcher defaultMatcher(RandomWalkData parms) {
+		return ComponentMatcher.all;
 	}
 }
