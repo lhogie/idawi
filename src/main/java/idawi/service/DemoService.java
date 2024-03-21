@@ -18,6 +18,8 @@ import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.service.local_view.Network;
 import idawi.service.web.Graph;
+import idawi.service.web.Image;
+import idawi.service.web.Video;
 import idawi.service.web.chart.Chart;
 import idawi.transport.SharedMemoryTransport;
 import toools.SizeOf;
@@ -31,7 +33,6 @@ public class DemoService extends Service {
 
 	public DemoService(Component component) {
 		super(component);
-
 		registerEndpoint("e", q -> {
 		});
 	}
@@ -302,4 +303,59 @@ public class DemoService extends Service {
 		}
 	}
 
+	public class SendGraph extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple graph";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Graph.random());
+		}
+	}
+
+	public class SendChart extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple chart";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Chart.random());
+		}
+	}
+
+	public class SendImage extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple image in base64";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Image.random());
+		}
+	}
+
+	public class SendVideo extends InnerClassOperation {
+		@Override
+		public String getDescription() {
+			return "returns a simple video in base64";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+
+			reply(msg, Video.random());
+		}
+	}
 }

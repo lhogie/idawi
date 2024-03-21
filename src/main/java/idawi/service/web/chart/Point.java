@@ -1,5 +1,7 @@
 package idawi.service.web.chart;
 
-class Point {
+import java.io.Serializable;
+
+class Point implements Serializable {
 	double x, y;
 }

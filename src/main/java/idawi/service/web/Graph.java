@@ -1,18 +1,19 @@
 package idawi.service.web;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public class Graph {
-	static class Node {
+public class Graph implements Serializable {
+	static class Node implements Serializable {
 		String color;
 		String label;
 	}
 
-	static class Link {
+	static class Link implements Serializable {
 		String style, color;
 		Node a, b;
 		boolean directed;

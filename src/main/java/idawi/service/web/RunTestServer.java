@@ -14,12 +14,12 @@ import idawi.transport.Topologies;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 1;
+		int n = 5;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent(n));
 
 		for (int i = 0; i < n; ++i) {
-			var c = components.get(i);
+		var c = components.get(i);
 			c.friendlyName = "c" + i;
 			new Loopback(c);
 			new DemoService(c);
