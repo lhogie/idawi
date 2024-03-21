@@ -34,6 +34,7 @@ import toools.text.NameList;
 public class Component implements SizeOf {
 
 	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	public final AutoForgettingLongList alreadyReceivedMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	final Set<Service> services = new HashSet<>();
 	public boolean autonomous = false;

@@ -303,7 +303,7 @@ public class DemoService extends Service {
 		}
 	}
 
-	public class SendGraph extends InnerClassOperation {
+	public class SendGraph extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns a simple graph";
@@ -313,11 +313,11 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Graph.random());
+			reply(msg, Graph.random(), true);
 		}
 	}
 
-	public class SendChart extends InnerClassOperation {
+	public class SendChart extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns a simple chart";
@@ -327,11 +327,11 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Chart.random());
+			reply(msg, Chart.random(), true);
 		}
 	}
 
-	public class SendImage extends InnerClassOperation {
+	public class SendImage extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns a simple image in base64";
@@ -341,11 +341,11 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Image.random());
+			reply(msg, Image.random(), true);
 		}
 	}
 
-	public class SendVideo extends InnerClassOperation {
+	public class SendVideo extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns a simple video in base64";
@@ -355,7 +355,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Video.random());
+			reply(msg, Video.random(), true);
 		}
 	}
 }

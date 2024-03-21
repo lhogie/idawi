@@ -3,7 +3,7 @@ package idawi.routing;
 import idawi.Service;
 import toools.SizeOf;
 
-public class MessageQDestination extends Destination { 
+public class ToQueue extends Destination { 
 	public Class<? extends Service> service;
 	public String queueID;
 	public boolean dropIfRecipientQueueIsFull = false;

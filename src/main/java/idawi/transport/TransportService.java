@@ -16,7 +16,7 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
 import idawi.routing.Entry;
-import idawi.routing.MessageODestination;
+import idawi.routing.ToEndpoint;
 import idawi.routing.RoutingData;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
@@ -64,8 +64,8 @@ public abstract class TransportService extends Service {
 		boolean loopback = msg.route.getFirst().link.src.component.equals(component);
 		// if the message was targeted to this component and its the first time it is
 		// received
-		if (msg.destination.componentMatcher.test(component) && (!component.alreadyKnownMsgs.contains(msg.ID) || allowLoopback)) {
-			var dest = (MessageODestination) msg.destination;
+		if (msg.destination.componentMatcher.test(component) && (!component.alreadyReceivedMsgs.contains(msg.ID))) {
+			var dest = msg.destination;
 			var targetService = component.service(dest.service(), dest.autoStartService);
 
 			if (targetService == null) {
@@ -93,6 +93,7 @@ public abstract class TransportService extends Service {
 			}
 
 			component.alreadyKnownMsgs.add(msg.ID);
+			component.alreadyReceivedMsgs.add(msg.ID);
 		}
 	}
 

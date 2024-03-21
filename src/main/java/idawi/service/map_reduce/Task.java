@@ -3,7 +3,7 @@ package idawi.service.map_reduce;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
-import idawi.routing.MessageQDestination;
+import idawi.routing.ToQueue;
 import idawi.routing.ComponentMatcher;
 
 public abstract class Task<R> implements Serializable {

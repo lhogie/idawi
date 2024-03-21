@@ -93,7 +93,7 @@ public class IdawiSerializer extends JavaSerializer {
 		} else if (o instanceof LinkRepresentative) {
 			var representative = (LinkRepresentative) o;
 			var src = representative.srcC.service(representative.srcT, true);
-			var dest = representative.destC.service(representative.srcT, true);
+			var dest = representative.destC.service(representative.destT, true);
 			var l = ts.component.localView().g.findALinkConnecting(src, dest);
 			return l != null ? l : new Link(src, dest);
 		} else {

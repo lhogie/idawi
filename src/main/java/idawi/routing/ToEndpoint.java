@@ -3,20 +3,18 @@ package idawi.routing;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 
-public class MessageODestination extends Destination {
-	public Class<? extends InnerClassEndpoint> operationID;
+public class ToEndpoint extends Destination {
+	public Class<? extends InnerClassEndpoint> endpointID;
 	Class<? extends Service> service;
 	public boolean premptive;
 	public long invocationDate;
 	public long instanceID;
-	public boolean alertServiceNotAvailable = true;
-	public boolean autoStartService = false;
 
-	public MessageODestination(Class<? extends Service> service, Class<? extends InnerClassEndpoint> operationID) {
+	public ToEndpoint(Class<? extends Service> service, Class<? extends InnerClassEndpoint> operationID) {
 		if (service == null)
 			throw new NullPointerException(operationID + " has no service");
 
-		this.operationID = operationID;
+		this.endpointID = operationID;
 	}
 
 	@Override
@@ -29,8 +27,8 @@ public class MessageODestination extends Destination {
 		return service;
 	}
 
-	public MessageQDestination m() {
-		var d = new MessageQDestination();
+	public ToQueue m() {
+		var d = new ToQueue();
 		d.componentMatcher = componentMatcher;
 		d.service = service();
 		d.queueID = queueID();
@@ -39,7 +37,7 @@ public class MessageODestination extends Destination {
 
 	@Override
 	public String queueID() {
-		return operationID.getSimpleName();// + "@" + invocationDate;
+		return endpointID.getSimpleName();// + "@" + invocationDate;
 	}
 
 	@Override

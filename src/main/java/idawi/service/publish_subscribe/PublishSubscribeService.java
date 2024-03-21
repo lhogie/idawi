@@ -13,7 +13,7 @@ import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.routing.Destination;
-import idawi.routing.MessageQDestination;
+import idawi.routing.ToQueue;
 import toools.SizeOf;
 
 public class PublishSubscribeService extends Service {
@@ -65,7 +65,7 @@ public class PublishSubscribeService extends Service {
 	}
 
 	public class unsubscribe extends TypedInnerClassEndpoint {
-		public void exec(String topic, MessageQDestination subscriber) throws Throwable {
+		public void exec(String topic, ToQueue subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
 		}

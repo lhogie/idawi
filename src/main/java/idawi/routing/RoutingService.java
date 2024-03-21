@@ -66,7 +66,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	public void send(Object value, boolean eot, ComponentMatcher r, Class<? extends Service> s, String queueID) {
 //		Cout.debugSuperVisible("send " + value);
 		++nbMessagesInitiated;
-		var dest = new MessageQDestination();
+		var dest = new ToQueue();
 		dest.queueID = queueID;
 		dest.service = s;
 		dest.componentMatcher = r;
@@ -146,7 +146,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 	public RemotelyRunningEndpoint exec(ExecRequest er) {
 
 		// Cout.debugSuperVisible("exec " + o.getSimpleName() + " " + initialInputData);
-		var dest = new MessageODestination(er.service, er.o);
+		var dest = new ToEndpoint(er.service, er.o);
 		dest.service = er.service;
 		dest.invocationDate = Date.timeNs();
 		dest.componentMatcher = er.matcher;
@@ -156,7 +156,7 @@ public abstract class RoutingService<D extends RoutingData> extends Service impl
 
 		if (er.returnQ != null) {
 			r.returnQ = er.returnQ;
-			dest.replyTo = new MessageQDestination();
+			dest.replyTo = new ToQueue();
 			dest.replyTo.componentMatcher = ComponentMatcher.unicast(component);
 			dest.replyTo.queueID = r.returnQ.name;
 			dest.replyTo.service = r.returnQ.service.getClass();

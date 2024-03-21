@@ -17,8 +17,10 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 	private static final long serialVersionUID = 1L;
 
 	public boolean add(Entry newEntry) {
+		/*
 		if (!isEmpty() && !last().link.dest.component.equals(newEntry.link.src.component))
 			throw new IllegalArgumentException("you try to add an entry "+ newEntry + " that not chain. Route : " + this);
+			*/
 
 		return super.add(newEntry);
 	}

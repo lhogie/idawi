@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
-import idawi.routing.MessageODestination;
-import idawi.routing.MessageQDestination;
+import idawi.routing.ToEndpoint;
+import idawi.routing.ToQueue;
 import idawi.routing.RoutingService;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
@@ -174,9 +174,9 @@ public class Service implements SizeOf, Serializable {
 	public void process(Message msg) {
 		++nbMsgsReceived;
 
-		if (msg.destination instanceof MessageODestination) {
-			var dest = (MessageODestination) msg.destination;
-			AbstractEndpoint endpoint = lookupEndpoint(dest.operationID.getSimpleName());
+		if (msg.destination instanceof ToEndpoint) {
+			var dest = (ToEndpoint) msg.destination;
+			AbstractEndpoint endpoint = lookupEndpoint(dest.endpointID.getSimpleName());
 
 			if (endpoint == null) {
 				triggerErrorHappened(dest.replyTo, new IllegalArgumentException("can't find endpoint '" + dest));
@@ -194,7 +194,7 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	private void triggerErrorHappened(MessageQDestination replyTo, Throwable s) {
+	private void triggerErrorHappened(ToQueue replyTo, Throwable s) {
 //		System.out.println(msg);
 		RemoteException err = new RemoteException(s);
 		logError(s);
@@ -205,7 +205,7 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, MessageODestination dest) {
+	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, ToEndpoint dest) {
 		var inputQ = getQueue(dest.queueID());
 
 		// most of the time the queue will not exist, unless the user wants to use the
