@@ -17,6 +17,10 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
+import idawi.service.web.WebService.HTMLRenderableObject;
+import idawi.service.web.WebService.TypedObject;
+import toools.text.json.JSONElement;
+import toools.text.json.JSONable;
 import toools.thread.Q;
 
 /**
@@ -38,16 +42,33 @@ public class Bencher extends Service {
 		public int size;
 	}
 
-	public static class Results implements Serializable {
-		long monothread;
+	public static class Results implements Serializable, JSONable {
 		long multithread;
+		long monothread;
+
+		TypedObject<Long> monothread2 = new TypedObject<Long>() {
+			@Override
+			public String nature() {
+				return "ratio";
+			}
+		};
+
+		HTMLRenderableObject<Long> monothread3 = new HTMLRenderableObject<Long>() {
+			@Override
+			public String html() {
+				return "<p>" + value + "</p>";
+			}
+		};
+
+		@Override
+		public JSONElement toJSONElement() {
+			return null;
+		}
 	}
 
 	public Bencher(Component node) {
 		super(node);
 	}
-
-
 
 	@Override
 	public String getFriendlyName() {
@@ -60,19 +81,19 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms, true).returnQ.collector().collect(c -> {
-			var m = c.messages.last();
+		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms, true).returnQ
+				.collector().collect(c -> {
+					var m = c.messages.last();
 
-			if (m.content instanceof String) {
-				msg.accept(m.route.source(), (String) m.content);
-			} else if (m.content instanceof Results) {
-				map.put(m.route.source(), (Results) m.content);
-			}
-		});
+					if (m.content instanceof String) {
+						msg.accept(m.route.source(), (String) m.content);
+					} else if (m.content instanceof Results) {
+						map.put(m.route.source(), (Results) m.content);
+					}
+				});
 
 		return map;
 	}
-
 
 	public class localBench extends TypedInnerClassEndpoint {
 		public Results f(int size) {
@@ -98,7 +119,6 @@ public class Bencher extends Service {
 		}
 
 	}
-
 
 	public class localBench2 extends InnerClassEndpoint {
 

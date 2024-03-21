@@ -62,6 +62,19 @@ import toools.text.TextUtilities;
 
 public class WebService extends Service {
 
+	public static abstract class TypedObject<T>
+	{
+		T value;
+		public abstract String nature();
+	}
+	
+	public static abstract class HTMLRenderableObject<T>
+	{
+		protected T value;
+		public abstract String html();
+	}
+
+	
 	public static int DEFAULT_PORT = 8081;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
@@ -305,8 +318,8 @@ public class WebService extends Service {
 		final RoutingService<?> r;
 		final RoutingData rp;
 		final ComponentMatcher t;
-		final Class<? extends Endpoint> o;
 		final Class<? extends Service> service;
+		final Class<? extends Endpoint> o;
 		final EndpointParameterList op = new EndpointParameterList();
 		final String description;
 
@@ -369,14 +382,14 @@ public class WebService extends Service {
 	}
 
 	public void exec(RoutingService routing, RoutingData routingParms, ComponentMatcher target,
-			Class<? extends Service> service, Class<? extends Endpoint> operationID, EndpointParameterList parms,
+			Class<? extends Service> service, Class<? extends Endpoint> endpoint, EndpointParameterList parms,
 			boolean compress, boolean encrypt, double duration, double timeout,
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
 			InputStream postDataInputStream, String resultDescription) {
 
 		System.out.println("target: " + target);
 
-		var ro = routing.exec(service, operationID, routingParms, target, true, parms, postDataInputStream == null);
+		var ro = routing.exec(service, endpoint, routingParms, target, true, parms, postDataInputStream == null);
 		var aes = new AES();
 		SecretKey key = null;
 
@@ -392,7 +405,7 @@ public class WebService extends Service {
 					JsonNode header = jsonParser.readTree(postDataInputStream);
 
 					if (header != null) { // EOF
-						// the header may carry control stuff for the collect process
+						// the header may carry control commands for the collect process
 						controlCollect(header, collector);
 
 						int contentLength = header.get("contentLength").asInt();
@@ -430,10 +443,10 @@ public class WebService extends Service {
 
 		System.out.println("collecting...");
 
-		collector.collect(duration, timeout, c -> {
+		collector.collect(duration, timeout, collecto -> {
 			List<String> encodingsToClient = new ArrayList<>();
-			Object what2send = whatToSendF.apply(c);
-			c.contentDescription = resultDescription;
+			Object what2send = whatToSendF.apply(collecto);
+			collecto.contentDescription = resultDescription;
 			var bytes = serializer.toBytes(what2send);
 			encodingsToClient.add(serializer.getMIMEType());
 			boolean base64 = serializer.isBinary() || compress || encrypt;

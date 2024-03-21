@@ -14,7 +14,7 @@ import idawi.PointInTime;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
-import idawi.routing.ComponentMatcher;
+import idawi.routing.ComponentMatcher.multicast;
 import idawi.routing.Entry;
 import idawi.routing.MessageODestination;
 import idawi.routing.RoutingData;
@@ -61,9 +61,10 @@ public abstract class TransportService extends Service {
 
 		component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
+		boolean loopback = msg.route.getFirst().link.src.component.equals(component);
 		// if the message was targeted to this component and its the first time it is
 		// received
-		if (msg.destination.componentMatcher.test(component) && !component.alreadyKnownMsgs.contains(msg.ID)) {
+		if (msg.destination.componentMatcher.test(component) && (!component.alreadyKnownMsgs.contains(msg.ID) || allowLoopback)) {
 			var dest = (MessageODestination) msg.destination;
 			var targetService = component.service(dest.service(), dest.autoStartService);
 
@@ -80,9 +81,11 @@ public abstract class TransportService extends Service {
 		}
 
 		synchronized (component) {
-			if (!msgTargettedToMeOnly(msg.destination.componentMatcher)) {
-				if (vault != null)
-				{
+			boolean msgTargettedToMeOnly = msg.destination.componentMatcher instanceof multicast to
+					&& to.target.size() == 1 && to.target.contains(component);
+
+			if (!msgTargettedToMeOnly) {
+				if (vault != null) {
 					msg.content = vault;
 				}
 
@@ -90,15 +93,6 @@ public abstract class TransportService extends Service {
 			}
 
 			component.alreadyKnownMsgs.add(msg.ID);
-		}
-	}
-
-	private boolean msgTargettedToMeOnly(ComponentMatcher m) {
-		if (m instanceof ComponentMatcher.multicast) {
-			ComponentMatcher.multicast to = (ComponentMatcher.multicast) m;
-			return to.target.size() == 1 && to.target.contains(component);
-		} else {
-			return false;
 		}
 	}
 
