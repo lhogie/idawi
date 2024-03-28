@@ -130,7 +130,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	}
 
 	public static ComponentMatcher fromString(String s, LocalViewService lookup) {
-		Cout.debugSuperVisible(s);
+//		Cout.debugSuperVisible(s);
 		s = s.trim();
 
 		if (s.isEmpty()) {

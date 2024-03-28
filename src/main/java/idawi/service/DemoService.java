@@ -5,26 +5,20 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import idawi.Component;
 import idawi.EndpointParameterList;
 import idawi.InnerClassEndpoint;
-import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
-import idawi.routing.BlindBroadcasting;
-import idawi.routing.ComponentMatcher;
-import idawi.service.local_view.Network;
 import idawi.service.web.Graph;
 import idawi.service.web.Image;
 import idawi.service.web.Video;
 import idawi.service.web.chart.Chart;
-import idawi.transport.SharedMemoryTransport;
 import toools.SizeOf;
 import toools.io.Cout;
 import toools.math.MathsUtilities;
@@ -104,8 +98,6 @@ public class DemoService extends Service {
 
 	}
 
-
-
 //	public static interface stringLength extends Operation2 {
 //		public static String description = "compute length";
 //
@@ -128,7 +120,6 @@ public class DemoService extends Service {
 
 	public class stringLength extends TypedInnerClassEndpoint {
 		public int f(String s) {
-			Cout.debugSuperVisible("lenght");
 			return s.length();
 		}
 
@@ -159,15 +150,14 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			var l = (EndpointParameterList) m.exec().parms;
-			Cout.debugSuperVisible(m);
 			int n = Integer.valueOf((String) l.getFirst());
 
 			for (int i = 0; i < n; ++i) {
 				reply(m, i, i == n - 1);
+				Threads.sleep(1);
 			}
 		}
 	}
-	
 
 	public static class Range implements Serializable, SizeOf {
 		public Range(int i, int j) {

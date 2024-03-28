@@ -40,6 +40,7 @@ import idawi.routing.RoutingService;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
 import idawi.service.local_view.LocalViewService;
+import toools.io.Cout;
 import toools.io.JavaResource;
 import toools.io.Utilities;
 import toools.io.file.RegularFile;
@@ -166,9 +167,7 @@ public class WebService extends Service {
 				if (path == null) {
 					sendOneShot(HttpURLConnection.HTTP_OK, "text/html",
 							new JavaResource(getClass(), "root.html").getByteArray(), e, output);
-//					output.write(new JavaResource(getClass(), "root.html").getByteArray());
 				} else {
-//					Cout.debugSuperVisible("path: " + path);
 					String context = path.remove(0);
 
 					if (context.equals("api")) {
@@ -182,12 +181,16 @@ public class WebService extends Service {
 									preferredSerializer.getMIMEType(), name2serializer.keySet());
 							preferredSerializer = name2serializer.get(preferredOuputFormat);
 							serveAPI(path, query, input, output, preferredSerializer);
-						} catch (Throwable err) {
-							err.printStackTrace();
-							sendEvent(output, new ChunkHeader(List.of(preferredSerializer.getMIMEType())),
-									preferredSerializer.toBytes(err), preferredSerializer.isBinary());
-						} finally {
 							sendEvent(output, new ChunkHeader(List.of("plain")), "EOT".getBytes(), false);
+						} catch (Throwable err) {
+//							err.printStackTrace();
+							try {
+								sendEvent(output, new ChunkHeader(List.of(preferredSerializer.getMIMEType())),
+										preferredSerializer.toBytes(err), preferredSerializer.isBinary());
+								sendEvent(output, new ChunkHeader(List.of("plain")), "EOT".getBytes(), false);
+							} catch (IOException ioerr) {
+
+							}
 						}
 					} else if (context.equals("favicon.ico")) {
 						sendOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
@@ -227,8 +230,8 @@ public class WebService extends Service {
 					sendOneShot(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
 							TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
-				} catch (Throwable ee) {
-					ee.printStackTrace();
+				} catch (IOException ee) {
+//					ee.printStackTrace();
 				}
 			}
 
@@ -269,23 +272,20 @@ public class WebService extends Service {
 		os.write(bytes);
 	}
 
-	private static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64) {
-		try {
-			out.write("data: ".getBytes());
-			out.write(header.toJSONNode().toString().getBytes());
-			out.write('\n');
+	private static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64)
+			throws IOException {
+		out.write("data: ".getBytes());
+		out.write(header.toJSONNode().toString().getBytes());
+		out.write('\n');
 
-			if (base64) {
-				data = TextUtilities.base64(data).getBytes();
-			}
-
-			var dataText = TextUtilities.prefixEachLineBy(new String(data), "data: ");
-			out.write(dataText.getBytes());
-			out.write('\n');
-			out.write('\n'); // end of event
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		if (base64) {
+			data = TextUtilities.base64(data).getBytes();
 		}
+
+		var dataText = TextUtilities.prefixEachLineBy(new String(data), "data: ");
+		out.write(dataText.getBytes());
+		out.write('\n');
+		out.write('\n'); // end of event
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
@@ -374,13 +374,11 @@ public class WebService extends Service {
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
 			InputStream postDataInputStream, String resultDescription) {
 
-		System.out.println("target: " + target);
+//		System.out.println("target: " + target);
 
 		var ro = routing.exec(target, service, endpoint, routingParms, parms, postDataInputStream == null);
 		var aes = new AES();
 		SecretKey key = null;
-
-		// Cout.debugSuperVisible("collecting...");
 
 		var collector = new MessageCollector(ro.returnQ);
 
@@ -454,7 +452,12 @@ public class WebService extends Service {
 				}
 			}
 
-			sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
+			try {
+				sendEvent(output, new ChunkHeader(encodingsToClient), bytes, base64);
+			} catch (IOException e) {
+				Cout.debugSuperVisible("Client has closed");
+				collecto.stop = true;
+			}
 		});
 
 		System.out.println("collecting completed");
@@ -594,5 +597,4 @@ public class WebService extends Service {
 			return "starts the HTTP server";
 		}
 	}
-
 }

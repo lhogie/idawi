@@ -208,7 +208,7 @@ public class Agenda {
 
 	public void scheduleTerminationAt(double date, Runnable terminationCode) {
 		Idawi.agenda.scheduleAt(date, "termination", () -> {
-			Cout.debugSuperVisible(Idawi.agenda.now() + " THIS IS THE END");
+//			Cout.debugSuperVisible(Idawi.agenda.now() + " THIS IS THE END");
 			terminationCode.run();
 			Idawi.agenda.terminationCondition = () -> true;
 		});

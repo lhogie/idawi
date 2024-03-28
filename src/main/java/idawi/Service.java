@@ -64,7 +64,7 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public String webShortcut() {
-		return getClass().getName();
+		return getClass().getSimpleName();
 	}
 
 	protected void registerURLShortCut() {
@@ -154,7 +154,8 @@ public class Service implements SizeOf, Serializable {
 			if (msg.autoCreateQueue || msg.content instanceof ExecReq) {
 				inputQ = createQueue(msg.qAddr.queueID);
 			} else {
-				throw new IllegalStateException("can't find queue " + msg.qAddr);
+				System.err.println("can't find queue " + msg.qAddr + " cannot deliver: " + msg.content);
+				return;
 			}
 		}
 
