@@ -18,4 +18,11 @@ public class ExecReq implements Serializable, SizeOf {
 	public long sizeOf() {
 		return 10;
 	}
+	
+	
+	@Override
+	public String toString() {
+		return "exec: " + endpointID.getSimpleName() + "/" + parms;
+	}
+
 }

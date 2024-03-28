@@ -159,14 +159,15 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			var l = (EndpointParameterList) m.exec().parms;
-			Cout.debugSuperVisible(l);
-			int n = (Integer) l.getFirst();
+			Cout.debugSuperVisible(m);
+			int n = Integer.valueOf((String) l.getFirst());
 
 			for (int i = 0; i < n; ++i) {
 				reply(m, i, i == n - 1);
 			}
 		}
 	}
+	
 
 	public static class Range implements Serializable, SizeOf {
 		public Range(int i, int j) {
