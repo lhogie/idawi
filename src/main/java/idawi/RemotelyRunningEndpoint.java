@@ -17,5 +17,4 @@ public class RemotelyRunningEndpoint {
 		d.service = destination.service;
 		return d;
 	}
-
 }

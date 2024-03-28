@@ -458,7 +458,7 @@ public class WebService extends Service {
 			} catch (IOException e) {
 				Cout.debugSuperVisible("Client has closed");
 				collecto.stop = true;
-				//ro.destination
+				component.bb().send("stop", ro.destination);
 			}
 		});
 

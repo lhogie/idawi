@@ -279,6 +279,15 @@ public class DemoService extends Service {
 			l.add(() -> new ProgressMessage("I'm still working!"));
 
 			for (int i = 0; i < target; ++i) {
+				if (in.size() > 0) {
+					msg = in.poll_sync();
+					
+					if (msg.content.equals("stop")) {
+						return;
+					}
+				}
+				
+				
 				var d = l.get(rand.nextInt(l.size()));
 				reply(msg, d.get(), false);
 				Threads.sleep(rand.nextDouble());
