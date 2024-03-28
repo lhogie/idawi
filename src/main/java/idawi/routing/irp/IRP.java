@@ -40,7 +40,7 @@ public class IRP extends RoutingService<IRPParms> {
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.send(msg, Set.of(l), IRP.this, msg.route.last().routing.parms);
+							tt.send(msg, Set.of(l), IRP.this, msg.route.getLast().routing.parms);
 						}
 					}
 				}
@@ -49,11 +49,15 @@ public class IRP extends RoutingService<IRPParms> {
 			@Override
 			public void linkDeactivated(Link l) {
 			}
+
+			@Override
+			public void newLink(Link l) {
+			}
 		});
 	}
 
 	@Override
-	public void accept(Message msg, IRPParms p) {
+	public void acceptImpl(Message msg, IRPParms p) {
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
@@ -62,7 +66,7 @@ public class IRP extends RoutingService<IRPParms> {
 			boolean outdated = msg.route.isEmpty() ? false : p.validityDuration > msg.route.duration();
 
 			if (!wentToFar && !outdated) {
-				component.services(TransportService.class).forEach(t -> t.multicast(msg, this, p));
+				component.services(TransportService.class).forEach(t -> t.send(msg, null, this, p));
 			}
 		}
 	}

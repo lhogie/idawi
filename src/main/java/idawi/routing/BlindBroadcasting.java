@@ -7,7 +7,7 @@ import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
 
-public class BlindBroadcasting extends RoutingService<RoutingData> {
+public class BlindBroadcasting extends RoutingService<RoutingParameters> {
 
 	// public final BloomFilterForLong alreadyReceivedMsgs2 = new
 	// BloomFilterForLong(1000);
@@ -22,10 +22,13 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	synchronized public void accept(Message msg, RoutingData parms) {
+	synchronized public void acceptImpl(Message msg, RoutingParameters parms) {
 		// the message was never received
-		if (!component.alreadyKnownMsgs.contains(msg.ID)) {
-			component.services(TransportService.class).forEach(t -> t.multicast(msg, this, parms));
+		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)) {
+			for (var t : component.services(TransportService.class)) {
+				t.send(msg, null, this, parms);
+			}
+
 			listeners.forEach(l -> l.messageForwarded(this, msg));
 		} else {
 			listeners.forEach(l -> l.messageDropped(this, msg));
@@ -33,14 +36,14 @@ public class BlindBroadcasting extends RoutingService<RoutingData> {
 	}
 
 	@Override
-	public List<RoutingData> dataSuggestions() {
-		var l = new ArrayList<RoutingData>();
+	public List<RoutingParameters> dataSuggestions() {
+		var l = new ArrayList<RoutingParameters>();
 		l.add(new EmptyRoutingParms());
 		return l;
 	}
 
 	@Override
-	public ComponentMatcher defaultMatcher(RoutingData parms) {
+	public ComponentMatcher defaultMatcher(RoutingParameters parms) {
 		return ComponentMatcher.all;
 	}
 }

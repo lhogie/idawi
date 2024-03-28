@@ -88,11 +88,11 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Link findALinkConnecting(TransportService from, TransportService to) {
-		return findALink(l -> l.src.equals(from) && l.dest.equals(to));
+		return findLink(l -> l.src.equals(from) && l.dest.equals(to));
 	}
 
 	public Link findALinkConnecting(TransportService from, Component to) {
-		return findALink(l -> l.src.equals(from) && l.dest.component.equals(to));
+		return findLink(l -> l.src.equals(from) && l.dest.component.equals(to));
 	}
 
 	@Override
@@ -114,7 +114,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Link findALinkConnecting(Component component, Component relay) {
-		return findALink(l -> l.src.component.equals(component) && l.dest.component.equals(relay));
+		return findLink(l -> l.src.component.equals(component) && l.dest.component.equals(relay));
 	}
 
 	public RRoute findRoute(Component src, Component dest, int maxDistance) {
@@ -144,9 +144,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		}
 	}
 
-	public Link markLinkActive(TransportService src, TransportService dest) {
-		return markLinkActive(new Link(src, dest));
-	}
+
 
 	public void markLinkActive(TransportService src, TransportService dest, boolean bothDirections) {
 		markLinkActive(src, dest);
@@ -162,8 +160,8 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		markLinkActive(src.service(t, true), dest.service(t, true), bothDirections);
 	}
 
-	public Link markLinkActive(Link l) {
-		l = ensureExists(l);
+	public Link markLinkActive(TransportService src, TransportService dest) {
+		var l = findLink(src, dest, true, null);
 
 		if (!l.isActive()) {
 			l.markActive();

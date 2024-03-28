@@ -8,6 +8,7 @@ import java.util.Vector;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.messaging.MessageList;
+import idawi.service.PingService;
 import toools.net.SSHParms;
 
 public class Demo3_multi_deployment {
@@ -31,8 +32,9 @@ public class Demo3_multi_deployment {
 				}, err -> err.printStackTrace());
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = t.bb().ping(new HashSet<>(children)).collector().collect(1000, 1000, c -> {
-		}).messages;
+		MessageList pongs = t.service(PingService.class).ping(new HashSet<>(children)).collector().collect(1000, 1000,
+				c -> {
+				}).messages;
 
 		if (pongs.isEmpty()) {
 			System.err.println("no response");

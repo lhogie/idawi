@@ -2,6 +2,7 @@ package idawi.ui.cmd;
 
 import idawi.Component;
 import idawi.messaging.Message;
+import idawi.service.PingService;
 import j4u.CommandLine;
 import j4u.CommandLineSpecification;
 import toools.io.Cout;
@@ -53,7 +54,7 @@ public class ping extends CommunicatingCommand {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = localComponent.bb().ping(p).poll_sync();
+				Message pong = localComponent.service(PingService.class).ping(p).poll_sync();
 
 				if (pong == null) {
 					if (printIndividualPings) {

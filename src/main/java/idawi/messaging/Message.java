@@ -1,21 +1,16 @@
 package idawi.messaging;
 
 import java.io.Serializable;
-import java.security.Key;
-import java.security.PublicKey;
 import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
 import idawi.RemoteException;
-import idawi.routing.Destination;
+import idawi.routing.QueueAddress;
 import idawi.routing.Route;
 import idawi.transport.Vault;
 import toools.Objeects;
 import toools.SizeOf;
-import toools.io.ser.JavaSerializer;
 import toools.io.ser.Serializer;
-import toools.security.AES;
-import toools.security.RSAEncoder;
 import toools.text.TextUtilities;
 
 public class Message implements Serializable, SizeOf {
@@ -24,38 +19,20 @@ public class Message implements Serializable, SizeOf {
 	public long ID = ThreadLocalRandom.current().nextLong();
 	public Route route = new Route();
 
-	// targeted to either a queue or an operation
-	public Destination destination;
-//	public Vault vault;
+	public QueueAddress qAddr;
+	public boolean autoStartService = false;
+	public boolean alertServiceNotAvailable = false;
 	public Object content;
-
-	public final RoutingStrategy routingStrategy;
-
+	public RoutingStrategy initialRoutingStrategy;
 	public boolean eot = false;
+//	public ExecReq exec;
 
-	public boolean simulate = true;
+	public String contentDescription;
 
+	public boolean autoCreateQueue = false;
 
-	public Message(Destination dest, RoutingStrategy routingStrategy, Object content) {
-		this.destination = dest;
-		this.content = content;
-		this.routingStrategy = routingStrategy;
-	}
-/*
-	public void encode(Object content, RSAEncoder rsa, Serializer ser) {
-		var aesKey = AES.getRandomKey(128);
-		vault = new Vault();
-		vault.encryptedAESKey = rsa.encode(ser.toBytes(aesKey));
-		vault.encryptedContent = AES.encode(ser.toBytes(content), aesKey);
-		content = null;
-	}
+	public boolean simulate = false;
 
-	public void decode(PublicKey pk, Serializer ser) {
-		var plainAESKey = RSAEncoder.decode(pk, vault.encryptedAESKey);
-		Key aesKey = (Key) new JavaSerializer().fromBytes(plainAESKey);
-		content = ser.fromBytes(AES.decode(vault.encryptedContent, aesKey));
-	}
-*/
 	public Message clone(Serializer ser) {
 		return (Message) ser.clone(this);
 	}
@@ -78,7 +55,7 @@ public class Message implements Serializable, SizeOf {
 	@Override
 	public String toString() {
 		String s = "msg " + Long.toHexString(ID);
-		s += ", dest:" + destination;
+		s += ", qAddr:" + qAddr;
 		s += ", route:" + route;
 		s += ", content: " + TextUtilities.toString(content);
 		return s;
@@ -114,7 +91,24 @@ public class Message implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + destination.sizeOf() + routingStrategy.sizeOf() + route.sizeOf() + SizeOf.sizeOf(content);
+		return 8 + SizeOf.sizeOf(initialRoutingStrategy) + route.sizeOf() + SizeOf.sizeOf(content);
+	}
+
+	public Object decrypt() {
+		var c = content;
+		int i = route.len();
+		var ser = route.getLast().link.dest.serializer;
+
+		while (c instanceof Vault) {
+			var encryptper = route.get(i--).link.src.component;
+			c = ser.fromBytes(((Vault) c).decode(encryptper.publicKey()));
+		}
+
+		return c;
+	}
+
+	public ExecReq exec() {
+		return (ExecReq) content;
 	}
 
 }

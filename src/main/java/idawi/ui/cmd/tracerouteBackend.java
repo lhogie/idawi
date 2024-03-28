@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.routing.Route;
+import idawi.service.PingService;
 import idawi.service.local_view.LocalViewService;
 
 public class tracerouteBackend extends CommandBackend {
@@ -16,7 +17,7 @@ public class tracerouteBackend extends CommandBackend {
 
 		for (var t : to) {
 			out.accept("ping " + t);
-			Message pong = n.bb().ping(t).poll_sync();
+			Message pong = n.service(PingService.class).ping(t).poll_sync();
 
 			if (pong == null) {
 				out.accept("No pong received. :(");
@@ -26,7 +27,7 @@ public class tracerouteBackend extends CommandBackend {
 			var ping = (Route) pong.content;
 			out.accept("forward route:  " + ping);
 			out.accept("backward route: " + pong.route);
-			double time = pong.route.last().receptionDate - ping.first().emissionDate;
+			double time = pong.route.getLast().receptionDate - ping.first().emissionDate;
 			out.accept("time: " + time + "s");
 		}
 	}

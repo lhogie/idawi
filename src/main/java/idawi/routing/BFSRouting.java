@@ -34,7 +34,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public void accept(Message msg, BFSRoutingParms parms) {
+	public void acceptImpl(Message msg, BFSRoutingParms parms) {
 
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);

@@ -9,10 +9,10 @@ import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.math.MathsUtilities;
 
-public class PipeFromToParentProcess extends TransportService {
+public class Pipe_ChildSide extends TransportService {
 	public boolean suicideIfLoseParent = true;
 
-	public PipeFromToParentProcess(Component me) {
+	public Pipe_ChildSide(Component me) {
 		super(me);
 
 		Idawi.agenda.threadPool.submit(() -> {
@@ -31,6 +31,11 @@ public class PipeFromToParentProcess extends TransportService {
 	}
 
 	@Override
+	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
+		send(msgBytes);
+	}
+
+	@Override
 	protected void bcast(byte[] msgBytes) {
 		send(msgBytes);
 	}
@@ -42,7 +47,7 @@ public class PipeFromToParentProcess extends TransportService {
 	public static void sendBytes(byte[] bytes) {
 		var base64 = new String(Base64.getEncoder().encode(bytes));
 		base64 = base64.replace("\n", "");
-		System.out.println(PipesFromToChildrenProcess.base64ObjectMark + base64);
+		System.out.println(Pipe_ParentSide.base64ObjectMark + base64);
 	}
 
 	@Override
@@ -63,11 +68,6 @@ public class PipeFromToParentProcess extends TransportService {
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
-	}
-
-	@Override
-	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
-		send(msgBytes);
 	}
 
 }

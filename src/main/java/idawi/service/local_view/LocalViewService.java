@@ -9,6 +9,7 @@ import idawi.Component;
 import idawi.Idawi;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
+import idawi.routing.BlindBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.service.DigitalTwinService;
@@ -33,7 +34,7 @@ public class LocalViewService extends KnowledgeBase {
 		component.trafficListeners.add(new TrafficListener() {
 			@Override
 			public void newMessageReceived(TransportService t, Message m) {
-				m.route.forEach(e -> g.markLinkActive(e.link));
+				m.route.forEach(e -> e.link.markActive());
 			}
 		});
 
@@ -66,6 +67,10 @@ public class LocalViewService extends KnowledgeBase {
 			@Override
 			public void componentHasGone(Component a) {
 			}
+
+			@Override
+			public void newLink(Link l) {
+			}
 		});
 	}
 
@@ -79,9 +84,8 @@ public class LocalViewService extends KnowledgeBase {
 		return disseminationIntervalS > 0;
 	}
 
-	@Override
 	protected RoutingService<?> routing() {
-		return component.defaultRoutingProtocol();
+		return component.need(BlindBroadcasting.class);
 	}
 
 	public List<Link> localLinks() {
@@ -105,7 +109,7 @@ public class LocalViewService extends KnowledgeBase {
 	}
 
 	public class acceptHello extends TypedInnerClassEndpoint {
-		public void f(Network n) {
+		public void f(String n) {
 			Cout.debug("DT merge not yet implemented");
 		}
 
@@ -139,7 +143,14 @@ public class LocalViewService extends KnowledgeBase {
 
 	@Override
 	public Stream<Info> infos() {
-		return g.components().stream().map(c -> c.dt().info());
+		var infos = new ArrayList<Info>();
+		for (var c : g.components()) {
+			var dts = c.dt();
+
+			if (dts != null)
+				infos.add(dts.info());
+		}
+		return infos.stream();
 	}
 
 	public class makeLinkInactive extends TypedInnerClassEndpoint {
@@ -155,7 +166,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	public class markLinkActive extends TypedInnerClassEndpoint {
 		public void f(Iterable<Link> list) {
-			list.forEach(l -> g.markLinkActive(l));
+			list.forEach(l -> l.markActive());
 		}
 
 		@Override
@@ -165,9 +176,7 @@ public class LocalViewService extends KnowledgeBase {
 	}
 
 	public Object helloMessage() {
-		var bfs = g.bfs.get(component).get();
-		return bfs.visitOrder.stream().filter(l -> bfs.distances.getLong(l.dest.component) < 2)
-				.map(l -> l.dest.component).toList();
+		return "hello";
 	}
 
 }

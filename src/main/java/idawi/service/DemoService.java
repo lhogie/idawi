@@ -2,8 +2,11 @@ package idawi.service;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import idawi.Component;
 import idawi.EndpointParameterList;
@@ -47,7 +50,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
-			var opl = (EndpointParameterList) tg.content;
+			var opl = (EndpointParameterList) tg.exec().parms;
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
@@ -75,7 +78,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_async();
-			String re = (String) trigger.content;
+			String re = (String) trigger.exec().parms;
 
 			while (true) {
 				var msg = in.poll_async();
@@ -101,21 +104,7 @@ public class DemoService extends Service {
 
 	}
 
-	public static void main(String[] args) {
-		Component a = new Component();
-		Component b = new Component();
-		Network.markLinkActive(a, b, SharedMemoryTransport.class, true, Set.of(a, b));
 
-		var s = new BlindBroadcasting(a);
-		RemotelyRunningEndpoint o = s.exec(DemoService.class, stringLength.class, null, ComponentMatcher.unicast(b),
-				true, "", true);
-
-		for (int i = 0; i < 50; ++i) {
-			s.send("" + i, i == 49, o);
-		}
-
-		o.returnQ.collector().collect(c -> c.messages.last().getClass());
-	}
 
 //	public static interface stringLength extends Operation2 {
 //		public static String description = "compute length";
@@ -169,7 +158,9 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			int n = (Integer) m.content;
+			var l = (EndpointParameterList) m.exec().parms;
+			Cout.debugSuperVisible(l);
+			int n = (Integer) l.getFirst();
 
 			for (int i = 0; i < n; ++i) {
 				reply(m, i, i == n - 1);
@@ -199,7 +190,7 @@ public class DemoService extends Service {
 
 		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-			var p = (Range) m.content;
+			var p = (Range) m.exec().parms;
 
 			for (int i = p.a; i < p.b; ++i) {
 				reply(m, i, i == p.b - 1);
@@ -231,7 +222,7 @@ public class DemoService extends Service {
 			throw new Error("this is a test error");
 		}
 	}
-	
+
 	public class quitAll extends InnerClassEndpoint {
 		@Override
 		public String getDescription() {
@@ -276,26 +267,29 @@ public class DemoService extends Service {
 
 			var rand = new Random();
 
-			for (int i = 0; i < target; ++i) {
-				var d = rand.nextDouble();
+			interface R extends Supplier<Object>, SizeOf {
 
-				if (d < 0.1) {
-					reply(msg, new ProgressRatio(i, target), false);
-				} else if (d < 0.2) {
-					reply(msg, rand.nextInt(), false);
-				} else if (d < 0.2) {
-					reply(msg, new Error("test error"), false);
-				} else if (d < 0.2) {
-					reply(msg, ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100), false);
-				} else if (d < 0.3) {
-					reply(msg, Chart.random(), false);
-				} else if (d < 0.4) {
-					reply(msg, Graph.random(), false);
-				} else if (d < 0.4) {
-					reply(msg, new ProgressMessage("I'm still working!"), false);
-				} else {
+				@Override
+				public default long sizeOf() {
+					return 0;
 				}
+			}
 
+			List<R> l = new ArrayList<>();
+			l.add(() -> new ProgressRatio(rand.nextInt(100), 100));
+			l.add(() -> rand.nextInt());
+			l.add(() -> {
+				try {
+					return ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+			l.add(() -> new ProgressMessage("I'm still working!"));
+
+			for (int i = 0; i < target; ++i) {
+				var d = l.get(rand.nextInt(l.size()));
+				reply(msg, d.get(), false);
 				Threads.sleep(rand.nextDouble());
 			}
 

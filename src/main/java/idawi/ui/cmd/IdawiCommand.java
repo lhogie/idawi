@@ -19,7 +19,6 @@ public abstract class IdawiCommand extends j4u.Command {
 		return Clazz.classNameWithoutPackage(getClass().getName());
 	}
 
-
 	public static Set<Component> targetPeers(Component n, String list, Consumer<Object> out) {
 		Set<Component> peers = new HashSet<>();
 
@@ -27,8 +26,11 @@ public abstract class IdawiCommand extends j4u.Command {
 			if (p.equals("_")) {
 				peers.add(n);
 			} else {
-				var pp = n.service(LocalViewService.class).g.findComponent(c -> c.friendlyName.equals(n), true,
-						c -> c.friendlyName = p);
+				var pp = n.service(LocalViewService.class).g.findComponent(c -> c.friendlyName.equals(n), true, () -> {
+					var c = new Component();
+					c.friendlyName = p;
+					return c;
+				});
 
 				if (pp == null) {
 					out.accept("no component with name: " + p);

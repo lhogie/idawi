@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public class Graph implements Serializable {
+import toools.SizeOf;
+
+public class Graph implements Serializable, SizeOf {
 	static class Node implements Serializable {
 		String color;
 		String label;
@@ -55,5 +57,10 @@ public class Graph implements Serializable {
 		}
 
 		return g;
+	}
+
+	@Override
+	public long sizeOf() {
+		return links.size() + nodes.size();
 	}
 }

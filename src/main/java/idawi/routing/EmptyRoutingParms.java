@@ -1,11 +1,11 @@
 package idawi.routing;
 
-public class EmptyRoutingParms extends RoutingData {
+public class EmptyRoutingParms extends RoutingParameters {
 
 	@Override
 	public void fromString(String s, RoutingService service) {
 		if (!s.isEmpty())
-			throw new IllegalArgumentException("there are no parameter to feed");
+			throw new IllegalArgumentException("this routing protocol accepts no parameter");
 	}
 
 	@Override

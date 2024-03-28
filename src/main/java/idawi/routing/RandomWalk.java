@@ -21,7 +21,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 	}
 
 	@Override
-	public void accept(Message msg, RandomWalkData p) {
+	public void acceptImpl(Message msg, RandomWalkData p) {
 		var relays = component.outLinks();
 		Collections.shuffle(relays);
 		var randomRelays = p.n < relays.size() ? relays.subList(0, p.n) : relays;

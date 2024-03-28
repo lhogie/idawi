@@ -144,25 +144,30 @@ public class MessageList extends ArrayList<Message> {
 					e = e.getCause();
 				}
 
-				throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+				throw e instanceof RuntimeException re ? re : new RuntimeException(e);
 			}
 		}
 
 		return this;
 	}
 
-	public void throwAllErrors() {
+	public MessageList throwAllErrors() {
 		var errs = new ExceptionSet();
-		errs.exceptions.addAll(errors());
-		throw errs;
+
+		if (errs.exceptions.isEmpty()) {
+			errs.exceptions.addAll(errors());
+			throw errs;
+		} else {
+			return this;
+		}
 	}
 
 	public MessageList throwAnyError_Runtime() {
 		try {
 			return throwAnyError();
 		} catch (Throwable e) {
-			if (e instanceof RuntimeException) {
-				throw (RuntimeException) e;
+			if (e instanceof RuntimeException re) {
+				throw re;
 			} else {
 				throw new RuntimeException(e);
 			}

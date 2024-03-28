@@ -29,10 +29,10 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	}
 
 	@Override
-	public void accept(Message msg, IRTo p) {
+	public void acceptImpl(Message msg, IRTo p) {
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
-			var routingInfo = (IRTo) msg.route.last().routing.parms;
+			var routingInfo = (IRTo) msg.route.getLast().routing.parms;
 			var remainingRoute = routingInfo.route;
 
 			var relay = remainingRoute == null ? null : remainingRoute.remove(0);

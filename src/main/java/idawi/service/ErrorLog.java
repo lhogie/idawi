@@ -21,7 +21,7 @@ public class ErrorLog extends Service {
 	public class registerError extends InnerClassEndpoint {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-			errors.add((Throwable) in.poll_sync().content);
+			errors.add((Throwable) in.poll_sync().exec().parms);
 		}
 
 		@Override
@@ -45,7 +45,7 @@ public class ErrorLog extends Service {
 		error = Exceptioons.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		component.bb().exec(getClass(), registerError.class, null, ComponentMatcher.all, false, error, true);
+		component.bb().exec(ComponentMatcher.all, getClass(), registerError.class, null, error, true);
 	}
 
 	public void report(String msg) {

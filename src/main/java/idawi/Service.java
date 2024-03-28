@@ -1,7 +1,6 @@
 package idawi;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,26 +11,19 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import idawi.messaging.ExecReq;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
-import idawi.routing.ToEndpoint;
-import idawi.routing.ToQueue;
-import idawi.routing.RoutingService;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
 import idawi.service.web.WebService;
-import idawi.transport.Vault;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
 
 public class Service implements SizeOf, Serializable {
-
-	public double now() {
-		return Idawi.agenda.now();
-	}
 
 	public Component component;
 	private boolean askToRun = true;
@@ -57,25 +49,7 @@ public class Service implements SizeOf, Serializable {
 
 		registerEndpoint("friendlyName", q -> getFriendlyName());
 
-		registerInnerClassEndpoints();
-	}
-
-	private void registerInnerClassEndpoints() {
-		for (var innerClass : getClass().getClasses()) {
-			if (InnerClassEndpoint.class.isAssignableFrom(innerClass)) {
-				try {
-					registerEndpoint((InnerClassEndpoint) innerClass.getConstructor(innerClass.getDeclaringClass())
-							.newInstance(this));
-				} catch (InvocationTargetException | InstantiationException | IllegalAccessException
-						| IllegalArgumentException | NoSuchMethodException | SecurityException err) {
-					throw new IllegalStateException(err);
-				}
-			}
-		}
-	}
-
-	protected RoutingService<?> routing() {
-		return component.defaultRoutingProtocol();
+		InnerClassEndpoint.registerInnerClassEndpoints(this);
 	}
 
 	@Override
@@ -107,7 +81,6 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public class getFriendlyName extends TypedInnerClassEndpoint {
-
 		public String f() {
 			return getFriendlyName();
 		}
@@ -171,87 +144,96 @@ public class Service implements SizeOf, Serializable {
 		return getClass().getName();
 	}
 
-	public void process(Message msg) {
+	public void process(Message msg) throws NotGrantedException {
 		++nbMsgsReceived;
-
-		if (msg.destination instanceof ToEndpoint) {
-			var dest = (ToEndpoint) msg.destination;
-			AbstractEndpoint endpoint = lookupEndpoint(dest.endpointID.getSimpleName());
-
-			if (endpoint == null) {
-				triggerErrorHappened(dest.replyTo, new IllegalArgumentException("can't find endpoint '" + dest));
-			} else {
-				trigger(msg, endpoint, dest);
-			}
-		} else {
-			MessageQueue q = name2queue.get(msg.destination.queueID());
-
-			if (q == null) {
-				System.err.println("ERERROEORO");
-			} else {
-				q.add_sync(msg);
-			}
-		}
-	}
-
-	private void triggerErrorHappened(ToQueue replyTo, Throwable s) {
-//		System.out.println(msg);
-		RemoteException err = new RemoteException(s);
-		logError(s);
-
-		// report the error to the guy who asked
-		if (replyTo != null) {
-			component.bb().send(err, true, replyTo);
-		}
-	}
-
-	private synchronized void trigger(Message msg, AbstractEndpoint endpoint, ToEndpoint dest) {
-		var inputQ = getQueue(dest.queueID());
+		var inputQ = getQueue(msg.qAddr.queueID);
 
 		// most of the time the queue will not exist, unless the user wants to use the
 		// input queue of another running endpoint
 		if (inputQ == null) {
-			inputQ = createQueue(dest.queueID());
-		}
-
-		// decrypt if necessary
-		while (msg.content instanceof Vault) {
-			msg.content = msg.route.last().link.dest.serializer
-					.fromBytes(((Vault) msg.content).decode(msg.route.last().link.src.component.publicKey()));
+			if (msg.autoCreateQueue || msg.content instanceof ExecReq) {
+				inputQ = createQueue(msg.qAddr.queueID);
+			} else {
+				throw new IllegalStateException("can't find queue " + msg.qAddr);
+			}
 		}
 
 		inputQ.add_sync(msg);
-		final var inputQ_final = inputQ;
 
-		Event e = new Event(new PointInTime(now())) {
+		if (msg.content instanceof ExecReq exec) {
+			AbstractEndpoint endpoint = lookupEndpoint(exec.endpointID.getSimpleName());
+
+			if (endpoint == null)
+				throw new IllegalStateException("can't find endpoint '" + exec.endpointID);
+
+			var requester = msg.route.source();
+
+			if (!endpoint.isGranted(requester))
+				throw new NotGrantedException(endpoint.getClass(), requester);
+
+			execEndpoint(msg, inputQ, endpoint);
+		}
+	}
+
+	private synchronized void execEndpoint(Message msg, MessageQueue inputQ, AbstractEndpoint endpoint)
+			throws NotGrantedException {
+		// decrypt if necessary
+		msg.decrypt();
+
+		Event<PointInTime> e = new Event<>(new PointInTime(now())) {
 			@Override
 			public void run() {
 				try {
-					final double start = Date.time();
+					final double start = now();
+
+					// if too late
+					if (start > msg.exec().latestExecTime)
+						throw new TooLateException(this, start - msg.exec().latestExecTime);
+
 					endpoint.nbCalls++;
 
 					if (component.isDigitalTwin()) {
-						endpoint.digitalTwin(inputQ_final);
+						endpoint.digitalTwin(inputQ);
 					} else {
-						endpoint.impl(inputQ_final);
+						endpoint.impl(inputQ);
 					}
+
 					endpoint.totalDuration += Date.time() - start;
 				} catch (Throwable exception) {
-					exception.printStackTrace();
 					endpoint.nbFailures++;
-					triggerErrorHappened(dest.replyTo, exception);
+					err(msg, exception);
 				}
 
-				detachQueue(inputQ_final);
+				if (msg.exec().detachQueueAfterCompletion) {
+					// System.out.println("DETACH " + inputQ_final.name);
+					detachQueue(inputQ);
+				}
 			}
 		};
 
-		if (dest.premptive) {
+		if (msg.exec().nbThreadsRequired == 0) {
 			e.run();
 		} else if (!Idawi.agenda.threadPool.isShutdown()) {
-			Idawi.agenda.schedule(e);
+			int nbThreads = msg.exec().nbThreadsRequired == Integer.MAX_VALUE
+					? Runtime.getRuntime().availableProcessors()
+					: msg.exec().nbThreadsRequired;
+
+			for (int i = 0; i < nbThreads; ++i) {
+				Idawi.agenda.schedule(e);
+			}
 		} else {
 			System.err.println("ignoring exec message: " + msg);
+		}
+	}
+
+	protected void err(Message msg, Throwable exception) {
+		exception.printStackTrace();
+		logError(exception);
+
+		if (msg.content instanceof ExecReq exec) {
+			// report the error to the guy who asked
+			component.bb().send(new RemoteException(exception), true, exec.replyTo);
+			reply(msg, exception, true);
 		}
 	}
 
@@ -323,11 +305,11 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	protected void reply(Message initialMsg, Object response, boolean eot) {
-		var replyTo = initialMsg.destination.replyTo;
-		replyTo.componentMatcher = ComponentMatcher.unicast(initialMsg.route.source());
+		var replyTo = initialMsg.exec().replyTo;
+		replyTo.targetedComponents = ComponentMatcher.unicast(initialMsg.route.source());
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
-		component.bb().send(response, eot, replyTo.componentMatcher, replyTo.service, replyTo.queueID);
+		component.bb().send(response, eot, replyTo);
 	}
 
 	public void registerEndpoint(AbstractEndpoint o) {
@@ -365,14 +347,29 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
+	public class retrieveQ extends InnerClassEndpoint {
+
+		@Override
+		public String getDescription() {
+			return "returns the full content of a queue";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws Throwable {
+			var tmsg = in.poll_sync();
+			var qid = (String) tmsg.exec().parms;
+			getQueue(qid).toList();
+		}
+	}
+
 	public class size extends TypedInnerClassEndpoint {
 		public long size() {
-			return sizeOf();
+			return Service.this.sizeOf();
 		}
 
 		@Override
 		public String getDescription() {
-			return "nb of bytes used by this knowkedge base";
+			return "nb of bytes used by this service";
 		}
 	}
 
@@ -458,4 +455,7 @@ public class Service implements SizeOf, Serializable {
 		return size;
 	}
 
+	public double now() {
+		return Idawi.agenda.now();
+	}
 }

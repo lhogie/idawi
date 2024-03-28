@@ -14,7 +14,7 @@ import idawi.transport.Topologies;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 5;
+		int n = 1;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent(n));
 

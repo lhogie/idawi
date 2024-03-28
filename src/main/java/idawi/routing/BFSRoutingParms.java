@@ -7,7 +7,7 @@ import idawi.Component;
 import toools.SizeOf;
 import toools.text.TextUtilities;
 
-public class BFSRoutingParms extends RoutingData {
+public class BFSRoutingParms extends RoutingParameters {
 	private static final long serialVersionUID = 1L;
 
 	Set<Component> recipients;

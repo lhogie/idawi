@@ -1,6 +1,6 @@
 package idawi.routing;
 
-public class RandomWalkData extends RoutingData {
+public class RandomWalkData extends RoutingParameters {
 	int n = 1;
 
 	@Override

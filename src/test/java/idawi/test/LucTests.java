@@ -18,6 +18,8 @@ import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.service.DemoService;
+import idawi.service.DemoService.stringLength;
+import idawi.service.PingService;
 import idawi.service.local_view.Network;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
@@ -45,7 +47,7 @@ public class LucTests {
 
 		// ask c1 to ping c2
 		Idawi.agenda.start();
-		Message pong = c1.bb().ping(c2).poll_sync();
+		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
 		System.out.println(pong);
 		Idawi.agenda.waitForCompletion();
 	}
@@ -65,7 +67,7 @@ public class LucTests {
 		Network.markLinkActive(c1, c2, SharedMemoryTransport.class, true, Set.of(c1, c2));
 
 		// ask c1 to ping c2
-		Message pong = c1.bb().ping(c2).poll_sync();
+		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
 
 		// be sure c1 got an answer
 		assertNotEquals(null, pong);
@@ -85,7 +87,7 @@ public class LucTests {
 		var target = c1.service(DeployerService.class, true).newLocalJVM();
 
 		for (int i = 0; i < 100; ++i) {
-			Message pong = c1.bb().ping(target).poll_sync();
+			Message pong = c1.service(PingService.class).ping(target).poll_sync();
 
 			// be sure c1 got an answer
 			assertNotEquals(null, pong);
@@ -107,8 +109,8 @@ public class LucTests {
 		Cout.debugSuperVisible(c1.outLinks());
 
 //		RoutingListener.debug_on(c1, c2);
-		assertEquals(5,
-				(int) c1.service(BlindBroadcasting.class, true).exec_rpc(c2, DemoService.stringLength.class, "salut"));
+		assertEquals(5, (int) c1.service(BlindBroadcasting.class, true).exec_rpc(c2, DemoService.class,
+				stringLength.class, "salut"));
 		Cout.debugSuperVisible(2);
 
 		assertEquals(53, (int) c1.bb().exec(c2, DemoService.countFrom1toN.class, 100, true).returnQ.collector()
@@ -136,8 +138,8 @@ public class LucTests {
 
 		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
 
-		Component first = root.bb().exec(DemoService.class, DemoService.waiting.class, null,
-				ComponentMatcher.multicast(ss), true, new EndpointParameterList(1), true).returnQ.collector()
+		Component first = root.bb().exec(ComponentMatcher.multicast(ss), DemoService.class, DemoService.waiting.class,
+				null, new EndpointParameterList(1), true).returnQ.collector()
 				.collectWhile(c -> !c.messages.isEmpty()).messages.get(0).route.first().link.src.component;
 
 		System.out.println(first);
@@ -159,7 +161,7 @@ public class LucTests {
 		var c = master.service(DeployerService.class).newLocalJVM();
 
 		// asks the master to ping the other component
-		Message pong = new Service(master).component.bb().ping(c).poll_sync();
+		Message pong = new Service(master).component.service(PingService.class).ping(c).poll_sync();
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
@@ -219,7 +221,7 @@ public class LucTests {
 		Topologies.chain(l, (a, b) -> SharedMemoryTransport.class, l);
 		var first = new Service(l.get(0));
 		var last = l.get(l.size() - 1);
-		Message pong = first.component.bb().ping(last).poll_sync();
+		Message pong = first.component.service(PingService.class).ping(last).poll_sync();
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 

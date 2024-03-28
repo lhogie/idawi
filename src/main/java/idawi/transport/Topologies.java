@@ -147,7 +147,7 @@ public class Topologies {
 		for (int i = 2; i < components.size(); ++i) {
 			var newComponent = components.get(i);
 			var a = components.get(r.nextInt(i));
-			var b = a.localView().g.findALink(l -> l.src.component.equals(a)).dest.component;
+			var b = a.localView().g.findLink(l -> l.src.component.equals(a)).dest.component;
 			consider(a, newComponent, f.apply(a, newComponent), inform);
 			consider(newComponent, b, f.apply(newComponent, b), inform);
 		}

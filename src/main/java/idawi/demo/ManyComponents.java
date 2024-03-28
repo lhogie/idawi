@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.routing.BlindBroadcasting;
+import idawi.service.PingService;
 import idawi.service.local_view.LocalViewService;
 import idawi.service.local_view.Network;
 import idawi.transport.SharedMemoryTransport;
@@ -41,7 +42,7 @@ public class ManyComponents {
 		var last = components.get(components.size() - 1);
 		Network.markLinkActive(last, first, SharedMemoryTransport.class, false, components);
 
-		var q = first.bb().ping(components.get(components.size() / 2));
+		var q = first.service(PingService.class).ping(components.get(components.size() / 2));
 		var pong = q.poll_sync();
 		System.out.println("pong= " + pong);
 

@@ -43,7 +43,7 @@ public class PlotLargeNetwork {
 		Topologies.wirelessMesh(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 //		Topologies.dchain(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 
-		r.get(0).bb().exec(RoutingService.class, dummyService.class, null, ComponentMatcher.all, false, null, true);
+		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, dummyService.class, null,  null, true);
 
 		Idawi.agenda.scheduleTerminationAt(5, () -> {
 			System.out.println("plotting");
@@ -54,7 +54,7 @@ public class PlotLargeNetwork {
 				d.linkStyle = l -> l.nbMsgs == 0 ? Style.dotted : Style.solid;
 //				d.componentWidth = c -> 0.01d;
 				d.componentPenWidth = c -> 1;
-				d.componentStyle = c -> c.alreadyKnownMsgs.size() == 0 ? Style.dotted
+				d.componentStyle = c -> c.alreadyReceivedMsgs.size() == 0 ? Style.dotted
 						: Style.solid;
 			});
 

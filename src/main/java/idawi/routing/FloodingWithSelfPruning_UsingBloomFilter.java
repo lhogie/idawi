@@ -29,17 +29,17 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
-	public void accept(Message msg, FloodingWithSelfPruning_UsingBloomFilterParm parms) {
+	public void acceptImpl(Message msg, FloodingWithSelfPruning_UsingBloomFilterParm parms) {
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 			var myNeighbors = component.outLinks();
-			var routingParms = convert(msg.route.last().routing.parms);
+			var routingParms = convert(msg.route.getLast().routing.parms);
 
 			// if I have neighbors that the source doesn't know
 			for (var n : myNeighbors) {
 				if (!routingParms.neighbors.mightContain(n.dest.component.longHash())) {
-					component.services(TransportService.class).forEach(t -> t.multicast(msg, this, parms));
+					component.services(TransportService.class).forEach(t -> t.send(msg, null, this, parms));
 					break;
 				}
 			}
@@ -47,7 +47,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
-	public FloodingWithSelfPruning_UsingBloomFilterParm defaultData() {
+	public FloodingWithSelfPruning_UsingBloomFilterParm defaultParameters() {
 		var neighbors = component.outLinks();
 		var p = new FloodingWithSelfPruning_UsingBloomFilterParm(bloomSize(neighbors.size()));
 

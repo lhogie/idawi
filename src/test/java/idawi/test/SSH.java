@@ -10,6 +10,7 @@ import org.junit.Test;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
+import idawi.service.PingService;
 import toools.io.Cout;
 import toools.net.SSHParms;
 
@@ -33,10 +34,11 @@ public class SSH {
 
 		c1.service(DeployerService.class).deployViaSSH(Set.of(ssh),
 				rsyncOut -> System.out.println("rsync: " + rsyncOut),
-				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"), err -> err.printStackTrace());
+				rsyncErr -> System.err.println("rsync: " + rsyncErr), p -> System.out.println("ok"),
+				err -> err.printStackTrace());
 
 		// asks the master to ping the other component
-		Message pong = c1.bb().ping(c2).poll_sync();
+		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer

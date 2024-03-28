@@ -1,5 +1,7 @@
 package idawi.messaging;
 
+import toools.SizeOf;
+
 public class ProgressMessage extends ProgressInformation {
 	final public String msg;
 
@@ -10,5 +12,11 @@ public class ProgressMessage extends ProgressInformation {
 	@Override
 	public String toString() {
 		return msg;
+	}
+	
+
+	@Override
+	public long sizeOf() {
+		return SizeOf.sizeOf(msg);
 	}
 }

@@ -7,7 +7,7 @@ import idawi.Component;
 import toools.SizeOf;
 import toools.text.TextUtilities;
 
-public class IRTo extends RoutingData {
+public class IRTo extends RoutingParameters {
 	List<Component> route = new ArrayList<>();
 
 	@Override
@@ -15,8 +15,11 @@ public class IRTo extends RoutingData {
 		route = new ArrayList<>();
 
 		for (var n : s.split(" *, *")) {
-			route.add(r.component.localView().g.findComponent(c -> c.friendlyName.equals(n), true,
-					c -> c.friendlyName = n));
+			route.add(r.component.localView().g.findComponent(c -> c.friendlyName.equals(n), true, () -> {
+				var c = new Component();
+				c.friendlyName = n;
+				return c;
+			}));
 		}
 	}
 

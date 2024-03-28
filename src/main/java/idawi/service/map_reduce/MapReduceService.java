@@ -21,7 +21,6 @@ public class MapReduceService extends Service {
 		super(component);
 	}
 
-
 	// the backend op
 	public class taskProcessor extends InnerClassEndpoint {
 
@@ -111,7 +110,9 @@ public class MapReduceService extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					component.defaultRoutingProtocol().exec(getClass(), taskProcessor.class, null, task.to, q, task, true);
+					component.defaultRoutingProtocol().exec(task.to, getClass(), taskProcessor.class, null, task,
+							true).returnQ.collector().collect(c -> q.add_sync(c.messages.last()));
+
 				}
 			}
 

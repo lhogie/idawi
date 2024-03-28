@@ -6,15 +6,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import idawi.Component;
 import idawi.transport.Link;
+import idawi.transport.TransportService;
 import toools.SizeOf;
 import toools.Stop;
 import toools.collections.Collections;
+import toools.io.Cout;
 
 public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 
@@ -27,23 +29,29 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 		links.clear();
 	}
 
-	public void add(Component c){
+	public void add(Component c) {
 		components.add(c);
 	}
 
-	
 	@Override
 	public synchronized long sizeOf() {
 		return SizeOf.sizeOf(components) + SizeOf.sizeOf(links);
 	}
 
-	public synchronized Link ensureExists(final Link l) {
-		var existing = search(l);
+	public synchronized Link findLink(TransportService src, TransportService dest, boolean autoCreate,
+			Supplier<Link> linkFactory) {
+		var existing = search(src, dest);
 
-		if (existing == null) {
-			l.src.component = findComponent(c -> c.equals(l.src.component), true, null);
-			l.dest.component = findComponent(c -> c.equals(l.dest.component), true, null);
-			links.add(existing = l);
+		if (existing == null && autoCreate) {
+			findComponent(c -> c.equals(src.component), true, () -> src.component);
+			findComponent(c -> c.equals(dest.component), true, () -> dest.component);
+			var l = linkFactory == null ? new Link(src, dest) : linkFactory.get();
+			links.add(l);
+
+			for (var li : listeners) {
+				li.newLink(l);
+			}
+
 			return l;
 		} else {
 			return existing;
@@ -103,22 +111,24 @@ public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 	}
 
 	public Link search(Link link) {
-		return findALink(l -> l.equals(link));
+		return findLink(l -> l.equals(link));
 	}
 
-	public Link findALink(Predicate<Link> p) {
+	public Link search(TransportService src, TransportService dest) {
+		return findLink(l -> l.src.equals(src) && l.dest.equals(dest));
+	}
+
+	public Link findLink(Predicate<Link> p) {
 		return forEachLink(l -> Stop.stopIf(p.test(l)));
 	}
 
 	public synchronized Component findComponent(Predicate<Component> p, boolean autoCreate,
-			Consumer<Component> newComponentInitalizer) {
+			Supplier<Component> componentFactory) {
 		var c = forEachComponent(a -> Stop.stopIf(p.test(a)));
 
 		if (c == null && autoCreate) {
-			c = new Component();
-
-			if (newComponentInitalizer != null) {
-				newComponentInitalizer.accept(c);
+			if (componentFactory != null) {
+				c = componentFactory.get();
 			}
 
 			components.add(c);

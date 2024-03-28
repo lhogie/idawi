@@ -13,7 +13,7 @@ public class Entry implements Serializable, SizeOf {
 
 	public Entry(Link l, RoutingService routing) {
 		this.link = l;
-		this.routing = new RoutingStrategy(routing, null);
+		this.routing = routing == null ? null : new RoutingStrategy(routing, null);
 	}
 
 	public double duration() {
@@ -27,6 +27,6 @@ public class Entry implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + 16 + routing.sizeOf();
+		return 8 + 16 + SizeOf.sizeOf(routing);
 	}
 }

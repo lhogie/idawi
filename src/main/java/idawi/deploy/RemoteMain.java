@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.messaging.Message;
+import idawi.service.PingService;
 import idawi.service.local_view.LocalViewService;
-import idawi.transport.PipeFromToParentProcess;
+import idawi.transport.Pipe_ChildSide;
 import toools.io.ser.JavaSerializer;
 import toools.thread.Threads;
 
@@ -28,13 +28,11 @@ public class RemoteMain {
 
 			System.out.println("instantiating component");
 			var child = new Component();
-
-			// create the pipe to the parent
-			var pipe = child.service(PipeFromToParentProcess.class, true);
-			var m = new Message(null, null, child);
-			PipeFromToParentProcess.sendBytes(pipe.serializer.toBytes(m));
-
-			child.service(LocalViewService.class, true);
+			var pipe = child.need(Pipe_ChildSide.class);
+			child.friendlyName = "baby";
+//			Pipe_ChildSide.sendBytes(pipe.serializer.toBytes(child));
+			child.need(PingService.class);
+			child.need(LocalViewService.class);
 
 			// prevents the JVM to quit
 			while (true) {
@@ -44,7 +42,7 @@ public class RemoteMain {
 		} catch (Throwable err) {
 			err.printStackTrace(System.err);
 			System.err.println("Stopping JVM");
-			PipeFromToParentProcess.sendBytes(new JavaSerializer<>().toBytes(err));
+			Pipe_ChildSide.sendBytes(new JavaSerializer<>().toBytes(err));
 			System.out.flush();
 			System.err.flush();
 			Threads.sleep(1);

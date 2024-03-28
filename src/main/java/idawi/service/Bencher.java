@@ -81,7 +81,7 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(getClass(), localBench.class, null, ComponentMatcher.all, true, parms, true).returnQ
+		component.bb().exec(ComponentMatcher.all,getClass(), localBench.class, null,  parms, true).returnQ
 				.collector().collect(c -> {
 					var m = c.messages.last();
 
@@ -125,7 +125,7 @@ public class Bencher extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			int size = (int) m.content;
+			int size = (int) m.exec().parms;
 			localBench(size, r -> reply(m, r, true));
 		}
 

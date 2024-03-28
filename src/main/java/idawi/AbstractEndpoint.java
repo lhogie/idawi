@@ -1,5 +1,7 @@
 package idawi;
 
+import java.util.function.Predicate;
+
 import idawi.service.local_view.EndpointDescriptor;
 import toools.SizeOf;
 
@@ -8,6 +10,17 @@ public abstract class AbstractEndpoint implements Endpoint, SizeOf {
 	double totalDuration;
 	private EndpointDescriptor descriptor;
 	Service service;
+
+	
+	public String getFullyQualifiedName() {
+		return service.component + "/" + service.getFriendlyName() + "/" + getName();
+	}
+
+	public boolean isGranted(Component requester) {
+		return authorizations.test(requester);
+	}
+
+	public final Predicate<Component> authorizations = c -> true;
 
 	protected EndpointDescriptor createDescriptor() {
 		return new EndpointDescriptor();

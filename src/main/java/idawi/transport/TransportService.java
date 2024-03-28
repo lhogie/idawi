@@ -16,8 +16,7 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
 import idawi.routing.Entry;
-import idawi.routing.ToEndpoint;
-import idawi.routing.RoutingData;
+import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
 import toools.io.Cout;
@@ -27,7 +26,7 @@ public abstract class TransportService extends Service {
 	public long nbMsgSent;
 	public long incomingTraffic;
 	public long outGoingTraffic;
-	// used to serialized messages for transport
+	// used to serialize messages for transport
 	public final transient IdawiSerializer serializer;
 
 //	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
@@ -50,63 +49,63 @@ public abstract class TransportService extends Service {
 
 	// this is called by transport implementations
 	protected synchronized final void processIncomingMessage(Message msg) {
-		Vault vault = msg.content instanceof Vault ? (Vault) msg.content : null;
-		Cout.debug(this + " receives " + msg);
-		++nbMsgReceived;
-		incomingTraffic += msg.sizeOf();
-		Entry last = msg.route.last();
-//		last.link.dest = this;
-		last.receptionDate = component.now();
-		last.link.latency = last.duration();
+		try {
+			Vault vault = msg.content instanceof Vault ? (Vault) msg.content : null;
+			Cout.debug(this + " receives " + msg);
+			++nbMsgReceived;
+			incomingTraffic += msg.sizeOf();
+			Entry last = msg.route.getLast();
+//			last.link.dest = this;
+			last.receptionDate = component.now();
+			last.link.latency = last.duration();
 
-		component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
+			component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
-		boolean loopback = msg.route.getFirst().link.src.component.equals(component);
-		// if the message was targeted to this component and its the first time it is
-		// received
-		if (msg.destination.componentMatcher.test(component) && (!component.alreadyReceivedMsgs.contains(msg.ID))) {
-			var dest = msg.destination;
-			var targetService = component.service(dest.service(), dest.autoStartService);
+			boolean loopback = msg.route.getFirst().link.src.component.equals(component);
+			// if the message was targeted to this component and its the first time it is
+			// received
+			if (msg.qAddr.targetedComponents.test(component) && (!component.alreadyReceivedMsgs.contains(msg.ID))) {
+				var targetService = component.service(msg.qAddr.service, msg.autoStartService);
 
-			if (targetService == null) {
-				if (dest.alertServiceNotAvailable && dest.replyTo != null) {
-					reply(msg, "no such service", true);
+				if (targetService == null) {
+					if (msg.alertServiceNotAvailable) {
+						throw new IllegalStateException(
+								"component " + component + " does not have service " + msg.qAddr.service.getName());
+					}
 				} else {
-					System.err.println(
-							"component " + component + " does not have service " + msg.destination.service().getName());
+					targetService.process(msg);
 				}
-			} else {
-				targetService.process(msg);
-			}
-		}
-
-		synchronized (component) {
-			boolean msgTargettedToMeOnly = msg.destination.componentMatcher instanceof multicast to
-					&& to.target.size() == 1 && to.target.contains(component);
-
-			if (!msgTargettedToMeOnly) {
-				if (vault != null) {
-					msg.content = vault;
-				}
-
-				considerForForwarding(msg);
 			}
 
-			component.alreadyKnownMsgs.add(msg.ID);
-			component.alreadyReceivedMsgs.add(msg.ID);
+			synchronized (component) {
+				boolean msgTargettedToMeOnly = msg.qAddr.targetedComponents instanceof multicast to
+						&& to.target.size() == 1 && to.target.contains(component);
+
+				if (!msgTargettedToMeOnly) {
+					if (vault != null) {
+						msg.content = vault;
+					}
+
+					considerForForwarding(msg);
+				}
+
+				component.alreadyReceivedMsgs.add(msg.ID);
+			}
+		} catch (Throwable err) {
+			err(msg, err);
 		}
 	}
 
 	private void considerForForwarding(Message msg) {
 		// search for the routing service it was initially sent
-		var rs = component.service(msg.routingStrategy.routingService, true);
-		RoutingData routingParms;
+		var rs = component.service(msg.initialRoutingStrategy.routingService, true);
+		RoutingParameters routingParms;
 
 		if (rs == null) {
 			rs = component.defaultRoutingProtocol();
-			routingParms = rs.defaultData();
+			routingParms = rs.defaultParameters();
 		} else {
-			routingParms = msg.routingStrategy.parms;
+			routingParms = msg.initialRoutingStrategy.parms;
 		}
 
 		rs.accept(msg, routingParms);
@@ -118,15 +117,14 @@ public abstract class TransportService extends Service {
 
 	protected abstract void bcast(byte[] msgBytes);
 
-	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingData parms) {
-		Cout.debug(" " + component + " uses '" + getName() + "' to send: " + msg);
-		component.alreadyKnownMsgs.add(msg.ID);
+	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingParameters parms) {
 		var sentFromTwin = component.isDigitalTwin();
 		++nbMsgSent;
 		outGoingTraffic += msg.sizeOf();
 
 		// add a link heading to an unknown destination
 		msg.route.add(new Entry(new Link(this), r));
+		Cout.debug(component + " uses '" + getName() + "' to send: " + msg);
 
 		if (outLinks == null) {
 			bcast(msgToBytes(msg));
@@ -152,6 +150,8 @@ public abstract class TransportService extends Service {
 			multicast(msgBytes, realSend);
 			fakeSend(msg, fakeEmissions);
 		}
+
+		component.alreadySentMsgs.add(msg.ID);
 	}
 
 	private byte[] msgToBytes(Message msg) {
@@ -186,9 +186,6 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	public final void multicast(Message msg, RoutingService r, RoutingData parms) {
-		send(msg, activeOutLinks(), r, parms);
-	}
 
 	public List<Link> activeOutLinks() {
 		return component.localView().g.findLinks(l -> l.isActive() && l.src.equals(this));

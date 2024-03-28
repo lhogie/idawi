@@ -24,7 +24,7 @@ public class CommandsService extends Service {
 					break;
 				}
 
-				((CommandBackend) m.content).runOnServer(component, r -> reply(m, r, false));
+				((CommandBackend) m.exec().parms).runOnServer(component, r -> reply(m, r, false));
 			}
 		}
 

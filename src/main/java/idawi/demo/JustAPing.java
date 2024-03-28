@@ -1,12 +1,10 @@
 package idawi.demo;
 
 import java.util.List;
-import java.util.stream.Stream;
 
-import idawi.AgendaListener;
 import idawi.Component;
 import idawi.Idawi;
-import idawi.routing.RoutingListener;
+import idawi.service.PingService;
 import idawi.service.local_view.LocalViewService;
 import idawi.transport.SharedMemoryTransport;
 import jdotgen.GraphvizDriver;
@@ -24,6 +22,7 @@ public class JustAPing {
 		var a = new Component();
 		var b = new Component();
 		var c = new Component();
+		b.service(PingService.class, true);
 
 //		var rl = new RoutingListener.PrintTo(System.out);
 //		Stream.of(a, b, c).forEach(u -> u.bb().listeners.add(rl));
@@ -34,17 +33,19 @@ public class JustAPing {
 		b.localView().g.markLinkActive(b, c, SharedMemoryTransport.class, false);
 		c.localView().g.markLinkActive(c, a, SharedMemoryTransport.class, false);
 
-		List.of(a, b, c).forEach(u -> System.out.println(
-				u + " knows: " + u.service(LocalViewService.class).g.links().stream().map(l -> l.dest.component).toList()));
+		List.of(a, b, c).forEach(u -> System.out.println(u + " knows: "
+				+ u.service(LocalViewService.class).g.links().stream().map(l -> l.dest.component).toList()));
 
 		Idawi.agenda.start();
 
-		System.out.println("ping");
-		var pong = a.bb().ping(b).poll_sync();
+		System.out.println("pinging");
+		var collector = a.service(PingService.class, true).ping(b).collector();
+		collector.collect(cl -> cl.stop = !cl.messages.isEmpty());
+		var pong = collector.messages.throwAnyError().getFirst(); 
+		
 		System.out.println("pong= " + pong);
 
+		Idawi.agenda.setTerminationCondition(() -> true);
 		Idawi.agenda.stop();
-
-		System.out.println("alreadyReceivedMsgs=" + a.alreadyKnownMsgs);
 	}
 }

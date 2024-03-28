@@ -13,13 +13,14 @@ import java.util.stream.Stream;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.io.Cout;
 import toools.io.Utilities;
 import toools.io.Utilities.ReadUntilResult;
 import toools.math.MathsUtilities;
 import toools.thread.Q;
 import toools.thread.Threads;
 
-public class PipesFromToChildrenProcess extends TransportService {
+public class Pipe_ParentSide extends TransportService {
 
 	public static class Entry {
 		InputStream stdout, stderr;
@@ -30,15 +31,15 @@ public class PipesFromToChildrenProcess extends TransportService {
 		public long base64Len;
 		public Process process;
 
-		public Component f() throws Throwable {
-			var r = ((Message) waitForChild.poll_sync()).content;
+		public Component waitForChild() throws Throwable {
+			var o = waitForChild.poll_sync();
 
-			if (r instanceof Throwable) {
-				throw (Throwable) r;
-			} else if (r instanceof Component) {
-				return (Component) r;
+			if (o instanceof Throwable err) {
+				throw err;
+			} else if (o instanceof Message m) {
+				return child = m.sender();
 			} else {
-				throw new IllegalStateException("what to do with that? " + r);
+				throw new IllegalStateException("what to do with that? " + o);
 			}
 		}
 	}
@@ -48,7 +49,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 
 	private final Set<Entry> child_entry = new HashSet<>();
 
-	public PipesFromToChildrenProcess(Component c) {
+	public Pipe_ParentSide(Component c) {
 		super(c);
 	}
 
@@ -61,8 +62,8 @@ public class PipesFromToChildrenProcess extends TransportService {
 		e.run = true;
 		e.process = p;
 
-		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stdout, System.out));
-		Threads.newThread_loop(() -> e.run, () -> processChildStandardStream(e, e.stderr, System.err));
+		Threads.newThread_loop(() -> e.run, () -> processSdtStreamFromChild(e, e.stdout, System.out));
+		Threads.newThread_loop(() -> e.run, () -> processSdtStreamFromChild(e, e.stderr, System.err));
 
 		child_entry.add(e);
 		return e;
@@ -89,7 +90,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 		return "pipe to child processes";
 	}
 
-	private void processChildStandardStream(Entry e, InputStream from, PrintStream to) {
+	private void processSdtStreamFromChild(Entry e, InputStream from, PrintStream to) {
 		try {
 			ReadUntilResult readResult = Utilities.readUntil(from, (byte) '\n');
 			var line = new String(readResult.bytes.toByteArray());
@@ -100,17 +101,17 @@ public class PipesFromToChildrenProcess extends TransportService {
 				var bytes = Base64.getDecoder().decode(base64);
 				var o = serializer.fromBytes(bytes);
 
-				if (o instanceof Message) {
-					var m = (Message) o;
+				if (o instanceof Message m) {
+					processIncomingMessage(m);
 
 					if (e.child == null) {
-						e.child = m.route.last().link.src.component;
 						e.waitForChild.add_sync(o);
 					}
 
-					processIncomingMessage(m);
+				} else if (o instanceof Throwable) {
+					e.waitForChild.add_sync(o);
 				} else {
-					throw new IllegalStateException("not a message " + o);
+					to.println(o.getClass().getName() + " object received: " + o);
 				}
 			} else {
 				to.println(e.child + "> " + line);
@@ -154,6 +155,7 @@ public class PipesFromToChildrenProcess extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		Cout.debug(outLinks);
 		for (var l : outLinks) {
 			var n = l.dest.component;
 			var e = findEntry(n);
@@ -165,6 +167,14 @@ public class PipesFromToChildrenProcess extends TransportService {
 		}
 	}
 
+	@Override
+	protected void bcast(byte[] msg) {
+		for (var e : child_entry) {
+			send(msg, e);
+		}
+	}
+	
+	
 	private void send(byte[] msg, Entry e) {
 		try {
 			e.stdin.write(msg);
@@ -174,11 +184,6 @@ public class PipesFromToChildrenProcess extends TransportService {
 		}
 	}
 
-	@Override
-	protected void bcast(byte[] msg) {
-		for (var e : child_entry) {
-			send(msg, e);
-		}
-	}
+
 
 }

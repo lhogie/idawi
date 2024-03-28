@@ -5,6 +5,7 @@ import java.util.Collection;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.io.Cout;
 import toools.math.MathsUtilities;
 
 public class SharedMemoryTransport extends TransportService {
@@ -30,9 +31,8 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		var msgClone = (Message) serializer.fromBytes(msg);
-
 		for (var l : outLinks) {
+			var msgClone = (Message) l.dest.serializer.fromBytes(msg);
 			Idawi.agenda.scheduleNow(() -> l.dest.processIncomingMessage(msgClone));
 		}
 	}

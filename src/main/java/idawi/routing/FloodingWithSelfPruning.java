@@ -6,8 +6,6 @@ import java.util.List;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.transport.TransportService;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import toools.collections.Collections;
 
 public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
@@ -27,15 +25,15 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	}
 
 	@Override
-	public void accept(Message msg, SPPParm p) {
+	public void acceptImpl(Message msg, SPPParm p) {
 		// the message was never received
-		if (!component.alreadyKnownMsgs.contains(msg.ID)) {
+		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)) {
 			var myNeighbors = component.outLinks().stream().map(n -> n.dest.component).toList();
 
 			if (msg.route.isEmpty()) {
-				component.services(TransportService.class).forEach(t -> t.multicast(msg, this, p));
+				component.services(TransportService.class).forEach(t -> t.send(msg, null, this, p));
 			} else {
-				var srcNeighbors = convert(msg.route.last().routing.parms).neighbors;
+				var srcNeighbors = convert(msg.route.getLast().routing.parms).neighbors;
 				var newNeighbors = Collections.difference(myNeighbors, srcNeighbors);
 
 				// if I have neighbors that the source doesn't know
@@ -50,7 +48,7 @@ public class FloodingWithSelfPruning extends RoutingService<SPPParm> {
 	}
 
 	@Override
-	public SPPParm defaultData() {
+	public SPPParm defaultParameters() {
 		var p = new SPPParm();
 		p.neighbors = component.outLinks().stream().map(i -> i.dest.component).toList();
 		return p;

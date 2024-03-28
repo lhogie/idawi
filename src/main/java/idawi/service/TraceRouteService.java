@@ -40,8 +40,8 @@ public class TraceRouteService extends Service {
 
 	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
 		var map = new HashMap<Component, Route>();
-		component.bb().exec(TraceRouteService.class, traceroute.class, null, ComponentMatcher.multicast(targets), true,
-				null, true).returnQ.collector().collect(timeout, timeout, c -> {
+		component.bb().exec(ComponentMatcher.multicast(targets), TraceRouteService.class, traceroute.class, null, null,
+				true).returnQ.collector().collect(timeout, timeout, c -> {
 					var target = c.messages.last().route.source();
 					var route = (Route) c.messages.last().content;
 					map.put(target, route);

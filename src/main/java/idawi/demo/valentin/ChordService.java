@@ -40,7 +40,7 @@ public class ChordService extends Service {
 
 		// async multicast the item to all targets
 		var target = ComponentMatcher.multicast(h);
-		rp.exec(ChordService.class, set.class, rp.defaultData(), target, null, item, true);
+		rp.exec(target, ChordService.class, set.class, null, item, true);
 	}
 
 	public Set<String> localKeys() {
@@ -57,7 +57,7 @@ public class ChordService extends Service {
 		// try all components in a sequence
 		for (var c : hosts) {
 			// sync call
-			var msg = rp.exec(ChordService.class, get.class, rp.defaultData(), ComponentMatcher.unicast(c), true, key,
+			var msg = rp.exec(ComponentMatcher.unicast(c), ChordService.class, get.class, rp.defaultParameters(), key,
 					true).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {
@@ -140,7 +140,7 @@ public class ChordService extends Service {
 			var execMsg = in.poll_sync();
 
 			// extract the key param from it
-			String k = (String) execMsg.content;
+			String k = (String) execMsg.exec().parms;
 
 			// get the corresponding items
 			for (var f : directory.listRegularFiles()) {

@@ -67,7 +67,7 @@ public class TCPDriver extends IPDriver {
 			try {
 				while (true) {
 					Message msg = (Message) serializer.read(is);
-					var from = msg.route.last().link.src.component;
+					var from = msg.route.getLast().link.src.component;
 
 					synchronized (neighbor_socket) {
 						Entry e = neighbor_socket.get(from);

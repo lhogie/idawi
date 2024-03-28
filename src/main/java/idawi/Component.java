@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import idawi.IdawiSerializer.ComponentRepresentative;
 import idawi.routing.AutoForgettingLongList;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ForceBroadcasting;
@@ -33,7 +34,7 @@ import toools.text.NameList;
 
 public class Component implements SizeOf {
 
-	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	public final AutoForgettingLongList alreadySentMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 	public final AutoForgettingLongList alreadyReceivedMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	final Set<Service> services = new HashSet<>();
@@ -48,11 +49,10 @@ public class Component implements SizeOf {
 //	public Component deployer;
 //	public Set<Component> simulatedComponents = new HashSet<>();
 
-	public Component()
-	{
-		//new Error().printStackTrace();
+	public Component() {
+		// new Error().printStackTrace();
 	}
-	
+
 	public Component turnToDigitalTwin(Component host) {
 		var s = new DigitalTwinService(this);
 		s.host = host.localView();
@@ -126,6 +126,10 @@ public class Component implements SizeOf {
 	public <S extends Service> S service(Class<S> c) {
 		return service(c, false);
 	}
+	
+	public <S extends Service> S need(Class<S> c) {
+		return service(c, true);
+	}
 
 	public <S extends Service> S service(Class<S> c, boolean autoload) {
 		for (var s : services) {
@@ -160,19 +164,19 @@ public class Component implements SizeOf {
 
 	@Override
 	public String toString() {
-		var name = friendlyName;
+		var s = friendlyName;
 
-		if (name == null) {
+		if (s == null) {
 			var pk = publicKey();
 
 			if (pk == null) {
-				name = "*unnamed*";
+				s = "*unnamed*";
 			} else {
-				name = new String(Base64.getEncoder().encode(pk.getEncoded()));
+				s = new String(Base64.getEncoder().encode(pk.getEncoded()));
 			}
 		}
 
-		return isDigitalTwin() ? dt().host.component + "/" + name : name;
+		return isDigitalTwin() ?  s +"*" : s;
 	}
 
 	public double now() {
@@ -214,7 +218,7 @@ public class Component implements SizeOf {
 			sum += 8 + s.sizeOf();
 		}
 
-		return sum + alreadyKnownMsgs.sizeOf() + 8;
+		return sum + alreadySentMsgs.sizeOf() + alreadyReceivedMsgs.sizeOf() + 8;
 	}
 
 	public List<Link> outLinks() {
@@ -269,5 +273,12 @@ public class Component implements SizeOf {
 
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
 	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
+
+	public ComponentRepresentative representative() {
+		var cr = new ComponentRepresentative();
+		cr.key = publicKey();
+		cr.friendlyName = friendlyName;
+		return cr;
+	}
 
 }

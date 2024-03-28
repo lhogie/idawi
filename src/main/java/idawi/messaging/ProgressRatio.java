@@ -32,4 +32,9 @@ public class ProgressRatio extends ProgressInformation {
 			return (((int) (10000 * ratio())) / 100d) + "%";
 		}
 	}
+
+	@Override
+	public long sizeOf() {
+		return 16;
+	}
 }

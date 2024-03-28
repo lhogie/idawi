@@ -5,7 +5,7 @@ import java.io.Serializable;
 public abstract class Event<W extends When> implements Runnable, Serializable {
 	public W when;
 	String name;
-
+	
 	public Event(W w) {
 		this(null, w);
 	}

@@ -7,6 +7,7 @@ import java.util.Vector;
 import idawi.Component;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
+import idawi.service.PingService;
 import toools.net.SSHParms;
 
 /**
@@ -35,13 +36,13 @@ public class Demo2_simple_deployment {
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.bb().ping(v.getFirst()).poll_sync(3);
+		var pong = localComponent.service(PingService.class).ping(v.getFirst()).poll_sync(3);
 
 		if (pong == null) {
 			System.err.println("ping timeout");
 		} else {
 			var ping = (Message) pong.content;
-			double pongDuration = pong.route.last().receptionDate - ping.route.first().emissionDate;
+			double pongDuration = pong.route.getLast().receptionDate - ping.route.first().emissionDate;
 			System.out.println("pong received after " + pongDuration + "ms");
 		}
 	}

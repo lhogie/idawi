@@ -33,7 +33,7 @@ public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 	}
 
 	@Override
-	public void accept(Message msg, ForceRoutingParms parms) {
+	public void acceptImpl(Message msg, ForceRoutingParms parms) {
 
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {

@@ -2,6 +2,8 @@ package idawi.messaging;
 
 import java.io.Serializable;
 
-public class ProgressInformation implements Serializable {
+import toools.SizeOf;
+
+public abstract class ProgressInformation implements Serializable, SizeOf {
 
 }

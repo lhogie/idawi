@@ -7,7 +7,6 @@ import idawi.Component;
 import idawi.Idawi;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.deploy.DeployerService;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.test.Demo4_deploy_local_peers.DummyService.op;
@@ -67,8 +66,8 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		initialThing.defaultRoutingProtocol().exec(DummyService.class, op.class, null, ComponentMatcher.unicast(last),
-				true, "hello!", true);
+		initialThing.defaultRoutingProtocol().exec(ComponentMatcher.unicast(last), DummyService.class, op.class, null,
+				"hello!", true);
 		s.wait.poll_sync();
 		System.out.println("completed");
 		Idawi.agenda.stop();

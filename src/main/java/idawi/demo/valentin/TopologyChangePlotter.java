@@ -44,4 +44,9 @@ public class TopologyChangePlotter implements NetworkTopologyListener {
 		}
 
 	}
+
+	@Override
+	public void newLink(Link l) {
+		plot();
+	}
 }

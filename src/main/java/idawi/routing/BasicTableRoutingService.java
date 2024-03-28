@@ -11,7 +11,7 @@ import idawi.routing.ComponentMatcher.multicast;
 import idawi.transport.TransportService;
 import toools.collections.primitive.BloomFilterForLong;
 
-public class BasicTableRoutingService extends RoutingService<RoutingData> implements TrafficListener {
+public class BasicTableRoutingService extends RoutingService<RoutingParameters> implements TrafficListener {
 	private final BloomFilterForLong alreadyReceivedMsgs = new BloomFilterForLong(1000);
 	private final Map<Component, Component> destination_relay = new HashMap<>();
 
@@ -20,18 +20,18 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 	}
 
 	@Override
-	public void accept(Message msg, RoutingData parms) {
+	public void acceptImpl(Message msg, RoutingParameters parms) {
 		// if the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
 			alreadyReceivedMsgs.add(msg.ID);
 
-			if (msg.destination.componentMatcher instanceof multicast) {
-				for (var target : ((multicast) msg.destination.componentMatcher).target) {
+			if (msg.qAddr.targetedComponents instanceof multicast) {
+				for (var target : ((multicast) msg.qAddr.targetedComponents).target) {
 					var relay = destination_relay.get(target);
 
 					if (relay != null) {
 						component.services(TransportService.class).forEach(t -> {
-							var link = component.localView().g.findALink(
+							var link = component.localView().g.findLink(
 									l -> l.src.component.equals(component) && l.dest.component.equals(relay));
 
 							if (link != null) {
@@ -52,7 +52,7 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 	}
 
 	@Override
-	public ComponentMatcher defaultMatcher(RoutingData parms) {
+	public ComponentMatcher defaultMatcher(RoutingParameters parms) {
 		return null;
 	}
 
@@ -62,7 +62,7 @@ public class BasicTableRoutingService extends RoutingService<RoutingData> implem
 	}
 
 	@Override
-	public List<RoutingData> dataSuggestions() {
+	public List<RoutingParameters> dataSuggestions() {
 		return null;
 	}
 

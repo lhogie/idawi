@@ -11,6 +11,7 @@ import idawi.Component;
 import idawi.service.SystemService;
 import idawi.service.local_view.LocalViewService;
 import toools.SizeOf;
+import toools.io.Cout;
 
 /**
  * The matcher runs on the real component to check if it should try to execute
@@ -129,6 +130,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 	}
 
 	public static ComponentMatcher fromString(String s, LocalViewService lookup) {
+		Cout.debugSuperVisible(s);
 		s = s.trim();
 
 		if (s.isEmpty()) {
@@ -137,8 +139,12 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 			int pos = s.indexOf('.');
 
 			if (pos == -1) {
-				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *")).map(name -> lookup.g
-						.findComponent(c -> c.friendlyName.equals(name), true, c -> c.friendlyName = name)).toList()));
+				return multicast(new HashSet<>(Arrays.stream(s.split(" *, *"))
+						.map(name -> lookup.g.findComponent(c -> c.friendlyName.equals(name), true, () -> {
+							var c = new Component();
+							c.friendlyName = name;
+							return c;
+						})).toList()));
 			} else {
 				var prefix = s.substring(0, pos);
 				var value = s.substring(pos + 1);

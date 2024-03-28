@@ -7,6 +7,7 @@ import idawi.Component;
 import idawi.Idawi;
 import idawi.routing.FloodingWithSelfPruning;
 import idawi.routing.RoutingListener;
+import idawi.service.PingService;
 import idawi.service.local_view.Network;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.TransportService;
@@ -17,6 +18,7 @@ public class Minimal {
 		Idawi.agenda.start();
 		var a = new Component();
 		var b = new Component();
+		b.need(PingService.class);
 
 		var rl = new RoutingListener.PrintTo(System.out);
 		Stream.of(a, b).forEach(c -> c.bb().listeners.add(rl));
@@ -28,7 +30,7 @@ public class Minimal {
 		var r = a.service(FloodingWithSelfPruning.class, true);
 		System.out.println("routing: " + r);
 //		r.exec(BlindBroadcasting.class, RoutingService.test2.class, null, ComponentMatcher.regex("b"), true, null);
-		var pong = r.ping(b).poll_sync();
+		var pong = a.service(PingService.class, true).ping(b).poll_sync();
 		System.out.println("pong= " + pong);
 
 		Threads.sleep(1);

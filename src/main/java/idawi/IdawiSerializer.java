@@ -10,15 +10,16 @@ import toools.io.ser.JavaSerializer;
 
 public class IdawiSerializer extends JavaSerializer {
 
+	public final TransportService transportService;
+
 	public static class ComponentRepresentative implements Serializable {
 		PublicKey key;
 		String friendlyName;
-		
+
 		public boolean matches(Component c) {
 			if (key != null && c.publicKey() != null) {
 				return key.equals(c.publicKey());
-			}
-			else if (friendlyName != null && c.friendlyName != null) {
+			} else if (friendlyName != null && c.friendlyName != null) {
 				return friendlyName.equals(c.friendlyName);
 			}
 
@@ -47,28 +48,16 @@ public class IdawiSerializer extends JavaSerializer {
 		}
 	}
 
-	private final TransportService ts;
-
 	public IdawiSerializer(TransportService c) {
-		this.ts = c;
+		this.transportService = c;
 	}
 
 	@Override
 	protected Object replaceAtSerialization(Object o) {
-		if (o instanceof Component) {
-			var c = ((Component) o);
-			var cr = new ComponentRepresentative();
-			cr.key = c.publicKey();
-			cr.friendlyName = c.friendlyName;
-			return cr;
-		} else if (o instanceof Link) {
-			var l = (Link) o;
-
-			if (l.toBeResolved) {
-				return new SourceRepresentative(l.src);
-			} else {
-				return new LinkRepresentative(l.src, l.dest);
-			}
+		if (o instanceof Component c) {
+			return c.representative();
+		} else if (o instanceof Link l) {
+			return l.toBeResolved ? new SourceRepresentative(l.src) : new LinkRepresentative(l.src, l.dest);
 		} else {
 			return super.replaceAtSerialization(o);
 		}
@@ -76,26 +65,25 @@ public class IdawiSerializer extends JavaSerializer {
 
 	@Override
 	protected Object replaceAtDeserialization(Object o) {
-		if (o instanceof ComponentRepresentative) {
-			var r = ((ComponentRepresentative) o);
-			var c = ts.component.localView().g.findComponent(d -> r.matches(d), true, d -> {
-				d.keyPair = new KeyPair(r.key, null);
-				d.turnToDigitalTwin(ts.component);
+		if (o instanceof ComponentRepresentative r) {
+			var twin = transportService.component.localView().g.findComponent(d -> r.matches(d), true, () -> {
+				var d = new Component();
+				d.turnToDigitalTwin(transportService.component);
+				return d;
 			});
 
-			c.friendlyName = r.friendlyName; // may have changed
-			return c;
-		} else if (o instanceof SourceRepresentative) {
-			var representative = (SourceRepresentative) o;
+			twin.keyPair = new KeyPair(r.key, null);
+			twin.friendlyName = r.friendlyName; // may have changed
+			return twin;
+		} else if (o instanceof SourceRepresentative representative) {
 			var src = representative.srcC.service(representative.srcT, true);
-			var l = ts.component.localView().g.findALinkConnecting(src, ts);
-			return l != null ? l : new Link(src, ts);
+			var l = transportService.component.localView().g.findLink(src, transportService, true, null);
+			return l;
 		} else if (o instanceof LinkRepresentative) {
 			var representative = (LinkRepresentative) o;
 			var src = representative.srcC.service(representative.srcT, true);
 			var dest = representative.destC.service(representative.destT, true);
-			var l = ts.component.localView().g.findALinkConnecting(src, dest);
-			return l != null ? l : new Link(src, dest);
+			return transportService.component.localView().g.findLink(src, dest, true, null);
 		} else {
 			return o;
 		}

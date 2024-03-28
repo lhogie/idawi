@@ -41,7 +41,7 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 	public ComponentSequence components() {
 		var components = new ComponentSequence();
 		forEach(e -> components.add(e.link.src.component));
-		components.add(last().link.dest.component);
+		components.add(getLast().link.dest.component);
 		return components;
 	}
 
@@ -65,10 +65,6 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 		return get(size() - 1 - rewind);
 	}
 
-	public Entry last() {
-		return getr(0);
-	}
-
 	public List<TransportService> transports() {
 		var r = new ArrayList<TransportService>();
 
@@ -89,7 +85,7 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 	}
 
 	public double duration() {
-		return last().receptionDate - get(0).emissionDate;
+		return getLast().receptionDate - get(0).emissionDate;
 	}
 
 	public boolean isEmpty() {

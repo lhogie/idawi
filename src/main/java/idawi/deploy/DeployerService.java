@@ -12,7 +12,7 @@ import idawi.Component;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
-import idawi.transport.PipesFromToChildrenProcess;
+import idawi.transport.Pipe_ParentSide;
 import toools.io.RSync;
 import toools.io.file.Directory;
 import toools.net.SSHParms;
@@ -54,7 +54,7 @@ public class DeployerService extends Service {
 		try {
 			Process p = Runtime.getRuntime()
 					.exec(new String[] { java, "-cp", classpath, RemoteMain.class.getName(), "run_by_a_node" });
-			return component.service(PipesFromToChildrenProcess.class, true).add(p).f();
+			return component.service(Pipe_ParentSide.class, true).add(p).waitForChild();
 		} catch (Throwable err) {
 			throw new DeployError(err);
 		}
@@ -103,7 +103,7 @@ public class DeployerService extends Service {
 						line -> feedback.accept(line));
 
 				// use any JVM with the same spec as the depoyer
-				Process p = SSHUtils.exec(req,
+				Process process = SSHUtils.exec(req,
 						"jre/jdk-" + System.getProperty("java.specification.version") + "*" + "-$(uname -s)-$(uname -m)"
 								+ "/bin/java",
 						"-cp", remoteClassDir + ":$(echo " + remoteClassDir + "* | tr ' ' :)",
@@ -112,7 +112,9 @@ public class DeployerService extends Service {
 				feedback.accept("sending node startup info to " + req);
 
 				try {
-					ok.accept(component.service(PipesFromToChildrenProcess.class, true).add(p).f());
+					var entry = component.need(Pipe_ParentSide.class).add(process);
+					Component newComponent = entry.waitForChild();
+					ok.accept(newComponent);
 				} catch (Throwable err) {
 					errors.accept(err);
 				}
@@ -146,7 +148,7 @@ public class DeployerService extends Service {
 		@Override
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
-			var reqs = (Collection<SSHParms>) trigger.content;
+			var reqs = (Collection<SSHParms>) trigger.exec().parms;
 			deployViaSSH(reqs, line -> reply(trigger, line, false), line -> reply(trigger, new Error(line), false),
 					ok -> reply(trigger, ok, false), err -> reply(trigger, err, false));
 		}

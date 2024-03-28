@@ -2,7 +2,7 @@ package idawi.routing;
 
 import toools.io.Utilities;
 
-public class ForceRoutingParms extends RoutingData {
+public class ForceRoutingParms extends RoutingParameters {
 	int force;
 
 	public ForceRoutingParms(int initialForce) {

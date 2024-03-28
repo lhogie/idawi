@@ -10,7 +10,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,7 @@ import idawi.messaging.MessageCollector;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.FloodingWithSelfPruning;
-import idawi.routing.RoutingData;
+import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
@@ -62,19 +61,18 @@ import toools.text.TextUtilities;
 
 public class WebService extends Service {
 
-	public static abstract class TypedObject<T>
-	{
+	public static abstract class TypedObject<T> {
 		T value;
+
 		public abstract String nature();
 	}
-	
-	public static abstract class HTMLRenderableObject<T>
-	{
+
+	public static abstract class HTMLRenderableObject<T> {
 		protected T value;
+
 		public abstract String html();
 	}
 
-	
 	public static int DEFAULT_PORT = 8081;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
@@ -158,15 +156,15 @@ public class WebService extends Service {
 			URI uri = e.getRequestURI();
 			InputStream input = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
 			// is.close();
-			// Cout.debugSuperVisible(data.length);
 			List<String> path = path(uri.getPath());
+			System.out.println("path: " + path);
 			Map<String, String> query = query(uri.getQuery());
 			e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 			OutputStream output = e.getResponseBody();
 
 			try {
 				if (path == null) {
-					writeOneShot(HttpURLConnection.HTTP_OK, "text/html",
+					sendOneShot(HttpURLConnection.HTTP_OK, "text/html",
 							new JavaResource(getClass(), "root.html").getByteArray(), e, output);
 //					output.write(new JavaResource(getClass(), "root.html").getByteArray());
 				} else {
@@ -175,32 +173,31 @@ public class WebService extends Service {
 
 					if (context.equals("api")) {
 						// setting default serializer
-						Serializer serializer = name2serializer.get("jaseto");
+						Serializer preferredSerializer = name2serializer.get("jaseto");
 
 						try {
-							var preferredOuputFormat = removeOrDefault(query, "format", serializer.getMIMEType(),
-									name2serializer.keySet());
-							serializer = name2serializer.get(preferredOuputFormat);
-
 							e.getResponseHeaders().set("Content-type", "text/event-stream");
 							e.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
-							serveAPI(path, query, input, output, serializer);
+							var preferredOuputFormat = removeOrDefault(query, "format",
+									preferredSerializer.getMIMEType(), name2serializer.keySet());
+							preferredSerializer = name2serializer.get(preferredOuputFormat);
+							serveAPI(path, query, input, output, preferredSerializer);
 						} catch (Throwable err) {
 							err.printStackTrace();
-							sendEvent(output, new ChunkHeader(List.of(serializer.getMIMEType())),
-									serializer.toBytes(err), serializer.isBinary());
+							sendEvent(output, new ChunkHeader(List.of(preferredSerializer.getMIMEType())),
+									preferredSerializer.toBytes(err), preferredSerializer.isBinary());
 						} finally {
 							sendEvent(output, new ChunkHeader(List.of("plain")), "EOT".getBytes(), false);
 						}
 					} else if (context.equals("favicon.ico")) {
-						writeOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
+						sendOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebService.class, "flavicon.ico").getByteArray(), e, output);
 					} else if (context.equals("frontend")) {
 						if (path.isEmpty()) {
 							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
 
-						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
+						sendOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("forward")) {
 						String src = path.remove(0);
@@ -218,7 +215,7 @@ public class WebService extends Service {
 							throw new IllegalArgumentException("unknown forward source: " + src);
 						}
 
-						writeOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path), bytes, e, output);
+						sendOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path), bytes, e, output);
 					} else {
 						throw new IllegalArgumentException("unknown context: " + context);
 					}
@@ -227,7 +224,7 @@ public class WebService extends Service {
 				try {
 					System.err.println("The following error will be sent to the Web client");
 					err.printStackTrace();
-					writeOneShot(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
+					sendOneShot(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
 							TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
 				} catch (Throwable ee) {
@@ -265,10 +262,9 @@ public class WebService extends Service {
 		 */
 	}
 
-	public static void writeOneShot(int returnCode, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
+	public static void sendOneShot(int returnCode, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
 			throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
-//		System.err.println("sending this to client: " + new String(bytes));
 		e.sendResponseHeaders(returnCode, bytes.length);
 		os.write(bytes);
 	}
@@ -280,7 +276,7 @@ public class WebService extends Service {
 			out.write('\n');
 
 			if (base64) {
-				data = base64(data).getBytes();
+				data = TextUtilities.base64(data).getBytes();
 			}
 
 			var dataText = TextUtilities.prefixEachLineBy(new String(data), "data: ");
@@ -290,15 +286,6 @@ public class WebService extends Service {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-
-	}
-
-	private static String base64(byte[] bytes) {
-		return new String(Base64.getMimeEncoder().encode(bytes)).replace("\n", "").replace("\r", "");
-	}
-
-	private static byte[] unbase64(byte[] bytes) {
-		return Base64.getMimeDecoder().decode(bytes);
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
@@ -312,11 +299,11 @@ public class WebService extends Service {
 				.get(String.valueOf(removeOrDefault(query, "what", "msg", whatToSendMap.keySet())));
 
 		if (!query.isEmpty()) {
-			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
+			throw new IllegalStateException("invalid parameters: " + query.keySet().toString());
 		}
 
 		final RoutingService<?> r;
-		final RoutingData rp;
+		final RoutingParameters rp;
 		final ComponentMatcher t;
 		final Class<? extends Service> service;
 		final Class<? extends Endpoint> o;
@@ -325,14 +312,14 @@ public class WebService extends Service {
 
 		if (path.isEmpty()) {// show available routing protocols
 			r = component.defaultRoutingProtocol();
-			rp = r.defaultData();
+			rp = r.defaultParameters();
 			t = ComponentMatcher.multicast(Set.of(component));
 			service = ServiceManager.class;
 			o = ServiceManager.listRoutingServices.class;
 			description = "list of available routing services";
 		} else if (path.size() == 1) { // show examples of routing parms
 			r = routing(path.get(0));
-			rp = r.defaultData();
+			rp = r.defaultParameters();
 			t = ComponentMatcher.multicast(Set.of(component));
 			service = r.getClass();
 			o = RoutingService.suggestParms.class;
@@ -381,7 +368,7 @@ public class WebService extends Service {
 		return (Class<? extends Service>) Class.forName(s);
 	}
 
-	public void exec(RoutingService routing, RoutingData routingParms, ComponentMatcher target,
+	public void exec(RoutingService routing, RoutingParameters routingParms, ComponentMatcher target,
 			Class<? extends Service> service, Class<? extends Endpoint> endpoint, EndpointParameterList parms,
 			boolean compress, boolean encrypt, double duration, double timeout,
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
@@ -389,7 +376,7 @@ public class WebService extends Service {
 
 		System.out.println("target: " + target);
 
-		var ro = routing.exec(service, endpoint, routingParms, target, true, parms, postDataInputStream == null);
+		var ro = routing.exec(target, service, endpoint, routingParms, parms, postDataInputStream == null);
 		var aes = new AES();
 		SecretKey key = null;
 
@@ -419,7 +406,7 @@ public class WebService extends Service {
 							if (encoding.equals("gzip")) {
 								content = Utilities.gunzip(content);
 							} else if (encoding.equals("base64")) {
-								content = unbase64(content);
+								content = TextUtilities.unbase64(content);
 							} else if (encoding.equals("aes")) {
 								try {
 									content = aes.decode(content, key);
@@ -445,11 +432,13 @@ public class WebService extends Service {
 
 		collector.collect(duration, timeout, collecto -> {
 			List<String> encodingsToClient = new ArrayList<>();
+			collecto.messages.getLast().contentDescription = resultDescription;
 			Object what2send = whatToSendF.apply(collecto);
-			collecto.contentDescription = resultDescription;
-			var bytes = serializer.toBytes(what2send);
-			encodingsToClient.add(serializer.getMIMEType());
-			boolean base64 = serializer.isBinary() || compress || encrypt;
+
+			var ser = what2send instanceof byte[] ? name2serializer.get("bytes") : serializer;
+			var bytes = ser.toBytes(what2send);
+			encodingsToClient.add(ser.getMIMEType());
+			boolean base64 = ser.isBinary() || compress || encrypt;
 
 			if (compress) {
 				bytes = Utilities.gzip(bytes);
@@ -474,7 +463,6 @@ public class WebService extends Service {
 
 	}
 
-
 	private String name(Function<MessageCollector, Object> whatToSendF) {
 		for (var e : whatToSendMap.entrySet()) {
 			if (e.getValue() == whatToSendF) {
@@ -485,8 +473,8 @@ public class WebService extends Service {
 		throw new IllegalStateException();
 	}
 
-	private RoutingData routingsParms(RoutingService routing, String routingDataDescr) {
-		var p = routing.defaultData();
+	private RoutingParameters routingsParms(RoutingService routing, String routingDataDescr) {
+		var p = routing.defaultParameters();
 
 		if (!routingDataDescr.isEmpty()) {
 			p.fromString(routingDataDescr, routing);
@@ -536,16 +524,16 @@ public class WebService extends Service {
 		if (s == null) {
 			return null;
 		}
-
 		if (s.startsWith("/")) {
 			s = s.substring(1);
 		}
 
-		if (s.endsWith("/")) {
+		if (s.charAt(s.length() - 1) == '/' && s.charAt(s.length() - 2) != '/') {
 			s = s.substring(0, s.length() - 1);
 		}
 
-		return s.isEmpty() ? null : new ArrayList<>(Arrays.asList(s.split("/")));
+		System.out.println("final :" + s);
+		return s.isEmpty() ? null : TextUtilities.split(s, '/');
 	}
 
 	private static String removeOrDefault(Map<String, String> map, String k, String defaultValue,

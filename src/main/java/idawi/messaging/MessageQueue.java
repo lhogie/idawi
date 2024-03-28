@@ -3,9 +3,9 @@ package idawi.messaging;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 
 import idawi.Service;
+import toools.io.Cout;
 import toools.thread.Q;
 
 public class MessageQueue extends Q<Message> {
@@ -21,15 +21,13 @@ public class MessageQueue extends Q<Message> {
 	}
 
 	public void detach() {
+		Cout.debug("detaching " + this);
 		service.detachQueue(this);
 	}
-
 
 	public MessageCollector collector() {
 		return new MessageCollector(this);
 	}
-
-
 
 	public InputStream restream(double timeout, BooleanSupplier keepOn) {
 		return new InputStream() {
@@ -84,5 +82,10 @@ public class MessageQueue extends Q<Message> {
 		var r = new MessageList();
 		r.addAll(super.toList());
 		return r;
+	}
+
+	@Override
+	public String toString() {
+		return name + ": " + super.toString();
 	}
 }

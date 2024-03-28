@@ -3,13 +3,13 @@ package idawi.routing.irp;
 import java.util.Set;
 
 import idawi.Component;
-import idawi.routing.RoutingData;
+import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import toools.SizeOf;
 import toools.io.Utilities;
 import toools.text.TextUtilities;
 
-public class IRPParms extends RoutingData {
+public class IRPParms extends RoutingParameters {
 	private static final long serialVersionUID = 1L;
 
 	public Set<Component> components;
@@ -103,8 +103,12 @@ public class IRPParms extends RoutingData {
 			components = null;
 		} else {
 			for (var n : names.split(" *, *")) {
-				components.add(service.component.localView().g.findComponent(c -> c.friendlyName.equals(n), true,
-						c -> c.friendlyName = n));
+				components
+						.add(service.component.localView().g.findComponent(c -> c.friendlyName.equals(n), true, () -> {
+							var c = new Component();
+							c.friendlyName = n;
+							return c;
+						}));
 			}
 		}
 	}

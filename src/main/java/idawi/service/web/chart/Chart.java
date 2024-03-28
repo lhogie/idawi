@@ -4,7 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Chart implements Serializable {
+import toools.SizeOf;
+
+public class Chart implements Serializable, SizeOf {
 	System system;
 	List<Function> functions = new ArrayList<>();
 
@@ -43,5 +45,10 @@ public class Chart implements Serializable {
 		}
 
 		return c;
+	}
+
+	@Override
+	public long sizeOf() {
+		return 0;
 	}
 }

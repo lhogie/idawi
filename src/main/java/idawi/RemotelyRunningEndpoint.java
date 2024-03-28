@@ -2,19 +2,19 @@ package idawi;
 
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
-import idawi.routing.ToEndpoint;
-import idawi.routing.ToQueue;
+import idawi.routing.QueueAddress;
 
 public class RemotelyRunningEndpoint {
 
-	public ToEndpoint destination;
+	public QueueAddress destination;
+//	public Class<? extends InnerClassEndpoint> endpoint;
 	public MessageQueue returnQ;
 
-	public ToQueue getOperationInputQueueDestination() {
-		var d = new ToQueue();
-		d.componentMatcher = ComponentMatcher.unicast(returnQ.service.component);
-		d.queueID = destination.queueID();
-		d.service = destination.service();
+	public QueueAddress getOperationInputQueueDestination() {
+		var d = new QueueAddress();
+		d.targetedComponents = ComponentMatcher.unicast(returnQ.service.component);
+		d.queueID = destination.queueID;
+		d.service = destination.service;
 		return d;
 	}
 

@@ -11,4 +11,6 @@ public interface NetworkTopologyListener {
 	void linkActivated(Link l);
 
 	void linkDeactivated(Link l);
+
+	void newLink(Link l);
 }

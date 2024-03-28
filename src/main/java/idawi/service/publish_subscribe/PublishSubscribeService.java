@@ -12,8 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import idawi.Component;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.routing.Destination;
-import idawi.routing.ToQueue;
+import idawi.routing.QueueAddress;
 import toools.SizeOf;
 
 public class PublishSubscribeService extends Service {
@@ -35,7 +34,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	private final Map<String, Set<Destination>> topic_subscribers = new HashMap<>();
+	private final Map<String, Set<QueueAddress>> topic_subscribers = new HashMap<>();
 	public final Map<String, List<Publication>> topic_history = new HashMap<>();
 
 	public PublishSubscribeService(Component peer) {
@@ -53,7 +52,7 @@ public class PublishSubscribeService extends Service {
 	}
 
 	public class subscribe extends TypedInnerClassEndpoint {
-		public void exec(String topic, Destination subscriber) throws Throwable {
+		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).add(subscriber);
 		}
@@ -65,7 +64,7 @@ public class PublishSubscribeService extends Service {
 	}
 
 	public class unsubscribe extends TypedInnerClassEndpoint {
-		public void exec(String topic, ToQueue subscriber) throws Throwable {
+		public void exec(String topic, QueueAddress subscriber) throws Throwable {
 			ensureTopicExists(topic);
 			topic_subscribers.get(topic).remove(subscriber);
 		}
@@ -89,7 +88,7 @@ public class PublishSubscribeService extends Service {
 	}
 
 	public class ListSubscribers extends TypedInnerClassEndpoint {
-		public Map<String, Set<Destination>> exec(String topic) throws Throwable {
+		public Map<String, Set<QueueAddress>> exec(String topic) throws Throwable {
 			return topic_subscribers;
 		}
 
@@ -145,7 +144,7 @@ public class PublishSubscribeService extends Service {
 
 		// notify subscribers
 		topic_subscribers.get(topic)
-				.forEach(subscriber -> component.defaultRoutingProtocol().send(o, true, subscriber));
+				.forEach(subscriber -> component.defaultRoutingProtocol().send(publication, subscriber));
 	}
 
 	private void ensureTopicExists(String topic) {
