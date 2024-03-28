@@ -286,6 +286,7 @@ public class WebService extends Service {
 		out.write(dataText.getBytes());
 		out.write('\n');
 		out.write('\n'); // end of event
+		out.flush();
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
@@ -457,6 +458,7 @@ public class WebService extends Service {
 			} catch (IOException e) {
 				Cout.debugSuperVisible("Client has closed");
 				collecto.stop = true;
+				//ro.destination
 			}
 		});
 
