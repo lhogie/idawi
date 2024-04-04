@@ -21,7 +21,7 @@ public class ErrorLog extends Service {
 	public class registerError extends InnerClassEndpoint {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-			errors.add((Throwable) in.poll_sync().exec().parms);
+			errors.add((Throwable) in.poll_sync().content);
 		}
 
 		@Override

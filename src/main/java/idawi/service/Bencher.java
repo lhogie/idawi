@@ -125,7 +125,7 @@ public class Bencher extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			int size = (int) m.exec().parms;
+			int size = (int) m.content;
 			localBench(size, r -> reply(m, r, true));
 		}
 

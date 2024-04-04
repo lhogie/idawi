@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
+import idawi.InnerClassEndpoint;
 import idawi.RemoteException;
 import idawi.routing.QueueAddress;
 import idawi.routing.Route;
@@ -25,10 +26,15 @@ public class Message implements Serializable, SizeOf {
 	public Object content;
 	public RoutingStrategy initialRoutingStrategy;
 	public boolean eot = false;
-//	public ExecReq exec;
+	public Class<? extends InnerClassEndpoint> endpointID;
+	public int nbThreadsInPool = 1; // 0 makes it synchronous
+	public QueueAddress replyTo;
+	public long soonestExecTime = 0;
+	public long latestExecTime = Long.MAX_VALUE;
+	public boolean detachQueueAfterCompletion = true;
+//	public Object parms;
 
-
-	public boolean autoCreateQueue = false;
+	public boolean autoCreateQueue = true;
 
 	public boolean simulate = false;
 
@@ -57,6 +63,7 @@ public class Message implements Serializable, SizeOf {
 		s += ", qAddr:" + qAddr;
 		s += ", route:" + route;
 		s += ", content: " + TextUtilities.toString(content);
+		s += endpointID.getSimpleName() + "(" + content + ")";
 		return s;
 	}
 
@@ -106,10 +113,6 @@ public class Message implements Serializable, SizeOf {
 		return c;
 	}
 
-	public ExecReq exec() {
-		return (ExecReq) content;
-	}
-
 	public Message throwIfError() {
 		if (content instanceof Throwable) {
 			Throwable e = (RemoteException) content;
@@ -120,7 +123,7 @@ public class Message implements Serializable, SizeOf {
 
 			throw e instanceof RuntimeException re ? re : new RuntimeException(e);
 		}
-		
+
 		return this;
 	}
 

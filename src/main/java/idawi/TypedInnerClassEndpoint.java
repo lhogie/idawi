@@ -76,11 +76,11 @@ public abstract class TypedInnerClassEndpoint extends InnerClassEndpoint {
 	public final void impl(MessageQueue in)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		var exeMsg = in.poll_sync();
-		var parms = EndpointParameterList.from(exeMsg.exec().parms, method.getParameterTypes(), getClass());
+		var parms = EndpointParameterList.from(exeMsg.content, method.getParameterTypes(), getClass());
 		Object r = method.invoke(this, parms.toArray());
 
 		if (method.getReturnType() != void.class) {
-			service.component.bb().send(r, exeMsg.exec().replyTo);
+			service.component.bb().send(r, exeMsg.replyTo);
 		}
 	}
 

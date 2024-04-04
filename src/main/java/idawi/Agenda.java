@@ -9,6 +9,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
+import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -61,7 +62,7 @@ public class Agenda {
 
 			@Override
 			public void run() {
-				schedule(new OKEvent(Idawi.agenda.now() + period));
+				schedule(new OKEvent(Idawi.agenda.time() + period));
 			}
 		}
 
@@ -84,7 +85,7 @@ public class Agenda {
 				if (candidateEvent == null) {
 					Thread.sleep(Long.MAX_VALUE);
 				} else {
-					double wait = candidateEvent.when.time - now();
+					double wait = candidateEvent.when.time - time();
 
 					if (wait > 0) {
 						listeners.forEach(l -> l.sleeping(wait, candidateEvent));
@@ -121,7 +122,6 @@ public class Agenda {
 						});
 					}
 				}
-
 			} catch (InterruptedException e) {
 				listeners.forEach(l -> l.interrupted());
 			}
@@ -135,7 +135,7 @@ public class Agenda {
 		listeners.forEach(l -> l.terminating(nbPastEvents));
 	}
 
-	public double now() {
+	public double time() {
 		if (!isStarted())
 			return 0;
 
@@ -172,7 +172,7 @@ public class Agenda {
 	}
 
 	public void scheduleNow(Runnable r) {
-		schedule(new Event<PointInTime>(null, new PointInTime(now())) {
+		schedule(new Event<PointInTime>(null, new PointInTime(time())) {
 
 			@Override
 			public void run() {

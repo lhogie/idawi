@@ -44,7 +44,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
-			var opl = (EndpointParameterList) tg.exec().parms;
+			var opl = (EndpointParameterList) tg.content;
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
@@ -72,7 +72,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_async();
-			String re = (String) trigger.exec().parms;
+			String re = (String) trigger.content;
 
 			while (true) {
 				var msg = in.poll_async();
@@ -149,7 +149,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			var l = (EndpointParameterList) m.exec().parms;
+			var l = (EndpointParameterList) m.content;
 			int n = Integer.valueOf((String) l.getFirst());
 
 			for (int i = 0; i < n; ++i) {
@@ -181,7 +181,7 @@ public class DemoService extends Service {
 
 		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-			var p = (Range) m.exec().parms;
+			var p = (Range) m.content;
 
 			for (int i = p.a; i < p.b; ++i) {
 				reply(m, i, i == p.b - 1);

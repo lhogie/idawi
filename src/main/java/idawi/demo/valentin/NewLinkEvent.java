@@ -27,6 +27,6 @@ class NewLinkEvent extends MobilityEvent {
 
 		Network.markLinkActive(a, b, WiFiDirect.class, true, Set.of(a, b));
 
-		Idawi.agenda.schedule(new LinkFailEvent(Idawi.agenda.now() + 1, c, prng));
+		Idawi.agenda.schedule(new LinkFailEvent(Idawi.agenda.time() + 1, c, prng));
 	}
 }

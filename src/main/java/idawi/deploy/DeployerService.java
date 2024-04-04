@@ -148,7 +148,7 @@ public class DeployerService extends Service {
 		@Override
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
-			var reqs = (Collection<SSHParms>) trigger.exec().parms;
+			var reqs = (Collection<SSHParms>) trigger.content;
 			deployViaSSH(reqs, line -> reply(trigger, line, false), line -> reply(trigger, new Error(line), false),
 					ok -> reply(trigger, ok, false), err -> reply(trigger, err, false));
 		}

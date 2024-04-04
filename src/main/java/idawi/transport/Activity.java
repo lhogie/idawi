@@ -40,14 +40,14 @@ public class Activity extends ArrayList<TimeFrame> implements SizeOf {
 
 	public void markActive() {
 		if (isEmpty()) {
-			add(new TimeFrame(Idawi.agenda.now()));
+			add(new TimeFrame(Idawi.agenda.time()));
 		} else {
 			var last = last();
 
 			if (last.isClosed()) {
-				add(new TimeFrame(Idawi.agenda.now()));
+				add(new TimeFrame(Idawi.agenda.time()));
 			} else {
-				last.end(Idawi.agenda.now());
+				last.end(Idawi.agenda.time());
 			}
 		}
 	}

@@ -10,13 +10,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import idawi.messaging.ExecReq;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.ServiceInfo;
 import toools.SizeOf;
+import toools.io.Cout;
 import toools.io.file.Directory;
 import toools.util.Date;
 
@@ -114,53 +114,40 @@ public class Service implements SizeOf, Serializable {
 
 	public void process(Message msg) throws NotGrantedException {
 		++nbMsgsReceived;
-		var inputQ = getQueue(msg.qAddr.queueID);
+Cout.debug(msg);
+		AbstractEndpoint endpoint = lookupEndpoint(msg.endpointID.getSimpleName());
 
-		// most of the time the queue will not exist, unless the user wants to use the
-		// input queue of another running endpoint
-		if (inputQ == null) {
-			if (msg.autoCreateQueue || msg.content instanceof ExecReq) {
-				inputQ = createQueue(msg.qAddr.queueID);
-			} else {
-				System.err.println("can't find queue " + msg.qAddr + " cannot deliver: " + msg.content);
-				return;
-			}
-		}
+		if (endpoint == null)
+			throw new IllegalStateException("can't find endpoint '" + msg.endpointID);
 
-		inputQ.add_sync(msg);
+		var requester = msg.route.source();
 
-		if (msg.content instanceof ExecReq exec) {
-			AbstractEndpoint endpoint = lookupEndpoint(exec.endpointID.getSimpleName());
+		if (!endpoint.isGranted(requester))
+			throw new NotGrantedException(endpoint.getClass(), requester);
 
-			if (endpoint == null)
-				throw new IllegalStateException("can't find endpoint '" + exec.endpointID);
-
-			var requester = msg.route.source();
-
-			if (!endpoint.isGranted(requester))
-				throw new NotGrantedException(endpoint.getClass(), requester);
-
-			execEndpoint(msg, inputQ, endpoint);
-		}
-	}
-
-	private synchronized void execEndpoint(Message msg, MessageQueue inputQ, AbstractEndpoint endpoint)
-			throws NotGrantedException {
-		// decrypt if necessary
-		msg.decrypt();
-		var exec = msg.exec();
-
-		Event<PointInTime> e = new Event<>(new PointInTime(exec.soonestExecTime)) {
+		Event<PointInTime> e = new Event<>(new PointInTime(msg.soonestExecTime)) {
 			@Override
 			public void run() {
+				var inputQ = getQueue(msg.qAddr.queueID);
+
 				try {
 					final double start = now();
 
 					// if too late
-					if (start > msg.exec().latestExecTime)
-						throw new TooLateException(this, start - msg.exec().latestExecTime);
+					if (start > msg.latestExecTime)
+						throw new TooLateException(this, start - msg.latestExecTime);
 
 					endpoint.nbCalls++;
+
+					if (inputQ == null) {
+						if (msg.autoCreateQueue) {
+							inputQ = createQueue(msg.qAddr.queueID);
+						} else {
+							System.err.println("can't find queue " + msg.qAddr + " cannot deliver: " + msg.content);
+						}
+					}
+
+					inputQ.add_sync(msg);
 
 					if (component.isDigitalTwin()) {
 						endpoint.digitalTwin(inputQ);
@@ -172,20 +159,19 @@ public class Service implements SizeOf, Serializable {
 				} catch (Throwable exception) {
 					endpoint.nbFailures++;
 					err(msg, exception);
-				}
-
-				if (msg.exec().detachQueueAfterCompletion) {
-					detachQueue(inputQ);
+				} finally {
+					if (msg.detachQueueAfterCompletion) {
+						detachQueue(inputQ);
+					}
 				}
 			}
 		};
 
-		if (msg.exec().nbThreadsRequired == 0) {
+		if (msg.nbThreadsInPool == 0) {
 			e.run();
 		} else if (!Idawi.agenda.threadPool.isShutdown()) {
-			int nbThreads = msg.exec().nbThreadsRequired == Integer.MAX_VALUE
-					? Runtime.getRuntime().availableProcessors()
-					: msg.exec().nbThreadsRequired;
+			int nbThreads = msg.nbThreadsInPool == Integer.MAX_VALUE ? Runtime.getRuntime().availableProcessors()
+					: msg.nbThreadsInPool;
 
 			for (int i = 0; i < nbThreads; ++i) {
 				Idawi.agenda.schedule(e);
@@ -199,11 +185,9 @@ public class Service implements SizeOf, Serializable {
 		exception.printStackTrace();
 		logError(exception);
 
-		if (msg.content instanceof ExecReq exec) {
-			// report the error to the guy who asked
-			component.bb().send(new RemoteException(exception), true, exec.replyTo);
-			reply(msg, exception, true);
-		}
+		// report the error to the guy who asked
+		component.bb().send(new RemoteException(exception), true, msg.replyTo);
+		reply(msg, exception, true);
 	}
 
 	public AbstractEndpoint lookupEndpoint(String name) {
@@ -217,7 +201,6 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public void registerEndpoint(String name, Endpoint userCode) {
-
 		if (name == null)
 			throw new NullPointerException("no name give for operation");
 
@@ -274,7 +257,7 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	protected void reply(Message initialMsg, Object response, boolean eot) {
-		var replyTo = initialMsg.exec().replyTo;
+		var replyTo = initialMsg.replyTo;
 		replyTo.targetedComponents = ComponentMatcher.unicast(initialMsg.route.source());
 //		Cout.debugSuperVisible("reply " + o);
 //		Cout.debugSuperVisible("to " + replyTo);
@@ -326,7 +309,7 @@ public class Service implements SizeOf, Serializable {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tmsg = in.poll_sync();
-			var qid = (String) tmsg.exec().parms;
+			var qid = (String) tmsg.content;
 			getQueue(qid).toList();
 		}
 	}
@@ -339,6 +322,18 @@ public class Service implements SizeOf, Serializable {
 		@Override
 		public String getDescription() {
 			return "nb of bytes used by this service";
+		}
+	}
+
+	public class deliverToQueue extends InnerClassEndpoint {
+		@Override
+		public String getDescription() {
+			return "nb of bytes used by this service";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws Throwable {
+
 		}
 	}
 
@@ -425,6 +420,6 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public double now() {
-		return Idawi.agenda.now();
+		return Idawi.agenda.time();
 	}
 }

@@ -4,7 +4,7 @@ import idawi.Component;
 import idawi.Idawi;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
-import idawi.routing.RoutingService.dummyService;
+import idawi.routing.RoutingService.testEndpoint;
 import idawi.transport.SharedMemoryTransport;
 
 public class JustAMsg {
@@ -16,10 +16,8 @@ public class JustAMsg {
 
 		a.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, false);
 
-		Idawi.agenda.setTerminationCondition(() -> Idawi.agenda.now() > 1);
 		Idawi.agenda.start();
-		a.bb().exec(ComponentMatcher.unicast(b), RoutingService.class, dummyService.class, null, null, true);
-		Idawi.agenda.stopWhen(() -> Idawi.agenda.now() >= 2, null);
-		System.out.println("done");
+		a.bb().exec(ComponentMatcher.unicast(b), RoutingService.class, testEndpoint.class, null, null, true);
+		Idawi.agenda.stopWhen(() -> Idawi.agenda.time() >= 2, () -> System.out.println("done"));
 	}
 }

@@ -42,7 +42,7 @@ public class Component implements SizeOf {
 	public final List<TrafficListener> trafficListeners = new ArrayList<>();
 	public String friendlyName = NameList.next();
 	public KeyPair keyPair;
-	public double birthDate = Idawi.agenda.now();
+	public double birthDate = Idawi.agenda.time();
 
 //	public final Set<CR> otherComponentsSharingFilesystem = new HashSet<>();
 //	public final Set<Component> dependantChildren = new HashSet<>();
@@ -180,7 +180,7 @@ public class Component implements SizeOf {
 	}
 
 	public double now() {
-		return Idawi.agenda.now();
+		return Idawi.agenda.time();
 		// var ts = lookup(TimeService.class);
 		// return ts == null ? Date.time() : ts.now();
 	}

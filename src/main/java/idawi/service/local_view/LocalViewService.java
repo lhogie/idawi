@@ -75,7 +75,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	void scheduleNextDisseminationMessage() {
 		if (disseminate()) {
-			Idawi.agenda.schedule(new TopologyDisseminationEvent(Idawi.agenda.now() + disseminationIntervalS, this));
+			Idawi.agenda.schedule(new TopologyDisseminationEvent(Idawi.agenda.time() + disseminationIntervalS, this));
 		}
 	}
 

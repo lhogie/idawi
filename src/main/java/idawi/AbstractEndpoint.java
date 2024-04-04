@@ -11,7 +11,6 @@ public abstract class AbstractEndpoint implements Endpoint, SizeOf {
 	private EndpointDescriptor descriptor;
 	Service service;
 
-	
 	public String getFullyQualifiedName() {
 		return service.component + "/" + service.getFriendlyName() + "/" + getName();
 	}

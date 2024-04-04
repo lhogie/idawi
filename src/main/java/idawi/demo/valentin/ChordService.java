@@ -140,7 +140,7 @@ public class ChordService extends Service {
 			var execMsg = in.poll_sync();
 
 			// extract the key param from it
-			String k = (String) execMsg.exec().parms;
+			String k = (String) execMsg.content;
 
 			// get the corresponding items
 			for (var f : directory.listRegularFiles()) {

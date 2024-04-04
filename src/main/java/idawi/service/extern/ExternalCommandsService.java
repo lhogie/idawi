@@ -53,7 +53,7 @@ public class ExternalCommandsService extends Service {
 	public class exec extends InnerClassEndpoint {
 		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
-			List<String> cmdLine = (List<String>) parmMsg.exec().parms;
+			List<String> cmdLine = (List<String>) parmMsg.content;
 			Process p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
 			var stdout = p.getInputStream();
 			var stdin = p.getOutputStream();

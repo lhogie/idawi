@@ -235,7 +235,7 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	}
 
 	public Directory plot(Object label, Consumer<IdawiGraphvizDriver> customizer) {
-		var filename = String.format("%03f", Idawi.agenda.now()) + " " + label;
+		var filename = String.format("%03f", Idawi.agenda.time()) + " " + label;
 		var d = new IdawiGraphvizDriver(this);
 		customizer.accept(d);
 		var dot = d.toDot();

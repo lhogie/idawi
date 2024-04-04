@@ -26,7 +26,7 @@ public class TimeFrame implements Serializable, SizeOf {
 	}
 
 	public double duration() {
-		return isClosed() ? end - start : Idawi.agenda.now() - start;
+		return isClosed() ? end - start : Idawi.agenda.time() - start;
 	}
 
 	@Override

@@ -183,6 +183,7 @@ public abstract class TransportService extends Service {
 								l.dest.processIncomingMessage((Message) serializer.fromBytes(msg));
 							} catch (Throwable e) {
 								e.printStackTrace();
+								System.exit(0);
 							}
 						}
 					});

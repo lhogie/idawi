@@ -12,7 +12,6 @@ import idawi.InnerClassEndpoint;
 import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
-import idawi.messaging.ExecReq;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.RoutingStrategy;
@@ -64,8 +63,8 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 	@Override
 	public final void accept(Message msg, P parms) {
 		++nbMessagesInitiated;
-		
-		if(msg.initialRoutingStrategy == null) {
+
+		if (msg.initialRoutingStrategy == null) {
 			msg.initialRoutingStrategy = new RoutingStrategy(this, parms);
 		}
 
@@ -74,49 +73,41 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 	protected abstract void acceptImpl(Message msg, P parms);
 
-	public void send(Object content, QueueAddress dest) {
-		send(content, true, dest);
-	}
-
-	public void send(Object content, boolean eot, QueueAddress dest) {
-		var msg = new Message();
-		msg.content = content;
-		msg.eot = true;
-		msg.qAddr = dest;
-		accept(msg, defaultData());
-
-	}
-
-	public RemotelyRunningEndpoint exec(ComponentMatcher re, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot) {
-		return exec(re, service, o, parms, initialInputData, eot, null);
-	}
-
 	public RemotelyRunningEndpoint exec(ComponentMatcher re, Class<? extends Service> service,
 			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot, String queueName) {
 		var r = new RemotelyRunningEndpoint();
 		r.returnQ = createUniqueQueue("return-");
 
-		var exec = new ExecReq();
-		exec.endpointID = o;
-		exec.replyTo = new QueueAddress();
-		exec.replyTo.targetedComponents = ComponentMatcher.unicast(component);
-		exec.replyTo.service = getClass();
-		exec.replyTo.queueID = r.returnQ.name;
-		exec.parms = initialInputData;
-
-		
 		var msg = new Message();
-		msg.content = exec;
+		msg.endpointID = o;
+		msg.replyTo = new QueueAddress();
+		msg.replyTo.targetedComponents = ComponentMatcher.unicast(component);
+		msg.replyTo.service = getClass();
+		msg.replyTo.queueID = r.returnQ.name;
+		msg.content = initialInputData;
+
 		msg.qAddr = new QueueAddress();
 		msg.qAddr.targetedComponents = re;
 		msg.qAddr.service = service;
 		msg.qAddr.queueID = queueName == null ? o.getSimpleName() + "@" + now() : queueName;
 
 		r.destination = msg.qAddr;
-System.out.println(msg);
 		accept(msg, parms);
 		return r;
+	}
+
+	public void send(Object content, QueueAddress dest) {
+		send(content, true, dest);
+	}
+
+	public void send(Object content, boolean eot, QueueAddress dest) {
+		exec(dest.targetedComponents, dest.service, Service.deliverToQueue.class, defaultData(), content, eot,
+				dest.queueID);
+	}
+
+	public RemotelyRunningEndpoint exec(ComponentMatcher re, Class<? extends Service> service,
+			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot) {
+		return exec(re, service, o, parms, initialInputData, eot, null);
 	}
 
 	public RemotelyRunningEndpoint exec(Component to, Class<? extends Service> service,
@@ -151,16 +142,16 @@ System.out.println(msg);
 		return l.getFirst().content;
 	}
 
-	public class dummyService extends InnerClassEndpoint {
+	public class testEndpoint extends InnerClassEndpoint {
 
 		@Override
-		public void impl(MessageQueue in) throws Throwable {
-			Cout.debugSuperVisible(getFullyQualifiedName() + " received: " + in.poll_sync());
+		public void impl(MessageQueue in) {
+			Cout.debugSuperVisible(getFullyQualifiedName() + " received " + in.poll_sync());
 		}
 
 		@Override
 		public String getDescription() {
-			return "do nothing";
+			return "just receives a message and tells it on stdout";
 		}
 	}
 
