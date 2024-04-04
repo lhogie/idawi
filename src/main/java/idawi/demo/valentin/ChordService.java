@@ -57,7 +57,7 @@ public class ChordService extends Service {
 		// try all components in a sequence
 		for (var c : hosts) {
 			// sync call
-			var msg = rp.exec(ComponentMatcher.unicast(c), ChordService.class, get.class, rp.defaultParameters(), key,
+			var msg = rp.exec(ComponentMatcher.unicast(c), ChordService.class, get.class, rp.defaultData(), key,
 					true).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {

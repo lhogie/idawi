@@ -22,6 +22,7 @@ public class PlotLargeNetwork {
 	public static void main(String[] args) throws Throwable {
 		Idawi.directory = new Directory("$HOME/idawi/test");
 		Idawi.directory.mkdirs();
+		Idawi.agenda.start();
 
 		GraphvizDriver.path = "/usr/local/bin/";
 
@@ -43,9 +44,10 @@ public class PlotLargeNetwork {
 		Topologies.wirelessMesh(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 //		Topologies.dchain(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 
-		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, dummyService.class, null,  null, true);
+		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, dummyService.class, null, null, true);
 
-		Idawi.agenda.scheduleTerminationAt(5, () -> {
+		Idawi.enableEncryption = false;
+		Idawi.agenda.stopWhen(() -> Idawi.agenda.now() >= 5, () -> {
 			System.out.println("plotting");
 
 			r.get(0).service(LocalViewService.class).g.plot("test", d -> {
@@ -54,17 +56,12 @@ public class PlotLargeNetwork {
 				d.linkStyle = l -> l.nbMsgs == 0 ? Style.dotted : Style.solid;
 //				d.componentWidth = c -> 0.01d;
 				d.componentPenWidth = c -> 1;
-				d.componentStyle = c -> c.alreadyReceivedMsgs.size() == 0 ? Style.dotted
-						: Style.solid;
+				d.componentStyle = c -> c.alreadyReceivedMsgs.size() == 0 ? Style.dotted : Style.solid;
 			});
 
 			Idawi.directory.open();
 		});
-
-		Idawi.enableEncryption = false;
-		Idawi.agenda.start();
 		System.out.println("started");
-		Idawi.agenda.waitForCompletion();
 		System.out.println("stopped");
 
 	}

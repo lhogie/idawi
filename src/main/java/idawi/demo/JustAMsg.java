@@ -13,15 +13,13 @@ public class JustAMsg {
 		var a = new Component();
 		var b = new Component();
 		b.bb();
-		
+
 		a.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, false);
 
 		Idawi.agenda.setTerminationCondition(() -> Idawi.agenda.now() > 1);
 		Idawi.agenda.start();
 		a.bb().exec(ComponentMatcher.unicast(b), RoutingService.class, dummyService.class, null, null, true);
-		Idawi.agenda.scheduleTerminationAt(2, () -> {
-		});
-		Idawi.agenda.waitForCompletion();
+		Idawi.agenda.stopWhen(() -> Idawi.agenda.now() >= 2, null);
 		System.out.println("done");
 	}
 }

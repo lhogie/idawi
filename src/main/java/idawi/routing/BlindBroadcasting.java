@@ -23,8 +23,11 @@ public class BlindBroadcasting extends RoutingService<RoutingParameters> {
 
 	@Override
 	synchronized public void acceptImpl(Message msg, RoutingParameters parms) {
-		// the message was never received
-		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)) {
+		boolean alreadyKnown = component.alreadyReceivedMsgs.contains(msg.ID)
+				|| component.alreadySentMsgs.contains(msg.ID);
+//		Cout.debug(msg.ID + "   " + alreadyKnown + " by " + System.identityHashCode(component));
+
+		if (!alreadyKnown) {
 			for (var t : component.services(TransportService.class)) {
 				t.send(msg, null, this, parms);
 			}

@@ -38,14 +38,14 @@ public class PredecessorTable extends LinkedHashMap<Component, Link> {
 		return keySet().stream().map(c -> pathTo(c)).toList();
 	}
 
-	public Set<Link> relaysTo(Set<Component> dest) {
-		var r = new HashSet<Link>();
+	public Set<RRoute> pathsTo(Iterable<Component> dest) {
+		var r = new HashSet<RRoute>();
 
 		for (var d : dest) {
 			var p = pathTo(d);
 
 			if (p != null) {
-				r.add(p.get(0));
+				r.add(p);
 			}
 		}
 

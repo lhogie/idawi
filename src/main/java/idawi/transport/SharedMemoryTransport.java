@@ -3,10 +3,7 @@ package idawi.transport;
 import java.util.Collection;
 
 import idawi.Component;
-import idawi.Idawi;
 import idawi.messaging.Message;
-import toools.io.Cout;
-import toools.math.MathsUtilities;
 
 public class SharedMemoryTransport extends TransportService {
 
@@ -26,20 +23,18 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	public double latency() {
-		return MathsUtilities.pickRandomBetween(0.000000002, 0.000000009, Idawi.prng);
+		return 0;
 	}
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		for (var l : outLinks) {
-			var msgClone = (Message) l.dest.serializer.fromBytes(msg);
-			Idawi.agenda.scheduleNow(() -> l.dest.processIncomingMessage(msgClone));
-		}
+//		Cout.debug(outLinks);
+//		outLinks.forEach(l -> l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg)));
+		fakeSend(msg, outLinks);
 	}
 
 	@Override
 	protected void bcast(byte[] msg) {
 		multicast(msg, activeOutLinks());
 	}
-
 }

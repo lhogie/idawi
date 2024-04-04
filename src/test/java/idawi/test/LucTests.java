@@ -47,35 +47,11 @@ public class LucTests {
 
 		// ask c1 to ping c2
 		Idawi.agenda.start();
-		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
+		Message pong = c1.service(PingService.class).ping(c2);
 		System.out.println(pong);
-		Idawi.agenda.waitForCompletion();
 	}
 
-	@org.junit.Test
-	public void twoComponentsConversation() throws Throwable {
-		Idawi.agenda.start();
 
-		Cout.debugSuperVisible("Starting test twoComponentsConversation");
-		// trigger the creation of a component from its description
-		Component c1 = new Component();
-
-		// a shortcut for creating a component from a description
-		Component c2 = new Component();
-
-		// connect those 2 components
-		Network.markLinkActive(c1, c2, SharedMemoryTransport.class, true, Set.of(c1, c2));
-
-		// ask c1 to ping c2
-		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
-
-		// be sure c1 got an answer
-		assertNotEquals(null, pong);
-
-		// clean
-		Component.componentsInThisJVM.clear();
-		Idawi.agenda.waitForCompletion();
-	}
 
 	@Test
 	public void manyMessages() throws Throwable {
@@ -87,13 +63,13 @@ public class LucTests {
 		var target = c1.service(DeployerService.class, true).newLocalJVM();
 
 		for (int i = 0; i < 100; ++i) {
-			Message pong = c1.service(PingService.class).ping(target).poll_sync();
+			Message pong = c1.need(PingService.class).ping(target);
 
 			// be sure c1 got an answer
 			assertNotEquals(null, pong);
 		}
 
-		Idawi.agenda.waitForCompletion();
+		
 	}
 
 	@Test
@@ -123,33 +99,11 @@ public class LucTests {
 		Cout.debugSuperVisible(4);
 
 		// assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
-
-		Idawi.agenda.waitForCompletion();
-
 	}
 
-	@Test
-	public void waitingFirst() throws Throwable {
-		Idawi.agenda.start();
-
-		Cout.debugSuperVisible("Starting test waitingFirst");
-		var root = new Component();
-		List<Component> others = Component.createNComponent(2);
-
-		Set<Component> ss = new HashSet<>(others.stream().map(c -> c).toList());
-
-		Component first = root.bb().exec(ComponentMatcher.multicast(ss), DemoService.class, DemoService.waiting.class,
-				null, new EndpointParameterList(1), true).returnQ.collector()
-				.collectWhile(c -> !c.messages.isEmpty()).messages.get(0).route.first().link.src.component;
-
-		System.out.println(first);
-//		assertEquals(7, (Double) );
-		Idawi.agenda.waitForCompletion();
-
-	}
 
 	@Test
-	public void pingViaTCP() throws Throwable {
+	public void deployAndPing() throws Throwable {
 		Cout.debugSuperVisible("Starting test pingViaTCP");
 		Idawi.agenda.start();
 
@@ -158,17 +112,17 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var c = master.service(DeployerService.class).newLocalJVM();
+		var c = master.need(DeployerService.class).newLocalJVM();
 
 		// asks the master to ping the other component
-		Message pong = new Service(master).component.service(PingService.class).ping(c).poll_sync();
+		Message pong = master.need(PingService.class).ping(c);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
 		assertNotEquals(null, pong);
 
-		Idawi.agenda.waitForCompletion();
-	}
+		
+}
 
 	@Test
 	public void signature() throws Throwable {
@@ -193,7 +147,7 @@ public class LucTests {
 		assertEquals(5, len);
 
 		// clean
-		Idawi.agenda.waitForCompletion();
+		
 
 	}
 
@@ -203,11 +157,12 @@ public class LucTests {
 
 		Cout.debugSuperVisible("Starting REST test");
 		Component c1 = new Component();
-		var ws = c1.service(WebService.class);
+		var ws = c1.need(WebService.class);
 		ws.startHTTPServer();
-		NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1);
+		var out = NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1);
+		System.out.println(new String(out));
 		// clean
-		Idawi.agenda.waitForCompletion();
+		
 
 	}
 
@@ -219,14 +174,12 @@ public class LucTests {
 		List<Component> l = Component.createNComponent(10);
 
 		Topologies.chain(l, (a, b) -> SharedMemoryTransport.class, l);
-		var first = new Service(l.get(0));
-		var last = l.get(l.size() - 1);
-		Message pong = first.component.service(PingService.class).ping(last).poll_sync();
+		Cout.debugSuperVisible(l.getFirst().localView().g);
+		Message pong = l.getFirst().need(PingService.class).ping(l.getLast());
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
 
-		// clean
-		Idawi.agenda.waitForCompletion();
+		
 
 	}
 

@@ -25,6 +25,8 @@ public class IdawiWebSerializer extends JasetoSerializer {
 					return "set";
 				} else if (Collection.class.isAssignableFrom(o)) {
 					return "collection";
+				} else if (Suggestion.class.isAssignableFrom(o)) {
+					return "suggestion";
 				}
 
 				return super.classname(o);

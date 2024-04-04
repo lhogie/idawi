@@ -38,7 +38,7 @@ public class SSH {
 				err -> err.printStackTrace());
 
 		// asks the master to ping the other component
-		Message pong = c1.service(PingService.class).ping(c2).poll_sync();
+		Message pong = c1.service(PingService.class).ping(c2);
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer

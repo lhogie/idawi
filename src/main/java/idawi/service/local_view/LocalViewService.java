@@ -15,13 +15,12 @@ import idawi.routing.TrafficListener;
 import idawi.service.DigitalTwinService;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
-import toools.io.Cout;
 
 public class LocalViewService extends KnowledgeBase {
 
 	public final List<DigitalTwinListener> listeners = new ArrayList<>();
 	public final Network g = new Network();
-	public final double disseminationIntervalS = 0;
+	public final double disseminationIntervalS = 1;
 	public int disseminationSampleSize = 50;
 	public boolean disseminateTopologyChangesWhenTheyOccur = false;
 
@@ -110,7 +109,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	public class acceptHello extends TypedInnerClassEndpoint {
 		public void f(String n) {
-			Cout.debug("DT merge not yet implemented");
+//			Cout.debug("DT merge not yet implemented");
 		}
 
 		@Override

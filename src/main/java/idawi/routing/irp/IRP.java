@@ -72,7 +72,7 @@ public class IRP extends RoutingService<IRPParms> {
 	}
 
 	@Override
-	public String webShortcut() {
+	public String getFriendlyName() {
 		return "irp";
 	}
 

@@ -54,11 +54,11 @@ public class Topologies {
 		}
 	}
 
-	public static class DistancedPair extends Pair<Component> {
+	public static class DistancedPair extends Pair<Component, Component> {
 		double distance;
 
 		DistancedPair(Component a, Component b) {
-			super(a, b, false);
+			super(a, b);
 			this.distance = distance(a, b);
 		}
 	}
@@ -160,13 +160,14 @@ public class Topologies {
 		var l = new ArrayList<>(components);
 
 		for (int i = 0; i < n; ++i) {
-			alter.accept(l);
 			chain(l, f, inform);
+			alter.accept(l);
 		}
 	}
 
 	public static void chains(Collection<Component> components, int n, Random r,
 			BiFunction<Component, Component, Class<? extends TransportService>> f, Collection<Component> inform) {
+		
 		chains(components, n, f, l -> Collections.shuffle(l, r), inform);
 	}
 

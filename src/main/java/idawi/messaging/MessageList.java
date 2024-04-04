@@ -10,7 +10,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import idawi.Component;
-import idawi.RemoteException;
 import idawi.routing.Route;
 import toools.exceptions.ExceptionSet;
 
@@ -135,19 +134,8 @@ public class MessageList extends ArrayList<Message> {
 		return r;
 	}
 
-	public MessageList throwAnyError() throws RuntimeException {
-		for (var m : this) {
-			if (m.isError()) {
-				Throwable e = (RemoteException) m.content;
-
-				while (e.getCause() != null) {
-					e = e.getCause();
-				}
-
-				throw e instanceof RuntimeException re ? re : new RuntimeException(e);
-			}
-		}
-
+	public MessageList throwAnyError() {
+		forEach(m -> m.throwIfError());
 		return this;
 	}
 

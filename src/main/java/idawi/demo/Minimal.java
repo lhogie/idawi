@@ -30,12 +30,12 @@ public class Minimal {
 		var r = a.service(FloodingWithSelfPruning.class, true);
 		System.out.println("routing: " + r);
 //		r.exec(BlindBroadcasting.class, RoutingService.test2.class, null, ComponentMatcher.regex("b"), true, null);
-		var pong = a.service(PingService.class, true).ping(b).poll_sync();
+		var pong = a.need(PingService.class).ping(b);
 		System.out.println("pong= " + pong);
 
 		Threads.sleep(1);
 		System.out.println(
 				"nbMsgSent: " + TransportService.sum(Set.of(a, b), SharedMemoryTransport.class, t -> t.nbMsgSent));
-		Idawi.agenda.stop();
+		Idawi.agenda.stopNow(null);
 	}
 }

@@ -24,7 +24,7 @@ public class ImposedRoute extends RoutingService<IRTo> {
 	}
 
 	@Override
-	public String webShortcut() {
+	public String getFriendlyName() {
 		return "ir";
 	}
 

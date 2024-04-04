@@ -2,14 +2,14 @@ package idawi.routing;
 
 import toools.io.Utilities;
 
-public class ForceRoutingParms extends RoutingParameters {
+public class BallBroadcastingParms extends RoutingParameters {
 	int force;
 
-	public ForceRoutingParms(int initialForce) {
+	public BallBroadcastingParms(int initialForce) {
 		this.force = initialForce;
 	}
 
-	public ForceRoutingParms() {
+	public BallBroadcastingParms() {
 		this(100);
 	}
 

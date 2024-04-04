@@ -10,10 +10,10 @@ import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
-public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
+public class BallBroadcasting extends RoutingService<BallBroadcastingParms> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
 
-	public ForceBroadcasting(Component node) {
+	public BallBroadcasting(Component node) {
 		super(node);
 	}
 
@@ -28,12 +28,12 @@ public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 	}
 
 	@Override
-	public String webShortcut() {
+	public String getFriendlyName() {
 		return "fb";
 	}
 
 	@Override
-	public void acceptImpl(Message msg, ForceRoutingParms parms) {
+	public void acceptImpl(Message msg, BallBroadcastingParms parms) {
 
 		// the message was never received
 		if (!alreadyReceivedMsgs.contains(msg.ID)) {
@@ -57,16 +57,16 @@ public class ForceBroadcasting extends RoutingService<ForceRoutingParms> {
 	}
 
 	@Override
-	public List<ForceRoutingParms> dataSuggestions() {
-		var l = new ArrayList<ForceRoutingParms>();
-		l.add(new ForceRoutingParms(10));
-		l.add(new ForceRoutingParms(100));
-		l.add(new ForceRoutingParms(-1));
+	public List<BallBroadcastingParms> dataSuggestions() {
+		var l = new ArrayList<BallBroadcastingParms>();
+		l.add(new BallBroadcastingParms(10));
+		l.add(new BallBroadcastingParms(100));
+		l.add(new BallBroadcastingParms(-1));
 		return l;
 	}
 
 	@Override
-	public ComponentMatcher defaultMatcher(ForceRoutingParms parms) {
+	public ComponentMatcher defaultMatcher(BallBroadcastingParms parms) {
 		return ComponentMatcher.all;
 	}
 

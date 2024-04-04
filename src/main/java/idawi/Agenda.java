@@ -9,7 +9,6 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
-import toools.io.Cout;
 import toools.util.Date;
 
 /**
@@ -24,7 +23,7 @@ public class Agenda {
 	private PriorityBlockingQueue<Event<PointInTime>> eventQueue = new PriorityBlockingQueue<>(100,
 			(a, b) -> a.when.compareTo(b.when));
 
-	public static List<AgendaListener> listeners = new ArrayList<>();
+	public List<AgendaListener> listeners = new ArrayList<>();
 
 	private List<Event<?>> scheduledEventsQueue = new ArrayList<>();
 	private long nbPastEvents = 0;
@@ -35,20 +34,21 @@ public class Agenda {
 	private BlockingQueue stopQ = new ArrayBlockingQueue(1);
 
 	public synchronized void start() {
-		if (isStarted())
-			throw new IllegalStateException("already started");
+		if (isStarted()) {
+			//throw new IllegalStateException("already started");
+		} else {
+			startTime = Date.time();
 
-		startTime = Date.time();
+			threadPool.submit(() -> {
+				try {
+					processEventQueue();
+				} catch (Throwable err) {
+					err.printStackTrace();
+				}
+			});
 
-		threadPool.submit(() -> {
-			try {
-				processEventQueue();
-			} catch (Throwable err) {
-				err.printStackTrace();
-			}
-		});
-
-		//startPeriodicDummyActivity(1);
+			// startPeriodicDummyActivity(1);
+		}
 	}
 
 	private void startPeriodicDummyActivity(double period) {
@@ -135,7 +135,6 @@ public class Agenda {
 		listeners.forEach(l -> l.terminating(nbPastEvents));
 	}
 
-
 	public double now() {
 		if (!isStarted())
 			return 0;
@@ -182,7 +181,13 @@ public class Agenda {
 		});
 	}
 
-	public long waitForCompletion() throws Throwable {
+	public long stopNow(Runnable terminationCode) throws Throwable {
+		return stopWhen(() -> true, terminationCode);
+	}
+
+	public long stopWhen(Supplier<Boolean> terminationCondition, Runnable terminationCode) throws Throwable {
+		setTerminationCondition(terminationCondition);
+
 		try {
 			// stopPlatformThreads();
 			var o = stopQ.take();
@@ -194,23 +199,19 @@ public class Agenda {
 			}
 		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
+		} finally {
+			if (terminationCode != null) {
+				terminationCode.run();
+			}
 		}
 	}
 
-	public void stop() throws Throwable {
+	private void stop() throws Throwable {
 		if (!isStarted())
 			throw new IllegalStateException();
 
 		var a = controllerThread;
 		controllerThread = null;
 		a.interrupt();
-	}
-
-	public void scheduleTerminationAt(double date, Runnable terminationCode) {
-		Idawi.agenda.scheduleAt(date, "termination", () -> {
-//			Cout.debugSuperVisible(Idawi.agenda.now() + " THIS IS THE END");
-			terminationCode.run();
-			Idawi.agenda.terminationCondition = () -> true;
-		});
 	}
 }

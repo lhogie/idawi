@@ -35,11 +35,11 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 	}
 
 	public void accept(Message msg) {
-		accept(msg, defaultParameters());
+		accept(msg, defaultData());
 	}
 
 	@Override
-	public String getFriendlyName() {
+	public String getDescription() {
 		return getAlgoName() + " routing protocol";
 	}
 
@@ -57,14 +57,18 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 	public abstract List<P> dataSuggestions();
 
-	public P defaultParameters() {
+	public P defaultData() {
 		return dataSuggestions().getFirst();
 	}
 
 	@Override
 	public final void accept(Message msg, P parms) {
 		++nbMessagesInitiated;
-		msg.initialRoutingStrategy = new RoutingStrategy(this, parms);
+		
+		if(msg.initialRoutingStrategy == null) {
+			msg.initialRoutingStrategy = new RoutingStrategy(this, parms);
+		}
+
 		acceptImpl(msg, parms);
 	}
 
@@ -79,7 +83,7 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 		msg.content = content;
 		msg.eot = true;
 		msg.qAddr = dest;
-		accept(msg, defaultParameters());
+		accept(msg, defaultData());
 
 	}
 
@@ -110,7 +114,7 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 		msg.qAddr.queueID = queueName == null ? o.getSimpleName() + "@" + now() : queueName;
 
 		r.destination = msg.qAddr;
-
+System.out.println(msg);
 		accept(msg, parms);
 		return r;
 	}
@@ -133,7 +137,7 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
 			Object initialInputData, boolean eot) {
-		P parms = defaultParameters();
+		P parms = defaultData();
 		return exec(defaultMatcher(parms), service, o, parms, initialInputData, eot);
 	}
 

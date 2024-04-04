@@ -19,7 +19,7 @@ public class Demo1_multi_jvm {
 
 		var c = t1.service(DeployerService.class).newLocalJVM();
 
-		Message pong = t1.service(PingService.class).ping(c).poll_sync();
+		Message pong = t1.service(PingService.class).ping(c);
 		System.out.println("pong duration: " + pong.route.duration());
 		System.out.println("pong message: " + pong);
 

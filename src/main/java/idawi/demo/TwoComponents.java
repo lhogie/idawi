@@ -30,7 +30,6 @@ public class TwoComponents {
 		});
 		System.out.println("done");
 
-
-		Idawi.agenda.waitForCompletion();
+		Idawi.agenda.stopNow(null);
 	}
 }

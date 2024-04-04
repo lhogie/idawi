@@ -10,6 +10,7 @@ public class ExecReq implements Serializable, SizeOf {
 	public Class<? extends InnerClassEndpoint> endpointID;
 	public int nbThreadsRequired = 1; // 0 makes it synchronous
 	public QueueAddress replyTo;
+	public long soonestExecTime = 0;
 	public long latestExecTime = Long.MAX_VALUE;
 	public boolean detachQueueAfterCompletion = true;
 	public Object parms;
@@ -22,7 +23,7 @@ public class ExecReq implements Serializable, SizeOf {
 	
 	@Override
 	public String toString() {
-		return "exec: " + endpointID.getSimpleName() + "/" + parms;
+		return "exec: " + endpointID.getSimpleName() + "(" + parms + ")";
 	}
 
 }

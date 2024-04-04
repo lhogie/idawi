@@ -9,16 +9,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import idawi.messaging.ExecReq;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.service.ErrorLog;
-import idawi.service.local_view.EndpointDescriptor;
 import idawi.service.local_view.ServiceInfo;
-import idawi.service.web.WebService;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.util.Date;
@@ -45,7 +42,6 @@ public class Service implements SizeOf, Serializable {
 			throw new IllegalStateException("component already has service " + getClass());
 
 		component.services.add(this);
-		registerURLShortCut();
 
 		registerEndpoint("friendlyName", q -> getFriendlyName());
 
@@ -61,23 +57,6 @@ public class Service implements SizeOf, Serializable {
 	public boolean equals(Object obj) {
 		var s = (Service) obj;
 		return s.component.equals(component) && getClass().equals(s.getClass());
-	}
-
-	public String webShortcut() {
-		return getClass().getSimpleName();
-	}
-
-	protected void registerURLShortCut() {
-		var ws = component.service(WebService.class);
-
-		if (ws != null && ws != this) {
-			var shortcut = webShortcut();
-
-			if (ws.serviceShortcuts.containsKey(shortcut))
-				throw new IllegalArgumentException("shortcut already in use: " + shortcut);
-
-			ws.serviceShortcuts.put(shortcut, getClass().getName());
-		}
 	}
 
 	public class getFriendlyName extends TypedInnerClassEndpoint {
@@ -114,30 +93,19 @@ public class Service implements SizeOf, Serializable {
 		}
 	}
 
-	public class listOperationNames extends TypedInnerClassEndpoint {
+	public class listEndpoints extends TypedInnerClassEndpoint {
 		@Override
 		public String getDescription() {
 			return "returns the name of available operations";
 		}
 
-		public Set<String> f() {
-			return new HashSet<>(endpoints.stream().map(o -> o.getName()).collect(Collectors.toSet()));
+		public Set<Class<? extends Endpoint>> f() {
+			return new HashSet<>(endpoints.stream().map(o -> o.getClass()).toList());
 		}
 	}
 
 	public Set<AbstractEndpoint> endpoints() {
 		return endpoints;
-	}
-
-	public class listNativeOperations extends TypedInnerClassEndpoint {
-		public Set<EndpointDescriptor> f() {
-			return endpoints.stream().map(o -> o.descriptor()).collect(Collectors.toSet());
-		}
-
-		@Override
-		public String getDescription() {
-			return "list native operations";
-		}
 	}
 
 	public String getFriendlyName() {
@@ -180,8 +148,9 @@ public class Service implements SizeOf, Serializable {
 			throws NotGrantedException {
 		// decrypt if necessary
 		msg.decrypt();
+		var exec = msg.exec();
 
-		Event<PointInTime> e = new Event<>(new PointInTime(now())) {
+		Event<PointInTime> e = new Event<>(new PointInTime(exec.soonestExecTime)) {
 			@Override
 			public void run() {
 				try {
@@ -206,7 +175,6 @@ public class Service implements SizeOf, Serializable {
 				}
 
 				if (msg.exec().detachQueueAfterCompletion) {
-					// System.out.println("DETACH " + inputQ_final.name);
 					detachQueue(inputQ);
 				}
 			}

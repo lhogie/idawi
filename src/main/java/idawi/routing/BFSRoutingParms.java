@@ -4,34 +4,26 @@ import java.util.HashSet;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.service.local_view.BFS.RRoute;
 import toools.SizeOf;
 import toools.text.TextUtilities;
 
 public class BFSRoutingParms extends RoutingParameters {
 	private static final long serialVersionUID = 1L;
 
-	Set<Component> recipients;
+	public Set<RRoute> paths;
 
 	@Override
 	public void fromString(String s, RoutingService service) {
-		recipients = new HashSet<>();
-
-		for (var n : s.split(" *, *")) {
-			var c = service.component.localView().g.findComponentByFriendlyName(n, false);
-
-			if (c != null) {
-				recipients.add(c);
-			}
-		}
 	}
 
 	@Override
 	public long sizeOf() {
-		return 8 + SizeOf.sizeOf(recipients);
+		return 8 + SizeOf.sizeOf(paths);
 	}
 
 	@Override
 	public String toURLElement() {
-		return TextUtilities.concat(" ", recipients);
+		return TextUtilities.concat(" ", paths);
 	}
 }

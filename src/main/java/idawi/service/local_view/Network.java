@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -40,7 +41,6 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		}
 	}
 
-	
 	public final BFSCache bfs = new BFSCache();
 
 	@Override
@@ -60,8 +60,6 @@ public class Network extends ThreadSafeNetworkDataStructure {
 	public List<Link> findInactiveLinks() {
 		return findLinks(l -> !l.isActive());
 	}
-
-
 
 	public Component findComponentByPublicKey(PublicKey k, boolean autoCreate) {
 		return findComponent(c -> c.publicKey() != null && c.publicKey().equals(k), autoCreate, null);
@@ -105,8 +103,22 @@ public class Network extends ThreadSafeNetworkDataStructure {
 			return Stop.no;
 		});
 
+		final  Set<Link> ignore = new HashSet<>();
+		
+
 		forEachLink(l -> {
-			s.println(l.src + " -> " + l.dest);
+			if (ignore.contains(l))
+				return Stop.no;
+			
+			var reverseLink = findALinkConnecting(l.dest, l.src);	
+			
+			if (reverseLink != null) {
+				s.println(l.src + " -- " + l.dest);
+				ignore.add(reverseLink);
+			}else {
+				s.println(l.src + " -> " + l.dest);
+			}
+			
 			return Stop.no;
 		});
 
@@ -143,8 +155,6 @@ public class Network extends ThreadSafeNetworkDataStructure {
 			}
 		}
 	}
-
-
 
 	public void markLinkActive(TransportService src, TransportService dest, boolean bothDirections) {
 		markLinkActive(src, dest);
@@ -236,6 +246,11 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		});
 
 		return Idawi.directory;
+	}
+
+	public byte[] toPDF() {
+		var d = new IdawiGraphvizDriver(this);
+		return GraphvizDriver.to(d.cfg, d.toDot(), OUTPUT_FORMAT.pdf);
 	}
 
 	public List<Link> findLinks(Predicate<Link> p) {

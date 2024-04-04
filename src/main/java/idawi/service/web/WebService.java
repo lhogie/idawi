@@ -3,20 +3,18 @@ package idawi.service.web;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.crypto.SecretKey;
 
@@ -39,6 +37,7 @@ import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.DemoService;
 import idawi.service.ServiceManager;
+import idawi.service.ServiceManager.listServices;
 import idawi.service.local_view.LocalViewService;
 import toools.io.Cout;
 import toools.io.JavaResource;
@@ -76,7 +75,6 @@ public class WebService extends Service {
 
 	public static int DEFAULT_PORT = 8081;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
-	public static final Map<String, Class<? extends Service>> friendyName_service = new HashMap<>();
 
 	static {
 		name2serializer.put("gson", new GSONSerializer<>());
@@ -96,41 +94,23 @@ public class WebService extends Service {
 	private HttpServer httpServer;
 	private int port;
 
-	public final Map<String, String> serviceShortcuts = new HashMap<>();
 	Map<String, Function<MessageCollector, Object>> whatToSendMap = new HashMap<>();
+	public final Map<String, Class<? extends Service>> shortcut_service = new HashMap<>();
 
 	public WebService(Component t) {
 		super(t);
 
-		serviceShortcuts.put("bb", BlindBroadcasting.class.getName());
-		serviceShortcuts.put("dt", LocalViewService.class.getName());
-		serviceShortcuts.put("fwsp", FloodingWithSelfPruning.class.getName());
-		serviceShortcuts.put("demo", DemoService.class.getName());
+		shortcut_service.put("bb", BlindBroadcasting.class);
+		shortcut_service.put("dt", LocalViewService.class);
+		shortcut_service.put("fwsp", FloodingWithSelfPruning.class);
+		shortcut_service.put("demo", DemoService.class);
 
 		whatToSendMap.put("msg", c -> c.messages.last());
 		whatToSendMap.put("content", c -> c.messages.last().content);
 		whatToSendMap.put("route", c -> c.messages.last().route);
 		whatToSendMap.put("source", c -> c.messages.last().route.source());
 		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.source(), c.messages.last().content });
-	}
 
-	public class Base64URL extends TypedInnerClassEndpoint {
-		class A {
-			String routing;
-			String service;
-			String operation;
-		}
-
-		public void f(String url) throws IOException {
-			var text = new String(Base64.getMimeDecoder().decode(url));
-			var p = new Properties();
-			p.load(new StringReader(text));
-		}
-
-		@Override
-		public String getDescription() {
-			return "interpret URLs encoded in base64";
-		}
 	}
 
 	@Override
@@ -158,14 +138,13 @@ public class WebService extends Service {
 			InputStream input = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
 			// is.close();
 			List<String> path = path(uri.getPath());
-			System.out.println("path: " + path);
 			Map<String, String> query = query(uri.getQuery());
 			e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 			OutputStream output = e.getResponseBody();
 
 			try {
 				if (path == null) {
-					sendOneShot(HttpURLConnection.HTTP_OK, "text/html",
+					singleHTTPResponse(HttpURLConnection.HTTP_OK, "text/html",
 							new JavaResource(getClass(), "root.html").getByteArray(), e, output);
 				} else {
 					String context = path.remove(0);
@@ -183,7 +162,7 @@ public class WebService extends Service {
 							serveAPI(path, query, input, output, preferredSerializer);
 							sendEvent(output, new ChunkHeader(List.of("plain")), "EOT".getBytes(), false);
 						} catch (Throwable err) {
-//							err.printStackTrace();
+							err.printStackTrace();
 							try {
 								sendEvent(output, new ChunkHeader(List.of(preferredSerializer.getMIMEType())),
 										preferredSerializer.toBytes(err), preferredSerializer.isBinary());
@@ -193,14 +172,14 @@ public class WebService extends Service {
 							}
 						}
 					} else if (context.equals("favicon.ico")) {
-						sendOneShot(HttpURLConnection.HTTP_OK, "image/x-icon",
+						singleHTTPResponse(HttpURLConnection.HTTP_OK, "image/x-icon",
 								new JavaResource(WebService.class, "flavicon.ico").getByteArray(), e, output);
 					} else if (context.equals("frontend")) {
 						if (path.isEmpty()) {
 							path.add(new JavaResource(getClass(), "web/index.html").getPath());
 						}
 
-						sendOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path),
+						singleHTTPResponse(HttpURLConnection.HTTP_OK, guessMIMEType(path),
 								new JavaResource("/" + TextUtilities.concatene(path, "/")).getByteArray(), e, output);
 					} else if (context.equals("forward")) {
 						String src = path.remove(0);
@@ -218,7 +197,7 @@ public class WebService extends Service {
 							throw new IllegalArgumentException("unknown forward source: " + src);
 						}
 
-						sendOneShot(HttpURLConnection.HTTP_OK, guessMIMEType(path), bytes, e, output);
+						singleHTTPResponse(HttpURLConnection.HTTP_OK, guessMIMEType(path), bytes, e, output);
 					} else {
 						throw new IllegalArgumentException("unknown context: " + context);
 					}
@@ -227,7 +206,7 @@ public class WebService extends Service {
 				try {
 					System.err.println("The following error will be sent to the Web client");
 					err.printStackTrace();
-					sendOneShot(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
+					singleHTTPResponse(HttpURLConnection.HTTP_INTERNAL_ERROR, "text/plain",
 							TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
 				} catch (IOException ee) {
@@ -255,25 +234,16 @@ public class WebService extends Service {
 		} catch (IOException e) {
 			return "application/octet-stream";
 		}
-		/*
-		 * int i = p.lastIndexOf('.');
-		 * 
-		 * if (i == -1) { return "application/octet-stream"; }else { switch
-		 * (p.substring(i + 1)) { case "html": return "text/html"; case "js": return
-		 * "text/javascript"; case "txt": return "text/plain"; default: return
-		 * "application/octet-stream"; } }
-		 */
 	}
 
-	public static void sendOneShot(int returnCode, String mimeType, byte[] bytes, HttpExchange e, OutputStream os)
-			throws IOException {
+	public static void singleHTTPResponse(int returnCode, String mimeType, byte[] bytes, HttpExchange e,
+			OutputStream os) throws IOException {
 		e.getResponseHeaders().set("Content-type", mimeType);
 		e.sendResponseHeaders(returnCode, bytes.length);
 		os.write(bytes);
 	}
 
-	private static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64)
-			throws IOException {
+	static void sendEvent(OutputStream out, ChunkHeader header, byte[] data, boolean base64) throws IOException {
 		out.write("data: ".getBytes());
 		out.write(header.toJSONNode().toString().getBytes());
 		out.write('\n');
@@ -292,90 +262,146 @@ public class WebService extends Service {
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
 			OutputStream output, Serializer serializer) throws IOException, ClassNotFoundException {
 
-		double duration = Double.valueOf(removeOrDefault(query, "duration", "1", null));
-		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "" + duration, null));
+		String duration = removeOrDefault(query, "stopWhen", "1s", null);
+		double timeout = Double.valueOf(removeOrDefault(query, "timeout", "1", null));
 		boolean compress = Boolean.valueOf(removeOrDefault(query, "compress", "false", Set.of("true", "false")));
 		boolean encrypt = Boolean.valueOf(removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
 		var whatToSendF = whatToSendMap
 				.get(String.valueOf(removeOrDefault(query, "what", "msg", whatToSendMap.keySet())));
 
+		final RoutingService r = routing(query, output, serializer);
+		final RoutingParameters rp = routingParms(query, r, output, serializer);
+		final var matcher = matcher(query, output, r, rp, serializer);
+		final var serviceClass = service(query, output, serializer, matcher, r, rp, duration);
+
+		if (serviceClass == null)
+			return;
+
+		final var endpointClass = endpoint(query, output, serializer, matcher, r, rp, serviceClass, duration);
+
+		if (endpointClass == null)
+			return;
+
+		final EndpointParameterList op = parmsFromQuery(query);
+
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("invalid parameters: " + query.keySet().toString());
 		}
 
-		final RoutingService<?> r;
-		final RoutingParameters rp;
-		final ComponentMatcher t;
-		final Class<? extends Service> service;
-		final Class<? extends Endpoint> o;
-		final EndpointParameterList op = new EndpointParameterList();
-		final String description;
-
-		if (path.isEmpty()) {// show available routing protocols
-			r = component.defaultRoutingProtocol();
-			rp = r.defaultParameters();
-			t = ComponentMatcher.multicast(Set.of(component));
-			service = ServiceManager.class;
-			o = ServiceManager.listRoutingServices.class;
-			description = "list of available routing services";
-		} else if (path.size() == 1) { // show examples of routing parms
-			r = routing(path.get(0));
-			rp = r.defaultParameters();
-			t = ComponentMatcher.multicast(Set.of(component));
-			service = r.getClass();
-			o = RoutingService.suggestParms.class;
-			description = "suggest parameters for the routing service given by the user";
-		} else if (path.size() == 2) { // no target, show possible ones
-			r = routing(path.get(0));
-			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.multicast(Set.of(component));
-			o = LocalViewService.components.class;
-			service = LocalViewService.class;
-			description = "suggest ways to target components";
-		} else if (path.size() == 3) { // show available services in the targets
-			r = routing(path.get(0));
-			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
-			o = ServiceManager.listServices.class;
-			service = ServiceManager.class;
-			description = "list services in the targeted components";
-		} else if (path.size() == 4) { // show operations available in services
-			r = routing(path.get(0));
-			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
-			service = ServiceManager.class;
-			o = ServiceManager.listOperations.class;
-			op.add(path.get(3)); // service name
-			description = "list operations in the targeted service";
-		} else { // all ok
-			r = routing(path.get(0));
-			rp = routingsParms(r, path.get(1));
-			t = ComponentMatcher.fromString(path.get(2), component.service(LocalViewService.class));
-			service = (Class<? extends Service>) Class.forName(path.get(3));
-			o = (Class<? extends Endpoint>) Clazz.innerClass(service, path.get(4));
-			op.addAll(path.subList(5, path.size()));
-			description = r.webShortcut() + "/" + rp.toURLElement() + "/" + t + "/" + service.getName() + "/"
-					+ o.getSimpleName() + "/" + TextUtilities.concat("/", op) + "?compress=" + compress + ",encrypt="
-					+ encrypt + ",duration=" + duration + ",timeout=" + timeout + ",what=" + name(whatToSendF)
-					+ ",format=" + serializer.getMIMEType();
-		}
-
-		exec(r, rp, t, service, o, op, compress, encrypt, duration, timeout, whatToSendF, serializer, output,
-				postDataInputStream, description);
+		exec(r, rp, matcher, serviceClass, endpointClass, op, compress, encrypt, duration, timeout, whatToSendF,
+				serializer, output, postDataInputStream);
 	}
 
-	private Class<? extends Service> service(String s) throws ClassNotFoundException {
-		s = serviceShortcuts.getOrDefault(s, s);
-		return (Class<? extends Service>) Class.forName(s);
+	private Class<? extends Endpoint> endpoint(Map<String, String> query, OutputStream output, Serializer serializer,
+			ComponentMatcher matcher, RoutingService r, RoutingParameters rp, Class<? extends Service> s,
+			String duration) throws ClassNotFoundException, IOException {
+		if (query.containsKey("e")) {
+			return (Class<? extends Endpoint>) Clazz.innerClass(s, query.remove("e"));
+		} else {
+			var ro = r.exec(matcher, s, listEndpoints.class, rp, null, true);
+			var messages = ro.returnQ.collector().collectWhile(stop(duration)).messages;
+			var map = new HashMap<Component, List<String>>();
+			messages.forEach(m -> map.put(m.sender(),
+					((Set<Class<? extends Endpoint>>) m.content).stream().map(e -> e.getSimpleName()).toList()));
+			new Suggestion("e", map).send(output, serializer);
+			return null;
+		}
+	}
+
+	private Class<? extends Service> service(Map<String, String> query, OutputStream output, Serializer serializer,
+			ComponentMatcher t, RoutingService r, RoutingParameters rp, String duration)
+			throws ClassNotFoundException, IOException {
+		if (query.containsKey("s")) {
+			var s = query.remove("s");
+			var c = shortcut_service.get(s);
+
+			if (c != null) {
+				return c;
+			} else {
+				return (Class<? extends Service>) Class.forName(s);
+			}
+		} else {
+			var ro = r.exec(t, ServiceManager.class, listServices.class, rp, null, true);
+			var messages = ro.returnQ.collector().collectWhile(stop(duration)).messages;
+			var map = new HashMap<Component, List<? extends Service>>();
+			messages.forEach(m -> map.put(m.sender(), (List<? extends Service>) m.content));
+			new Suggestion("s", map).send(output, serializer);
+			return null;
+		}
+	}
+
+	private Predicate<MessageCollector> stop(String s) {
+		if (s.matches("[0-9]s")) {
+			return c -> c.duration() < Double.valueOf(s.substring(0, s.length() - 1));
+		} else if (s.matches("[0-9]msg")) {
+			return c -> c.messages.size() < Integer.valueOf(s.substring(0, s.length() - 3));
+		}
+
+		throw new IllegalArgumentException("cannot interpret: " + s);
+	}
+
+	private ComponentMatcher matcher(Map<String, String> query, OutputStream output, RoutingService r,
+			RoutingParameters rp, Serializer serializer) throws IOException {
+		if (query.containsKey("t")) {
+			return ComponentMatcher.fromString(query.remove("t"), component.localView());
+		} else {
+			new Suggestion("t", component.localView().g.components()).send(output, serializer);
+			return ComponentMatcher.all;
+		}
+	}
+
+	private <P extends RoutingParameters> RoutingParameters routingParms(Map<String, String> query, RoutingService<P> r,
+			OutputStream output, Serializer serializer) throws IOException {
+		if (query.containsKey("rp")) {
+			final RoutingParameters rp = r.defaultData();
+			rp.fromString(query.remove("rp"), r);
+			return rp;
+		} else {
+			new Suggestion("rp", r.dataSuggestions()).send(output, serializer);
+			return r.defaultData();
+		}
+	}
+
+	private RoutingService routing(Map<String, String> query, OutputStream output, Serializer serializer)
+			throws IOException, ClassNotFoundException {
+		if (query.containsKey("r")) {
+			var s = query.remove("r");
+			var serviceClass = shortcut_service.get(s);
+
+			if (serviceClass == null) {
+				serviceClass = (Class<? extends RoutingService>) Class.forName(s);
+			}
+
+			return (RoutingService) component.service(serviceClass);
+		} else {
+			new Suggestion("r", component.services(RoutingService.class).stream().map(s -> s.getClass()).toList())
+					.send(output, serializer);
+			return component.defaultRoutingProtocol();
+		}
+	}
+
+	private EndpointParameterList parmsFromQuery(Map<String, String> query) {
+		var l = new EndpointParameterList();
+
+		for (int i = 0;; ++i) {
+			if (query.containsKey("p" + i)) {
+				l.add(query.remove("p" + i));
+			} else {
+				return l;
+			}
+		}
 	}
 
 	public void exec(RoutingService routing, RoutingParameters routingParms, ComponentMatcher target,
 			Class<? extends Service> service, Class<? extends Endpoint> endpoint, EndpointParameterList parms,
-			boolean compress, boolean encrypt, double duration, double timeout,
+			boolean compress, boolean encrypt, String duration, double timeout,
 			Function<MessageCollector, Object> whatToSendF, Serializer serializer, OutputStream output,
-			InputStream postDataInputStream, String resultDescription) {
+			InputStream postDataInputStream) {
 
-//		System.out.println("target: " + target);
+		final String description = routing.getFriendlyName() + "/" + routingParms.toURLElement() + "/" + target + "/"
+				+ service.getName() + "/" + endpoint.getSimpleName() + "/" + TextUtilities.concat("/", parms)
+				+ "?compress=" + compress + ",encrypt=" + encrypt + ",duration=" + duration + ",timeout=" + timeout
+				+ ",what=" + name(whatToSendF) + ",format=" + serializer.getMIMEType();
 
 		var ro = routing.exec(target, service, endpoint, routingParms, parms, postDataInputStream == null);
 		var aes = new AES();
@@ -429,9 +455,8 @@ public class WebService extends Service {
 
 		System.out.println("collecting...");
 
-		collector.collect(duration, timeout, collecto -> {
+		collector.collect(timeout, timeout, collecto -> {
 			List<String> encodingsToClient = new ArrayList<>();
-			collecto.messages.getLast().contentDescription = resultDescription;
 			Object what2send = whatToSendF.apply(collecto);
 
 			var ser = what2send instanceof byte[] ? name2serializer.get("bytes") : serializer;
@@ -478,33 +503,6 @@ public class WebService extends Service {
 		throw new IllegalStateException();
 	}
 
-	private RoutingParameters routingsParms(RoutingService routing, String routingDataDescr) {
-		var p = routing.defaultParameters();
-
-		if (!routingDataDescr.isEmpty()) {
-			p.fromString(routingDataDescr, routing);
-		}
-
-		return p;
-	}
-
-	private RoutingService routing(String routingString) {
-		RoutingService routing = component.defaultRoutingProtocol();
-
-		if (!routingString.isEmpty()) {
-			routingString = serviceShortcuts.getOrDefault(routingString, routingString);
-
-			try {
-				var routingClass = (Class<? extends RoutingService>) Class.forName(routingString);
-				routing = component.service(routingClass);
-			} catch (ClassNotFoundException | NoClassDefFoundError err) {
-				throw new URLContentException("cannot find routing service: " + routingString, null);
-			}
-		}
-
-		return routing;
-	}
-
 	private void controlCollect(JsonNode header, MessageCollector collector) {
 		var newTimeout = header.get("timeout");
 
@@ -529,15 +527,16 @@ public class WebService extends Service {
 		if (s == null) {
 			return null;
 		}
+
 		if (s.startsWith("/")) {
 			s = s.substring(1);
 		}
 
+		// if the path ends by a /
 		if (s.charAt(s.length() - 1) == '/' && s.charAt(s.length() - 2) != '/') {
 			s = s.substring(0, s.length() - 1);
 		}
 
-		System.out.println("final :" + s);
 		return s.isEmpty() ? null : TextUtilities.split(s, '/');
 	}
 
@@ -559,7 +558,7 @@ public class WebService extends Service {
 		Map<String, String> query = new HashMap<>();
 
 		if (s != null && !s.isEmpty()) {
-			for (String queryEntry : s.split("&")) {
+			for (String queryEntry : TextUtilities.split(s, '&')) {
 				String[] a = queryEntry.split("=");
 
 				if (a.length == 2) {

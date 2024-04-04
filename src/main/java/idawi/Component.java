@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 import idawi.IdawiSerializer.ComponentRepresentative;
 import idawi.routing.AutoForgettingLongList;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.ForceBroadcasting;
+import idawi.routing.BallBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.routing.irp.IRP;
@@ -83,7 +83,7 @@ public class Component implements SizeOf {
 		new BlindBroadcasting(this);
 		new IRP(this);
 		new ServiceManager(this);
-		new ForceBroadcasting(this);
+		new BallBroadcasting(this);
 	}
 
 	public boolean isDigitalTwin() {
@@ -187,7 +187,7 @@ public class Component implements SizeOf {
 
 	public LocalViewService localView() {
 		var dt = dt();
-		return dt == null ? service(LocalViewService.class, true) : dt.host;
+		return dt == null ? need(LocalViewService.class) : dt.host;
 	}
 
 	public RoutingService defaultRoutingProtocol() {

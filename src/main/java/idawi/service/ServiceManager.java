@@ -16,8 +16,6 @@ public class ServiceManager extends Service {
 		super(peer);
 	}
 
-
-	
 	public class listRoutingServices extends TypedInnerClassEndpoint {
 		public List<?> f() {
 			return component.services(RoutingService.class).stream().map(s -> s.getClass()).toList();
@@ -30,24 +28,13 @@ public class ServiceManager extends Service {
 	}
 
 	public class listServices extends TypedInnerClassEndpoint {
-		public List<?> f() {
-			return component.services().stream().map(s -> s.getClass()).toList();
+		public <S extends Service> List<Class<S>> f() {
+			return component.services().stream().map(s -> (Class<S>) s.getClass()).toList();
 		}
 
 		@Override
 		public String getDescription() {
 			return "gives the ID the services available on the local component";
-		}
-	}
-
-	public class listOperations extends TypedInnerClassEndpoint {
-		public List<String> f(Class<? extends Service> serviceName) {
-			return component.service(serviceName).endpoints().stream().map(o -> o.getName()).sorted().toList();
-		}
-
-		@Override
-		public String getDescription() {
-			return "listServices";
 		}
 	}
 

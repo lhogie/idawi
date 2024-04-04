@@ -47,7 +47,7 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 	}
 
 	@Override
-	public FloodingWithSelfPruning_UsingBloomFilterParm defaultParameters() {
+	public FloodingWithSelfPruning_UsingBloomFilterParm defaultData() {
 		var neighbors = component.outLinks();
 		var p = new FloodingWithSelfPruning_UsingBloomFilterParm(bloomSize(neighbors.size()));
 
@@ -57,8 +57,9 @@ public class FloodingWithSelfPruning_UsingBloomFilter
 
 		return p;
 	}
+	
 	@Override
-	public String webShortcut() {
+	public String getFriendlyName() {
 		return "fwsp_bf";
 	}
 

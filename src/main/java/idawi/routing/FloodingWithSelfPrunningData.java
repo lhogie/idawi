@@ -6,8 +6,8 @@ import java.util.function.Predicate;
 import idawi.Component;
 import idawi.transport.TransportService;
 
-public class SPPParm extends EmptyRoutingParms {
-	Collection<Component> neighbors;
+public class FloodingWithSelfPrunningData extends EmptyRoutingParms {
+	Collection<Component> outNeighbors;
 	
 	// by default use all transports available
 //	Predicate<TransportService> useTransport = t -> true;

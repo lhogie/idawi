@@ -2,7 +2,7 @@ package idawi.demo;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
-import idawi.routing.Route;
+import idawi.messaging.Message;
 import idawi.service.PingService;
 
 public class Demo2_simple_deployment_into_another_JVM {
@@ -14,19 +14,13 @@ public class Demo2_simple_deployment_into_another_JVM {
 		var localComponent = new Component();
 
 // deploy
-		var child = localComponent.service(DeployerService.class, true).newLocalJVM();
+		var child = localComponent.need(DeployerService.class).newLocalJVM();
 		System.out.println("new child: " + child);
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.need(PingService.class).ping(child).collector().collectDuring(1).messages
-				.throwAnyError().getFirst();
-
-		if (pong == null) {
-			System.err.println("ping timeout");
-		} else {
-			var route = (Route) pong.content;
-			double pongDuration = pong.route.getLast().receptionDate - route.first().emissionDate;
-			System.out.println("pong received after " + pongDuration + "ms");
-		}
+		var pong = (Message)localComponent.need(PingService.class).ping(child).content;
+		var route =  pong.route;
+		double pongDuration = pong.route.getLast().receptionDate - route.first().emissionDate;
+		System.out.println("pong received after " + pongDuration + "ms");
 	}
 }

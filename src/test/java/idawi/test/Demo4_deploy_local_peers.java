@@ -70,6 +70,6 @@ public class Demo4_deploy_local_peers {
 				"hello!", true);
 		s.wait.poll_sync();
 		System.out.println("completed");
-		Idawi.agenda.stop();
+		Idawi.agenda.stopNow(null);
 	}
 }

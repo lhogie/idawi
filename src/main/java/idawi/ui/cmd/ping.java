@@ -54,7 +54,7 @@ public class ping extends CommunicatingCommand {
 					System.out.print(nbFailure + "/" + i + " ok. Pinging... ");
 				}
 
-				Message pong = localComponent.service(PingService.class).ping(p).poll_sync();
+				Message pong = localComponent.service(PingService.class).ping(p);
 
 				if (pong == null) {
 					if (printIndividualPings) {

@@ -17,7 +17,7 @@ public class tracerouteBackend extends CommandBackend {
 
 		for (var t : to) {
 			out.accept("ping " + t);
-			Message pong = n.service(PingService.class).ping(t).poll_sync();
+			Message pong = n.service(PingService.class).ping(t);
 
 			if (pong == null) {
 				out.accept("No pong received. :(");

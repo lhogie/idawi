@@ -1,5 +1,6 @@
 package idawi.transport;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +20,6 @@ import idawi.routing.Entry;
 import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
-import toools.io.Cout;
 
 public abstract class TransportService extends Service {
 	public long nbMsgReceived = 0;
@@ -28,7 +28,7 @@ public abstract class TransportService extends Service {
 	public long outGoingTraffic;
 	// used to serialize messages for transport
 	public final transient IdawiSerializer serializer;
-
+	public final List<TransportListener> listeners = new ArrayList<>();
 //	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
@@ -51,7 +51,7 @@ public abstract class TransportService extends Service {
 	protected synchronized final void processIncomingMessage(Message msg) {
 		try {
 			Vault vault = msg.content instanceof Vault ? (Vault) msg.content : null;
-			Cout.debug(this + " receives " + msg);
+			listeners.forEach(l -> l.msgReceived(this, msg));
 			++nbMsgReceived;
 			incomingTraffic += msg.sizeOf();
 			Entry last = msg.route.getLast();
@@ -98,17 +98,17 @@ public abstract class TransportService extends Service {
 
 	private void considerForForwarding(Message msg) {
 		// search for the routing service it was initially sent
-		var rs = component.service(msg.initialRoutingStrategy.routingService, true);
+		var routingService = component.service(msg.initialRoutingStrategy.routingService, true);
 		RoutingParameters routingParms;
 
-		if (rs == null) {
-			rs = component.defaultRoutingProtocol();
-			routingParms = rs.defaultParameters();
+		if (routingService == null) {
+			routingService = component.defaultRoutingProtocol();
+			routingParms = routingService.defaultData();
 		} else {
 			routingParms = msg.initialRoutingStrategy.parms;
 		}
 
-		rs.accept(msg, routingParms);
+		routingService.accept(msg, routingParms);
 	}
 
 	public abstract String getName();
@@ -117,14 +117,15 @@ public abstract class TransportService extends Service {
 
 	protected abstract void bcast(byte[] msgBytes);
 
-	public final void send(Message msg, Collection<Link> outLinks, RoutingService r, RoutingParameters parms) {
+	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
 		var sentFromTwin = component.isDigitalTwin();
 		++nbMsgSent;
 		outGoingTraffic += msg.sizeOf();
 
 		// add a link heading to an unknown destination
 		msg.route.add(new Entry(new Link(this), r));
-		Cout.debug(component + " uses '" + getName() + "' to send: " + msg);
+		listeners.forEach(l -> l.msgSent(this, msg));
+
 
 		if (outLinks == null) {
 			bcast(msgToBytes(msg));
@@ -135,12 +136,13 @@ public abstract class TransportService extends Service {
 			for (var outLink : outLinks) {
 				// sending from a real component to a digital twin in the only situation
 				// the transport is really involved
+				var sentToTwin = outLink.dest.component.isDigitalTwin();
 				var loop = outLink.dest.component.equals(component);
 
-				if (sentFromTwin || msg.simulate || loop) {
-					fakeEmissions.add(outLink);
-				} else {
+				if (!sentFromTwin && sentToTwin) {
 					realSend.add(outLink);
+				} else {
+					fakeEmissions.add(outLink);
 				}
 
 				outLink.nbMsgs++;
@@ -166,18 +168,19 @@ public abstract class TransportService extends Service {
 		return serializer.toBytes(msg);
 	}
 
-	private void fakeSend(Message msg, Set<Link> fakeEmissions) {
-		for (var l : fakeEmissions) {
-			var msgClone = msg.clone(serializer);
-			double actualLatency = l.latency();
+	private void fakeSend(Message msg, Collection<Link> fakeEmissions) {
+		fakeSend(serializer.toBytes(fakeEmissions), fakeEmissions);
+	}
 
+	protected void fakeSend(byte[] msg, Collection<Link> fakeEmissions) {
+		for (var l : fakeEmissions) {
 			Idawi.agenda.schedule(
-					new Event<PointInTime>("message reception " + msgClone.ID, new PointInTime(now() + actualLatency)) {
+					new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
 						@Override
 						public void run() {
 //							Cout.debugSuperVisible(":)");
 							try {
-								l.dest.processIncomingMessage(msgClone);
+								l.dest.processIncomingMessage((Message) serializer.fromBytes(msg));
 							} catch (Throwable e) {
 								e.printStackTrace();
 							}
@@ -185,7 +188,6 @@ public abstract class TransportService extends Service {
 					});
 		}
 	}
-
 
 	public List<Link> activeOutLinks() {
 		return component.localView().g.findLinks(l -> l.isActive() && l.src.equals(this));

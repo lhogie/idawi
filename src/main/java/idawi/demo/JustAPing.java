@@ -22,7 +22,7 @@ public class JustAPing {
 		var a = new Component();
 		var b = new Component();
 		var c = new Component();
-		b.service(PingService.class, true);
+		b.need(PingService.class);
 
 //		var rl = new RoutingListener.PrintTo(System.out);
 //		Stream.of(a, b, c).forEach(u -> u.bb().listeners.add(rl));
@@ -39,13 +39,10 @@ public class JustAPing {
 		Idawi.agenda.start();
 
 		System.out.println("pinging");
-		var collector = a.service(PingService.class, true).ping(b).collector();
-		collector.collect(cl -> cl.stop = !cl.messages.isEmpty());
-		var pong = collector.messages.throwAnyError().getFirst(); 
-		
+		var pong = a.need(PingService.class).ping(b);
+
 		System.out.println("pong= " + pong);
 
-		Idawi.agenda.setTerminationCondition(() -> true);
-		Idawi.agenda.stop();
+		Idawi.agenda.stopNow(null);
 	}
 }

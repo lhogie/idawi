@@ -27,7 +27,6 @@ public class Message implements Serializable, SizeOf {
 	public boolean eot = false;
 //	public ExecReq exec;
 
-	public String contentDescription;
 
 	public boolean autoCreateQueue = false;
 
@@ -109,6 +108,20 @@ public class Message implements Serializable, SizeOf {
 
 	public ExecReq exec() {
 		return (ExecReq) content;
+	}
+
+	public Message throwIfError() {
+		if (content instanceof Throwable) {
+			Throwable e = (RemoteException) content;
+
+			while (e.getCause() != null) {
+				e = e.getCause();
+			}
+
+			throw e instanceof RuntimeException re ? re : new RuntimeException(e);
+		}
+		
+		return this;
 	}
 
 }

@@ -28,8 +28,8 @@ public class RemoteMain {
 
 			System.out.println("instantiating component");
 			var child = new Component();
-			var pipe = child.need(Pipe_ChildSide.class);
 			child.friendlyName = "baby";
+			child.need(Pipe_ChildSide.class);
 //			Pipe_ChildSide.sendBytes(pipe.serializer.toBytes(child));
 			child.need(PingService.class);
 			child.need(LocalViewService.class);
