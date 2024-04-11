@@ -17,6 +17,7 @@ import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
 import idawi.service.web.Graph;
 import idawi.service.web.Image;
+import idawi.service.web.RawData;
 import idawi.service.web.Video;
 import idawi.service.web.chart.Chart;
 import toools.SizeOf;
@@ -341,6 +342,23 @@ public class DemoService extends Service {
 			var msg = in.poll_sync();
 
 			component.defaultRoutingProtocol().send(Image.random(), msg.replyTo, m -> msg.eot = true);
+		}
+	}
+	
+	public class SendImageJPEG extends InnerClassEndpoint {
+		@Override
+		public String getDescription() {
+			return "returns a simple image in JPEG";
+		}
+
+		@Override
+		public void impl(MessageQueue in) throws IOException {
+			var msg = in.poll_sync();
+			var rd = new RawData();
+			rd.bytes =  NetUtilities.retrieveURLContent("https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg");
+			rd.mimeType = "image/jpeg";
+			
+			component.defaultRoutingProtocol().send(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
