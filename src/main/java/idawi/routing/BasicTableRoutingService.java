@@ -31,11 +31,13 @@ public class BasicTableRoutingService extends RoutingService<RoutingParameters> 
 
 					if (relay != null) {
 						component.services(TransportService.class).forEach(t -> {
-							var link = component.localView().g.findLink(
-									l -> l.src.component.equals(component) && l.dest.component.equals(relay));
+							if (parms.acceptTransport.test(t)) {
+								var link = component.localView().g.findLink(
+										l -> l.src.component.equals(component) && l.dest.component.equals(relay));
 
-							if (link != null) {
-								t.send(msg, Set.of(link), this, parms);
+								if (link != null) {
+									t.send(msg, Set.of(link), this, parms);
+								}
 							}
 						});
 					}

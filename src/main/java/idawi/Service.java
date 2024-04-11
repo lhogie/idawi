@@ -10,9 +10,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import idawi.messaging.ACK.eventScheduled;
+import idawi.messaging.ACK.processingCompleted;
+import idawi.messaging.ACK.processingStarts;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
-import idawi.routing.ComponentMatcher;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.ServiceInfo;
 import toools.SizeOf;
@@ -22,7 +24,7 @@ import toools.util.Date;
 
 public class Service implements SizeOf, Serializable {
 
-	public Component component;
+	public final Component component;
 	private boolean askToRun = true;
 //	transient protected final List<Thread> threads = new ArrayList<>();
 	transient private final Set<AbstractEndpoint> endpoints = new HashSet<>();
@@ -114,7 +116,7 @@ public class Service implements SizeOf, Serializable {
 
 	public void process(Message msg) throws NotGrantedException {
 		++nbMsgsReceived;
-Cout.debug(msg);
+//Cout.debug(msg);
 		AbstractEndpoint endpoint = lookupEndpoint(msg.endpointID.getSimpleName());
 
 		if (endpoint == null)
@@ -125,7 +127,7 @@ Cout.debug(msg);
 		if (!endpoint.isGranted(requester))
 			throw new NotGrantedException(endpoint.getClass(), requester);
 
-		Event<PointInTime> e = new Event<>(new PointInTime(msg.soonestExecTime)) {
+		Event<PointInTime> e = new Event<>(new PointInTime(msg.runtimes.soonestExecTime)) {
 			@Override
 			public void run() {
 				var inputQ = getQueue(msg.qAddr.queueID);
@@ -134,8 +136,12 @@ Cout.debug(msg);
 					final double start = now();
 
 					// if too late
-					if (start > msg.latestExecTime)
-						throw new TooLateException(this, start - msg.latestExecTime);
+					if (start > msg.runtimes.latestExecTime)
+						throw new TooLateException(this, start - msg.runtimes.latestExecTime);
+
+					if (msg.ackReqs != null && msg.ackReqs.contains(processingStarts.class)) {
+						component.defaultRoutingProtocol().send(new processingStarts(msg), msg.replyTo);
+					}
 
 					endpoint.nbCalls++;
 
@@ -156,25 +162,35 @@ Cout.debug(msg);
 					}
 
 					endpoint.totalDuration += Date.time() - start;
+
+					if (msg.ackReqs != null && msg.ackReqs.contains(processingCompleted.class)) {
+						component.defaultRoutingProtocol().send(new processingCompleted(msg), msg.replyTo);
+					}
+
 				} catch (Throwable exception) {
 					endpoint.nbFailures++;
 					err(msg, exception);
 				} finally {
-					if (msg.detachQueueAfterCompletion) {
-						detachQueue(inputQ);
+					if (msg.deleteQueueAfterCompletion) {
+						deleteQueue(inputQ);
 					}
 				}
 			}
 		};
 
-		if (msg.nbThreadsInPool == 0) {
+		if (msg.nbSpecificThreads == 0) {
 			e.run();
 		} else if (!Idawi.agenda.threadPool.isShutdown()) {
-			int nbThreads = msg.nbThreadsInPool == Integer.MAX_VALUE ? Runtime.getRuntime().availableProcessors()
-					: msg.nbThreadsInPool;
+			int nbThreads = msg.nbSpecificThreads == Integer.MAX_VALUE ? Runtime.getRuntime().availableProcessors()
+					: msg.nbSpecificThreads;
 
 			for (int i = 0; i < nbThreads; ++i) {
 				Idawi.agenda.schedule(e);
+
+				if (msg.ackReqs != null && msg.ackReqs.contains(eventScheduled.class)) {
+					component.defaultRoutingProtocol().send(new eventScheduled(msg), msg.replyTo);
+				}
+
 			}
 		} else {
 			System.err.println("ignoring exec message: " + msg);
@@ -186,8 +202,7 @@ Cout.debug(msg);
 		logError(exception);
 
 		// report the error to the guy who asked
-		component.bb().send(new RemoteException(exception), true, msg.replyTo);
-		reply(msg, exception, true);
+		component.defaultRoutingProtocol().send(exception, msg.replyTo);
 	}
 
 	public AbstractEndpoint lookupEndpoint(String name) {
@@ -246,7 +261,7 @@ Cout.debug(msg);
 			@Override
 			public void impl(MessageQueue in) throws Throwable {
 				var m = in.poll_sync();
-				userCode.accept(m, r -> reply(m, r, true));
+				userCode.accept(m, r -> component.defaultRoutingProtocol().send(r, m.replyTo));
 			}
 
 			@Override
@@ -254,14 +269,6 @@ Cout.debug(msg);
 				return Service.this.getClass();
 			}
 		});
-	}
-
-	protected void reply(Message initialMsg, Object response, boolean eot) {
-		var replyTo = initialMsg.replyTo;
-		replyTo.targetedComponents = ComponentMatcher.unicast(initialMsg.route.source());
-//		Cout.debugSuperVisible("reply " + o);
-//		Cout.debugSuperVisible("to " + replyTo);
-		component.bb().send(response, eot, replyTo);
 	}
 
 	public void registerEndpoint(AbstractEndpoint o) {
@@ -326,14 +333,16 @@ Cout.debug(msg);
 	}
 
 	public class deliverToQueue extends InnerClassEndpoint {
+		public long nbDelivery;
+
 		@Override
 		public String getDescription() {
-			return "nb of bytes used by this service";
+			return "do nothing";
 		}
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
-
+			++nbDelivery;
 		}
 	}
 
@@ -362,7 +371,7 @@ Cout.debug(msg);
 		return name2queue.get(qid);
 	}
 
-	public void detachQueue(MessageQueue q) {
+	public void deleteQueue(MessageQueue q) {
 		name2queue.remove(q.name);
 		detachedQueues.add(q.name);
 		q.cancelEventisation();

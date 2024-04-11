@@ -14,21 +14,20 @@ import idawi.service.ServiceManager;
 import idawi.transport.Loopback;
 import idawi.transport.SharedMemoryTransport;
 import idawi.transport.Topologies;
+import idawi.transport.TransportListener;
+import idawi.transport.TransportService;
 
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 2;
+		int n = 1;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent(n));
 
 		for (int i = 0; i < n; ++i) {
 			var c = components.get(i);
 			c.friendlyName = "c" + i;
-			new Loopback(c);
-			new DemoService(c);
-			new ServiceManager(c);
-			new PingService(c);
+			c.need(Loopback.class, DemoService.class, ServiceManager.class, PingService.class);
 		}
 
 		Topologies.tree(components, (parent, leaf, out) -> out.tree2leaf = out.leaf2tree = SharedMemoryTransport.class,
@@ -37,9 +36,10 @@ public class RunTestServer {
 		var gateway = components.getFirst();
 		gateway.friendlyName = "gw";
 		var ws = gateway.need(WebService.class).startHTTPServer();
-		gateway.need(BlindBroadcasting.class);
-		gateway.need(BFSRouting.class);
-		gateway.need(ProbabilisticBroadcasting.class);
+		gateway.need(BlindBroadcasting.class, BFSRouting.class, ProbabilisticBroadcasting.class);
+
+		components.forEach(
+				c -> c.services(TransportService.class).forEach(t -> t.listeners.add(new TransportListener.StdOut())));
 
 		Idawi.agenda.start();
 		Idawi.agenda.stopWhen(() -> false, null);

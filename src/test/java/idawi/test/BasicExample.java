@@ -21,7 +21,7 @@ public class BasicExample {
 
 // we'll put another component in a different JVM
 
-		var c2 = c1.service(DeployerService.class).newLocalJVM();
+		var c2 = c1.service(DeployerService.class).newLocalJVM("test");
 
 // asks the other component to compute something
 		var l = c1.bb().exec_rpc(c2, DemoService.class, stringLength.class, "Hello Idawi!");

@@ -28,7 +28,10 @@ public class ProbabilisticBroadcasting extends RoutingService<ProbabilisticBroad
 		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)
 				&& Idawi.prng.nextDouble() < 0) {
 			for (var t : component.services(TransportService.class)) {
-				t.send(msg, null, this, parms);
+				if (parms.acceptTransport.test(t)) {
+
+					t.send(msg, null, this, parms);
+				}
 			}
 
 			listeners.forEach(l -> l.messageForwarded(this, msg));

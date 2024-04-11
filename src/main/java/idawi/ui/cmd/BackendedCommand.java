@@ -6,7 +6,6 @@ import idawi.Component;
 import idawi.messaging.Message;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
-import idawi.service.PingService;
 import idawi.ui.cmd.CommandsService.exec;
 import j4u.CommandLine;
 import j4u.CommandLineSpecification;
@@ -27,7 +26,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 		hook.friendlyName = getOptionValue(cmdLine, "--hook");
 		Cout.info("connecting to overlay via " + hook);
 
-		if (localNode.service(PingService.class).ping(hook) == null) {
+		if (localNode.defaultRoutingProtocol().ping(hook) == null) {
 			Cout.error("Error pinging the hook");
 			return 1;
 		}
@@ -37,10 +36,10 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 
 		CommandBackend backend = getBackend();
 		backend.cmdline = cmdLine;
-		var col = localNode.defaultRoutingProtocol().exec(ComponentMatcher.multicast(target),CommandsService.class, exec.class, null,
-				  backend, true).returnQ.collector();
+		var col = localNode.defaultRoutingProtocol().exec(ComponentMatcher.multicast(target), CommandsService.class,
+				exec.class, backend, null).returnQ.collector();
 
-		col.collect(1, 1, c2 -> {
+		col.collect(1, c2 -> {
 			var msg = c2.messages.last();
 
 			if (msg.isError()) {
@@ -52,7 +51,7 @@ public abstract class BackendedCommand extends CommunicatingCommand {
 			}
 		});
 
-		if (col.stop) {
+		if (col.gotEnough) {
 			System.err.println("not enough results!");
 		}
 

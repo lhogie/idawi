@@ -6,7 +6,6 @@ import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.ComponentMatcher;
 import idawi.routing.FloodingWithSelfPruning;
 import idawi.service.PingService;
 import idawi.service.PingService.ping;
@@ -42,9 +41,8 @@ public class ManyComponents {
 //		Idawi.directory = new Directory("$HOME/test/idawi");
 //		GraphvizDriver.path = "/usr/local/bin/";
 //		first.localView().g.plot().open();
-		var to = ComponentMatcher.unicast(components.get(components.size() / 2));
-		var q = first.need(BlindBroadcasting.class).exec(to, PingService.class, ping.class, null, "ping",
-				true).returnQ;
+		var to = components.get(components.size() / 2);
+		var q = first.need(BlindBroadcasting.class).exec(to, PingService.class, ping.class, "ping", null).returnQ;
 		var pong = q.poll_sync().throwIfError();
 		System.out.println("pong= " + pong);
 		System.out.println("ping travelled through: " + ((Message) pong.content).route.components());

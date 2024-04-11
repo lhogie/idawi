@@ -6,9 +6,15 @@ import idawi.Service;
 import toools.SizeOf;
 
 public class QueueAddress implements SizeOf, Serializable {
-	public ComponentMatcher targetedComponents;
-	public Class<? extends Service> service;
-	public String queueID;
+	public final ComponentMatcher targetedComponents;
+	public final Class<? extends Service> service;
+	public final String queueID;
+
+	public QueueAddress(ComponentMatcher targetedComponents, Class<? extends Service> service, String queueID) {
+		this.targetedComponents = targetedComponents;
+		this.service = service;
+		this.queueID = queueID;
+	}
 
 	@Override
 	public String toString() {

@@ -13,7 +13,6 @@ import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
-import idawi.routing.ComponentMatcher;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
 
@@ -62,9 +61,9 @@ public class ExternalCommandsService extends Service {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
-						reply(parmMsg, b, b.length == 0);
+						component.defaultRoutingProtocol().send(b, parmMsg.replyTo, m -> m.eot = b.length == 0);
 					} catch (IOException e) {
-						reply(parmMsg, e, true);
+						component.defaultRoutingProtocol().send(e, parmMsg.replyTo, m -> m.eot = true);
 						break;
 					}
 				}
@@ -102,8 +101,9 @@ public class ExternalCommandsService extends Service {
 	}
 
 	public void exec(Component to, InputStream stdin, OutputStream out, String... cmdLine) throws IOException {
-		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(to , ExternalCommandsService.class, exec.class,
-				 cmdLine, true);
+		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(to, ExternalCommandsService.class,
+				exec.class, cmdLine, msg -> {
+				});
 		boolean eofIN = false;
 
 		while (true) {
@@ -119,7 +119,7 @@ public class ExternalCommandsService extends Service {
 
 			if (!eofIN) {
 				var wav = stdin.readNBytes(1000);
-				component.defaultRoutingProtocol().send(wav, wav.length == 0, s.getOperationInputQueueDestination());
+				component.defaultRoutingProtocol().send(wav, s.inputQAddr, m -> m.eot = wav.length == 0);
 			}
 		}
 	}

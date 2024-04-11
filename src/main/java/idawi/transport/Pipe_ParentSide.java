@@ -58,7 +58,6 @@ public class Pipe_ParentSide extends TransportService {
 		e.stdout = p.getInputStream();
 		e.stderr = p.getErrorStream();
 		e.stdin = p.getOutputStream();
-//		e.child = child;
 		e.run = true;
 		e.process = p;
 
@@ -73,8 +72,6 @@ public class Pipe_ParentSide extends TransportService {
 		return child_entry.stream().map(e -> e.child).toList();
 	}
 
-	static int nbW = 0;
-
 	private Entry findEntry(Component n) {
 		for (var e : child_entry) {
 			if (e.child == n) {
@@ -87,29 +84,32 @@ public class Pipe_ParentSide extends TransportService {
 
 	@Override
 	public String getName() {
-		return "pipe to child processes";
+		return getClass().getSimpleName();
 	}
 
 	private void processSdtStreamFromChild(Entry e, InputStream from, PrintStream to) {
 		try {
 			ReadUntilResult readResult = Utilities.readUntil(from, (byte) '\n');
 			var line = new String(readResult.bytes.toByteArray());
-
 			if (line.startsWith(base64ObjectMark)) {
 				var base64 = line.substring(base64ObjectMark.length()); // get the rest of the line
 				e.base64Len += base64.length();
 				var bytes = Base64.getDecoder().decode(base64);
 				var o = serializer.fromBytes(bytes);
+//				Cout.debug(component +  " receives " + o);
 
-				if (o instanceof Message m) {
-					processIncomingMessage(m);
+				if (o instanceof Message msg) {
+					processIncomingMessage(msg);
 
 					if (e.child == null) {
 						e.waitForChild.add_sync(o);
 					}
 
-				} else if (o instanceof Throwable) {
-					e.waitForChild.add_sync(o);
+					e.child = msg.route.getLast().link.src.component;
+					Cout.debug("route: " + msg.route);
+					Cout.debug("child: " + e.child);
+				} else if (o instanceof Throwable err) {
+					e.waitForChild.add_sync(err);
 				} else {
 					to.println(o.getClass().getName() + " object received: " + o);
 				}
@@ -125,13 +125,7 @@ public class Pipe_ParentSide extends TransportService {
 	}
 
 	public long base64Len() {
-		long sum = 0;
-
-		for (var e : child_entry) {
-			sum += e.base64Len;
-		}
-
-		return sum;
+		return child_entry.stream().mapToLong(e -> e.base64Len).sum();
 	}
 
 	@Override
@@ -155,7 +149,7 @@ public class Pipe_ParentSide extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		Cout.debug(outLinks);
+		Cout.debug(this + " multicast: " + outLinks);
 		for (var l : outLinks) {
 			var n = l.dest.component;
 			var e = findEntry(n);
@@ -169,12 +163,13 @@ public class Pipe_ParentSide extends TransportService {
 
 	@Override
 	protected void bcast(byte[] msg) {
+//		Cout.debug(this + " bcast: " + child_entry.stream().map(e -> e.child).toList());
+
 		for (var e : child_entry) {
 			send(msg, e);
 		}
 	}
-	
-	
+
 	private void send(byte[] msg, Entry e) {
 		try {
 			e.stdin.write(msg);
@@ -183,7 +178,5 @@ public class Pipe_ParentSide extends TransportService {
 			throw new RuntimeException(err);
 		}
 	}
-
-
 
 }

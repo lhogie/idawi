@@ -3,9 +3,7 @@ package idawi.routing;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
-import toools.exceptions.NotYetImplementedException;
-
-public class FloodingWithSelfPruning_UsingBloomFilterParm extends EmptyRoutingParms {
+public class FloodingWithSelfPruning_UsingBloomFilterParm extends RoutingParameters {
 	BloomFilter<Long> neighbors;
 
 	public FloodingWithSelfPruning_UsingBloomFilterParm(int n) {
@@ -14,7 +12,7 @@ public class FloodingWithSelfPruning_UsingBloomFilterParm extends EmptyRoutingPa
 
 	@Override
 	public long sizeOf() {
-		throw new NotYetImplementedException();
+		return super.sizeOf();
 	}
 
 }

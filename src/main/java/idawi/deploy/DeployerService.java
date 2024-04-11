@@ -15,6 +15,7 @@ import idawi.messaging.MessageQueue;
 import idawi.transport.Pipe_ParentSide;
 import toools.io.RSync;
 import toools.io.file.Directory;
+import toools.io.ser.JavaSerializer;
 import toools.net.SSHParms;
 import toools.net.SSHUtils;
 import toools.progression.LongProcess;
@@ -48,13 +49,13 @@ public class DeployerService extends Service {
 		}
 	}
 
-	public Component newLocalJVM() {
+	public Component newLocalJVM(String name) {
 		String java = System.getProperty("java.home") + "/bin/java";
 		String classpath = System.getProperty("java.class.path");
 		try {
 			Process p = Runtime.getRuntime()
-					.exec(new String[] { java, "-cp", classpath, RemoteMain.class.getName(), "run_by_a_node" });
-			return component.service(Pipe_ParentSide.class, true).add(p).waitForChild();
+					.exec(new String[] { java, "-cp", classpath, RemoteMain.class.getName(), name });
+			return component.need(Pipe_ParentSide.class).add(p).waitForChild();
 		} catch (Throwable err) {
 			throw new DeployError(err);
 		}
@@ -149,8 +150,10 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
 			var reqs = (Collection<SSHParms>) trigger.content;
-			deployViaSSH(reqs, line -> reply(trigger, line, false), line -> reply(trigger, new Error(line), false),
-					ok -> reply(trigger, ok, false), err -> reply(trigger, err, false));
+			var r = component.defaultRoutingProtocol();
+			deployViaSSH(reqs, line -> r.send(line, trigger.replyTo), line -> r.send(new Error(line), trigger.replyTo),
+					ok -> r.send(ok, trigger.replyTo), err -> r.send(err, trigger.replyTo));
 		}
 	}
+
 }

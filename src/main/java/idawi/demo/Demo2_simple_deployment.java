@@ -36,7 +36,7 @@ public class Demo2_simple_deployment {
 
 // at this step the child is running on the remote host. We can interact with
 // it.
-		var pong = localComponent.service(PingService.class).ping(v.getFirst());
+		var pong = localComponent.defaultRoutingProtocol().ping(v.getFirst());
 
 		if (pong == null) {
 			System.err.println("ping timeout");

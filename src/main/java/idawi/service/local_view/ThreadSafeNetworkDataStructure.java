@@ -16,7 +16,6 @@ import idawi.transport.TransportService;
 import toools.SizeOf;
 import toools.Stop;
 import toools.collections.Collections;
-import toools.io.Cout;
 
 public class ThreadSafeNetworkDataStructure implements Serializable, SizeOf {
 

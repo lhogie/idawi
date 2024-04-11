@@ -7,8 +7,8 @@ import idawi.routing.RoutingService;
 import toools.SizeOf;
 
 public class RoutingStrategy implements Serializable, SizeOf {
-	public final Class<? extends RoutingService> routingService;
-	public final RoutingParameters parms;
+	public Class<? extends RoutingService> routingService;
+	public RoutingParameters parms;
 
 	public RoutingStrategy(RoutingService routingService, RoutingParameters parms2) {
 		this.routingService = routingService.getClass();

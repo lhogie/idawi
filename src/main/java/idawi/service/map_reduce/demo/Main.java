@@ -25,12 +25,12 @@ public class Main {
 
 		DeployerService deployer = mapper.service(DeployerService.class, true);
 		// create workers
-		var workers = IntStream.range(0, 5).mapToObj(i -> deployer.newLocalJVM()).toList();
+		var workers = IntStream.range(0, 5).mapToObj(i -> deployer.newLocalJVM("child")).toList();
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
 		var ro = mapper.defaultRoutingProtocol().exec(ComponentMatcher.multicast(workers), ServiceManager.class,
-				ServiceManager.ensureStarted.class, null, new EndpointParameterList(MapReduceService.class), true);
+				ServiceManager.ensureStarted.class, new EndpointParameterList(MapReduceService.class), null);
 		ro.returnQ.collector().collectUntilNEOT(1, workers.size());
 
 		// create tasks

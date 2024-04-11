@@ -1,10 +1,10 @@
 package idawi.routing.irp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import idawi.Component;
 import idawi.messaging.Message;
@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 
 public class IRP extends RoutingService<IRPParms> {
 	public final LongSet alreadyReceivedMsgs = new LongOpenHashSet();
-	public final ConcurrentHashMap<Long, Message> aliveMessages = new ConcurrentHashMap<>();
+	public final HashMap<Long, Message> aliveMessages = new HashMap<>();
 
 	public IRP(Component node) {
 		super(node);

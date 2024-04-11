@@ -44,7 +44,7 @@ public class PlotLargeNetwork {
 		Topologies.wirelessMesh(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 //		Topologies.dchain(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 
-		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, testEndpoint.class, null, null, true);
+		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, testEndpoint.class, null, null);
 
 		Idawi.enableEncryption = false;
 		Idawi.agenda.stopWhen(() -> Idawi.agenda.time() >= 5, () -> {

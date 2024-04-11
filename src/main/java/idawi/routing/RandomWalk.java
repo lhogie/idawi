@@ -27,7 +27,10 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 		var randomRelays = p.n < relays.size() ? relays.subList(0, p.n) : relays;
 
 		for (var t : transports()) {
-			t.send(msg, randomRelays, this, p);
+			if (p.acceptTransport.test(t)) {
+
+				t.send(msg, randomRelays, this, p);
+			}
 		}
 	}
 

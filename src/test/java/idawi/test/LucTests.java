@@ -3,7 +3,6 @@ package idawi.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -12,14 +11,12 @@ import org.junit.Test;
 import idawi.Component;
 import idawi.EndpointParameterList;
 import idawi.Idawi;
-import idawi.Service;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.ComponentMatcher;
 import idawi.service.DemoService;
+import idawi.service.DemoService.countFromAtoB;
 import idawi.service.DemoService.stringLength;
-import idawi.service.PingService;
 import idawi.service.local_view.Network;
 import idawi.service.web.WebService;
 import idawi.transport.SharedMemoryTransport;
@@ -47,11 +44,9 @@ public class LucTests {
 
 		// ask c1 to ping c2
 		Idawi.agenda.start();
-		Message pong = c1.service(PingService.class).ping(c2);
+		Message pong = c1.defaultRoutingProtocol().ping(c2);
 		System.out.println(pong);
 	}
-
-
 
 	@Test
 	public void manyMessages() throws Throwable {
@@ -60,16 +55,15 @@ public class LucTests {
 		Cout.debugSuperVisible("Starting test manyMessages");
 		Component c1 = new Component();
 
-		var target = c1.service(DeployerService.class, true).newLocalJVM();
+		var target = c1.service(DeployerService.class, true).newLocalJVM("test");
 
 		for (int i = 0; i < 100; ++i) {
-			Message pong = c1.need(PingService.class).ping(target);
+			Message pong = c1.defaultRoutingProtocol().ping(target);
 
 			// be sure c1 got an answer
 			assertNotEquals(null, pong);
 		}
 
-		
 	}
 
 	@Test
@@ -89,18 +83,16 @@ public class LucTests {
 				stringLength.class, "salut"));
 		Cout.debugSuperVisible(2);
 
-		assertEquals(53, (int) c1.bb().exec(c2, DemoService.countFrom1toN.class, 100, true).returnQ.collector()
-				.collectNResults(100).get(53));
+		assertEquals(53, (int) c1.bb().exec(c2, DemoService.class, DemoService.countFrom1toN.class, 100, null).returnQ
+				.collector().collectNResults(1, 100).get(53));
 		Cout.debugSuperVisible(3);
 
-		assertEquals(7,
-				(int) c1.bb().exec(c2, DemoService.countFromAtoB.class, new DemoService.Range(0, 13), true).returnQ
-						.collector().collectNResults(13).get(7));
+		assertEquals(7, (int) c1.bb().exec(c2, DemoService.class, countFromAtoB.class, new DemoService.Range(0, 13),
+				null).returnQ.collector().collectNResults(1, 13).get(7));
 		Cout.debugSuperVisible(4);
 
 		// assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
 	}
-
 
 	@Test
 	public void deployAndPing() throws Throwable {
@@ -112,17 +104,16 @@ public class LucTests {
 
 		// and deploy another one in a separate JVM
 		// they will communicate through standard streams
-		var c = master.need(DeployerService.class).newLocalJVM();
+		var c = master.need(DeployerService.class).newLocalJVM("test");
 
 		// asks the master to ping the other component
-		Message pong = master.need(PingService.class).ping(c);
+		Message pong = master.defaultRoutingProtocol().ping(c);
 		System.out.println("***** " + pong.route);
 
 		// be sure it got an answer
 		assertNotEquals(null, pong);
 
-		
-}
+	}
 
 	@Test
 	public void signature() throws Throwable {
@@ -134,12 +125,12 @@ public class LucTests {
 		new DemoService(c2);
 		Network.markLinkActive(c1, c2, SharedMemoryTransport.class, true, Set.of(c1, c2));
 
-		var rom = c1.bb().exec(c2, DemoService.stringLength.class, new EndpointParameterList("hello"), true);
+		var rom = c1.bb().exec(c2, DemoService.class, stringLength.class, new EndpointParameterList("hello"), null);
 		var c = rom.returnQ.collector();
-		c.collect(5, 5, cc -> {
+		c.collect(5, cc -> {
 			Cout.debugSuperVisible(cc.messages.last());
-			cc.stop = !cc.messages.isEmpty();
-			Idawi.agenda.setTerminationCondition(() -> cc.stop);
+			cc.gotEnough = !cc.messages.isEmpty();
+			Idawi.agenda.setTerminationCondition(() -> cc.gotEnough);
 		});
 
 		var l = c.messages;
@@ -147,7 +138,6 @@ public class LucTests {
 		assertEquals(5, len);
 
 		// clean
-		
 
 	}
 
@@ -159,10 +149,9 @@ public class LucTests {
 		Component c1 = new Component();
 		var ws = c1.need(WebService.class);
 		ws.startHTTPServer();
-		var out = NetUtilities.retrieveURLContent("http://localhost:" + ws.getPort() + "/api/" + c1);
+		var out = NetUtilities.retrieveURLContent("http://localhost:" + ws.DEFAULT_PORT + "/api/" + c1);
 		System.out.println(new String(out));
 		// clean
-		
 
 	}
 
@@ -175,11 +164,9 @@ public class LucTests {
 
 		Topologies.chain(l, (a, b) -> SharedMemoryTransport.class, l);
 		Cout.debugSuperVisible(l.getFirst().localView().g);
-		Message pong = l.getFirst().need(PingService.class).ping(l.getLast());
+		Message pong = l.getFirst().defaultRoutingProtocol().ping(l.getLast());
 		System.out.println(pong.route);
 		assertNotEquals(pong, null);
-
-		
 
 	}
 

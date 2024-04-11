@@ -2,7 +2,6 @@ package idawi.test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Vector;
 
 import idawi.Component;
@@ -32,9 +31,8 @@ public class Demo3_multi_deployment {
 				}, err -> err.printStackTrace());
 
 		long pingTime = System.currentTimeMillis();
-		MessageList pongs = t.service(PingService.class).ping(new HashSet<>(children)).collector().collect(1000, 1000,
-				c -> {
-				}).messages;
+		MessageList pongs = t.defaultRoutingProtocol().ping(children).collector().collect(1000, c -> {
+		}).messages;
 
 		if (pongs.isEmpty()) {
 			System.err.println("no response");

@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 import idawi.Component;
 import idawi.messaging.Message;
 import idawi.routing.Route;
-import idawi.service.PingService;
 import idawi.service.local_view.LocalViewService;
 
 public class tracerouteBackend extends CommandBackend {
@@ -17,7 +16,7 @@ public class tracerouteBackend extends CommandBackend {
 
 		for (var t : to) {
 			out.accept("ping " + t);
-			Message pong = n.service(PingService.class).ping(t);
+			Message pong = n.defaultRoutingProtocol().ping(t);
 
 			if (pong == null) {
 				out.accept("No pong received. :(");

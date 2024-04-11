@@ -1,6 +1,7 @@
 package idawi.demo.website;
 
 import java.io.IOException;
+import java.util.Set;
 
 import idawi.Component;
 import idawi.deploy.DeployerService;
@@ -13,8 +14,8 @@ public class DeployToAnotherNode {
 		var ssh = new SSHParms();
 		ssh.host = "musclotte.inria.fr";
 
-		var ro = a.bb().exec(DeployerService.class, DeployerService.remote_deploy.class, ssh, true);
-
-		ro.returnQ.collector().collect(10, 10, c -> System.out.println(c.messages.last().content));
+		a.need(DeployerService.class).deployViaSSH(Set.of(ssh), fdback -> System.out.println(fdback),
+				err -> System.err.println(err), ok -> System.out.println("deployed: " + ok),
+				err -> err.printStackTrace());
 	}
 }

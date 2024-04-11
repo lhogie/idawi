@@ -1,12 +1,17 @@
-package idawi.messaging;
+package idawi.demo;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
-import idawi.Endpoint;
+import idawi.InnerClassEndpoint;
 import idawi.RemoteException;
+import idawi.messaging.ACK;
+import idawi.messaging.Message;
+import idawi.messaging.ProgressInformation;
+import idawi.messaging.ProgressMessage;
+import idawi.messaging.ProgressRatio;
+import idawi.messaging.RoutingStrategy;
 import idawi.routing.QueueAddress;
 import idawi.routing.Route;
 import idawi.transport.Vault;
@@ -14,28 +19,12 @@ import toools.Objeects;
 import toools.SizeOf;
 import toools.io.ser.Serializer;
 
-public class Message implements Serializable, SizeOf {
-	private static final long serialVersionUID = 1L;
-
-	public final long ID = ThreadLocalRandom.current().nextLong();
-	public final Route route = new Route();
-
-	public QueueAddress qAddr;
-	public QueueAddress replyTo;
-	public boolean autoStartService = false;
-	public Object content = null;
-	public RoutingStrategy initialRoutingStrategy;
-	public boolean eot = false;
-	public Class<? extends Endpoint> endpointID;
-
-	public int nbSpecificThreads = 1; // 0 makes it synchronous
-	public Runtimes runtimes = new Runtimes();
-	public boolean autoCreateQueue = true;
-	public boolean deleteQueueAfterCompletion = false;
-
-	public boolean simulate = false;
-	public HashSet<Class<? extends ACK>> ackReqs = null;
-
+public record AA(long ID, Route route, QueueAddress qAddr, boolean autoStartService, Object content,
+		RoutingStrategy initialRoutingStrategy, boolean eot, Class<? extends InnerClassEndpoint> endpointID,
+		int nbSpecificThreads, QueueAddress replyTo, long soonestExecTime, long latestExecTime,
+		boolean deleteQueueAfterCompletion, boolean autoCreateQueue, boolean simulate,
+		HashSet<Class<? extends ACK>> ackReqs) implements Serializable, SizeOf {
+	
 	public Message clone(Serializer ser) {
 		return (Message) ser.clone(this);
 	}
@@ -95,8 +84,7 @@ public class Message implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + SizeOf.sizeOf(initialRoutingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + qAddr.sizeOf()
-				+ runtimes.sizeOf();
+		return 8 + SizeOf.sizeOf(initialRoutingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + qAddr.sizeOf();
 	}
 
 	public Object decrypt() {
@@ -112,7 +100,7 @@ public class Message implements Serializable, SizeOf {
 		return c;
 	}
 
-	public Message throwIfError() {
+	public AA throwIfError() {
 		if (content instanceof Throwable) {
 			Throwable e = (RemoteException) content;
 
@@ -125,5 +113,4 @@ public class Message implements Serializable, SizeOf {
 
 		return this;
 	}
-
 }

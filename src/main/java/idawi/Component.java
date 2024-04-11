@@ -4,30 +4,26 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import idawi.IdawiSerializer.ComponentRepresentative;
 import idawi.routing.AutoForgettingLongList;
 import idawi.routing.BlindBroadcasting;
-import idawi.routing.BallBroadcasting;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.routing.irp.IRP;
 import idawi.service.DigitalTwinService;
 import idawi.service.Location;
 import idawi.service.LocationService;
-import idawi.service.ServiceManager;
 import idawi.service.local_view.LocalViewService;
-import idawi.service.web.WebService;
 import idawi.transport.Link;
-import idawi.transport.SharedMemoryTransport;
 import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.text.NameList;
@@ -50,7 +46,7 @@ public class Component implements SizeOf {
 //	public Set<Component> simulatedComponents = new HashSet<>();
 
 	public Component() {
-		// new Error().printStackTrace();
+//		new Error().printStackTrace();
 	}
 
 	public Component turnToDigitalTwin(Component host) {
@@ -74,16 +70,6 @@ public class Component implements SizeOf {
 		}
 
 		return twin;
-	}
-
-	public void addBasicServices() {
-		new LocalViewService(this);
-		new WebService(this);
-		new SharedMemoryTransport(this);
-		new BlindBroadcasting(this);
-		new IRP(this);
-		new ServiceManager(this);
-		new BallBroadcasting(this);
 	}
 
 	public boolean isDigitalTwin() {
@@ -126,9 +112,13 @@ public class Component implements SizeOf {
 	public <S extends Service> S service(Class<S> c) {
 		return service(c, false);
 	}
-	
+
 	public <S extends Service> S need(Class<S> c) {
 		return service(c, true);
+	}
+
+	public List<? extends Service> need(Class<? extends Service>... c) {
+		return Arrays.stream(c).map(cc -> need(cc)).toList();
 	}
 
 	public <S extends Service> S service(Class<S> c, boolean autoload) {
@@ -176,7 +166,7 @@ public class Component implements SizeOf {
 			}
 		}
 
-		return isDigitalTwin() ?  s +"*" : s;
+		return isDigitalTwin() ? s + "*" : s;
 	}
 
 	public double now() {
@@ -190,7 +180,7 @@ public class Component implements SizeOf {
 		return dt == null ? need(LocalViewService.class) : dt.host;
 	}
 
-	public RoutingService defaultRoutingProtocol() {
+	public RoutingService<?> defaultRoutingProtocol() {
 		return bb();
 	}
 
@@ -272,7 +262,6 @@ public class Component implements SizeOf {
 	}
 
 	public static final Directory directory = new Directory("$HOME/" + Component.class.getPackage().getName());
-	public static final ConcurrentHashMap<String, Component> componentsInThisJVM = new ConcurrentHashMap<>();
 
 	public ComponentRepresentative representative() {
 		var cr = new ComponentRepresentative();

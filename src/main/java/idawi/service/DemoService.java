@@ -48,7 +48,8 @@ public class DemoService extends Service {
 			int n = Integer.valueOf(opl.get(0).toString());
 
 			for (int i = 0; i < n; ++i) {
-				reply(tg, new Random().nextInt(), i == n - 1);
+				var eot = i == n - 1;
+				component.defaultRoutingProtocol().send(new Random().nextInt(), tg.replyTo, msg -> msg.eot = eot);
 				Threads.sleepMs(1000);
 			}
 		}
@@ -84,11 +85,11 @@ public class DemoService extends Service {
 				String line = (String) msg.content;
 
 				if (line.matches(re)) {
-					reply(trigger, line, false);
+					component.defaultRoutingProtocol().send(line, trigger.replyTo);
 				}
 			}
 
-			reply(trigger, null, true);
+			component.defaultRoutingProtocol().send(null, trigger.replyTo, m -> m.eot = true);
 		}
 
 		@Override
@@ -150,11 +151,13 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			var l = (EndpointParameterList) m.content;
-			int n = Integer.valueOf((String) l.getFirst());
+			double sleepTime = Double.valueOf((String) l.removeFirst());
+			int n = Integer.valueOf((String) l.removeFirst());
 
 			for (int i = 0; i < n; ++i) {
-				reply(m, i, i == n - 1);
-				Threads.sleep(1);
+				var eot = i == n - 1;
+				component.defaultRoutingProtocol().send(i, m.replyTo, msg -> msg.eot = eot);
+				Threads.sleep(sleepTime);
 			}
 		}
 	}
@@ -180,11 +183,13 @@ public class DemoService extends Service {
 		}
 
 		public void impl(MessageQueue in) {
+			Cout.debugSuperVisible(getFullyQualifiedName());
 			var m = in.poll_sync();
 			var p = (Range) m.content;
 
 			for (int i = p.a; i < p.b; ++i) {
-				reply(m, i, i == p.b - 1);
+				var eot = i == p.b - 1;
+				component.defaultRoutingProtocol().send(i, m.replyTo, msg -> msg.eot = eot);
 			}
 		}
 	}
@@ -239,8 +244,9 @@ public class DemoService extends Service {
 			int target = (Integer) msg.content;
 
 			for (int i = 0; i < target; ++i) {
-				reply(msg, i, false);
-				reply(msg, new ProgressRatio(i, target), i == target - 1);
+				component.defaultRoutingProtocol().send(i, msg.replyTo);
+				var eot = i == target - 1;
+				component.defaultRoutingProtocol().send(new ProgressRatio(i, target), msg.replyTo, m -> m.eot = eot);
 			}
 		}
 	}
@@ -281,19 +287,18 @@ public class DemoService extends Service {
 			for (int i = 0; i < target; ++i) {
 				if (in.size() > 0) {
 					msg = in.poll_sync();
-					
+
 					if (msg.content.equals("stop")) {
 						return;
 					}
 				}
-				
-				
+
 				var d = l.get(rand.nextInt(l.size()));
-				reply(msg, d.get(), false);
+				component.defaultRoutingProtocol().send(d.get(), msg.replyTo, m -> m.eot = false);
 				Threads.sleep(rand.nextDouble());
 			}
 
-			reply(msg, new ProgressRatio(target, target), true);
+			component.defaultRoutingProtocol().send(new ProgressRatio(target, target), msg.replyTo, m -> m.eot = true);
 		}
 	}
 
@@ -307,7 +312,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Graph.random(), true);
+			component.defaultRoutingProtocol().send(Graph.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -321,7 +326,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Chart.random(), true);
+			component.defaultRoutingProtocol().send(Chart.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -335,7 +340,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Image.random(), true);
+			component.defaultRoutingProtocol().send(Image.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -349,7 +354,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			reply(msg, Video.random(), true);
+			component.defaultRoutingProtocol().send(Video.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 }

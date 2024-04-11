@@ -103,22 +103,21 @@ public class Network extends ThreadSafeNetworkDataStructure {
 			return Stop.no;
 		});
 
-		final  Set<Link> ignore = new HashSet<>();
-		
+		final Set<Link> ignore = new HashSet<>();
 
 		forEachLink(l -> {
 			if (ignore.contains(l))
 				return Stop.no;
-			
-			var reverseLink = findALinkConnecting(l.dest, l.src);	
-			
+
+			var reverseLink = findALinkConnecting(l.dest, l.src);
+
 			if (reverseLink != null) {
 				s.println(l.src + " -- " + l.dest);
 				ignore.add(reverseLink);
-			}else {
+			} else {
 				s.println(l.src + " -> " + l.dest);
 			}
-			
+
 			return Stop.no;
 		});
 
@@ -164,10 +163,10 @@ public class Network extends ThreadSafeNetworkDataStructure {
 		}
 	}
 
-	public void markLinkActive(Component src, Component dest, Class<? extends TransportService> t,
+	public void markLinkActive(Component src, Component dest, Class<? extends TransportService> transport,
 			boolean bothDirections) {
 
-		markLinkActive(src.service(t, true), dest.service(t, true), bothDirections);
+		markLinkActive(src.need(transport), dest.need(transport), bothDirections);
 	}
 
 	public Link markLinkActive(TransportService src, TransportService dest) {

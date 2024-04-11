@@ -7,7 +7,7 @@ import java.util.Collection;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
-import toools.math.MathsUtilities;
+import toools.io.Cout;
 
 public class Pipe_ChildSide extends TransportService {
 	public boolean suicideIfLoseParent = true;
@@ -18,7 +18,8 @@ public class Pipe_ChildSide extends TransportService {
 		Idawi.agenda.threadPool.submit(() -> {
 			try {
 				while (true) {
-					processIncomingMessage((Message) serializer.read(System.in));
+					var msg = (Message) serializer.read(System.in);
+					processIncomingMessage(msg);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -52,7 +53,7 @@ public class Pipe_ChildSide extends TransportService {
 
 	@Override
 	public String getName() {
-		return "pipe to parent";
+		return getClass().getSimpleName();
 	}
 
 	@Override
@@ -67,7 +68,7 @@ public class Pipe_ChildSide extends TransportService {
 
 	@Override
 	public double latency() {
-		return MathsUtilities.pickRandomBetween(0.000010, 0.000030, Idawi.prng);
+		return 0;
 	}
 
 }

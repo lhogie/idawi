@@ -5,7 +5,6 @@ import java.util.List;
 
 import idawi.Component;
 import idawi.messaging.Message;
-import idawi.transport.Link;
 import idawi.transport.TransportService;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -24,34 +23,31 @@ public class BallBroadcasting extends RoutingService<BallBroadcastingParms> {
 
 	@Override
 	public String getAlgoName() {
-		return "force broadcasting";
+		return "ball broadcasting";
 	}
 
 	@Override
 	public String getFriendlyName() {
-		return "fb";
+		return "ballbcast";
 	}
 
 	@Override
 	public void acceptImpl(Message msg, BallBroadcastingParms parms) {
+		boolean alreadyKnown = component.alreadyReceivedMsgs.contains(msg.ID)
+				|| component.alreadySentMsgs.contains(msg.ID);
+//		Cout.debug(msg.ID + "   " + alreadyKnown + " by " + System.identityHashCode(component));
 
-		// the message was never received
-		if (!alreadyReceivedMsgs.contains(msg.ID)) {
+		if (!alreadyKnown) {
 			alreadyReceivedMsgs.add(msg.ID);
 
 			for (var t : component.services(TransportService.class)) {
-				var recipients = new ArrayList<Link>();
-
-				t.activeOutLinks().forEach(l -> {
-					// if the message is still powerful enough
-					if (parms.force-- >= 1) {
-						recipients.add(l);
+				if (parms.acceptTransport.test(t)) {
+					if (parms.energy-- > 0) {
+						t.send(msg, null, this, parms);
 					} else {
 						return;
 					}
-				});
-
-				t.send(msg, recipients, this, parms);
+				}
 			}
 		}
 	}

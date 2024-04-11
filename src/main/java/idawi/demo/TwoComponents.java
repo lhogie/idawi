@@ -20,13 +20,13 @@ public class TwoComponents {
 
 		a.need(DemoService.class);
 		b.need(DemoService.class);
-		RemotelyRunningEndpoint r = a.bb().exec(DemoService.class, DemoService.stringLength.class, "salut", true);
+		RemotelyRunningEndpoint r = a.bb().exec(b, DemoService.class, DemoService.stringLength.class, "salut", null);
 
 		System.out.println("collecting in  " + r.returnQ);
 		r.returnQ.collector().collect(c -> {
 			Cout.debug("got " + c.messages.last().content);
 			System.out.println("from " + c.messages.last().route.source() + ": " + c.messages.last().content);
-			c.stop = true;
+			c.gotEnough = true;
 		});
 		System.out.println("done");
 

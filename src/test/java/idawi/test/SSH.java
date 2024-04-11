@@ -38,13 +38,11 @@ public class SSH {
 				err -> err.printStackTrace());
 
 		// asks the master to ping the other component
-		Message pong = c1.service(PingService.class).ping(c2);
+		Message pong = c1.defaultRoutingProtocol().ping(c2);
 		System.out.println("pong: " + pong);
 
 		// be sure it got an answer
 		assertNotEquals(null, pong);
 
-		// clean
-		Component.componentsInThisJVM.clear();
 	}
 }

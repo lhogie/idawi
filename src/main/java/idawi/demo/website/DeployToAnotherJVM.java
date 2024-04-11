@@ -8,7 +8,7 @@ public class DeployToAnotherJVM {
 		// creates a component in this JVM
 		var a = new Component();
 
-		var c = a.service(DeployerService.class, true).newLocalJVM();
+		var c = a.service(DeployerService.class, true).newLocalJVM("child");
 		System.out.println(c);
 	}
 }

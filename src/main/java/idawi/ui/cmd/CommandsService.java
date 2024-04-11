@@ -12,7 +12,6 @@ public class CommandsService extends Service {
 		super(peer);
 	}
 
-
 	public class exec extends InnerClassEndpoint {
 
 		@Override
@@ -24,7 +23,8 @@ public class CommandsService extends Service {
 					break;
 				}
 
-				((CommandBackend) m.content).runOnServer(component, r -> reply(m, r, false));
+				((CommandBackend) m.content).runOnServer(component,
+						r -> component.defaultRoutingProtocol().send(r, m.replyTo));
 			}
 		}
 

@@ -11,7 +11,6 @@ import idawi.Component;
 import idawi.service.SystemService;
 import idawi.service.local_view.LocalViewService;
 import toools.SizeOf;
-import toools.io.Cout;
 
 /**
  * The matcher runs on the real component to check if it should try to execute
@@ -133,7 +132,7 @@ public abstract class ComponentMatcher implements Predicate<Component>, Serializ
 //		Cout.debugSuperVisible(s);
 		s = s.trim();
 
-		if (s.isEmpty()) {
+		if (s.isEmpty() || s.equals("*")) {
 			return ComponentMatcher.all;
 		} else {
 			int pos = s.indexOf('.');

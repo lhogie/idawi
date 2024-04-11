@@ -22,7 +22,7 @@ public class MessageQueue extends Q<Message> {
 
 	public void detach() {
 		Cout.debug("detaching " + this);
-		service.detachQueue(this);
+		service.deleteQueue(this);
 	}
 
 	public MessageCollector collector() {

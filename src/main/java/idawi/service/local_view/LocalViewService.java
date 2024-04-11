@@ -10,11 +10,13 @@ import idawi.Idawi;
 import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
+import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
 import idawi.routing.TrafficListener;
 import idawi.service.DigitalTwinService;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
+import toools.io.Cout;
 
 public class LocalViewService extends KnowledgeBase {
 
@@ -47,7 +49,9 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkActivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
-					routing().exec(LocalViewService.class, markLinkActive.class, List.of(l), true);
+					routing().exec(ComponentMatcher.all, LocalViewService.class, markLinkActive.class, List.of(l),
+							msg -> {
+							});
 				}
 			}
 
@@ -55,7 +59,9 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkDeactivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
-					routing().exec(LocalViewService.class, makeLinkInactive.class, List.of(l), true);
+					routing().exec(ComponentMatcher.all, LocalViewService.class, makeLinkInactive.class, List.of(l),
+							msg -> {
+							});
 				}
 			}
 
@@ -109,6 +115,7 @@ public class LocalViewService extends KnowledgeBase {
 
 	public class acceptHello extends TypedInnerClassEndpoint {
 		public void f(String n) {
+			Cout.debug(component + " received " + n);
 //			Cout.debug("DT merge not yet implemented");
 		}
 
@@ -175,7 +182,7 @@ public class LocalViewService extends KnowledgeBase {
 	}
 
 	public Object helloMessage() {
-		return "hello";
+		return "hello from "  + component;
 	}
 
 }

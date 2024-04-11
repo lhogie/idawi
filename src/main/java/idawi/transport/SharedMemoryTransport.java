@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import idawi.Component;
 import idawi.messaging.Message;
+import toools.io.Cout;
 
 public class SharedMemoryTransport extends TransportService {
 

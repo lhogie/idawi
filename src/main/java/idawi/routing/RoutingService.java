@@ -1,12 +1,15 @@
 package idawi.routing;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.Endpoint;
 import idawi.EndpointParameterList;
 import idawi.InnerClassEndpoint;
 import idawi.RemotelyRunningEndpoint;
@@ -15,6 +18,8 @@ import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.RoutingStrategy;
+import idawi.service.PingService;
+import idawi.service.PingService.ping;
 import idawi.transport.TransportService;
 import toools.io.Cout;
 
@@ -73,73 +78,57 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 	protected abstract void acceptImpl(Message msg, P parms);
 
-	public RemotelyRunningEndpoint exec(ComponentMatcher re, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot, String queueName) {
-		var r = new RemotelyRunningEndpoint();
-		r.returnQ = createUniqueQueue("return-");
+	private RemotelyRunningEndpoint exec(Consumer<Message> privateCustomizer, Consumer<Message> userCustomizer) {
+		P defaultData = defaultData();
+		var returnQ = createUniqueQueue("return-");
 
 		var msg = new Message();
-		msg.endpointID = o;
-		msg.replyTo = new QueueAddress();
-		msg.replyTo.targetedComponents = ComponentMatcher.unicast(component);
-		msg.replyTo.service = getClass();
-		msg.replyTo.queueID = r.returnQ.name;
-		msg.content = initialInputData;
+		msg.initialRoutingStrategy = new RoutingStrategy(this, defaultData);
+		msg.replyTo = new QueueAddress(ComponentMatcher.unicast(component), getClass(), returnQ.name);
+		privateCustomizer.accept(msg);
 
-		msg.qAddr = new QueueAddress();
-		msg.qAddr.targetedComponents = re;
-		msg.qAddr.service = service;
-		msg.qAddr.queueID = queueName == null ? o.getSimpleName() + "@" + now() : queueName;
+		if (userCustomizer != null) {
+			userCustomizer.accept(msg);
+		}
 
-		r.destination = msg.qAddr;
-		accept(msg, parms);
-		return r;
+		accept(msg, defaultData);
+		return new RemotelyRunningEndpoint(msg.qAddr, returnQ);
 	}
 
-	public void send(Object content, QueueAddress dest) {
-		send(content, true, dest);
+	public RemotelyRunningEndpoint exec(ComponentMatcher t, Class<? extends Service> s, Class<? extends Endpoint> e,
+			Object initialInputData, Consumer<Message> msgCustomizer) {
+		return exec(msg -> {
+			msg.qAddr = new QueueAddress(t, s, e.getSimpleName() + "@" + now());
+			msg.autoCreateQueue = true;
+			msg.deleteQueueAfterCompletion = true;
+			msg.endpointID = e;
+			msg.content = initialInputData;
+		}, msgCustomizer);
 	}
 
-	public void send(Object content, boolean eot, QueueAddress dest) {
-		exec(dest.targetedComponents, dest.service, Service.deliverToQueue.class, defaultData(), content, eot,
-				dest.queueID);
+	public RemotelyRunningEndpoint exec(Component c, Class<? extends Service> service,
+			Class<? extends InnerClassEndpoint> e, Object initialInputData, Consumer<Message> msgCustomizer) {
+		return exec(ComponentMatcher.unicast(c), service, e, initialInputData, msgCustomizer);
 	}
 
-	public RemotelyRunningEndpoint exec(ComponentMatcher re, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot) {
-		return exec(re, service, o, parms, initialInputData, eot, null);
+	public RemotelyRunningEndpoint send(Object content, QueueAddress dest) {
+		return send(content, dest, msg -> msg.eot = false);
 	}
 
-	public RemotelyRunningEndpoint exec(Component to, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, Object initialInputData, boolean eot) {
-		return exec(ComponentMatcher.unicast(to), service, o, null, initialInputData, eot);
-	}
-
-	public RemotelyRunningEndpoint exec(Component to, Class<? extends InnerClassEndpoint> o, Object initialInputData,
-			boolean eot) {
-		return exec(ComponentMatcher.unicast(to), (Class<? extends Service>) o.getEnclosingClass(), o, null,
-				initialInputData, eot);
-	}
-
-	public RemotelyRunningEndpoint exec(Component to, Class<? extends Service> service,
-			Class<? extends InnerClassEndpoint> o, P parms, Object initialInputData, boolean eot) {
-		return exec(ComponentMatcher.unicast(to), service, o, parms, initialInputData, eot);
-	}
-
-	public RemotelyRunningEndpoint exec(Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
-			Object initialInputData, boolean eot) {
-		P parms = defaultData();
-		return exec(defaultMatcher(parms), service, o, parms, initialInputData, eot);
+	public RemotelyRunningEndpoint send(Object content, QueueAddress dest, Consumer<Message> msgCustomizer) {
+		return exec(msg -> {
+			msg.qAddr = dest;
+			msg.content = content;
+			msg.endpointID = deliverToQueue.class;
+		}, msgCustomizer);
 	}
 
 	public static double RPC_TIMEOUT = 5;
 
 	public Object exec_rpc(Component to, Class<? extends Service> service, Class<? extends InnerClassEndpoint> o,
 			Object parms) {
-		var rq = exec(to, service, o, new EndpointParameterList(parms), true).returnQ;
-		rq.poll_sync(RPC_TIMEOUT);
-		var l = rq.toList().throwAnyError();
-		return l.getFirst().content;
+		return exec(to, service, o, new EndpointParameterList(parms), null).returnQ.poll_sync(RPC_TIMEOUT)
+				.throwIfError().content;
 	}
 
 	public class testEndpoint extends InnerClassEndpoint {
@@ -164,6 +153,29 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 		public List<String> impl() {
 			return dataSuggestions().stream().map(d -> d.toURLElement()).toList();
+		}
+	}
+
+	public MessageQueue ping(ComponentMatcher target, P p) {
+		return exec(target, PingService.class, ping.class, "foobar",
+				msg -> msg.initialRoutingStrategy.parms = p).returnQ;
+	}
+
+	public MessageQueue ping(Collection<Component> targets, P p) {
+		return ping(ComponentMatcher.multicast(targets), p);
+	}
+
+	public MessageQueue ping(Collection<Component> targets) {
+		return ping(ComponentMatcher.multicast(targets), defaultData());
+	}
+
+	public Message ping(Component target) {
+		var pong = ping(ComponentMatcher.unicast(target), defaultData()).poll_sync();
+
+		if (pong == null) {
+			return null;
+		} else {
+			return pong.throwIfError();
 		}
 	}
 

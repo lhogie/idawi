@@ -24,17 +24,18 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 	}
 
 	@Override
-	public void acceptImpl(Message msg, BFSRoutingParms parms) {
+	public void acceptImpl(Message msg, final BFSRoutingParms parms) {
 		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)) {
 			var to = ((multicast) msg.qAddr.targetedComponents).target;
-
-			parms = new BFSRoutingParms();
 			parms.paths = component.localView().g.bfs.from(component).predecessors.pathsTo(to);
 			parms.paths.stream().map(p -> p.getFirst()).collect(Collectors.groupingBy(l -> l.src)).entrySet()
 					.forEach(e -> {
 						var t = e.getKey();
-						var links = e.getValue();
-						t.send(msg, links, this, null);
+
+						if (parms.acceptTransport.test(t)) {
+							var links = e.getValue();
+							t.send(msg, links, this, null);
+						}
 					});
 		}
 	}

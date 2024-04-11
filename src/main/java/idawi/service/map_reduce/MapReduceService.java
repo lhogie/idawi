@@ -35,15 +35,15 @@ public class MapReduceService extends Service {
 			Cout.debug(":) received " + msg);
 			var t = (Task) msg.content;
 			Cout.debug("received2 " + msg);
-			reply(msg, new ProgressMessage("processing task " + t.id), false);
+			component.defaultRoutingProtocol().send(new ProgressMessage("processing task " + t.id), msg.replyTo);
 			t.mapReduceService = MapReduceService.this;
 			Result r = new Result<>();
 			r.receptionDate = Date.time();
 			r.taskID = t.id;
-			r.value = t.compute(something -> reply(msg, something, false));
+			r.value = t.compute(something -> component.defaultRoutingProtocol().send(something, msg.replyTo));
 			r.completionDate = Date.time();
-			reply(msg, new ProgressMessage("sending result " + t.id), false);
-			reply(msg, r, true);
+			component.defaultRoutingProtocol().send(new ProgressMessage("sending result " + t.id), msg.replyTo);
+			component.defaultRoutingProtocol().send(r, msg.replyTo);
 		}
 	}
 
@@ -110,8 +110,8 @@ public class MapReduceService extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					component.defaultRoutingProtocol().exec(task.to, getClass(), taskProcessor.class, null, task,
-							true).returnQ.collector().collect(c -> q.add_sync(c.messages.last()));
+					component.defaultRoutingProtocol().exec(task.to, getClass(), taskProcessor.class, task,
+							null).returnQ.collector().collect(c -> q.add_sync(c.messages.last()));
 
 				}
 			}
@@ -131,11 +131,11 @@ public class MapReduceService extends Service {
 					h.newMessage(msg);
 				}
 
-				c.stop = unprocessedTasks.isEmpty();
+				c.gotEnough = unprocessedTasks.isEmpty();
 			});
 		}
 
-		detachQueue(q);
+		deleteQueue(q);
 		return unprocessedTasks;
 	}
 

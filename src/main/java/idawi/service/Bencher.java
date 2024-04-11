@@ -81,16 +81,16 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(ComponentMatcher.all,getClass(), localBench.class, null,  parms, true).returnQ
-				.collector().collect(c -> {
-					var m = c.messages.last();
+		component.bb().exec(ComponentMatcher.all, getClass(), localBench.class, null, m -> {
+		}).returnQ.collector().collect(c -> {
+			var m = c.messages.last();
 
-					if (m.content instanceof String) {
-						msg.accept(m.route.source(), (String) m.content);
-					} else if (m.content instanceof Results) {
-						map.put(m.route.source(), (Results) m.content);
-					}
-				});
+			if (m.content instanceof String) {
+				msg.accept(m.route.source(), (String) m.content);
+			} else if (m.content instanceof Results) {
+				map.put(m.route.source(), (Results) m.content);
+			}
+		});
 
 		return map;
 	}
@@ -126,7 +126,7 @@ public class Bencher extends Service {
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
 			int size = (int) m.content;
-			localBench(size, r -> reply(m, r, true));
+			localBench(size, r -> component.defaultRoutingProtocol().send(r, m.replyTo));
 		}
 
 		@Override

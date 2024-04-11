@@ -14,12 +14,14 @@ import idawi.IdawiSerializer;
 import idawi.PointInTime;
 import idawi.Service;
 import idawi.TypedInnerClassEndpoint;
+import idawi.messaging.ACK.serviceNotAvailable;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
 import idawi.routing.Entry;
 import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
+import toools.io.Cout;
 
 public abstract class TransportService extends Service {
 	public long nbMsgReceived = 0;
@@ -33,7 +35,7 @@ public abstract class TransportService extends Service {
 
 	public TransportService(Component c) {
 		super(c);
-		serializer = new IdawiSerializer(this);
+		this.serializer = new IdawiSerializer(this);
 //		 c.localView().g.markLinkActive(this, this); // loopback
 	}
 
@@ -47,17 +49,29 @@ public abstract class TransportService extends Service {
 		return component + "/" + getName();
 	}
 
+	public abstract String getName();
+
+	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
+
+	protected abstract void bcast(byte[] msgBytes);
+
 	// this is called by transport implementations
 	protected synchronized final void processIncomingMessage(Message msg) {
+		if (!msg.route.getLast().link.dest.component.equals(component))
+			throw new IllegalStateException(
+					"route ends by " + msg.route.getLast().link.dest.component + " instead of " + component);
+
 		try {
 			Vault vault = msg.content instanceof Vault ? (Vault) msg.content : null;
-			listeners.forEach(l -> l.msgReceived(this, msg));
 			++nbMsgReceived;
 			incomingTraffic += msg.sizeOf();
-			Entry last = msg.route.getLast();
-//			last.link.dest = this;
-			last.receptionDate = component.now();
-			last.link.latency = last.duration();
+			Entry lastRouteEntry = msg.route.getLast();
+//			lastRouteEntry.link.dest = this;
+			lastRouteEntry.receptionDate = component.now();
+			lastRouteEntry.link.latency = lastRouteEntry.duration();
+//			Cout.debugSuperVisible(serializer.transportService);
+			listeners.forEach(l -> l.msgReceived(this, msg));
+//			Cout.debug("-----");
 
 			component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
@@ -68,8 +82,10 @@ public abstract class TransportService extends Service {
 				var targetService = component.service(msg.qAddr.service, msg.autoStartService);
 
 				if (targetService == null) {
-					if (msg.alertServiceNotAvailable) {
-						throw new IllegalStateException(
+					if (msg.ackReqs != null && msg.ackReqs.contains(serviceNotAvailable.class)) {
+						var ack = new serviceNotAvailable(msg.qAddr.service, component, msg);
+						component.defaultRoutingProtocol().send(ack, msg.replyTo, outM -> outM.eot = true);
+						System.out.println(
 								"component " + component + " does not have service " + msg.qAddr.service.getName());
 					}
 				} else {
@@ -98,7 +114,7 @@ public abstract class TransportService extends Service {
 
 	private void considerForForwarding(Message msg) {
 		// search for the routing service it was initially sent
-		var routingService = component.service(msg.initialRoutingStrategy.routingService, true);
+		var routingService = component.need(msg.initialRoutingStrategy.routingService);
 		RoutingParameters routingParms;
 
 		if (routingService == null) {
@@ -111,27 +127,29 @@ public abstract class TransportService extends Service {
 		routingService.accept(msg, routingParms);
 	}
 
-	public abstract String getName();
-
-	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
-
-	protected abstract void bcast(byte[] msgBytes);
-
 	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
-		var sentFromTwin = component.isDigitalTwin();
+
 		++nbMsgSent;
 		outGoingTraffic += msg.sizeOf();
 
 		// add a link heading to an unknown destination
 		msg.route.add(new Entry(new Link(this), r));
-		listeners.forEach(l -> l.msgSent(this, msg));
-
+		listeners.forEach(l -> l.msgSent(this, msg, outLinks));
 
 		if (outLinks == null) {
+			if (msg.simulate) {
+				// ???
+			}
+
 			bcast(msgToBytes(msg));
 		} else {
+			for (var l : outLinks)
+				if (l.src != this)
+					throw new IllegalStateException();
+
 			Set<Link> realSend = new HashSet<Link>();
 			Set<Link> fakeEmissions = new HashSet<Link>();
+			var sentFromTwin = component.isDigitalTwin();
 
 			for (var outLink : outLinks) {
 				// sending from a real component to a digital twin in the only situation
@@ -159,7 +177,7 @@ public abstract class TransportService extends Service {
 	private byte[] msgToBytes(Message msg) {
 		var es = component.service(EncryptionService.class);
 
-		// if need to encrypt
+		// if encryption is required
 		if (es != null) {
 			msg.content = new Vault(msg.content, es.rsa, serializer);
 			throw new IllegalStateException();
@@ -174,19 +192,18 @@ public abstract class TransportService extends Service {
 
 	protected void fakeSend(byte[] msg, Collection<Link> fakeEmissions) {
 		for (var l : fakeEmissions) {
-			Idawi.agenda.schedule(
-					new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
-						@Override
-						public void run() {
-//							Cout.debugSuperVisible(":)");
-							try {
-								l.dest.processIncomingMessage((Message) serializer.fromBytes(msg));
-							} catch (Throwable e) {
-								e.printStackTrace();
-								System.exit(0);
-							}
-						}
-					});
+			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
+				@Override
+				public void run() {
+//							Cout.debugSuperVisible(":)   "  +   l +     "      "+ l.dest);
+					try {
+						l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
+					} catch (Throwable e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
+				}
+			});
 		}
 	}
 

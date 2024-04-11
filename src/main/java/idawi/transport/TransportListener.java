@@ -6,7 +6,7 @@ import toools.io.Cout;
 public interface TransportListener {
 	void msgReceived(TransportService transportService, Message msg);
 
-	void msgSent(TransportService transportService, Message msg);
+	void msgSent(TransportService transportService, Message msg, Iterable<Link> outLinks);
 
 	public static class StdOut implements TransportListener {
 
@@ -17,8 +17,8 @@ public interface TransportListener {
 		}
 
 		@Override
-		public void msgSent(TransportService transportService, Message msg) {
-			Cout.debug(transportService.component + " uses '" + transportService.getName() + "' to send: " + msg);
+		public void msgSent(TransportService transportService, Message msg, Iterable<Link> outLinks) {
+			Cout.debug(transportService.component + " uses '" + transportService.getName() + "' to send: " + msg +  " via " + outLinks);
 		}
 
 	}

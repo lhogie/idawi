@@ -29,7 +29,9 @@ public class BlindBroadcasting extends RoutingService<RoutingParameters> {
 
 		if (!alreadyKnown) {
 			for (var t : component.services(TransportService.class)) {
-				t.send(msg, null, this, parms);
+				if (parms.acceptTransport.test(t)) {
+					t.send(msg, null, this, parms);
+				}
 			}
 
 			listeners.forEach(l -> l.messageForwarded(this, msg));
@@ -41,7 +43,7 @@ public class BlindBroadcasting extends RoutingService<RoutingParameters> {
 	@Override
 	public List<RoutingParameters> dataSuggestions() {
 		var l = new ArrayList<RoutingParameters>();
-		l.add(new EmptyRoutingParms());
+		l.add(new RoutingParameters());
 		return l;
 	}
 

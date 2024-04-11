@@ -66,8 +66,8 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		initialThing.defaultRoutingProtocol().exec(ComponentMatcher.unicast(last), DummyService.class, op.class, null,
-				"hello!", true);
+		initialThing.defaultRoutingProtocol().exec(ComponentMatcher.unicast(last), DummyService.class, op.class,
+				"hello!", null);
 		s.wait.poll_sync();
 		System.out.println("completed");
 		Idawi.agenda.stopNow(null);

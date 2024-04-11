@@ -68,7 +68,7 @@ public class Link implements Infoable, SizeOf {
 		var t = getCommonTransport();
 
 		if (t != null) {
-			return src.component + " ==" + src.getName() + "==> " + dest.component;
+			return src.component + " =" + src.getName() + "=> " + dest.component;
 		} else {
 			return src + " => " + dest;
 		}

@@ -27,8 +27,7 @@ public class Chat extends Service implements Swingable {
 		textInput.addActionListener(e -> {
 			String text = textInput.getText().trim();
 			conversationPane.append("> ");
-			peer.bb().exec(ComponentMatcher.all, Chat.class, receiveMsg.class, null, text,
-					true);
+			peer.bb().exec(ComponentMatcher.all, Chat.class, receiveMsg.class, text, null);
 			textInput.setText("");
 		});
 	}

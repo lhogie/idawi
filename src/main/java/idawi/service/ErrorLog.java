@@ -45,7 +45,7 @@ public class ErrorLog extends Service {
 		error = Exceptioons.cause(error);
 		error.printStackTrace();
 		errors.add(error);
-		component.bb().exec(ComponentMatcher.all, getClass(), registerError.class, null, error, true);
+		component.defaultRoutingProtocol().exec(ComponentMatcher.all, getClass(), registerError.class, error, null);
 	}
 
 	public void report(String msg) {
