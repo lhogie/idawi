@@ -2,7 +2,6 @@ package idawi.service.web;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import idawi.Component;
 import idawi.routing.Route;
@@ -10,6 +9,7 @@ import jaseto.ArrayNode;
 import jaseto.Jaseto;
 import jaseto.Node;
 import jaseto.ThrowableNode;
+import toools.text.TextUtilities;
 
 public class IdawiWebSerializer extends JasetoSerializer {
 	public IdawiWebSerializer() {
@@ -21,12 +21,12 @@ public class IdawiWebSerializer extends JasetoSerializer {
 					return "URL error";
 				} else if (List.class.isAssignableFrom(o)) {
 					return "list";
-				} else if (Set.class.isAssignableFrom(o)) {
-					return "set";
 				} else if (Collection.class.isAssignableFrom(o)) {
-					return "collection";
-				} else if (Suggestion.class.isAssignableFrom(o)) {
-					return "suggestion";
+					return "set";
+				} else if (RawData.class.isAssignableFrom(o)) {
+					return "raw data";
+				} else if (o.getName().startsWith("idawi.")) {
+					return TextUtilities.f(o.getSimpleName());
 				}
 
 				return super.classname(o);
@@ -46,7 +46,6 @@ public class IdawiWebSerializer extends JasetoSerializer {
 
 				return super.createNode(o);
 			}
-
 		});
 	}
 }

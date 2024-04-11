@@ -5,11 +5,11 @@ import java.io.Serializable;
 import toools.SizeOf;
 
 public class RawData implements Serializable, SizeOf {
-	public byte[] bytes;
+	public String base64;
 	public String mimeType;
 
 	@Override
 	public long sizeOf() {
-		return bytes.length;
+		return base64.length();
 	}
 }
