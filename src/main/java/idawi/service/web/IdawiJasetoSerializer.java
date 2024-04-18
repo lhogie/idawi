@@ -11,8 +11,8 @@ import jaseto.Node;
 import jaseto.ThrowableNode;
 import toools.text.TextUtilities;
 
-public class IdawiWebSerializer extends JasetoSerializer {
-	public IdawiWebSerializer() {
+public class IdawiJasetoSerializer extends JasetoSerializer {
+	public IdawiJasetoSerializer() {
 		super(new Jaseto() {
 
 			@Override

@@ -15,7 +15,6 @@ import idawi.messaging.MessageQueue;
 import idawi.transport.Pipe_ParentSide;
 import toools.io.RSync;
 import toools.io.file.Directory;
-import toools.io.ser.JavaSerializer;
 import toools.net.SSHParms;
 import toools.net.SSHUtils;
 import toools.progression.LongProcess;
@@ -150,9 +149,8 @@ public class DeployerService extends Service {
 		public void impl(MessageQueue q) throws Throwable {
 			var trigger = q.poll_sync();
 			var reqs = (Collection<SSHParms>) trigger.content;
-			var r = component.defaultRoutingProtocol();
-			deployViaSSH(reqs, line -> r.send(line, trigger.replyTo), line -> r.send(new Error(line), trigger.replyTo),
-					ok -> r.send(ok, trigger.replyTo), err -> r.send(err, trigger.replyTo));
+			deployViaSSH(reqs, line -> send(line, trigger.replyTo), line -> send(new Error(line), trigger.replyTo),
+					ok -> send(ok, trigger.replyTo), err -> send(err, trigger.replyTo));
 		}
 	}
 

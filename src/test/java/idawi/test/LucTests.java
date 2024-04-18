@@ -9,13 +9,14 @@ import java.util.Set;
 import org.junit.Test;
 
 import idawi.Component;
-import idawi.EndpointParameterList;
 import idawi.Idawi;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
 import idawi.routing.BlindBroadcasting;
 import idawi.service.DemoService;
+import idawi.service.DemoService.countFrom1toN.AAA;
 import idawi.service.DemoService.countFromAtoB;
+import idawi.service.DemoService.countFromAtoB.Range;
 import idawi.service.DemoService.stringLength;
 import idawi.service.local_view.Network;
 import idawi.service.web.WebService;
@@ -79,16 +80,19 @@ public class LucTests {
 		Cout.debugSuperVisible(c1.outLinks());
 
 //		RoutingListener.debug_on(c1, c2);
-		assertEquals(5, (int) c1.service(BlindBroadcasting.class, true).exec_rpc(c2, DemoService.class,
-				stringLength.class, "salut"));
+		assertEquals(5, (int) c1.defaultRoutingProtocol().exec_rpc(c2, DemoService.class,
+				stringLength.class, msg -> msg.content = "salut"));
 		Cout.debugSuperVisible(2);
 
-		assertEquals(53, (int) c1.bb().exec(c2, DemoService.class, DemoService.countFrom1toN.class, 100, null).returnQ
-				.collector().collectNResults(1, 100).get(53));
+		assertEquals(53, (int) c1.bb().exec(c2, DemoService.class, DemoService.countFrom1toN.class, msg -> {
+			msg.content = new AAA();
+			msg.content.n = 100;
+			msg.content.sleepTime = 1;
+		}).returnQ.collector().collectNResults(1, 100).get(53));
 		Cout.debugSuperVisible(3);
 
-		assertEquals(7, (int) c1.bb().exec(c2, DemoService.class, countFromAtoB.class, new DemoService.Range(0, 13),
-				null).returnQ.collector().collectNResults(1, 13).get(7));
+		assertEquals(7, (int) c1.bb().exec(c2, DemoService.class, countFromAtoB.class,
+				msg -> msg.content = new Range(0, 13)).returnQ.collector().collectNResults(1, 13).get(7));
 		Cout.debugSuperVisible(4);
 
 		// assertEquals(7, c2.DemoService.countFromAtoB(0, 13).get(7).content);
@@ -125,7 +129,7 @@ public class LucTests {
 		new DemoService(c2);
 		Network.markLinkActive(c1, c2, SharedMemoryTransport.class, true, Set.of(c1, c2));
 
-		var rom = c1.bb().exec(c2, DemoService.class, stringLength.class, new EndpointParameterList("hello"), null);
+		var rom = c1.bb().exec(c2, DemoService.class, stringLength.class, msg -> msg.content = "hello");
 		var c = rom.returnQ.collector();
 		c.collect(5, cc -> {
 			Cout.debugSuperVisible(cc.messages.last());

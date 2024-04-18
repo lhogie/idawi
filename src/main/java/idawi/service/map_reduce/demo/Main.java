@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import idawi.Component;
-import idawi.EndpointParameterList;
 import idawi.Idawi;
 import idawi.deploy.DeployerService;
 import idawi.messaging.Message;
@@ -29,8 +28,8 @@ public class Main {
 
 		// start Map/Reduce workers in them
 		System.out.println("starting map/reduce service on " + workers);
-		var ro = mapper.defaultRoutingProtocol().exec(ComponentMatcher.multicast(workers), ServiceManager.class,
-				ServiceManager.ensureStarted.class, new EndpointParameterList(MapReduceService.class), null);
+		var ro = deployer.exec(ComponentMatcher.multicast(workers), ServiceManager.class,
+				ServiceManager.ensureStarted.class, msg -> msg.content = MapReduceService.class);
 		ro.returnQ.collector().collectUntilNEOT(1, workers.size());
 
 		// create tasks

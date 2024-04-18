@@ -2,6 +2,7 @@ package idawi.service.local_view;
 
 import idawi.Event;
 import idawi.PointInTime;
+import idawi.messaging.RoutingStrategy;
 import idawi.routing.BallBroadcasting;
 import idawi.routing.BallBroadcastingParms;
 import idawi.routing.ComponentMatcher;
@@ -19,11 +20,13 @@ class TopologyDisseminationEvent extends Event<PointInTime> {
 
 	@Override
 	public void run() {
-		localView.component.need(BallBroadcasting.class).exec(ComponentMatcher.all, LocalViewService.class,
-				acceptHello.class, localView.helloMessage(), msg -> {
-					msg.initialRoutingStrategy.parms.acceptTransport = t -> !(t instanceof Loopback);
+		localView.exec(ComponentMatcher.all, LocalViewService.class,
+				acceptHello.class, msg -> {
+					msg.routingStrategy = new RoutingStrategy(localView.component.need(BallBroadcasting.class));
+					msg.content = localView.helloMessage();
+					msg.routingStrategy.parms.acceptTransport = t -> !(t instanceof Loopback);
 
-					if (msg.initialRoutingStrategy.parms instanceof BallBroadcastingParms bbp) {
+					if (msg.routingStrategy.parms instanceof BallBroadcastingParms bbp) {
 						bbp.energy = 10;
 					}
 				});

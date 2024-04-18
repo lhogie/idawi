@@ -14,7 +14,7 @@ import toools.Objeects;
 import toools.SizeOf;
 import toools.io.ser.Serializer;
 
-public class Message implements Serializable, SizeOf {
+public class Message<C> implements Serializable, SizeOf {
 	private static final long serialVersionUID = 1L;
 
 	public final long ID = ThreadLocalRandom.current().nextLong();
@@ -23,8 +23,9 @@ public class Message implements Serializable, SizeOf {
 	public QueueAddress qAddr;
 	public QueueAddress replyTo;
 	public boolean autoStartService = false;
-	public Object content = null;
-	public RoutingStrategy initialRoutingStrategy;
+	public C content = null;
+	public Vault vault;
+	public RoutingStrategy routingStrategy;
 	public boolean eot = false;
 	public Class<? extends Endpoint> endpointID;
 
@@ -95,21 +96,22 @@ public class Message implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + SizeOf.sizeOf(initialRoutingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + qAddr.sizeOf()
+		return 8 + SizeOf.sizeOf(routingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + qAddr.sizeOf()
 				+ runtimes.sizeOf();
 	}
 
 	public Object decrypt() {
-		var c = content;
 		int i = route.len();
 		var ser = route.getLast().link.dest.serializer;
 
-		while (c instanceof Vault) {
+		Object v = vault;
+
+		while (v instanceof Vault vv) {
 			var encryptper = route.get(i--).link.src.component;
-			c = ser.fromBytes(((Vault) c).decode(encryptper.publicKey()));
+			v = ser.fromBytes(vv.decode(encryptper.publicKey()));
 		}
 
-		return c;
+		return v;
 	}
 
 	public Message throwIfError() {
@@ -125,5 +127,4 @@ public class Message implements Serializable, SizeOf {
 
 		return this;
 	}
-
 }

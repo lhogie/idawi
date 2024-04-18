@@ -2,6 +2,7 @@ package idawi.messaging;
 
 import java.io.Serializable;
 
+import idawi.routing.BallBroadcasting;
 import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import toools.SizeOf;
@@ -13,6 +14,10 @@ public class RoutingStrategy implements Serializable, SizeOf {
 	public RoutingStrategy(RoutingService routingService, RoutingParameters parms2) {
 		this.routingService = routingService.getClass();
 		this.parms = parms2;
+	}
+
+	public RoutingStrategy(RoutingService r) {
+		this(r, r.defaultData());
 	}
 
 	@Override

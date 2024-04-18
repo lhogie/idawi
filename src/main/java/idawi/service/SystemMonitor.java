@@ -5,7 +5,7 @@ import java.io.Serializable;
 import fr.cnrs.i3s.Cache;
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import toools.Systeem;
@@ -32,14 +32,15 @@ public class SystemMonitor extends Service {
 		super(peer);
 	}
 
-	public class get extends TypedInnerClassEndpoint {
+	public class get extends SupplierEndPoint<SystemInfo> {
 
 		@Override
-		public String getDescription() {
-			return "gets the lastest proble";
+		public String r() {
+			return "the lastest proble";
 		}
 
-		public SystemInfo f() {
+		@Override
+		public SystemInfo get() {
 			return info.get();
 		}
 	}
@@ -56,14 +57,15 @@ public class SystemMonitor extends Service {
 		return i;
 	}
 
-	public class loadAvg extends TypedInnerClassEndpoint {
+	public class loadAvg extends SupplierEndPoint<Double> {
 
 		@Override
-		public String getDescription() {
-			return "gives the load average";
+		public String r() {
+			return "the load average";
 		}
 
-		public double f() {
+		@Override
+		public Double get() {
 			return Systeem.loadRatio();
 		}
 	}

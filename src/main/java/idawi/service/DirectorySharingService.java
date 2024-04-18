@@ -8,11 +8,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
+import idawi.FunctionEndPoint;
+import idawi.InnerClassEndpoint;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.Streams;
 import idawi.service.DemoService.waiting;
+import idawi.service.DirectorySharingService.downloadFile.DownloadFileParms;
+import idawi.service.DirectorySharingService.upload.P;
 import toools.io.Utilities;
 import toools.io.file.AbstractFile;
 import toools.io.file.Directory;
@@ -25,19 +30,22 @@ public class DirectorySharingService extends Service {
 		super(t);
 	}
 
-	public class pathToLocalFiles extends TypedInnerClassEndpoint {
-		public String pathToLocalFiles() {
-			return dir.getPath();
+	public class pathToLocalFiles extends SupplierEndPoint<String> {
+
+		@Override
+		protected String r() {
+			return "gives the path to shared files";
 		}
 
 		@Override
-		public String getDescription() {
-			return "gives the path to shared files";
+		public String get() {
+			return dir.getPath();
 		}
 	}
 
-	public class listFiles extends TypedInnerClassEndpoint {
-		public Set<String> listFiles() throws IOException {
+	public class listFiles extends SupplierEndPoint<Set<String>> {
+		@Override
+		public Set<String> get() {
 			dir.ensureExists();
 			List<AbstractFile> files = dir.retrieveTree();
 			files.remove(dir);
@@ -45,8 +53,7 @@ public class DirectorySharingService extends Service {
 		}
 
 		@Override
-		public String getDescription() {
-			// TODO Auto-generated method stub
+		public String r() {
 			return null;
 		}
 	}
@@ -68,36 +75,42 @@ public class DirectorySharingService extends Service {
 		return info;
 	}
 
-	public static class DownloadFileParms implements Serializable {
-		String name;
-		long seek = 0;
-		long len = Long.MAX_VALUE;
-	}
+	public class downloadFile extends InnerClassEndpoint<DownloadFileParms, byte[]> {
+		public static class DownloadFileParms implements Serializable {
+			String name;
+			long seek = 0;
+			long len = Long.MAX_VALUE;
+		}
 
-	public class downloadFile extends TypedInnerClassEndpoint {
-		public void downloadFile(MessageQueue q) throws IOException {
+		@Override
+		public void impl(MessageQueue q) throws IOException {
 			var msg = q.poll_sync();
-			var parms = (DownloadFileParms) msg.content;
+			var parms = parms(msg);
 			dir.ensureExists();
 			var f = new RegularFile(dir, parms.name);
 			var inputStream = f.createReadingStream();
 			inputStream.skip(parms.seek);
-			Streams.split(inputStream, 1000,
-					c -> component.defaultRoutingProtocol().send(c, msg.replyTo, m -> m.eot = c.length == 0));
+			Streams.split(inputStream, 1000, c -> sendd(c, msg.replyTo, m -> m.eot = c.length == 0));
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 	}
 
-	public class upload extends TypedInnerClassEndpoint {
-		public void upload(String name, boolean append, InputStream in) throws IOException {
+	public class upload extends ProcedureEndpoint<P> {
+		public static class P {
+			String name;
+			boolean append;
+			InputStream in;
+		}
+
+		@Override
+		public void doIt(P p) throws IOException {
 			dir.ensureExists();
-			var fos = new RegularFile(dir, name).createWritingStream(append);
-			Utilities.copy(in, fos);
+			var fos = new RegularFile(dir, p.name).createWritingStream(p.append);
+			Utilities.copy(p.in, fos);
 			fos.close();
 		}
 
@@ -108,33 +121,34 @@ public class DirectorySharingService extends Service {
 		}
 	}
 
-	public class exists extends TypedInnerClassEndpoint {
-		public boolean exists(String name) {
-			dir.ensureExists();
-			return new RegularFile(dir, name).exists();
-		}
+	public class exists extends FunctionEndPoint<String, Boolean> {
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "if the file exists";
+		}
+
+		@Override
+		public Boolean f(String name) throws Throwable {
+			return dir.exists() && new RegularFile(dir, name).exists();
 		}
 	}
 
-	public class delete extends TypedInnerClassEndpoint {
-		public void delete(String name) {
-			dir.ensureExists();
+	public class delete extends ProcedureEndpoint<String> {
+		@Override
+		public String getDescription() {
+			return "delete the given file";
+		}
+
+		@Override
+		public void doIt(String name) throws Throwable {
 			new RegularFile(dir, name).delete();
 		}
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
 	}
 
-	public class size extends TypedInnerClassEndpoint {
-		public long size(String name) {
+	public class size extends FunctionEndPoint<String, Long> {
+		@Override
+		public Long f(String name) {
 			dir.ensureExists();
 			return new RegularFile(name).getSize();
 		}

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.transport.Topologies;
 
 /**
@@ -19,15 +19,15 @@ public class LocationService extends Service {
 		super(node);
 	}
 
-	public class location extends TypedInnerClassEndpoint {
+	public class location extends SupplierEndPoint<Location> {
 
 		public Location get() {
 			return location;
 		}
 
 		@Override
-		public String getDescription() {
-			return "get the location of this component";
+		public String r() {
+			return "the location of this component";
 		}
 	}
 

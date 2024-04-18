@@ -30,10 +30,9 @@ public class Demo4_deploy_local_peers {
 
 		public DummyService(Component t) {
 			super(t);
-			registerEndpoint(new op());
 		}
 
-		public class op extends InnerClassEndpoint {
+		public class op extends InnerClassEndpoint<Void, Void> {
 			@Override
 			public void impl(MessageQueue in) throws Throwable {
 				var msg = in.poll_sync();
@@ -66,8 +65,7 @@ public class Demo4_deploy_local_peers {
 		var s = new DummyService(last);
 		// things.forEach(t -> t.services.add(new DummyService(t)));
 
-		initialThing.defaultRoutingProtocol().exec(ComponentMatcher.unicast(last), DummyService.class, op.class,
-				"hello!", null);
+		initialThing.defaultRoutingProtocol().exec(ComponentMatcher.unicast(last), DummyService.class, op.class, null);
 		s.wait.poll_sync();
 		System.out.println("completed");
 		Idawi.agenda.stopNow(null);

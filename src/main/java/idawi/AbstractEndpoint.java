@@ -1,11 +1,13 @@
 package idawi;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import idawi.messaging.Message;
 import idawi.service.local_view.EndpointDescriptor;
 import toools.SizeOf;
 
-public abstract class AbstractEndpoint implements Endpoint, SizeOf {
+public abstract class AbstractEndpoint<I, O> implements Endpoint<I, O>, SizeOf {
 	int nbCalls, nbFailures;
 	double totalDuration;
 	private EndpointDescriptor descriptor;
@@ -27,6 +29,14 @@ public abstract class AbstractEndpoint implements Endpoint, SizeOf {
 
 	public boolean isSystemOperation() {
 		return getDeclaringServiceClass() != Service.class;
+	}
+
+	protected void reply(Object o, Message<I> m) {
+		service.send(o, m.replyTo);
+	}
+
+	protected <I> void reply(Consumer<Message<I>> m) {
+		service.sendd(m);
 	}
 
 	protected abstract Class<? extends Service> getDeclaringServiceClass();

@@ -24,7 +24,7 @@ public class BasicExample {
 		var c2 = c1.service(DeployerService.class).newLocalJVM("test");
 
 // asks the other component to compute something
-		var l = c1.bb().exec_rpc(c2, DemoService.class, stringLength.class, "Hello Idawi!");
+		var l = c1.bb().exec_rpc(c2, DemoService.class, stringLength.class, msg -> msg.content = "Hello Idawi!");
 		System.out.println(l);
 
 	}

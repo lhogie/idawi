@@ -8,8 +8,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import idawi.Component;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
 import idawi.routing.ComponentMatcher;
 import toools.gui.Swingable;
 
@@ -27,13 +27,14 @@ public class Chat extends Service implements Swingable {
 		textInput.addActionListener(e -> {
 			String text = textInput.getText().trim();
 			conversationPane.append("> ");
-			peer.bb().exec(ComponentMatcher.all, Chat.class, receiveMsg.class, text, null);
+			peer.bb().exec(ComponentMatcher.all, Chat.class, receiveMsg.class, msg -> msg.content = text);
 			textInput.setText("");
 		});
 	}
 
-	class receiveMsg extends TypedInnerClassEndpoint {
-		public void f(String msg) {
+	class receiveMsg extends ProcedureEndpoint<String> {
+		@Override
+		public void doIt(String msg) {
 			conversationPane.append(msg + '\n');
 		}
 
@@ -41,7 +42,6 @@ public class Chat extends Service implements Swingable {
 		public String getDescription() {
 			return "receives a piece of text";
 		}
-
 	}
 
 	@Override

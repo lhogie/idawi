@@ -15,11 +15,11 @@ public class DigitalTwinService extends Service {
 	}
 
 	public void kill() {
-		component.bb().exec_rpc(component, ExitApplication.class, ExitApplication.exit.class, null);
+		exec_rpc(component, ExitApplication.class, ExitApplication.exit.class, null);
 	}
 
 	public void retrieveInfo() {
-		component.bb().exec_rpc(component, SystemService.class, SystemService.info.class, null);
+		exec_rpc(component, SystemService.class, SystemService.info.class, null);
 	}
 
 	public ComponentInfo info() {

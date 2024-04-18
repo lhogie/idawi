@@ -10,9 +10,12 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import idawi.Component;
+import idawi.FunctionEndPoint;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.routing.QueueAddress;
+import idawi.service.publish_subscribe.PublishSubscribeService.Publish.P;
 import toools.SizeOf;
 
 public class PublishSubscribeService extends Service {
@@ -51,10 +54,17 @@ public class PublishSubscribeService extends Service {
 		return "publish/subscribe";
 	}
 
-	public class subscribe extends TypedInnerClassEndpoint {
-		public void exec(String topic, QueueAddress subscriber) throws Throwable {
-			ensureTopicExists(topic);
-			topic_subscribers.get(topic).add(subscriber);
+	public static class I {
+		String topic;
+		QueueAddress subscriber;
+	}
+
+	public class subscribe extends ProcedureEndpoint<I> {
+
+		@Override
+		public void doIt(I i) throws Throwable {
+			ensureTopicExists(i.topic);
+			topic_subscribers.get(i.topic).add(i.subscriber);
 		}
 
 		@Override
@@ -63,10 +73,11 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class unsubscribe extends TypedInnerClassEndpoint {
-		public void exec(String topic, QueueAddress subscriber) throws Throwable {
-			ensureTopicExists(topic);
-			topic_subscribers.get(topic).remove(subscriber);
+	public class unsubscribe extends ProcedureEndpoint<I> {
+		@Override
+		public void doIt(I i) throws Throwable {
+			ensureTopicExists(i.topic);
+			topic_subscribers.get(i.topic).remove(i.subscriber);
 		}
 
 		@Override
@@ -76,19 +87,21 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class ListTopics extends TypedInnerClassEndpoint {
-		public List<String> exec() throws Throwable {
+	public class ListTopics extends SupplierEndPoint<List<String>> {
+		@Override
+		public List<String> get() {
 			return new ArrayList(topic_history.keySet());
 		}
 
 		@Override
-		public String getDescription() {
-			return "list topics known by this node";
+		public String r() {
+			return "topics known by this node";
 		}
 	}
 
-	public class ListSubscribers extends TypedInnerClassEndpoint {
-		public Map<String, Set<QueueAddress>> exec(String topic) throws Throwable {
+	public class ListSubscribers extends FunctionEndPoint<String, Map<String, Set<QueueAddress>>> {
+		@Override
+		public Map<String, Set<QueueAddress>> f(String topic) throws Throwable {
 			return topic_subscribers;
 		}
 
@@ -98,9 +111,15 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class Publish extends TypedInnerClassEndpoint {
-		public void exec(String topic, Object content) throws Throwable {
-			publish(content, topic);
+	public class Publish extends ProcedureEndpoint<P> {
+		public static class P {
+			String topic;
+			Object content;
+		}
+
+		@Override
+		public void doIt(P i) throws Throwable {
+			publish(i.content, i.topic);
 		}
 
 		@Override
@@ -109,8 +128,9 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public class LookupPublication extends TypedInnerClassEndpoint {
-		public Publication exec(long ID) throws Throwable {
+	public class LookupPublication extends FunctionEndPoint<Long, Publication> {
+		@Override
+		public Publication f(Long ID) {
 			return lookup(ID);
 		}
 
@@ -120,7 +140,7 @@ public class PublishSubscribeService extends Service {
 		}
 	}
 
-	public Publication lookup(long ID) throws Throwable {
+	public Publication lookup(long ID) {
 		for (var history : topic_history.values()) {
 			for (var publication : history) {
 				if (publication.ID == ID) {
@@ -143,8 +163,7 @@ public class PublishSubscribeService extends Service {
 		topic_history.get(topic).add(publication);
 
 		// notify subscribers
-		topic_subscribers.get(topic)
-				.forEach(subscriber -> component.defaultRoutingProtocol().send(publication, subscriber));
+		topic_subscribers.get(topic).forEach(subscriber -> send(publication, subscriber));
 	}
 
 	private void ensureTopicExists(String topic) {

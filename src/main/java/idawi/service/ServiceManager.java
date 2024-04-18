@@ -5,10 +5,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
+import idawi.Endpoint;
+import idawi.FunctionEndPoint;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.routing.RoutingService;
-import idawi.service.local_view.ServiceInfo;
 
 public class ServiceManager extends Service {
 
@@ -16,65 +18,67 @@ public class ServiceManager extends Service {
 		super(peer);
 	}
 
-	public class listRoutingServices extends TypedInnerClassEndpoint {
-		public List<?> f() {
+	public class listRoutingServices extends SupplierEndPoint<List<?>> {
+		@Override
+		public List<?> get() {
 			return component.services(RoutingService.class).stream().map(s -> s.getClass()).toList();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "listRoutingServices";
 		}
 	}
 
-	public class listServices extends TypedInnerClassEndpoint {
-		public <S extends Service> List<Class<S>> f() {
+	public class listServices<S extends Service> extends SupplierEndPoint<List<Class<S>>> {
+		public List<Class<S>> get() {
 			return component.services().stream().map(s -> (Class<S>) s.getClass()).toList();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "gives the ID the services available on the local component";
 		}
 	}
 
-	public class start extends TypedInnerClassEndpoint {
-		public ServiceInfo f(Class<? extends Service> serviceID) {
-			return component.start(serviceID).descriptor();
+	public class start extends ProcedureEndpoint<Class<? extends Service>> {
+		@Override
+		public void doIt(Class<? extends Service> serviceID) {
+			component.start(serviceID).descriptor();
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "starts the given service";
 		}
 	}
 
-	public class stop extends TypedInnerClassEndpoint {
-		public void stop(Class<? extends Service> serviceID) {
+	public class stop extends ProcedureEndpoint<Class<? extends Service>> {
+		@Override
+		public void doIt(Class<? extends Service> serviceID) {
 			component.services(serviceID).forEach(s -> s.dispose());
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 	}
 
-	public class list extends TypedInnerClassEndpoint {
+	public class list extends SupplierEndPoint<Set<String>> {
 		public Set<String> get() {
 			return component.services().stream().map(s -> s.getClass().getName()).collect(Collectors.toSet());
 		}
 
 		@Override
-		public String getDescription() {
-			return "list services available in this component";
+		public String r() {
+			return "services available in this component";
 		}
 	}
 
-	public class has extends TypedInnerClassEndpoint {
-		public boolean has(Class serviceID) {
+	public class has extends FunctionEndPoint<Class, Boolean> {
+		@Override
+		public Boolean f(Class serviceID) {
 			return component.service(serviceID) != null;
 		}
 
@@ -84,8 +88,21 @@ public class ServiceManager extends Service {
 		}
 	}
 
-	public class ensureStarted extends TypedInnerClassEndpoint {
-		public void f(Class serviceID) {
+	public class getParmTypes extends FunctionEndPoint<Class<? extends Endpoint>, Class<?>> {
+		@Override
+		public Class<?> f(Class<? extends Endpoint> e) {
+			return Endpoint.inputSpecification(e);
+		}
+
+		@Override
+		public String getDescription() {
+			return "gets the parameter types for the given endpoint";
+		}
+	}
+
+	public class ensureStarted extends ProcedureEndpoint<Class> {
+		@Override
+		public void doIt(Class serviceID) {
 //			Cout.debugSuperVisible("ensure started " + serviceID);
 			component.service(serviceID);
 		}

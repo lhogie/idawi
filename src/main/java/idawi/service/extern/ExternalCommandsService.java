@@ -8,10 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.Computation;
+import idawi.FunctionEndPoint;
 import idawi.InnerClassEndpoint;
-import idawi.RemotelyRunningEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.MessageQueue;
 import toools.extern.ExternalProgram;
 import toools.io.file.RegularFile;
@@ -24,8 +25,9 @@ public class ExternalCommandsService extends Service {
 		super(t);
 	}
 
-	public class has extends TypedInnerClassEndpoint {
-		public boolean f(String cmdName) {
+	public class has extends FunctionEndPoint<String, Boolean> {
+		@Override
+		public Boolean f(String cmdName) {
 			RegularFile f = get(cmdName);
 			return f != null && f.exists();
 		}
@@ -37,19 +39,19 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public class commands extends TypedInnerClassEndpoint {
-		public Set<String> f() {
+	public class commands extends SupplierEndPoint<Set<String>> {
+		@Override
+		public Set<String> get() {
 			return commandName2executableFile.keySet();
 		}
 
 		@Override
-		public String getDescription() {
-			// TODO Auto-generated method stub
+		public String r() {
 			return null;
 		}
 	}
 
-	public class exec extends InnerClassEndpoint {
+	public class exec extends InnerClassEndpoint<List<String>, byte[]> {
 		public void impl(MessageQueue in) throws IOException {
 			var parmMsg = in.poll_sync();
 			List<String> cmdLine = (List<String>) parmMsg.content;
@@ -61,9 +63,9 @@ public class ExternalCommandsService extends Service {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
-						component.defaultRoutingProtocol().send(b, parmMsg.replyTo, m -> m.eot = b.length == 0);
+						sendd(b, parmMsg.replyTo, m -> m.eot = b.length == 0);
 					} catch (IOException e) {
-						component.defaultRoutingProtocol().send(e, parmMsg.replyTo, m -> m.eot = true);
+						sendd(e, parmMsg.replyTo, m -> m.eot = true);
 						break;
 					}
 				}
@@ -100,10 +102,9 @@ public class ExternalCommandsService extends Service {
 		}
 	}
 
-	public void exec(Component to, InputStream stdin, OutputStream out, String... cmdLine) throws IOException {
-		RemotelyRunningEndpoint s = component.defaultRoutingProtocol().exec(to, ExternalCommandsService.class,
-				exec.class, cmdLine, msg -> {
-				});
+	public void exec(Component to, InputStream stdin, OutputStream out, List<String> cmdLine) throws IOException {
+		Computation s = exec(to, ExternalCommandsService.class, exec.class, msg -> msg.content = cmdLine);
+
 		boolean eofIN = false;
 
 		while (true) {
@@ -119,7 +120,7 @@ public class ExternalCommandsService extends Service {
 
 			if (!eofIN) {
 				var wav = stdin.readNBytes(1000);
-				component.defaultRoutingProtocol().send(wav, s.inputQAddr, m -> m.eot = wav.length == 0);
+				sendd(wav, s.inputQAddr, m -> m.eot = wav.length == 0);
 			}
 		}
 	}

@@ -3,11 +3,13 @@ package idawi.service.web;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,10 +24,10 @@ import com.sun.net.httpserver.HttpServer;
 
 import idawi.Component;
 import idawi.Endpoint;
-import idawi.EndpointParameterList;
 import idawi.Idawi;
+import idawi.ProcedureEndpoint;
+import idawi.ProcedureNoInputEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageCollector;
 import idawi.messaging.RoutingStrategy;
 import idawi.routing.BlindBroadcasting;
@@ -56,6 +58,7 @@ import toools.net.NetUtilities;
 import toools.reflect.Clazz;
 import toools.security.AES;
 import toools.text.TextUtilities;
+import toools.util.Conversion;
 
 public class WebService extends Service {
 
@@ -86,7 +89,7 @@ public class WebService extends Service {
 		name2serializer.put("bytes", new ToBytesSerializer<>());
 		name2serializer.put("toml", new TOMLSerializer<>());
 		name2serializer.put("yaml", new YAMLSerializer<>());
-		name2serializer.put("jaseto", new IdawiWebSerializer());
+		name2serializer.put("jaseto", new IdawiJasetoSerializer());
 	}
 
 	private HttpServer httpServer;
@@ -216,7 +219,9 @@ public class WebService extends Service {
 	}
 
 	private void serveAPI(List<String> path, Map<String, String> query, InputStream postDataInputStream,
-			OutputStream output, Serializer serializer) throws IOException, ClassNotFoundException {
+			OutputStream output, Serializer serializer) throws IOException, ClassNotFoundException,
+			NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException,
+			InstantiationException, InvocationTargetException, NoSuchMethodException {
 
 		if (!query.containsKey("enough")) {
 			new Suggestion("enough", "describe a termination condition", null).send(output, serializer);
@@ -233,32 +238,34 @@ public class WebService extends Service {
 		final RoutingService<?> routing = routing(query, output, serializer);
 		final RoutingParameters routingParms = Utils.routingParms(query, routing, output, serializer);
 		final var target = matcher(query, output, routing, routingParms, serializer);
-		final var serviceClass = service(query, output, serializer, target, routing, routingParms, stopCollectingWhen);
+		final Class<? extends Service> serviceClass = service(query, output, serializer, target, routing, routingParms,
+				stopCollectingWhen);
 
 		if (serviceClass == null)
 			return;
 
-		final var endpointClass = endpoint(query, output, serializer, target, routing, routingParms, serviceClass,
+		var endpointClass = endpoint(query, output, serializer, target, routing, routingParms, serviceClass,
 				stopCollectingWhen);
 
 		if (endpointClass == null)
 			return;
 
-		final EndpointParameterList parms = parmsFromQuery(query);
+		var content = parmsFromQuery(endpointClass, query);
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
-		var remoteEndpoint = routing.exec(target, serviceClass, endpointClass, parms, msg -> {
-			msg.initialRoutingStrategy.parms = routingParms;
+		var computation = exec(target, serviceClass, (Class) endpointClass, msg -> {
+			msg.content = content;
+			msg.routingStrategy = new RoutingStrategy(routing, routingParms);
 			msg.eot = postDataInputStream == null;
 		});
 
 		var aes = new AES();
 		SecretKey key = null;
 
-		var collector = new MessageCollector(remoteEndpoint.returnQ);
+		var collector = new MessageCollector(computation.returnQ);
 
 		if (postDataInputStream != null) {
 			new Thread(() -> {
@@ -273,19 +280,19 @@ public class WebService extends Service {
 
 						int contentLength = header.get("contentLength").asInt();
 
-						var content = postDataInputStream.readNBytes(contentLength);
+						var postData = postDataInputStream.readNBytes(contentLength);
 						var encodingsFromClient = header.get("encodings").asText().split(",");
 						// restore the original data by reversing the encoding
 						for (int i = encodingsFromClient.length - 1; i > 0; --i) {
 							var encoding = encodingsFromClient[i];
 
 							if (encoding.equals("gzip")) {
-								content = Utilities.gunzip(content);
+								postData = Utilities.gunzip(postData);
 							} else if (encoding.equals("base64")) {
-								content = TextUtilities.unbase64(content);
+								postData = TextUtilities.unbase64(postData);
 							} else if (encoding.equals("aes")) {
 								try {
-									content = aes.decode(content, key);
+									postData = aes.decode(postData, key);
 								} catch (Exception e) {
 									throw new IllegalStateException(e);
 								}
@@ -294,11 +301,17 @@ public class WebService extends Service {
 
 						String serializerName = encodingsFromClient[0];
 						var ser = name2serializer.get(serializerName);
-						Object o = ser.fromBytes(content);
-						routing.send(o, remoteEndpoint.inputQAddr);
+						Object o = ser.fromBytes(postData);
+						sendd(o, computation.inputQAddr, msg -> {
+							msg.eot = true;
+							msg.routingStrategy = new RoutingStrategy(routing);
+						});
 					}
 
-					routing.send(null, remoteEndpoint.inputQAddr, msg -> msg.eot = true);
+					sendd(null, computation.inputQAddr, msg -> {
+						msg.eot = true;
+						msg.routingStrategy = new RoutingStrategy(routing);
+					});
 				} catch (IOException e1) {
 				}
 			}).start();
@@ -335,48 +348,81 @@ public class WebService extends Service {
 			} catch (IOException e) {
 				Cout.debugSuperVisible("Client has closed");
 				collecto.gotEnough = true;
-				component.bb().send("stop", remoteEndpoint.inputQAddr);
+				send("stop", computation.inputQAddr);
 			}
 		});
 
 		System.out.println("collecting completed");
 	}
 
-	private Class<? extends Endpoint> endpoint(Map<String, String> query, OutputStream output, Serializer serializer,
-			ComponentMatcher matcher, RoutingService<?> r, RoutingParameters rp, Class<? extends Service> s,
-			Predicate<MessageCollector> stopCollectingWhen) throws ClassNotFoundException, IOException {
+	private Object parmsFromQuery(Class<? extends Endpoint> endpointClass, Map<String, String> query)
+			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		var spec = Endpoint.inputSpecification(endpointClass);
+		var r = defaultParms(spec);
+
+		for (var k : new HashSet<>(query.keySet())) {
+			var v = query.remove(k);
+
+			if (k.equals("p")) {
+				r = Conversion.convert(v, spec);
+				break;
+			} else if (k.startsWith("p.")) {
+				var propName = k.substring(2);
+				r = Conversion.convert(v, spec);
+
+				if (propName.isEmpty()) {
+					query.put(k, v);
+				} else {
+					var field = spec.getDeclaredField(propName);
+					var fieldValue = Conversion.convert(v, field.getType());
+					field.set(r, fieldValue);
+				}
+			}
+		}
+
+		return r;
+	}
+
+	private Object defaultParms(Class spec) {
+		try {
+			return spec.getConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			return null;
+		}
+	}
+
+	private <I, O, S extends Service> Class<? extends Endpoint<I, O>> endpoint(Map<String, String> query,
+			OutputStream output, Serializer serializer, ComponentMatcher matcher, RoutingService<?> r,
+			RoutingParameters rp, Class<S> s, Predicate<MessageCollector> stopCollectingWhen)
+			throws ClassNotFoundException, IOException {
 		if (query.containsKey("e")) {
-			return (Class<? extends Endpoint>) Clazz.innerClass(s, query.remove("e"));
+			return (Class<Endpoint<I, O>>) Clazz.innerClass(s, query.remove("e"));
 		} else {
-			var ro = r.exec(matcher, s, listEndpoints.class, null, msg -> {
+			var ro = exec(matcher, s, listEndpoints.class, msg -> {
 				msg.eot = true;
-				msg.initialRoutingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r, rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(stopCollectingWhen).messages;
 			var map = new HashMap<Component, List<String>>();
 			messages.forEach(m -> map.put(m.sender(),
-					((Set<Class<? extends Endpoint>>) m.content).stream().map(e -> e.getSimpleName()).toList()));
+					((Set<Class<Endpoint>>) m.content).stream().map(e -> e.getSimpleName()).toList()));
 			new Suggestion("e", "gives the name of an endpoint", map).send(output, serializer);
 			return null;
 		}
 	}
 
-	private Class<? extends Service> service(Map<String, String> query, OutputStream output, Serializer serializer,
+	private <S extends Service> Class<S> service(Map<String, String> query, OutputStream output, Serializer serializer,
 			ComponentMatcher t, RoutingService<?> r, RoutingParameters rp,
 			Predicate<MessageCollector> terminationCondition) throws ClassNotFoundException, IOException {
 		if (query.containsKey("s")) {
 			var s = query.remove("s");
 			var c = shortcut_service.get(s);
-
-			if (c != null) {
-				return c;
-			} else {
-				return (Class<? extends Service>) Class.forName(s);
-			}
+			return (Class<S>) (c != null ? c : Class.forName(s));
 		} else {
-			var ro = r.exec(t, ServiceManager.class, listServices.class, null, msg -> {
+			var ro = exec(t, ServiceManager.class, listServices.class, msg -> {
 				msg.eot = true;
-				msg.initialRoutingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r, rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(terminationCondition).messages;
 			var map = new HashMap<Component, List<? extends Service>>();
@@ -416,18 +462,6 @@ public class WebService extends Service {
 		}
 	}
 
-	private static EndpointParameterList parmsFromQuery(Map<String, String> query) {
-		var l = new EndpointParameterList();
-
-		for (int i = 0;; ++i) {
-			if (query.containsKey("p" + i)) {
-				l.add(query.remove("p" + i));
-			} else {
-				return l;
-			}
-		}
-	}
-
 	private String name(Function<MessageCollector, Object> whatToSendF) {
 		for (var e : whatToSendMap.entrySet()) {
 			if (e.getValue() == whatToSendF) {
@@ -438,8 +472,9 @@ public class WebService extends Service {
 		throw new IllegalStateException();
 	}
 
-	public class stopHTTPServer extends TypedInnerClassEndpoint {
-		public void f() throws IOException {
+	public class stopHTTPServer extends ProcedureNoInputEndpoint {
+		@Override
+		public void doIt() throws IOException {
 			if (httpServer == null) {
 				throw new IOException("REST server is not running");
 			}
@@ -454,8 +489,9 @@ public class WebService extends Service {
 		}
 	}
 
-	public class startHTTPServerOperation extends TypedInnerClassEndpoint {
-		public void f(int port) throws IOException {
+	public class startHTTPServerOperation extends ProcedureEndpoint<Integer> {
+		@Override
+		public void doIt(Integer port) throws IOException {
 			startHTTPServer(port);
 		}
 

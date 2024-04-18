@@ -2,7 +2,7 @@ package idawi.service.time;
 
 import idawi.Component;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 
 public class TimeService extends Service {
 	public TimeModel model = new ComputerClockTimeModel();
@@ -11,24 +11,26 @@ public class TimeService extends Service {
 		super(peer);
 	}
 
-	public class getTime extends TypedInnerClassEndpoint {
-		public Time f() {
+	public class getTime extends SupplierEndPoint<Time> {
+		@Override
+		public Time get() {
 			return now2();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "gets the current time";
 		}
 	}
 
-	public class getModel extends TypedInnerClassEndpoint {
-		public TimeModel f() {
+	public class getModel extends SupplierEndPoint<TimeModel> {
+		@Override
+		public TimeModel get() {
 			return model;
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "get the time model";
 		}
 	}

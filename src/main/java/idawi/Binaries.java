@@ -46,7 +46,7 @@ public class Binaries {
 			e.hashContents(h);
 		}
 
-		//Directory.getHomeDirectory().getChildDirectory("jre").hashContents(h);
+		// Directory.getHomeDirectory().getChildDirectory("jre").hashContents(h);
 		return h.result();
 	}
 
@@ -71,7 +71,7 @@ public class Binaries {
 		return offsets;
 	}
 
-	public static byte[] proofOfBinaries(long... offsets) throws IOException {
+	public static byte[] proofOfBinaries(long... offsets) {
 		byte[] bytes = new byte[offsets.length];
 
 		for (int i = 0; i < offsets.length; ++i) {
@@ -82,7 +82,7 @@ public class Binaries {
 		return bytes;
 	}
 
-	public static byte proofOfBinaries(long offset) throws IOException {
+	public static byte proofOfBinaries(long offset) {
 		for (var f : binaryFiles) {
 			if (f.getSize() > offset) {
 				return f.read((int) offset, 1)[0];

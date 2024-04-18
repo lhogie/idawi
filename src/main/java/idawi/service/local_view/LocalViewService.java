@@ -6,9 +6,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.FunctionEndPoint;
 import idawi.Idawi;
-import idawi.TypedInnerClassEndpoint;
+import idawi.ProcedureEndpoint;
+import idawi.ProcedureNoInputEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.Message;
+import idawi.messaging.RoutingStrategy;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
@@ -49,9 +53,10 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkActivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
-					routing().exec(ComponentMatcher.all, LocalViewService.class, markLinkActive.class, List.of(l),
-							msg -> {
-							});
+					exec(ComponentMatcher.all, LocalViewService.class, markLinkActive.class, msg -> {
+						msg.content = List.of(l);
+						msg.routingStrategy = new RoutingStrategy(routing());
+					});
 				}
 			}
 
@@ -59,9 +64,11 @@ public class LocalViewService extends KnowledgeBase {
 			public void linkDeactivated(Link l) {
 				// if this is a local link
 				if (disseminateTopologyChangesWhenTheyOccur && l.asInfo().involves(component)) {
-					routing().exec(ComponentMatcher.all, LocalViewService.class, makeLinkInactive.class, List.of(l),
-							msg -> {
-							});
+					exec(ComponentMatcher.all, LocalViewService.class, makeLinkInactive.class, msg -> {
+						msg.routingStrategy = new RoutingStrategy(routing());
+
+						msg.content = List.of(l);
+					});
 				}
 			}
 
@@ -102,7 +109,7 @@ public class LocalViewService extends KnowledgeBase {
 		return "digital twin service";
 	}
 
-	public class getComponentInfo extends TypedInnerClassEndpoint {
+	public class getComponentInfo extends FunctionEndPoint<Component, ComponentInfo> {
 		public ComponentInfo f(Component c) {
 			return c.service(DigitalTwinService.class).info();
 		}
@@ -113,8 +120,9 @@ public class LocalViewService extends KnowledgeBase {
 		}
 	}
 
-	public class acceptHello extends TypedInnerClassEndpoint {
-		public void f(String n) {
+	public class acceptHello extends ProcedureEndpoint<Object> {
+		@Override
+		public void doIt(Object n) {
 			Cout.debug(component + " received " + n);
 //			Cout.debug("DT merge not yet implemented");
 		}
@@ -125,19 +133,21 @@ public class LocalViewService extends KnowledgeBase {
 		}
 	}
 
-	public class components extends TypedInnerClassEndpoint {
-		public Collection<Component> f() {
+	public class components extends SupplierEndPoint<Collection<Component>> {
+		@Override
+		public Collection<Component> get() {
 			return g.components();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "get all known components";
 		}
 	}
 
-	public class clear extends TypedInnerClassEndpoint {
-		public void f() {
+	public class clear extends ProcedureNoInputEndpoint {
+		@Override
+		public void doIt() {
 			g.clear();
 		}
 
@@ -159,8 +169,9 @@ public class LocalViewService extends KnowledgeBase {
 		return infos.stream();
 	}
 
-	public class makeLinkInactive extends TypedInnerClassEndpoint {
-		public void f(List<Link> list) {
+	public class makeLinkInactive extends ProcedureEndpoint<List<Link>> {
+		@Override
+		public void doIt(List<Link> list) {
 			list.forEach(l -> g.deactivateLink(l));
 		}
 
@@ -170,8 +181,9 @@ public class LocalViewService extends KnowledgeBase {
 		}
 	}
 
-	public class markLinkActive extends TypedInnerClassEndpoint {
-		public void f(Iterable<Link> list) {
+	public class markLinkActive extends ProcedureEndpoint<Iterable<Link>> {
+		@Override
+		public void doIt(Iterable<Link> list) {
 			list.forEach(l -> l.markActive());
 		}
 
@@ -182,7 +194,7 @@ public class LocalViewService extends KnowledgeBase {
 	}
 
 	public Object helloMessage() {
-		return "hello from "  + component;
+		return "hello from " + component;
 	}
 
 }

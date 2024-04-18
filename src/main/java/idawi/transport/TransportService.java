@@ -13,7 +13,7 @@ import idawi.Idawi;
 import idawi.IdawiSerializer;
 import idawi.PointInTime;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.ACK.serviceNotAvailable;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
@@ -21,7 +21,6 @@ import idawi.routing.Entry;
 import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
-import toools.io.Cout;
 
 public abstract class TransportService extends Service {
 	public long nbMsgReceived = 0;
@@ -84,7 +83,7 @@ public abstract class TransportService extends Service {
 				if (targetService == null) {
 					if (msg.ackReqs != null && msg.ackReqs.contains(serviceNotAvailable.class)) {
 						var ack = new serviceNotAvailable(msg.qAddr.service, component, msg);
-						component.defaultRoutingProtocol().send(ack, msg.replyTo, outM -> outM.eot = true);
+						sendd(ack, msg.replyTo, outM -> outM.eot = true);
 						System.out.println(
 								"component " + component + " does not have service " + msg.qAddr.service.getName());
 					}
@@ -102,7 +101,7 @@ public abstract class TransportService extends Service {
 						msg.content = vault;
 					}
 
-					considerForForwarding(msg);
+					component.need(msg.routingStrategy.routingService).accept(msg);
 				}
 
 				component.alreadyReceivedMsgs.add(msg.ID);
@@ -112,20 +111,7 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	private void considerForForwarding(Message msg) {
-		// search for the routing service it was initially sent
-		var routingService = component.need(msg.initialRoutingStrategy.routingService);
-		RoutingParameters routingParms;
 
-		if (routingService == null) {
-			routingService = component.defaultRoutingProtocol();
-			routingParms = routingService.defaultData();
-		} else {
-			routingParms = msg.initialRoutingStrategy.parms;
-		}
-
-		routingService.accept(msg, routingParms);
-	}
 
 	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
 
@@ -220,24 +206,26 @@ public abstract class TransportService extends Service {
 		return nbMsgReceived;
 	}
 
-	public class getNbMessagesReceived extends TypedInnerClassEndpoint {
-		public long f() {
+	public class getNbMessagesReceived extends SupplierEndPoint<Long> {
+		@Override
+		public Long get() {
 			return getNbMessagesReceived();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "number of message received so far";
 		}
 	}
 
-	public class neighbors extends TypedInnerClassEndpoint {
-		public List<Link> f() {
+	public class neighbors extends SupplierEndPoint<List<Link>> {
+		@Override
+		public List<Link> get() {
 			return activeOutLinks();
 		}
 
 		@Override
-		public String getDescription() {
+		public String r() {
 			return "get the neighborhood";
 		}
 	}

@@ -1,5 +1,6 @@
 package idawi.service;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -8,13 +9,16 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 import idawi.Component;
-import idawi.EndpointParameterList;
+import idawi.FunctionEndPoint;
 import idawi.InnerClassEndpoint;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
+import idawi.service.DemoService.countFrom1toN.AAA;
+import idawi.service.DemoService.countFromAtoB.Range;
 import idawi.service.web.Graph;
 import idawi.service.web.Image;
 import idawi.service.web.RawData;
@@ -22,7 +26,6 @@ import idawi.service.web.Video;
 import idawi.service.web.chart.Chart;
 import toools.SizeOf;
 import toools.io.Cout;
-import toools.math.MathsUtilities;
 import toools.net.NetUtilities;
 import toools.text.TextUtilities;
 import toools.thread.Threads;
@@ -36,7 +39,7 @@ public class DemoService extends Service {
 		});
 	}
 
-	public class multipleRandomMessages extends InnerClassEndpoint {
+	public class multipleRandomMessages extends InnerClassEndpoint<Integer, Integer> {
 
 		@Override
 		public String getDescription() {
@@ -46,32 +49,29 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
-			var opl = (EndpointParameterList) tg.content;
-			int n = Integer.valueOf(opl.get(0).toString());
+			var n = parms(tg);
 
 			for (int i = 0; i < n; ++i) {
 				var eot = i == n - 1;
-				component.defaultRoutingProtocol().send(new Random().nextInt(), tg.replyTo, msg -> msg.eot = eot);
+				sendd(new Random().nextInt(), tg.replyTo, msg -> msg.eot = eot);
 				Threads.sleepMs(1000);
 			}
 		}
 	}
 
-	public class waiting extends TypedInnerClassEndpoint {
-		public double waiting(double maxSeconds) {
-			double seconds = MathsUtilities.pickRandomBetween(0, maxSeconds, new Random());
-			Threads.sleepMs((long) (seconds * 1000));
-			return seconds;
+	public class waiting extends ProcedureEndpoint<Double> {
+		@Override
+		public void doIt(Double d) {
+			Threads.sleepMs((long) (d * 1000));
 		}
 
 		@Override
 		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
+			return "just waits";
 		}
 	}
 
-	public class grep extends InnerClassEndpoint {
+	public class grep extends InnerClassEndpoint<String, Integer> {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var trigger = in.poll_async();
@@ -87,11 +87,11 @@ public class DemoService extends Service {
 				String line = (String) msg.content;
 
 				if (line.matches(re)) {
-					component.defaultRoutingProtocol().send(line, trigger.replyTo);
+					send(line, trigger.replyTo);
 				}
 			}
 
-			component.defaultRoutingProtocol().send(null, trigger.replyTo, m -> m.eot = true);
+			sendd(null, trigger.replyTo, m -> m.eot = true);
 		}
 
 		@Override
@@ -121,90 +121,97 @@ public class DemoService extends Service {
 //		}
 //	}
 
-	public class stringLength extends TypedInnerClassEndpoint {
-		public int f(String s) {
-			return s.length();
-		}
+	public class stringLength extends FunctionEndPoint<String, Integer> {
 
 		@Override
 		public String getDescription() {
 			return null;
 		}
+
+		@Override
+		public Integer f(String s) throws Throwable {
+			return s.length();
+		}
 	}
 
-	public class chart extends TypedInnerClassEndpoint {
-		public Chart f() {
-			return new Chart();
+	public class chart extends SupplierEndPoint<Chart> {
+		@Override
+		public String r() {
+			return "gives a chart";
 		}
 
 		@Override
-		public String getDescription() {
-			return "gives a chart";
+		public Chart get() {
+			return new Chart();
 		}
 	}
 
-	public class countFrom1toN extends InnerClassEndpoint {
+	public class countFrom1toN extends InnerClassEndpoint<AAA, Integer> {
 		@Override
 		public String getDescription() {
 			return "replies n messages";
 		}
 
+		public static class AAA implements Serializable {
+			public double sleepTime;
+			public int n;
+		}
+
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			var l = (EndpointParameterList) m.content;
-			double sleepTime = Double.valueOf((String) l.removeFirst());
-			int n = Integer.valueOf((String) l.removeFirst());
+			AAA a = parms(m);
 
-			for (int i = 0; i < n; ++i) {
-				var eot = i == n - 1;
-				component.defaultRoutingProtocol().send(i, m.replyTo, msg -> msg.eot = eot);
-				Threads.sleep(sleepTime);
+			for (int i = 0; i < a.n; ++i) {
+				var eot = i == a.n - 1;
+				sendd(i, m.replyTo, msg -> msg.eot = eot);
+				Threads.sleep(a.sleepTime);
 			}
 		}
 	}
 
-	public static class Range implements Serializable, SizeOf {
-		public Range(int i, int j) {
-			this.a = i;
-			this.b = j;
-		}
-
-		int a, b;
-
-		@Override
-		public long sizeOf() {
-			return 8;
-		}
-	}
-
-	public class countFromAtoB extends InnerClassEndpoint {
+	public class countFromAtoB extends InnerClassEndpoint<Range, Integer> {
 		@Override
 		public String getDescription() {
 			return null;
 		}
 
+		public static class Range implements Serializable, SizeOf {
+			public Range(int i, int j) {
+				this.a = i;
+				this.b = j;
+			}
+
+			int a, b;
+
+			@Override
+			public long sizeOf() {
+				return 8;
+			}
+		}
+
+		@Override
 		public void impl(MessageQueue in) {
-			Cout.debugSuperVisible(getFullyQualifiedName());
 			var m = in.poll_sync();
-			var p = (Range) m.content;
+			var p = parms(m);
 
 			for (int i = p.a; i < p.b; ++i) {
 				var eot = i == p.b - 1;
-				component.defaultRoutingProtocol().send(i, m.replyTo, msg -> msg.eot = eot);
+				sendd(i, m.replyTo, msg -> msg.eot = eot);
 			}
 		}
 	}
 
-	public class loremPicsum extends TypedInnerClassEndpoint {
+	public class loremPicsum extends FunctionEndPoint<Dimension, byte[]> {
 		@Override
 		public String getDescription() {
 			return "returns a random image";
 		}
 
-		public byte[] f(int w, int h) throws IOException {
+		@Override
+		public byte[] f(Dimension d) throws IOException {
 			int id = new Random().nextInt(100);
-			String url = "https://picsum.photos/id/" + id + "/" + w + "/" + h;
+			String url = "https://picsum.photos/id/" + id + "/" + d.width + "/" + d.height;
 			return NetUtilities.retrieveURLContent(url);
 		}
 	}
@@ -246,9 +253,9 @@ public class DemoService extends Service {
 			int target = (Integer) msg.content;
 
 			for (int i = 0; i < target; ++i) {
-				component.defaultRoutingProtocol().send(i, msg.replyTo);
+				send(i, msg.replyTo);
 				var eot = i == target - 1;
-				component.defaultRoutingProtocol().send(new ProgressRatio(i, target), msg.replyTo, m -> m.eot = eot);
+				sendd(new ProgressRatio(i, target), msg.replyTo, m -> m.eot = eot);
 			}
 		}
 	}
@@ -279,7 +286,7 @@ public class DemoService extends Service {
 			l.add(() -> rand.nextInt());
 			l.add(() -> {
 				try {
-					return ((loremPicsum) lookupEndpoint(loremPicsum.class.getSimpleName())).f(200, 100);
+					return lookupEndpoint(loremPicsum.class).f(new Dimension(200, 100));
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -296,11 +303,11 @@ public class DemoService extends Service {
 				}
 
 				var d = l.get(rand.nextInt(l.size()));
-				component.defaultRoutingProtocol().send(d.get(), msg.replyTo, m -> m.eot = false);
+				sendd(d.get(), msg.replyTo, m -> m.eot = false);
 				Threads.sleep(rand.nextDouble());
 			}
 
-			component.defaultRoutingProtocol().send(new ProgressRatio(target, target), msg.replyTo, m -> m.eot = true);
+			sendd(new ProgressRatio(target, target), msg.replyTo, m -> m.eot = true);
 		}
 	}
 
@@ -314,7 +321,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			component.defaultRoutingProtocol().send(Graph.random(), msg.replyTo, m -> msg.eot = true);
+			sendd(Graph.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -328,7 +335,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			component.defaultRoutingProtocol().send(Chart.random(), msg.replyTo, m -> msg.eot = true);
+			sendd(Chart.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -342,7 +349,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			component.defaultRoutingProtocol().send(Image.random(), msg.replyTo, m -> msg.eot = true);
+			sendd(Image.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -361,7 +368,7 @@ public class DemoService extends Service {
 			rd.base64 = TextUtilities.base64(bytes);
 			rd.mimeType = "image/jpeg";
 
-			component.defaultRoutingProtocol().send(rd, msg.replyTo, m -> msg.eot = true);
+			sendd(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -375,7 +382,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			component.defaultRoutingProtocol().send(Video.random(), msg.replyTo, m -> msg.eot = true);
+			sendd(Video.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 }

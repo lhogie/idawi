@@ -11,14 +11,14 @@ public class PingService extends Service {
 		super(component);
 	}
 
-	public class ping extends InnerClassEndpoint {
+	public class ping extends InnerClassEndpoint<Object, Void> {
 
 		@Override
 		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-Cout.debugSuperVisible("PIINNGGG");
+			Cout.debugSuperVisible("PIINNGGG");
 			// sends back the ping message to the caller
-			component.defaultRoutingProtocol().send(m, m.replyTo, mmsg -> mmsg.eot = true);
+			sendd(m, m.replyTo, mmsg -> mmsg.eot = true);
 		}
 
 		@Override

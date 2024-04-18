@@ -11,9 +11,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import idawi.Component;
+import idawi.FunctionEndPoint;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
@@ -81,7 +81,7 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		component.bb().exec(ComponentMatcher.all, getClass(), localBench.class, null, m -> {
+		exec(ComponentMatcher.all, getClass(), localBench.class,  m -> {
 		}).returnQ.collector().collect(c -> {
 			var m = c.messages.last();
 
@@ -95,8 +95,15 @@ public class Bencher extends Service {
 		return map;
 	}
 
-	public class localBench extends TypedInnerClassEndpoint {
-		public Results f(int size) {
+	public class localBench extends FunctionEndPoint<Integer, Results> {
+
+		@Override
+		public String getDescription() {
+			return null;
+		}
+
+		@Override
+		public Results f(Integer size) {
 			Results r = new Results();
 			Q<Object> q = new Q<>(4);
 
@@ -112,21 +119,15 @@ public class Bencher extends Service {
 			r.multithread = (long) q.poll_sync();
 			return r;
 		}
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 	}
 
-	public class localBench2 extends InnerClassEndpoint {
+	public class localBench2 extends InnerClassEndpoint<Integer, Results> {
 
 		@Override
-		public void impl(MessageQueue in) throws Throwable {
+		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-			int size = (int) m.content;
-			localBench(size, r -> component.defaultRoutingProtocol().send(r, m.replyTo));
+			int size = parms(m);
+			localBench(size, r -> send(r, m.replyTo));
 		}
 
 		@Override

@@ -39,7 +39,7 @@ public class JustAPing {
 		Idawi.agenda.start();
 
 		System.out.println("pinging");
-		var pong = a.defaultRoutingProtocol().ping(b);
+		var pong = a.bb().ping(b);
 
 		System.out.println("pong= " + pong);
 

@@ -9,9 +9,11 @@ import java.util.stream.Collectors;
 
 import idawi.Component;
 import idawi.InnerClassEndpoint;
+import idawi.ProcedureEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import idawi.messaging.MessageQueue;
+import idawi.messaging.RoutingStrategy;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
 import toools.io.file.Directory;
@@ -23,7 +25,7 @@ public class ChordService extends Service {
 	final public Directory directory;
 
 	// chord queries will be send using this routing scheme
-	public RoutingService rp = component.defaultRoutingProtocol();
+	public RoutingService<?> rp = component.defaultRoutingProtocol();
 
 	public ChordService(Component c) {
 		super(c);
@@ -40,7 +42,10 @@ public class ChordService extends Service {
 
 		// async multicast the item to all targets
 		var target = ComponentMatcher.multicast(h);
-		rp.exec(target, ChordService.class, set.class, item, null);
+		exec(target, ChordService.class, set.class, msg -> {
+			msg.routingStrategy = new RoutingStrategy(rp);
+			msg.content = item;
+		});
 	}
 
 	public Set<String> localKeys() {
@@ -57,8 +62,10 @@ public class ChordService extends Service {
 		// try all components in a sequence
 		for (var c : hosts) {
 			// sync call
-			var msg = rp.exec(ComponentMatcher.unicast(c), ChordService.class, get.class, key, null).returnQ
-					.poll_sync();
+			var msg = exec(ComponentMatcher.unicast(c), ChordService.class, get.class, im -> {
+				im.routingStrategy = new RoutingStrategy(rp);
+				im.content = key;
+			}).returnQ.poll_sync();
 
 			if (msg.content instanceof Item) {
 				return (Item) msg.content;
@@ -80,8 +87,11 @@ public class ChordService extends Service {
 
 	public List<ItemLocation> search(String k, double searchDuration) {
 		// SYNC multicast the key to all targets
-		return rp.exec(ComponentMatcher.all, ChordService.class, get.class, k, null).returnQ.collector()
-				.collectDuring(searchDuration).messages.stream().filter(msg -> msg.content instanceof Item)
+		return exec(ComponentMatcher.all, ChordService.class, get.class, msg -> {
+			msg.routingStrategy = new RoutingStrategy(rp);
+			msg.content = k;
+		}).returnQ.collector().collectDuring(searchDuration).messages.stream()
+				.filter(msg -> msg.content instanceof Item)
 				.map(msg -> new ItemLocation((Item) msg.content, msg.route.source())).toList();
 	}
 
@@ -105,19 +115,21 @@ public class ChordService extends Service {
 		return r;
 	}
 
-	public class keys extends TypedInnerClassEndpoint {
-		public Collection<String> keys() {
+	public class keys extends SupplierEndPoint<Collection<String>> {
+		@Override
+		public Collection<String> get() {
 			return localKeys();
 		}
 
 		@Override
-		public String getDescription() {
-			return "list the name of the entries stored in this component";
+		public String r() {
+			return "the name of the entries stored in this component";
 		}
 	}
 
-	public class set extends TypedInnerClassEndpoint {
-		public void f(Item i) {
+	public class set extends ProcedureEndpoint<Item> {
+		@Override
+		public void doIt(Item i) {
 			System.out.println(component + " writing " + file(i.key));
 			file(i.key).setContent(i.content);
 		}
@@ -132,7 +144,7 @@ public class ChordService extends Service {
 		return new RegularFile(directory, key + ".dat");
 	}
 
-	public class get extends InnerClassEndpoint {
+	public class get extends InnerClassEndpoint<String, Item> {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -146,7 +158,7 @@ public class ChordService extends Service {
 			for (var f : directory.listRegularFiles()) {
 				if (file2ItemKey(f).equals(k)) {
 					var i = new Item(k, file(k).getContent());
-					component.defaultRoutingProtocol().send(i, execMsg.replyTo);
+					send(i, execMsg.replyTo);
 					return;
 				}
 			}
@@ -158,8 +170,9 @@ public class ChordService extends Service {
 		}
 	}
 
-	public class deleteRegex extends TypedInnerClassEndpoint {
-		public void delete(String k) {
+	public class deleteRegex extends ProcedureEndpoint<String> {
+		@Override
+		public void doIt(String k) {
 			directory.listRegularFiles().stream().filter(f -> file2ItemKey(f).equals(k)).findAny()
 					.ifPresent(f -> f.delete());
 		}

@@ -22,7 +22,7 @@ public class MapReduceService extends Service {
 	}
 
 	// the backend op
-	public class taskProcessor extends InnerClassEndpoint {
+	public class taskProcessor extends InnerClassEndpoint<Task, Object> {
 
 		@Override
 		public String getDescription() {
@@ -35,15 +35,15 @@ public class MapReduceService extends Service {
 			Cout.debug(":) received " + msg);
 			var t = (Task) msg.content;
 			Cout.debug("received2 " + msg);
-			component.defaultRoutingProtocol().send(new ProgressMessage("processing task " + t.id), msg.replyTo);
+			send(new ProgressMessage("processing task " + t.id), msg.replyTo);
 			t.mapReduceService = MapReduceService.this;
 			Result r = new Result<>();
 			r.receptionDate = Date.time();
 			r.taskID = t.id;
-			r.value = t.compute(something -> component.defaultRoutingProtocol().send(something, msg.replyTo));
+			r.value = t.compute(something -> send(something, msg.replyTo));
 			r.completionDate = Date.time();
-			component.defaultRoutingProtocol().send(new ProgressMessage("sending result " + t.id), msg.replyTo);
-			component.defaultRoutingProtocol().send(r, msg.replyTo);
+			send(new ProgressMessage("sending result " + t.id), msg.replyTo);
+			send(r, msg.replyTo);
 		}
 	}
 
@@ -110,9 +110,8 @@ public class MapReduceService extends Service {
 			for (var task : tasks) {
 				if (task.to != null) {
 					h.newProgressMessage("sending task " + task.id + " to " + task.to);
-					component.defaultRoutingProtocol().exec(task.to, getClass(), taskProcessor.class, task,
-							null).returnQ.collector().collect(c -> q.add_sync(c.messages.last()));
-
+					exec(task.to, getClass(), taskProcessor.class,
+							msg -> msg.content = task).returnQ.collector().collect(c -> q.add_sync(c.messages.last()));
 				}
 			}
 

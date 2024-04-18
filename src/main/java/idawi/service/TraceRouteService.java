@@ -21,11 +21,11 @@ public class TraceRouteService extends Service {
 		super(node);
 	}
 
-	public class traceroute extends InnerClassEndpoint {
+	public class traceroute extends InnerClassEndpoint<Void, Route> {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var msg = in.poll_sync();
-			component.defaultRoutingProtocol().send(msg.route, msg.replyTo);
+			send(msg.route, msg.replyTo);
 		}
 
 		@Override
@@ -34,20 +34,19 @@ public class TraceRouteService extends Service {
 		}
 	}
 
-	public Route traceRoute(Component t, double timeout) {
-		return (Route) component.bb().exec_rpc(t, TraceRouteService.class, traceroute.class, null);
+	public Route traceRoute(Component t) {
+		return (Route) exec_rpc(t, TraceRouteService.class, traceroute.class, null);
 	}
 
 	public Map<Component, Route> traceRoute(Set<Component> targets, double timeout) {
 		var map = new HashMap<Component, Route>();
-		component.defaultRoutingProtocol().exec(ComponentMatcher.multicast(targets), TraceRouteService.class,
-				traceroute.class, null, msg -> {
-				}).returnQ.collector().collect(timeout, c -> {
-					var target = c.messages.last().route.source();
-					var route = (Route) c.messages.last().content;
-					map.put(target, route);
-					c.gotEnough = c.messages.senders().equals(targets);
-				});
+		exec(ComponentMatcher.multicast(targets), TraceRouteService.class, traceroute.class, msg -> {
+		}).returnQ.collector().collect(timeout, c -> {
+			var target = c.messages.last().route.source();
+			var route = (Route) c.messages.last().content;
+			map.put(target, route);
+			c.gotEnough = c.messages.senders().equals(targets);
+		});
 
 		return map;
 	}

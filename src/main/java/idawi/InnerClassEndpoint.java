@@ -2,7 +2,7 @@ package idawi;
 
 import java.lang.reflect.InvocationTargetException;
 
-public abstract class InnerClassEndpoint extends AbstractEndpoint {
+public abstract class InnerClassEndpoint<I,O> extends AbstractEndpoint<I, O> {
 
 	public Class<? extends InnerClassEndpoint> id() {
 		return getClass();
@@ -31,4 +31,5 @@ public abstract class InnerClassEndpoint extends AbstractEndpoint {
 			}
 		}
 	}
+
 }

@@ -6,8 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.FunctionEndPoint;
+import idawi.InnerClassEndpoint;
+import idawi.ProcedureEndpoint;
+import idawi.ProcedureNoInputEndpoint;
 import idawi.Service;
-import idawi.TypedInnerClassEndpoint;
+import idawi.SupplierEndPoint;
 import toools.io.OnDiskMap;
 
 public class KeyValueService extends Service {
@@ -18,8 +22,9 @@ public class KeyValueService extends Service {
 		super(peer);
 	}
 
-	public class get extends TypedInnerClassEndpoint {
-		public List<Object> get(List<Object> keys) throws Throwable {
+	public class get extends FunctionEndPoint<List<Object>, List<Object>> {
+		@Override
+		public List<Object> f(List<Object> keys) throws Throwable {
 			return keys.stream().map(k -> map.get(k)).toList();
 		}
 
@@ -29,30 +34,32 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class keys extends TypedInnerClassEndpoint {
+	public class keys extends SupplierEndPoint<Set<Object>> {
+		@Override
 		public Set<Object> get() throws Throwable {
 			return map.keySet();
 		}
 
 		@Override
-		public String getDescription() {
-			return "gets a value";
+		public String r() {
+			return "a value";
 		}
 	}
 
-	public class nbKeys extends TypedInnerClassEndpoint {
-		public int get() throws Throwable {
+	public class nbKeys extends SupplierEndPoint<Integer> {
+		public Integer get() throws Throwable {
 			return map.size();
 		}
 
 		@Override
-		public String getDescription() {
-			return "gets the number of keys";
+		public String r() {
+			return "the number of keys";
 		}
 	}
 
-	public class clear extends TypedInnerClassEndpoint {
-		public void f() throws Throwable {
+	public class clear extends ProcedureNoInputEndpoint {
+		@Override
+		public void doIt() throws Throwable {
 			map.clear();
 		}
 
@@ -62,8 +69,9 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class remove extends TypedInnerClassEndpoint {
-		public void f(List<Object> keys) throws Throwable {
+	public class remove extends ProcedureEndpoint<List<Object>> {
+		@Override
+		public void doIt(List<Object> keys) throws Throwable {
 			map.keySet().removeAll(keys);
 		}
 
@@ -73,7 +81,8 @@ public class KeyValueService extends Service {
 		}
 	}
 
-	public class contains extends TypedInnerClassEndpoint {
+	public class contains extends FunctionEndPoint<List<Object>, List<Boolean>> {
+		@Override
 		public List<Boolean> f(List<Object> keys) throws Throwable {
 			return keys.stream().map(k -> map.containsKey(k)).toList();
 		}

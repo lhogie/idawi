@@ -12,7 +12,7 @@ public class CommandsService extends Service {
 		super(peer);
 	}
 
-	public class exec extends InnerClassEndpoint {
+	public class exec extends InnerClassEndpoint<CommandBackend, Object> {
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -23,8 +23,7 @@ public class CommandsService extends Service {
 					break;
 				}
 
-				((CommandBackend) m.content).runOnServer(component,
-						r -> component.defaultRoutingProtocol().send(r, m.replyTo));
+				((CommandBackend) m.content).runOnServer(component, r -> send(r, m.replyTo));
 			}
 		}
 

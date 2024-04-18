@@ -1,14 +1,20 @@
 package idawi.test;
 
-import java.awt.Color;
-import java.util.Arrays;
-
-import toools.text.TextUtilities;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 
 public class Test {
 
 	public static void main(String[] args) throws Throwable {
-		System.out.println(TextUtilities.split("a=fd", '='));
+
+		class E extends ArrayList<String>{
+			
+		}
+		
+		
+		var s = Class.forName(((ParameterizedType) E.class.getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()).getConstructor().newInstance();
+		
+		System.out.println(s.getClass());
 	}
 
 }

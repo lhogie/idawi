@@ -16,7 +16,7 @@ public class JustAMsg {
 		a.localView().g.markLinkActive(a, b, SharedMemoryTransport.class, false);
 
 		Idawi.agenda.start();
-		a.bb().exec(b, RoutingService.class, testEndpoint.class, null, null);
+		a.bb().exec(b, RoutingService.class, testEndpoint.class, null);
 		Idawi.agenda.stopWhen(() -> Idawi.agenda.time() >= 2, () -> System.out.println("done"));
 	}
 }

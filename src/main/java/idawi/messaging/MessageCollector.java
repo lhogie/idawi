@@ -13,7 +13,7 @@ public class MessageCollector {
 	public final MessageList messages = new MessageList();
 	public boolean gotEnough;
 	private final MessageQueue q;
-
+	public ProgressRatio lastProgressRation;
 	public static double DEFAULT_COLLECT_DURATION = 3;
 
 	public MessageCollector(MessageQueue q) {
@@ -36,6 +36,10 @@ public class MessageCollector {
 			var msg = q.poll_sync(remainingTime());
 
 			if (msg != null) {
+				if (msg.content instanceof ProgressRatio ratio) {
+					lastProgressRation = ratio;
+				}
+
 				messages.add(msg);
 				userCode.accept(this);
 			}
@@ -43,6 +47,15 @@ public class MessageCollector {
 
 		q.detach();
 		return this;
+	}
+
+	public double estimatedTimeRemaining() {
+		if (lastProgressRation == null) {
+			return -1;
+		}
+
+		double duration = Idawi.agenda.time() - startDate;
+		return duration * 1 / lastProgressRation.ratio() - duration;
 	}
 
 	public List<Object> collectNResults(double timeout, int n) {

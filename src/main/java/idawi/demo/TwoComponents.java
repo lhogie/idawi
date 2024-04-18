@@ -3,8 +3,8 @@ package idawi.demo;
 import java.util.Set;
 
 import idawi.Component;
+import idawi.Computation;
 import idawi.Idawi;
-import idawi.RemotelyRunningEndpoint;
 import idawi.service.DemoService;
 import idawi.transport.SharedMemoryTransport;
 import toools.io.Cout;
@@ -20,7 +20,8 @@ public class TwoComponents {
 
 		a.need(DemoService.class);
 		b.need(DemoService.class);
-		RemotelyRunningEndpoint r = a.bb().exec(b, DemoService.class, DemoService.stringLength.class, "salut", null);
+		
+		Computation r = a.defaultRoutingProtocol().exec(b, DemoService.class, DemoService.stringLength.class, msg -> msg.content = "salut");
 
 		System.out.println("collecting in  " + r.returnQ);
 		r.returnQ.collector().collect(c -> {

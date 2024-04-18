@@ -5,6 +5,7 @@ import java.util.Set;
 
 import idawi.Component;
 import idawi.Idawi;
+import idawi.Service;
 import idawi.routing.BlindBroadcasting;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.RoutingService;
@@ -44,7 +45,7 @@ public class PlotLargeNetwork {
 		Topologies.wirelessMesh(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 //		Topologies.dchain(r, (from, to) -> WiFiDirect.class, Set.of(r.get(0)));
 
-		r.get(0).bb().exec(ComponentMatcher.all, RoutingService.class, testEndpoint.class, null, null);
+		r.get(0).defaultRoutingProtocol().exec(ComponentMatcher.all, RoutingService.class, testEndpoint.class, null);
 
 		Idawi.enableEncryption = false;
 		Idawi.agenda.stopWhen(() -> Idawi.agenda.time() >= 5, () -> {
