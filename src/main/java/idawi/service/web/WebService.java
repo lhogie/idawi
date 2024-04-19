@@ -358,29 +358,31 @@ public class WebService extends Service {
 	private Object parmsFromQuery(Class<? extends Endpoint> endpointClass, Map<String, String> query)
 			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 		var spec = Endpoint.inputSpecification(endpointClass);
-		var r = defaultParms(spec);
+		var inputInstance = defaultParms(spec);
 
 		for (var k : new HashSet<>(query.keySet())) {
 			var v = query.remove(k);
 
 			if (k.equals("p")) {
-				r = Conversion.convert(v, spec);
+				inputInstance = Conversion.convert(v, spec);
 				break;
 			} else if (k.startsWith("p.")) {
 				var propName = k.substring(2);
-				r = Conversion.convert(v, spec);
+//				Cout.debugSuperVisible(v);
+				
+				var field = spec.getDeclaredField(propName);
+				var fieldValue = Conversion.convert(v, field.getType());
+//				Cout.debugSuperVisible(inputInstance.getClass());
 
 				if (propName.isEmpty()) {
 					query.put(k, v);
 				} else {
-					var field = spec.getDeclaredField(propName);
-					var fieldValue = Conversion.convert(v, field.getType());
-					field.set(r, fieldValue);
+					field.set(inputInstance, fieldValue);
 				}
 			}
 		}
 
-		return r;
+		return inputInstance;
 	}
 
 	private Object defaultParms(Class spec) {
