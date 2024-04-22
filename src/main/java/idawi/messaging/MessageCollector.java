@@ -58,7 +58,7 @@ public class MessageCollector {
 		return duration * 1 / lastProgressRation.ratio() - duration;
 	}
 
-	public List<Object> collectNResults(double timeout, int n) {
+	public List<?> collectNResults(double timeout, int n) {
 		collect(timeout, c -> c.gotEnough = c.messages.count(m -> m.isResult()) >= n);
 		return messages.throwAnyError().resultMessages(n).stream().map(m -> m.content).toList();
 	}

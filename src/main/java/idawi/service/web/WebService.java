@@ -250,14 +250,14 @@ public class WebService extends Service {
 		if (endpointClass == null)
 			return;
 
-		var content = parmsFromQuery(endpointClass, query);
+		var parms = Endpoint.from(query, endpointClass);
 
 		if (!query.isEmpty()) {
 			throw new IllegalStateException("unused parameters: " + query.keySet().toString());
 		}
 
 		var computation = exec(target, serviceClass, (Class) endpointClass, msg -> {
-			msg.content = content;
+			msg.content = parms;
 			msg.routingStrategy = new RoutingStrategy(routing, routingParms);
 			msg.eot = postDataInputStream == null;
 		});
@@ -355,35 +355,7 @@ public class WebService extends Service {
 		System.out.println("collecting completed");
 	}
 
-	private Object parmsFromQuery(Class<? extends Endpoint> endpointClass, Map<String, String> query)
-			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		var spec = Endpoint.inputSpecification(endpointClass);
-		var inputInstance = defaultParms(spec);
 
-		for (var k : new HashSet<>(query.keySet())) {
-			var v = query.remove(k);
-
-			if (k.equals("p")) {
-				inputInstance = Conversion.convert(v, spec);
-				break;
-			} else if (k.startsWith("p.")) {
-				var propName = k.substring(2);
-//				Cout.debugSuperVisible(v);
-				
-				var field = spec.getDeclaredField(propName);
-				var fieldValue = Conversion.convert(v, field.getType());
-//				Cout.debugSuperVisible(inputInstance.getClass());
-
-				if (propName.isEmpty()) {
-					query.put(k, v);
-				} else {
-					field.set(inputInstance, fieldValue);
-				}
-			}
-		}
-
-		return inputInstance;
-	}
 
 	private Object defaultParms(Class spec) {
 		try {

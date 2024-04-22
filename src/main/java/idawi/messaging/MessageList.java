@@ -13,7 +13,7 @@ import idawi.Component;
 import idawi.routing.Route;
 import toools.exceptions.ExceptionSet;
 
-public class MessageList extends ArrayList<Message> {
+public class MessageList extends ArrayList<Message<?>> {
 	private static final long serialVersionUID = 1L;
 	// public Enough enough;
 
@@ -100,7 +100,7 @@ public class MessageList extends ArrayList<Message> {
 		return this;
 	}
 
-	public List<Object> contents() {
+	public List<?> contents() {
 		return stream().map(m -> m.content).toList();
 	}
 
@@ -121,7 +121,7 @@ public class MessageList extends ArrayList<Message> {
 	public Map<Component, MessageList> sender2message() {
 		Map<Component, MessageList> r = new HashMap<>();
 
-		for (Message m : this) {
+		for (Message<?> m : this) {
 			MessageList l = r.get(m.route.source());
 
 			if (l == null) {
@@ -162,7 +162,7 @@ public class MessageList extends ArrayList<Message> {
 		}
 	}
 
-	public int count(Predicate<Message> p) {
+	public int count(Predicate<Message<?>> p) {
 		int n = 0;
 
 		for (var m : this) {

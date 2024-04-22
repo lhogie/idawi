@@ -6,7 +6,6 @@ import java.security.PublicKey;
 
 import idawi.transport.Link;
 import idawi.transport.TransportService;
-import toools.io.Cout;
 import toools.io.ser.JavaSerializer;
 
 public class IdawiSerializer extends JavaSerializer {
@@ -75,7 +74,7 @@ public class IdawiSerializer extends JavaSerializer {
 
 			twin.keyPair = new KeyPair(r.key, null);
 			twin.friendlyName = r.friendlyName; // may have changed
-		//	Cout.debugSuperVisible(r.friendlyName + "   ->   " + twin);
+			// Cout.debugSuperVisible(r.friendlyName + " -> " + twin);
 			return twin;
 		} else if (o instanceof SourceRepresentative representative) {
 			var src = representative.srcC.need(representative.srcT);

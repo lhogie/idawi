@@ -7,17 +7,16 @@ import toools.SizeOf;
 
 public class Image implements Serializable, SizeOf {
 
-	public String url;
 	public String base64;
 
-	public Image(String url) {
-		this.url = url;
-	}
-
-	public static Image random() throws IOException {
-		var image = new Image("https://picsum.photos/200/300");
-		image.base64 = Media.toBase64(image.url);
-		return image;
+	public static Image random() {
+		try {
+			var image = new Image();
+			image.base64 = Media.download("https://picsum.photos/200/300");
+			return image;
+		} catch (IOException e) {
+			return null;
+		}
 	}
 
 	@Override

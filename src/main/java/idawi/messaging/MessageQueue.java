@@ -8,7 +8,7 @@ import idawi.Service;
 import toools.io.Cout;
 import toools.thread.Q;
 
-public class MessageQueue extends Q<Message> {
+public class MessageQueue extends Q<Message<?>> {
 	public final Service service;
 	public final String name;
 //	private final Consumer<MessageQueue> destructor;

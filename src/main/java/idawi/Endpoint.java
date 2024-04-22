@@ -1,11 +1,12 @@
 package idawi;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
+import java.util.HashSet;
 import java.util.Map;
 
 import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
+import toools.reflect.Clazz;
 import toools.util.Conversion;
 
 public interface Endpoint<I, O> {
@@ -14,78 +15,79 @@ public interface Endpoint<I, O> {
 	default void digitalTwin(MessageQueue in) throws Throwable {
 		impl(in);
 	}
-	
-	
-	public default Class<I> inputSpecificationClass() {
+
+	public default Class<I> inputSpecification() {
 		return inputSpecification(getClass());
 	}
 
+	public default Class<O> outputSpecification() {
+		return outputSpecification(getClass());
+	}
+
 	public static <I, O, E extends Endpoint<I, O>> Class<I> inputSpecification(Class<E> c) {
-		return ioSpecification(c, 0);
+		return (Class<I>) ioSpecification(c, 0);
 	}
 
-	public static <E> Class<E> outputSpecification(Class<? extends Endpoint> c) {
-		return ioSpecification(c, 1);
+	public static <I, O, E extends Endpoint<I, O>> Class<O> outputSpecification(Class<E> c) {
+		return (Class<O>) ioSpecification(c, 1);
 	}
 
-	private static <E> Class<E> ioSpecification(Class<? extends Endpoint> c, int i) {
-		var a = ((ParameterizedType) c.getGenericSuperclass()).getActualTypeArguments()[i];
-		
-		if (a instanceof ParameterizedType pa) {
-			return (Class) pa.getRawType();
-		}else {
-			return (Class) a;
-		}
-	}
+	private static <I, O, E extends Endpoint<I, O>> Class<?> ioSpecification(Class<E> endpointClass, int i) {
+		var sc = endpointClass.getGenericSuperclass();
 
-	public default I defaultParms() {
-		try {
-			return (I) inputSpecificationClass().getConstructor().newInstance();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			throw new RuntimeException(e);
-		}
-	}
+		if (sc instanceof ParameterizedType pa) {
+			var ioType = pa.getActualTypeArguments()[i];
 
-	public default I parms(Message msg) {
-		return Endpoint.from(msg.content, inputSpecificationClass());
-	}
-
-	public default I convert(Object o) {
-		try {
-			var parmClass = inputSpecificationClass();
-
-			if (o instanceof Map<?, ?> map) {
-				var r = defaultParms();
-
-				for (var e : map.entrySet()) {
-					var fieldName = (String) e.getKey();
-					var targetField = parmClass.getField(fieldName);
-					var destinationClass = targetField.getType();
-					Object initialObject = e.getValue();
-
-					if (!destinationClass.isAssignableFrom(initialObject.getClass())) {
-						initialObject = Conversion.convert(initialObject, destinationClass);
-					}
-
-					targetField.set(r, initialObject);
-				}
-
-				return r;
+			if (ioType instanceof ParameterizedType parameterizedIOType) {
+				return (Class) parameterizedIOType.getRawType();
 			} else {
-				return Conversion.convert(o, parmClass);
+				return (Class) ioType;
 			}
-		} catch (Exception err) {
-			throw new RuntimeException(err);
+		} else {
+			return null;
 		}
 	}
 
-	public static <T> T from(Object o, Class<T> t) {
-		try {
-			return t == o.getClass() ? (T) o : t.getConstructor(Object.class).newInstance(o);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			throw new IllegalStateException(e);
+	public default I getInputFrom(Message<?> msg) {
+		return (I) msg.content;
+	}
+
+	public static <I, O, E extends Endpoint<I, O>> I from(Object input, Class<E> e) {
+		Class<I> inputSpec = Endpoint.inputSpecification(e);
+
+		if (inputSpec == null || inputSpec.isAssignableFrom(input.getClass())) {
+			return (I) input;
+		} else if (input instanceof Map<?, ?> map) {
+			var inputInstance = Clazz.makeInstance(inputSpec);
+
+			for (var k : new HashSet<>(map.keySet())) {
+				var v = map.get(k);
+
+				if (k.equals("p")) {
+					inputInstance = Conversion.convert(v, inputSpec);
+					map.remove(k);
+					break;
+				} else if (k.toString().startsWith("p.")) {
+					var propName = k.toString().substring(2);
+
+					if (!propName.isEmpty()) {
+						try {
+							var field = inputSpec.getDeclaredField(propName);
+							var fieldValue = Conversion.convert(v, field.getType());
+							field.set(inputInstance, fieldValue);
+							map.remove(k);
+						} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+								| IllegalAccessException err) {
+							throw new RuntimeException(err);
+						}
+					}
+				}
+			}
+
+			return inputInstance;
+		} else {
+			return Conversion.convert(input, inputSpec);
 		}
 	}
+
 }

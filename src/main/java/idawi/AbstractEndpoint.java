@@ -31,12 +31,15 @@ public abstract class AbstractEndpoint<I, O> implements Endpoint<I, O>, SizeOf {
 		return getDeclaringServiceClass() != Service.class;
 	}
 
-	protected void reply(Object o, Message<I> m) {
+	protected void reply(Object o, Message<?> m) {
 		service.send(o, m.replyTo);
 	}
 
-	protected <I> void reply(Consumer<Message<I>> m) {
-		service.sendd(m);
+	protected void reply(Message<?> m, Consumer<Message<?>> c) {
+		service.send(msg -> {
+			msg.qAddr = m.replyTo;
+			c.accept(m);
+		});
 	}
 
 	protected abstract Class<? extends Service> getDeclaringServiceClass();

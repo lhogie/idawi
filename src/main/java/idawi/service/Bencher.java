@@ -126,7 +126,7 @@ public class Bencher extends Service {
 		@Override
 		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-			int size = parms(m);
+			int size = getInputFrom(m);
 			localBench(size, r -> send(r, m.replyTo));
 		}
 

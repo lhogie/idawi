@@ -85,7 +85,7 @@ public class DirectorySharingService extends Service {
 		@Override
 		public void impl(MessageQueue q) throws IOException {
 			var msg = q.poll_sync();
-			var parms = parms(msg);
+			var parms = getInputFrom(msg);
 			dir.ensureExists();
 			var f = new RegularFile(dir, parms.name);
 			var inputStream = f.createReadingStream();

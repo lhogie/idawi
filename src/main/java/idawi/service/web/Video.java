@@ -13,7 +13,7 @@ public class Video implements Serializable {
 
     public static Video random() throws IOException {
         var video = new Video("https://www.youtube.com/embed/5qap5aO4i9A");
-        video.base64 = Media.toBase64(video.url);
+        video.base64 = Media.download(video.url);
         return video;
     }
 }

@@ -49,7 +49,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var tg = in.poll_sync();
-			var n = parms(tg);
+			var n = getInputFrom(tg);
 
 			for (int i = 0; i < n; ++i) {
 				var eot = i == n - 1;
@@ -160,7 +160,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
 			var m = in.poll_sync();
-			AAA a = parms(m);
+			AAA a = getInputFrom(m);
 
 			for (int i = 0; i < a.n; ++i) {
 				var eot = i == a.n - 1;
@@ -193,7 +193,7 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) {
 			var m = in.poll_sync();
-			var p = parms(m);
+			var p = getInputFrom(m);
 
 			for (int i = p.a; i < p.b; ++i) {
 				var eot = i == p.b - 1;

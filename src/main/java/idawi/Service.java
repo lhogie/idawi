@@ -478,11 +478,16 @@ public class Service implements SizeOf, Serializable {
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
 			msg.endpointID = e;
-			try {
-				msg.content = Endpoint.inputSpecification(e).getConstructor().newInstance();
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException err) {
-//				throw new IllegalStateException(err);
+			
+			var iSpec = Endpoint.inputSpecification(e);
+			
+			if (iSpec != null) {
+				try {
+					msg.content = iSpec.getConstructor().newInstance();
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException err) {
+//					throw new IllegalStateException(err);
+				}
 			}
 		}, msgCustomizer);
 	}
@@ -504,7 +509,7 @@ public class Service implements SizeOf, Serializable {
 		}, msgCustomizer);
 	}
 
-	protected <I> Computation sendd(Consumer<Message<I>> msgCustomizer) {
+	protected <I> Computation send(Consumer<Message<I>> msgCustomizer) {
 		return prepareExec(msg -> msg.endpointID = deliverToQueue.class, msgCustomizer);
 	}
 

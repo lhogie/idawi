@@ -9,7 +9,7 @@ public abstract class FunctionEndPoint<I, O> extends InnerClassEndpoint<I, O> im
 	@Override
 	public final void impl(MessageQueue in) throws Throwable {
 		var msg = in.poll_sync();
-		I parms = parms(msg);
+		I parms = getInputFrom(msg);
 		O response = f(parms);
 		reply(response, msg);
 	}
