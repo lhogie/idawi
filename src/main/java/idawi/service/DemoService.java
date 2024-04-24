@@ -301,7 +301,7 @@ public class DemoService extends Service {
 				try {
 					var i = new RawData();
 					i.mimeType = "image/jpeg";
-					i.base64 = TextUtilities.base64(loremPicsum.imageData(new Dimension(200, 100)));
+					i.bytes = loremPicsum.imageData(new Dimension(200, 100));
 					return i;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
@@ -380,9 +380,8 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 			var rd = new RawData();
-			var bytes = NetUtilities.retrieveURLContent(
+			rd.bytes = NetUtilities.retrieveURLContent(
 					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg");
-			rd.base64 = TextUtilities.base64(bytes);
 			rd.mimeType = "image/jpeg";
 
 			send(rd, msg.replyTo, m -> msg.eot = true);
