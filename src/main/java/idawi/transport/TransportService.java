@@ -83,7 +83,7 @@ public abstract class TransportService extends Service {
 				if (targetService == null) {
 					if (msg.ackReqs != null && msg.ackReqs.contains(serviceNotAvailable.class)) {
 						var ack = new serviceNotAvailable(msg.qAddr.service, component, msg);
-						sendd(ack, msg.replyTo, outM -> outM.eot = true);
+						send(ack, msg.replyTo, outM -> outM.eot = true);
 						System.out.println(
 								"component " + component + " does not have service " + msg.qAddr.service.getName());
 					}

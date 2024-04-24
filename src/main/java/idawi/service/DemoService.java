@@ -53,7 +53,7 @@ public class DemoService extends Service {
 
 			for (int i = 0; i < n; ++i) {
 				var eot = i == n - 1;
-				sendd(new Random().nextInt(), tg.replyTo, msg -> msg.eot = eot);
+				send(new Random().nextInt(), tg.replyTo, msg -> msg.eot = eot);
 				Threads.sleepMs(1000);
 			}
 		}
@@ -91,7 +91,7 @@ public class DemoService extends Service {
 				}
 			}
 
-			sendd(null, trigger.replyTo, m -> m.eot = true);
+			send(null, trigger.replyTo, m -> m.eot = true);
 		}
 
 		@Override
@@ -164,7 +164,7 @@ public class DemoService extends Service {
 
 			for (int i = 0; i < a.n; ++i) {
 				var eot = i == a.n - 1;
-				sendd(i, m.replyTo, msg -> msg.eot = eot);
+				send(i, m.replyTo, msg -> msg.eot = eot);
 				Threads.sleep(a.sleepTime);
 			}
 		}
@@ -197,7 +197,7 @@ public class DemoService extends Service {
 
 			for (int i = p.a; i < p.b; ++i) {
 				var eot = i == p.b - 1;
-				sendd(i, m.replyTo, msg -> msg.eot = eot);
+				send(i, m.replyTo, msg -> msg.eot = eot);
 			}
 		}
 	}
@@ -210,6 +210,10 @@ public class DemoService extends Service {
 
 		@Override
 		public byte[] f(Dimension d) throws IOException {
+			return imageData(d);
+		}
+
+		public static byte[] imageData(Dimension d) throws IOException {
 			int id = new Random().nextInt(100);
 			String url = "https://picsum.photos/id/" + id + "/" + d.width + "/" + d.height;
 			return NetUtilities.retrieveURLContent(url);
@@ -255,7 +259,7 @@ public class DemoService extends Service {
 			for (int i = 0; i < target; ++i) {
 				send(i, msg.replyTo);
 				var eot = i == target - 1;
-				sendd(new ProgressRatio(i, target), msg.replyTo, m -> m.eot = eot);
+				send(new ProgressRatio(i, target), msg.replyTo, m -> m.eot = eot);
 			}
 		}
 	}
@@ -281,17 +285,19 @@ public class DemoService extends Service {
 				}
 			}
 
-			List<R> l = new ArrayList<>();
-			l.add(() -> new ProgressRatio(rand.nextInt(100), 100));
-			l.add(() -> rand.nextInt());
-			l.add(() -> {
+			List<R> suppliers = new ArrayList<>();
+			suppliers.add(() -> new ProgressRatio(rand.nextInt(100), 100));
+			suppliers.add(() -> rand.nextInt());
+			suppliers.add(() -> {
 				try {
-					return lookupEndpoint(loremPicsum.class).f(new Dimension(200, 100));
+					var i = new Image();
+					i.base64 = TextUtilities.base64(loremPicsum.imageData(new Dimension(200, 100)));
+					return i;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			});
-			l.add(() -> new ProgressMessage("I'm still working!"));
+			suppliers.add(() -> new ProgressMessage("I'm still working!"));
 
 			for (int i = 0; i < target; ++i) {
 				if (in.size() > 0) {
@@ -302,12 +308,13 @@ public class DemoService extends Service {
 					}
 				}
 
-				var d = l.get(rand.nextInt(l.size()));
-				sendd(d.get(), msg.replyTo, m -> m.eot = false);
+				var randomSupplier = suppliers.get(rand.nextInt(suppliers.size()));
+				var randomValue = randomSupplier.get();
+				send(randomValue, msg.replyTo, m -> m.eot = false);
 				Threads.sleep(rand.nextDouble());
 			}
 
-			sendd(new ProgressRatio(target, target), msg.replyTo, m -> m.eot = true);
+			send(new ProgressRatio(target, target), msg.replyTo, m -> m.eot = true);
 		}
 	}
 
@@ -321,7 +328,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			sendd(Graph.random(), msg.replyTo, m -> msg.eot = true);
+			send(Graph.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -335,7 +342,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			sendd(Chart.random(), msg.replyTo, m -> msg.eot = true);
+			send(Chart.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -349,7 +356,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			sendd(Image.random(), msg.replyTo, m -> msg.eot = true);
+			send(Image.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -368,7 +375,7 @@ public class DemoService extends Service {
 			rd.base64 = TextUtilities.base64(bytes);
 			rd.mimeType = "image/jpeg";
 
-			sendd(rd, msg.replyTo, m -> msg.eot = true);
+			send(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}
 
@@ -382,7 +389,7 @@ public class DemoService extends Service {
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
 
-			sendd(Video.random(), msg.replyTo, m -> msg.eot = true);
+			send(Video.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
 }

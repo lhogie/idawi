@@ -498,10 +498,10 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public Computation send(Object content, QueueAddress dest) {
-		return sendd(content, dest, msg -> msg.eot = false);
+		return send(content, dest, msg -> msg.eot = false);
 	}
 
-	public <I> Computation sendd(I content, QueueAddress dest, Consumer<Message<I>> msgCustomizer) {
+	public <I> Computation send(I content, QueueAddress dest, Consumer<Message<I>> msgCustomizer) {
 		return prepareExec(msg -> {
 			msg.qAddr = dest;
 			msg.endpointID = deliverToQueue.class;

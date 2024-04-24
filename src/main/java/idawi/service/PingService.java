@@ -18,7 +18,7 @@ public class PingService extends Service {
 			var m = in.poll_sync();
 			Cout.debugSuperVisible("PIINNGGG");
 			// sends back the ping message to the caller
-			sendd(m, m.replyTo, mmsg -> mmsg.eot = true);
+			send(m, m.replyTo, mmsg -> mmsg.eot = true);
 		}
 
 		@Override

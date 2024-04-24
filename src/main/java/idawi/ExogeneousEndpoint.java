@@ -40,7 +40,7 @@ public abstract class ExogeneousEndpoint extends InnerClassEndpoint {
 
 			@Override
 			protected void terminated(int returnCode) {
-				service.sendd(new Output<Integer>(returnCode, false), execM.replyTo, m -> m.eot = true);
+				service.send(new Output<Integer>(returnCode, false), execM.replyTo, m -> m.eot = true);
 				t.interrupt();
 			}
 

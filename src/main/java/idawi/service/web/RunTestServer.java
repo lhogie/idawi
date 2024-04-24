@@ -20,7 +20,7 @@ import idawi.transport.TransportService;
 public class RunTestServer {
 
 	public static void main(String[] args) throws Throwable {
-		int n = 1;
+		int n = 5;
 		var components = new ArrayList<Component>();
 		components.addAll(Component.createNComponent(n));
 

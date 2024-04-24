@@ -9,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +57,6 @@ import toools.net.NetUtilities;
 import toools.reflect.Clazz;
 import toools.security.AES;
 import toools.text.TextUtilities;
-import toools.util.Conversion;
 
 public class WebService extends Service {
 
@@ -230,7 +228,7 @@ public class WebService extends Service {
 		Predicate<MessageCollector> stopCollectingWhen = Utils
 				.parseGotEnoughCondition(Utils.removeOrDefault(query, "enough", null, null));
 		double timeout = Double.valueOf(Utils.removeOrDefault(query, "timeout", "1", null));
-		boolean compress = Boolean.valueOf(Utils.removeOrDefault(query, "compress", "false", Set.of("true", "false")));
+		boolean gzip = Boolean.valueOf(Utils.removeOrDefault(query, "gzip", "false", Set.of("true", "false")));
 		boolean encrypt = Boolean.valueOf(Utils.removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
 		var whatToSendF = whatToSendMap
 				.get(String.valueOf(Utils.removeOrDefault(query, "what", "msg", whatToSendMap.keySet())));
@@ -302,16 +300,11 @@ public class WebService extends Service {
 						String serializerName = encodingsFromClient[0];
 						var ser = name2serializer.get(serializerName);
 						Object o = ser.fromBytes(postData);
-						sendd(o, computation.inputQAddr, msg -> {
-							msg.eot = true;
+						send(o, computation.inputQAddr, msg -> {
+							msg.eot = false;
 							msg.routingStrategy = new RoutingStrategy(routing);
 						});
 					}
-
-					sendd(null, computation.inputQAddr, msg -> {
-						msg.eot = true;
-						msg.routingStrategy = new RoutingStrategy(routing);
-					});
 				} catch (IOException e1) {
 				}
 			}).start();
@@ -327,9 +320,9 @@ public class WebService extends Service {
 			var ser = what2send instanceof byte[] ? name2serializer.get("bytes") : serializer;
 			var bytes = ser.toBytes(what2send);
 			encodingsToClient.add(ser.getMIMEType());
-			boolean base64 = ser.isBinary() || compress || encrypt;
+			boolean base64 = ser.isBinary() || gzip || encrypt;
 
-			if (compress) {
+			if (gzip) {
 				bytes = Utilities.gzip(bytes);
 				encodingsToClient.add("gzip");
 			}
@@ -355,16 +348,6 @@ public class WebService extends Service {
 		System.out.println("collecting completed");
 	}
 
-
-
-	private Object defaultParms(Class spec) {
-		try {
-			return spec.getConstructor().newInstance();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			return null;
-		}
-	}
 
 	private <I, O, S extends Service> Class<? extends Endpoint<I, O>> endpoint(Map<String, String> query,
 			OutputStream output, Serializer serializer, ComponentMatcher matcher, RoutingService<?> r,

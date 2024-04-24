@@ -63,9 +63,9 @@ public class ExternalCommandsService extends Service {
 				while (true) {
 					try {
 						byte[] b = stdout.readNBytes(1000);
-						sendd(b, parmMsg.replyTo, m -> m.eot = b.length == 0);
+						send(b, parmMsg.replyTo, m -> m.eot = b.length == 0);
 					} catch (IOException e) {
-						sendd(e, parmMsg.replyTo, m -> m.eot = true);
+						send(e, parmMsg.replyTo, m -> m.eot = true);
 						break;
 					}
 				}
@@ -120,7 +120,7 @@ public class ExternalCommandsService extends Service {
 
 			if (!eofIN) {
 				var wav = stdin.readNBytes(1000);
-				sendd(wav, s.inputQAddr, m -> m.eot = wav.length == 0);
+				send(wav, s.inputQAddr, m -> m.eot = wav.length == 0);
 			}
 		}
 	}
