@@ -297,6 +297,16 @@ public class DemoService extends Service {
 					throw new RuntimeException(e);
 				}
 			});
+			suppliers.add(() -> {
+				try {
+					var i = new RawData();
+					i.mimeType = "image/jpeg";
+					i.base64 = TextUtilities.base64(loremPicsum.imageData(new Dimension(200, 100)));
+					return i;
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
 			suppliers.add(() -> new ProgressMessage("I'm still working!"));
 
 			for (int i = 0; i < target; ++i) {
