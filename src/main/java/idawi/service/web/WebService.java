@@ -227,7 +227,7 @@ public class WebService extends Service {
 
 		Predicate<MessageCollector> stopCollectingWhen = Utils
 				.parseGotEnoughCondition(Utils.removeOrDefault(query, "enough", null, null));
-		double timeout = Double.valueOf(Utils.removeOrDefault(query, "timeout", "1", null));
+		double duration = Double.valueOf(Utils.removeOrDefault(query, "duration", "1", null));
 		boolean gzip = Boolean.valueOf(Utils.removeOrDefault(query, "gzip", "false", Set.of("true", "false")));
 		boolean encrypt = Boolean.valueOf(Utils.removeOrDefault(query, "encrypt", "no", Set.of("yes", "no")));
 		var whatToSendF = whatToSendMap
@@ -312,7 +312,7 @@ public class WebService extends Service {
 
 		System.out.println("collecting...");
 
-		collector.collect(timeout, collecto -> {
+		collector.collect(duration, collecto -> {
 			collecto.gotEnough = stopCollectingWhen.test(collecto);
 			List<String> encodingsToClient = new ArrayList<>();
 			Object what2send = whatToSendF.apply(collecto);

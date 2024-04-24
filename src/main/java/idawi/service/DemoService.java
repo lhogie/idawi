@@ -383,7 +383,6 @@ public class DemoService extends Service {
 			rd.bytes = NetUtilities.retrieveURLContent(
 					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg");
 			rd.mimeType = "image/jpeg";
-
 			send(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}
