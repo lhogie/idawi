@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -14,6 +16,7 @@ import idawi.InnerClassEndpoint;
 import idawi.ProcedureEndpoint;
 import idawi.Service;
 import idawi.SupplierEndPoint;
+import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
@@ -277,26 +280,32 @@ public class DemoService extends Service {
 
 			var rand = new Random();
 
-			interface R extends Supplier<Object>, SizeOf {
+			List<Supplier<?>> suppliers = new ArrayList<>();
+			suppliers.add(() -> new ProgressRatio(rand.nextInt(100), 100));
+			suppliers.add(() -> new ProgressMessage("I'm still working!"));
+			suppliers.add(() -> rand.nextInt());
+			suppliers.add(() -> rand.nextBoolean());
+			suppliers.add(() -> rand.nextDouble());
+			suppliers.add(() -> rand.nextFloat());
+			suppliers.add(() -> rand.nextLong());
+			suppliers.add(() -> TextUtilities.pickRandomString(rand, 1, 10));
+			suppliers.add(() -> new Float[] { rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), rand.nextFloat() });
+			suppliers.add(
+					() -> new Double[] { rand.nextDouble(), rand.nextDouble(), rand.nextDouble(), rand.nextDouble() });
+			suppliers.add(() -> new Message<>());
+			suppliers.add(() -> new IOException("some I/O error happened"));
 
-				@Override
-				public default long sizeOf() {
-					return 0;
+			{
+				var m = new HashMap<Integer, Double>();
+				for (int i = 0; i < 10; ++i) {
+					m.put(i, i / 2d);
 				}
+
+				suppliers.add(() -> m);
+				suppliers.add(() -> new HashSet<>(m.keySet()));
+				suppliers.add(() -> new HashSet<>(m.values()));
 			}
 
-			List<R> suppliers = new ArrayList<>();
-			suppliers.add(() -> new ProgressRatio(rand.nextInt(100), 100));
-			suppliers.add(() -> rand.nextInt());
-			suppliers.add(() -> {
-				try {
-					var i = new Image();
-					i.base64 = TextUtilities.base64(loremPicsum.imageData(new Dimension(200, 100)));
-					return i;
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
 			suppliers.add(() -> {
 				try {
 					var i = new RawData();
@@ -307,7 +316,45 @@ public class DemoService extends Service {
 					throw new RuntimeException(e);
 				}
 			});
-			suppliers.add(() -> new ProgressMessage("I'm still working!"));
+
+			suppliers.add(() -> {
+				var i = new RawData();
+				i.mimeType = "text/csv";
+				i.bytes = "John,Paul,George,Ringo\nguitar,bass,guitar,drums".getBytes();
+				return i;
+			});
+
+			suppliers.add(() -> {
+				var i = new RawData();
+				i.mimeType = "text/html";
+				i.bytes = "<a href=\"https://www.google.com/\">Hello <b>Google</b></a>".getBytes();
+				return i;
+			});
+
+			suppliers.add(() -> {
+				var i = new RawData();
+				i.mimeType = "application/javascript";
+				i.bytes = "alert( 'Hello, world!' );".getBytes();
+				return i;
+			});
+
+			suppliers.add(() -> {
+				var i = new RawData();
+				i.mimeType = "application/javascript";
+				i.bytes = "alert( 'Hello, world!' );".getBytes();
+				return i;
+			});
+
+			suppliers.add(() -> {
+				var i = new RawData();
+				i.mimeType = "image/svg+xml";
+				i.bytes = ("<svg height=\"150\" width=\"500\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+						+ "  <ellipse cx=\"240\" cy=\"100\" rx=\"220\" ry=\"30\" fill=\"purple\" />\n"
+						+ "  <ellipse cx=\"220\" cy=\"70\" rx=\"190\" ry=\"20\" fill=\"lime\" />\n"
+						+ "  <ellipse cx=\"210\" cy=\"45\" rx=\"170\" ry=\"15\" fill=\"yellow\" />\n"
+						+ "  Sorry, your browser does not support inline SVG. \n" + "</svg>").getBytes();
+				return i;
+			});
 
 			for (int i = 0; i < target; ++i) {
 				if (in.size() > 0) {

@@ -348,7 +348,6 @@ public class WebService extends Service {
 		System.out.println("collecting completed");
 	}
 
-
 	private <I, O, S extends Service> Class<? extends Endpoint<I, O>> endpoint(Map<String, String> query,
 			OutputStream output, Serializer serializer, ComponentMatcher matcher, RoutingService<?> r,
 			RoutingParameters rp, Class<S> s, Predicate<MessageCollector> stopCollectingWhen)
@@ -412,7 +411,7 @@ public class WebService extends Service {
 
 			return (RoutingService) component.service(serviceClass);
 		} else {
-			new Suggestion("r", "gives the name of an routing algorithm",
+			new Suggestion("r", "gives the class name of a routing algorithm",
 					component.services(RoutingService.class).stream().map(s -> s.getClass()).toList())
 					.send(output, serializer);
 			return component.defaultRoutingProtocol();
