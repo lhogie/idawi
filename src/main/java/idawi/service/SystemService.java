@@ -47,7 +47,7 @@ public class SystemService extends Service {
 		}
 
 		@Override
-		protected String r() {
+		public String getDescription() {
 			return "an updated description of the host component";
 		}
 	}
@@ -73,7 +73,7 @@ public class SystemService extends Service {
 		}
 
 		@Override
-		protected String r() {
+		public String getDescription() {
 			return "return a hash of the binaries";
 		}
 	}
@@ -85,7 +85,7 @@ public class SystemService extends Service {
 		}
 
 		@Override
-		protected String r() {
+		public String getDescription() {
 			return "the size of the binaries";
 		}
 
@@ -99,7 +99,7 @@ public class SystemService extends Service {
 		}
 
 		@Override
-		protected String r() {
+		public String getDescription() {
 			return "gets the system properties";
 		}
 	}

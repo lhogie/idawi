@@ -46,7 +46,7 @@ public class ExternalCommandsService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return null;
 		}
 	}

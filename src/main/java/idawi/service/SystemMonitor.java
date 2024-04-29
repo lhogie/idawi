@@ -35,7 +35,7 @@ public class SystemMonitor extends Service {
 	public class get extends SupplierEndPoint<SystemInfo> {
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "the lastest proble";
 		}
 
@@ -60,7 +60,7 @@ public class SystemMonitor extends Service {
 	public class loadAvg extends SupplierEndPoint<Double> {
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "the load average";
 		}
 

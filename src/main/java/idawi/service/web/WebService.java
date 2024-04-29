@@ -60,18 +60,6 @@ import toools.text.TextUtilities;
 
 public class WebService extends Service {
 
-	public static abstract class TypedObject<T> {
-		T value;
-
-		public abstract String nature();
-	}
-
-	public static abstract class HTMLRenderableObject<T> {
-		protected T value;
-
-		public abstract String html();
-	}
-
 	public static int DEFAULT_PORT = 8081;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 

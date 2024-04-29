@@ -25,7 +25,7 @@ public class ServiceManager extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "listRoutingServices";
 		}
 	}
@@ -36,7 +36,7 @@ public class ServiceManager extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "gives the ID the services available on the local component";
 		}
 	}
@@ -71,7 +71,7 @@ public class ServiceManager extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "services available in this component";
 		}
 	}

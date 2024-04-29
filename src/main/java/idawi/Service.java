@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import idawi.Endpoint.EDescription;
 import idawi.messaging.ACK.eventScheduled;
 import idawi.messaging.ACK.processingCompleted;
 import idawi.messaging.ACK.processingStarts;
@@ -19,7 +20,6 @@ import idawi.messaging.MessageQueue;
 import idawi.messaging.RoutingStrategy;
 import idawi.routing.ComponentMatcher;
 import idawi.routing.QueueAddress;
-import idawi.routing.RoutingService;
 import idawi.service.ErrorLog;
 import idawi.service.local_view.ServiceInfo;
 import toools.SizeOf;
@@ -63,17 +63,12 @@ public class Service implements SizeOf, Serializable {
 		return s.component.equals(component) && getClass().equals(s.getClass());
 	}
 
+	@EDescription("gets the friendly name")
 	public class getFriendlyName extends SupplierEndPoint<String> {
 
 		@Override
 		public String get() {
 			return getFriendlyName();
-		}
-
-		@Override
-		protected String r() {
-			// TODO Auto-generated method stub
-			return null;
 		}
 
 	}
@@ -90,24 +85,16 @@ public class Service implements SizeOf, Serializable {
 		return this.directory;
 	}
 
+	@EDescription("returns the number of messages received")
 	public class nbMessagesReceived extends SupplierEndPoint<Long> {
 		@Override
 		public Long get() {
 			return nbMsgsReceived;
 		}
-
-		@Override
-		protected String r() {
-			return "the number of messages received";
-		}
 	}
 
+	@EDescription("the name of available operations")
 	public class listEndpoints extends SupplierEndPoint<Set<Class<? extends Endpoint<?, ?>>>> {
-		@Override
-		public String r() {
-			return "the name of available operations";
-		}
-
 		@Override
 		public Set<Class<? extends Endpoint<?, ?>>> get() {
 			var r = new HashSet<Class<? extends Endpoint<?, ?>>>();
@@ -343,8 +330,8 @@ public class Service implements SizeOf, Serializable {
 			getQueue(qid).toList();
 		}
 	}
-	
-	public class endpointInputSpecs extends FunctionEndPoint<Class<Endpoint>, Class> {		
+
+	public class endpointInputSpecs extends FunctionEndPoint<Class<Endpoint>, Class> {
 		@Override
 		public String getDescription() {
 			return "returns input spec of an endpoint";
@@ -478,9 +465,9 @@ public class Service implements SizeOf, Serializable {
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
 			msg.endpointID = e;
-			
+
 			var iSpec = Endpoint.inputSpecification(e);
-			
+
 			if (iSpec != null) {
 				try {
 					msg.content = iSpec.getConstructor().newInstance();
@@ -492,8 +479,8 @@ public class Service implements SizeOf, Serializable {
 		}, msgCustomizer);
 	}
 
-	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Computation exec(Component c,
-			Class<S> service, Class<E> e, Consumer<Message<I>> msgCustomizer) {
+	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Computation exec(Component c, Class<S> service,
+			Class<E> e, Consumer<Message<I>> msgCustomizer) {
 		return exec(ComponentMatcher.unicast(c), service, e, msgCustomizer);
 	}
 
@@ -515,8 +502,8 @@ public class Service implements SizeOf, Serializable {
 
 	public static double RPC_TIMEOUT = 5;
 
-	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Object exec_rpc(Component to,
-			Class<S> service, Class<E> e, Consumer<Message<I>> c) {
+	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Object exec_rpc(Component to, Class<S> service,
+			Class<E> e, Consumer<Message<I>> c) {
 
 		try {
 			var rc = exec(to, service, e, c);

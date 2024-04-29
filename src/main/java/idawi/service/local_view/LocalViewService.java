@@ -140,7 +140,7 @@ public class LocalViewService extends KnowledgeBase {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get all known components";
 		}
 	}

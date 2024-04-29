@@ -8,7 +8,7 @@ import toools.SizeOf;
 import toools.io.file.Directory;
 import toools.io.file.RegularFile;
 
-public abstract class ExogeneousEndpoint extends InnerClassEndpoint {
+public abstract class NonJavaEndpoint extends InnerClassEndpoint {
 
 	public static class Output<E> implements Serializable, SizeOf {
 		public E msg;
@@ -27,7 +27,7 @@ public abstract class ExogeneousEndpoint extends InnerClassEndpoint {
 
 	private final Directory directory;
 
-	public ExogeneousEndpoint(Directory directory) {
+	public NonJavaEndpoint(Directory directory) {
 		this.directory = directory;
 	}
 
@@ -63,6 +63,8 @@ public abstract class ExogeneousEndpoint extends InnerClassEndpoint {
 				break;
 			}
 		}
+		
+		f.endOfTransmission();
 	}
 
 	protected abstract RegularFile executable();

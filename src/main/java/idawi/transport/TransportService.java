@@ -213,7 +213,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "number of message received so far";
 		}
 	}
@@ -225,7 +225,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get the neighborhood";
 		}
 	}

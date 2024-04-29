@@ -36,7 +36,7 @@ public class ErrorLog extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "the errors stored in this component";
 		}
 	}

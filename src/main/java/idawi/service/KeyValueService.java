@@ -41,7 +41,7 @@ public class KeyValueService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "a value";
 		}
 	}
@@ -52,7 +52,7 @@ public class KeyValueService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "the number of keys";
 		}
 	}

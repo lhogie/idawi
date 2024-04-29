@@ -18,7 +18,7 @@ public class TimeService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "gets the current time";
 		}
 	}
@@ -30,7 +30,7 @@ public class TimeService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get the time model";
 		}
 	}

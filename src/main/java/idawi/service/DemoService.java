@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
+import javax.swing.JLabel;
+
 import idawi.Component;
+import idawi.Endpoint.EDescription;
 import idawi.FunctionEndPoint;
 import idawi.InnerClassEndpoint;
 import idawi.ProcedureEndpoint;
@@ -42,12 +45,8 @@ public class DemoService extends Service {
 		});
 	}
 
+	@EDescription("sends a random message every second")
 	public class multipleRandomMessages extends InnerClassEndpoint<Integer, Integer> {
-
-		@Override
-		public String getDescription() {
-			return "sends a random message every second";
-		}
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -62,15 +61,11 @@ public class DemoService extends Service {
 		}
 	}
 
+	@EDescription("waits")
 	public class waiting extends ProcedureEndpoint<Double> {
 		@Override
 		public void doIt(Double d) {
 			Threads.sleepMs((long) (d * 1000));
-		}
-
-		@Override
-		public String getDescription() {
-			return "just waits";
 		}
 	}
 
@@ -96,12 +91,6 @@ public class DemoService extends Service {
 
 			send(null, trigger.replyTo, m -> m.eot = true);
 		}
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 	}
 
 //	public static interface stringLength extends Operation2 {
@@ -125,35 +114,22 @@ public class DemoService extends Service {
 //	}
 
 	public class stringLength extends FunctionEndPoint<String, Integer> {
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 		@Override
 		public Integer f(String s) throws Throwable {
 			return s.length();
 		}
 	}
 
+	@EDescription("gives a chart")
 	public class chart extends SupplierEndPoint<Chart> {
-		@Override
-		public String r() {
-			return "gives a chart";
-		}
-
 		@Override
 		public Chart get() {
 			return new Chart();
 		}
 	}
 
+	@EDescription("replies n messages")
 	public class countFrom1toN extends InnerClassEndpoint<AAA, Integer> {
-		@Override
-		public String getDescription() {
-			return "replies n messages";
-		}
 
 		public static class AAA implements Serializable {
 			public double sleepTime;
@@ -174,18 +150,13 @@ public class DemoService extends Service {
 	}
 
 	public class countFromAtoB extends InnerClassEndpoint<Range, Integer> {
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 		public static class Range implements Serializable, SizeOf {
+			int a, b;
+
 			public Range(int i, int j) {
 				this.a = i;
 				this.b = j;
 			}
-
-			int a, b;
 
 			@Override
 			public long sizeOf() {
@@ -205,11 +176,8 @@ public class DemoService extends Service {
 		}
 	}
 
+	@EDescription("random image")
 	public class loremPicsum extends FunctionEndPoint<Dimension, byte[]> {
-		@Override
-		public String getDescription() {
-			return "returns a random image";
-		}
 
 		@Override
 		public byte[] f(Dimension d) throws IOException {
@@ -224,10 +192,6 @@ public class DemoService extends Service {
 	}
 
 	public class throwError extends InnerClassEndpoint {
-		@Override
-		public String getDescription() {
-			return null;
-		}
 
 		@Override
 		public void impl(MessageQueue in) {
@@ -236,10 +200,6 @@ public class DemoService extends Service {
 	}
 
 	public class quitAll extends InnerClassEndpoint {
-		@Override
-		public String getDescription() {
-			return null;
-		}
 
 		@Override
 		public void impl(MessageQueue in) {
@@ -288,6 +248,7 @@ public class DemoService extends Service {
 			suppliers.add(() -> rand.nextDouble());
 			suppliers.add(() -> rand.nextFloat());
 			suppliers.add(() -> rand.nextLong());
+			suppliers.add(() -> new JLabel("test"));
 			suppliers.add(() -> TextUtilities.pickRandomString(rand, 1, 10));
 			suppliers.add(() -> new Float[] { rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), rand.nextFloat() });
 			suppliers.add(
@@ -317,33 +278,9 @@ public class DemoService extends Service {
 				}
 			});
 
-			suppliers.add(() -> {
-				var i = new RawData();
-				i.mimeType = "text/csv";
-				i.bytes = "John,Paul,George,Ringo\nguitar,bass,guitar,drums".getBytes();
-				return i;
-			});
-
-			suppliers.add(() -> {
-				var i = new RawData();
-				i.mimeType = "text/html";
-				i.bytes = "<a href=\"https://www.google.com/\">Hello <b>Google</b></a>".getBytes();
-				return i;
-			});
-
-			suppliers.add(() -> {
-				var i = new RawData();
-				i.mimeType = "application/javascript";
-				i.bytes = "alert( 'Hello, world!' );".getBytes();
-				return i;
-			});
-
-			suppliers.add(() -> {
-				var i = new RawData();
-				i.mimeType = "application/javascript";
-				i.bytes = "alert( 'Hello, world!' );".getBytes();
-				return i;
-			});
+			suppliers.add(() -> new RawData.javascript("alert( 'Hello, world!' );"));
+			suppliers.add(() -> new RawData.csv("John,Paul,George,Ringo\nguitar,bass,guitar,drums"));
+			suppliers.add(() -> new RawData.html("<a href=\"https://www.google.com/\">Hello <b>Google</b></a>"));
 
 			suppliers.add(() -> {
 				var i = new RawData();
@@ -384,7 +321,6 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
-
 			send(Graph.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}

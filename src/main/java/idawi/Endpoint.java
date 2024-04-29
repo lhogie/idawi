@@ -1,5 +1,9 @@
 package idawi;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashSet;
 import java.util.Map;
@@ -10,6 +14,17 @@ import toools.reflect.Clazz;
 import toools.util.Conversion;
 
 public interface Endpoint<I, O> {
+
+	@Target(ElementType.TYPE)
+	@Retention(RetentionPolicy.RUNTIME)
+	public static @interface EDescription {
+		String value();
+	}
+
+	public default String getDescription() {
+		return getClass().getAnnotation(EDescription.class).value();
+	}
+
 	void impl(MessageQueue in) throws Throwable;
 
 	default void digitalTwin(MessageQueue in) throws Throwable {
