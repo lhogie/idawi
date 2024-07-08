@@ -1,0 +1,293 @@
+\documentclass[11pt]{beamer}
+\usetheme{JuanLesPins}
+\usepackage{xspace}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{listings, xcolor}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\newcommand{\idawi}[1]{\textsc{Idawi}\xspace}
+
+\usepackage{graphicx}
+\author{Luc Hogie}
+\title{\idawi - a parallel/distributed librairy tailored to Research in IOT/fog/edge/distributed computing}
+%\setbeamercovered{transparent} 
+%\setbeamertemplate{navigation symbols}{} 
+%\logo{} 
+\institute{Cnrs/Inria/Université Côte d'Azur} 
+%\date{} 
+%\subject{} 
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+%\begin{frame}
+%\tableofcontents
+%\end{frame}
+
+
+\begin{frame}
+\frametitle{}
+\idawi, a new middleware for parallel/distributed computing for:
+\begin{itemize}
+	\item multi-hop
+	\item decentralized
+	\item unreliable
+	\item mobile
+\end{itemize}
+Implementation: \url{https://github.com/lhogie/idawi}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{What is this all about?}
+This is about \idawi, a new library for parallel/distributed computing.
+\idawi is designed to:
+\begin{itemize}
+	\item meet the needs of our on-going/future R\&D projects:
+		\begin{itemize}
+			\item emulating IOT/decentralized networks (Map/Liquori)
+			\item providing infrastructure services to Gemoc (Deantoni)
+			\item computing very large graphs (Coati)
+		\end{itemize}
+	\item be useful to other labs (Open Source license)
+	\item stand as a step forward existing tools
+\end{itemize}
+Implementation: \url{https://github.com/lhogie/idawi}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Lastest product of a software suite?}
+\idawi benefits from the experience we gained in past devs:
+\begin{description}
+	\item[BigGrph] set of modules dedicated to distributed graph computing. Supported by Inria. Now discontinued.
+	\item[JMR] disk-based distributed batch processor.
+	\item[JMaxGraph] multi-thread graph library for  processing large graphs.
+	\item[MPI4Lectures]multi-thread message-passing library dedicated to teaching at University of Luxembourg
+\end{description}
+Also, \idawi learns a lot from ProActive,  a distributed implementation of the Fractal specification  developed by another team in our lab.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{In a few words...}
+\idawi enables its user to execute software components on networked computers. These components have message-oriented communication facilities that is embeds built-in and user-defined services   will interact with each other by sending/receives messages. Also they expose . Doing this, they  distributed application made of services within the components.
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Components: what they \emph{are}}
+There is no global consensus on what a component is. In \idawi, a component is an object augmented with the following features:
+\begin{itemize}
+	\item it organizes, along with other components, in a multi-graph
+	\item it is able send/receive \emph{messages} to/from other components, using a variety of transport protocols
+	\item it forwards incoming messages
+	\item it exposes \emph{services} which extend its  functionality
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Components: what they \emph{are used for}}
+\idawi components can be used to several purposes:
+\begin{itemize}
+	\item exposing computational resources in a cluster
+	\item simulating complex systems by representing domain-specific entities and their internals
+	\item providing services in a distributed application
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Built-in services}
+Ranging from simplest to more sophisticated:
+\begin{description}
+	\item[exit] shuts down the entire distributed system
+	\item[ping pong] emulates the ubiquitous ping command
+	\item[error log] archives and disseminates internal errors
+	\item[service lifecycle] starts/stops services remotely
+	\item[routing] guides messages traveling across the  graph
+\end{description}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Built-in services}
+Ranging from simplest to more sophisticated:
+\begin{description}
+	\item[bencher] provides performance information about the host computer
+	\item[maps]  constructs a graph representing the topology of the network
+	\item[deployment] enables new components to be started 
+	\item[time series database] stores and serves numerical time-based information on user-defined metrics
+	\item[publish-subscribe] notifies subscriber components of new publications on particular topics
+\end{description}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Service}
+A service exposes to other components functionality for a particular concern. 
+\begin{itemize}
+	\item it proposes a high-level API for communication
+	\item it defines a set of \emph{operations}
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{operations are what perform user-defined computations}
+\begin{itemize}
+	\item is a piece of sequential code
+	\item triggered by a \emph{message}
+	\item read input from a message list
+\end{itemize}
+At runtime, an operation can:
+\begin{itemize}
+	\item do anything, including sending messages to any other component/service
+	\item invoke operations on any other component/service (service composition)
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Parallel execution}
+\begin{itemize}
+	\item unlike active objects, components have no threads
+	\item $#threads = f(#cores)$
+	\item lock-free by default
+\end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}
+\frametitle{Message}
+\begin{itemize}
+	\item carries a content (that can be anything)
+	\item to a set of components defines in a "to:"  address
+	\item has an optional "reply-to:" (that is automatically fed in the case of a synchronous emission)
+\end{itemize}
+An address consists of:
+\begin{itemize}
+	\item an optional set of recipients components (unicast if $|R|=1$, multicast if $|R|>1$, broadcast if $R=null$)
+	\item a recipient service that is expected on all recipients components
+	\item a recipient operation
+\end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}
+\frametitle{Communication}
+\begin{itemize}
+	\item message emission is asynchronous
+	\item no guaranty of delivery
+	\item if a message has "reply-to" information, the sender obtains a queue that will store response messages.
+\end{itemize}
+Queues enable:
+\begin{itemize}
+	\item asynchronous on-the-fly  processing of incoming messages
+	\item synchronous collect and classification
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Communication protocols}
+\idawi currently support the following transport protocols:
+\begin{itemize}
+	\item TCP: ensures reception
+	\item UDP: is quick
+	\item IPC: connect components in child/parent processes
+		\begin{itemize}
+			\item locally, mostly useful for tests
+			\item remotely through SSH, across NATs and firewalls
+		\end{itemize}
+	\item intra-process: method calls enables large iocal simulations
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Deployment of components}
+New components can be deployed anywhere a SSH connection is possible (and rsync is available). When you 
+\begin{enumerate}
+	\item determines shared file systems among computers
+	\item update binaries, which includes:
+		\begin{enumerate}
+			\item incremental update of Java  bytecode (using rsync)
+			\item installs the right JVM if necessary
+		\end{enumerate}
+	\item executes a JVM  and starts a component in it
+\end{enumerate}
+The parent component initially communicate with the new component through the standard I/O streams of the SSH local process. If the new component is declared to be autonomous, it remains alive even if the I/O streams get closed.
+\end{frame}
+
+ 
+
+\begin{frame}
+\frametitle{Interoperable with external tools using REST}
+\begin{itemize}
+	\item the REST service launches a HTTP server
+	\item which serve JSON documents provided by specific REST operations in services
+	\item the REST interface gives access to the  component system as a whole, regardless of which component exposes it
+	\item executing a REST operation is done via the URL:  \resizebox{.9\hsize}{!}{\url{http://host:port/component/service/operation/parms1,parm2,...,parm3}}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Conclusion: most notable features}
+\begin{enumerate}
+	\item multihop mobile overlay network of components
+	\item deployment of new remote/local component  
+	\item synchronous and asynchronous communications
+	\item support for unicast/multicast/broadcast
+	\item reactive message programming and stream processing
+	\item massively parallel computations
+	\item multi-protocol, REST/JSON interface
+	\item many base services for platform management and demo
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Adding/deleting operations}
+operations can be declared by:
+\begin{description}
+	\item[calling Service.registerNewOperation()] allows adding/deleting new operations are runtime
+	\item[adding annotated methods] improves readability by isolating the code, allowing the specification of a return and parameters type. Such an operation can be unregistered but its implementation code remains, and can still be invoked from within its class.
+\end{description}
+\end{frame}
+
+
+\begin{frame}[containsverbatim]
+\frametitle{Sending a message}
+operations can be declared by:
+\begin{lstlisting}
+To to = new To(
+MyResultType r = (MyResultType) send(content,
+			Set.of(myRemoteComponent),
+			myService, myoperation)
+	.setTimeout(5)
+	.collect()
+	.ensureResults(1)
+	.first().content;
+\end{lstlisting}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Conclusion}
+\end{frame}
+
+\end{document}

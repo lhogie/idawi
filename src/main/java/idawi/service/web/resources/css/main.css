@@ -1,0 +1,32 @@
+#container-nodes {
+    right: 0px;
+    border: solid thin black;
+    padding: 1em;
+    position: absolute;
+}
+
+.vis-network {
+    margin: 0.5em;
+    background-color: antiquewhite;
+}
+
+#vis-network-hotbar {
+    /*position: absolute;
+    top: 10px;
+    padding: 1em;
+    background-color: darkkhaki;*/
+}
+
+div.vis-network {
+    background-color: #f0f0f0;
+}
+
+.initialize-plotly {
+    border: solid thin black;
+    width: 100%;
+}
+
+.initialize-plotly td {
+    min-width: 100px;
+    border: solid thin crimson;
+}

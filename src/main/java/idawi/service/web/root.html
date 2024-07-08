@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <!-- Importation des networks et graph2d de Vis -->
+        <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+   
+    </head>
+
+
+    <body>
+        <h1>Idawi Web server</h1>
+        <br>
+        <br>
+        This is the Idawi Web server.
+        <ul>
+        <li><a href="api/">The Web API</a> exposing all components/services/operation to a Web client. 
+        <li><a href="frontend/">A user-friendly front-end</a> to the API, developed by students at Université Côte d'Azur.
+        <li><a href="https://github.com/lhogie/idawi">complete source code</a> hosted on Github. 
+        <li><a href="https://dl.acm.org/doi/proceedings/10.1145/3565385">Article presenting the middleware (Middleware 2022)</a> 
+        <li><a href="https://github.com/lhogie/idawi/blob/main/doc/slides/full/slides.pdf">A slideshow</a> 
+        </ul>
+        <br>
+        Developer tools.
+        <ul>
+        <li><a href="file/">Serves files</a> in directory <tt>$HOME/public_html/idawi/</tt>
+        <li><a href="web/">Serves files from any Web server</a> <a href="http://localhost:8081/forward/web/https://raw.githubusercontent.com/lhogie/idawi/main/src/main/java/idawi/Component.java">Example</a>
+        </ul>
+    </body>
+</html>
