@@ -1,6 +1,10 @@
 package idawi.service.serialTest;
 
+import java.net.DatagramPacket;
+
 import com.fazecast.jSerialComm.*;
+
+import idawi.messaging.Message;
 
 public class serialTest {
 
@@ -12,7 +16,15 @@ public class serialTest {
         comPort.setNumDataBits(8);
         comPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
         comPort.setParity(SerialPort.NO_PARITY);
+        DatagramPacket p = new DatagramPacket(data, data.length);
 
+                            try {
+                                // Cout.info("reading packet");
+                                socket.receive(p);
+                                Message msg = (Message) serializer.fromBytes(p.getData());
+                                // Cout.info("UDP received " + msg);
+                                // Cout.debugSuperVisible(msg.ID);
+                                processIncomingMessage(msg);}
         comPort.openPort();
 
         try {
