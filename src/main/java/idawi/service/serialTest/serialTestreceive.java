@@ -8,6 +8,10 @@ public class serialTestreceive {
 
     public static void main(String[] args) {
         SerialPort comPort = SerialPort.getCommPort("/dev/ttyUSB0");
+        comPort.setBaudRate(57600);
+        comPort.setNumDataBits(8);
+        comPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
+        comPort.setParity(SerialPort.NO_PARITY);
         comPort.openPort();
         InputStream numRead = comPort.getInputStream();
 
