@@ -32,10 +32,10 @@ Here are some of his features of interest:
 
 Curent team members:
 - [Luc Hogie](http://www.i3s.unice.fr/~hogie/)
-- Gregory Jannin (Master1 spring 2024)
-- Salma Talib (Master1 spring 2024)
+- [Bachir Benna](https://www.linkedin.com/in/bachir-benna-664a55200/) (Master1 spring/summer 2024)
 
 Former students who worked on the project:
+- Gregory Jannin (Master1 spring 2024)
 - Andranik Arakelov (Licence3 autumn 2023)
 - Paul Gros (Engineering & Master2 degree intern in spring 2023)
 - [Lidaou Denis Assoti](https://www.linkedin.com/in/denisassoti/) (Engineering & Master2 degree intern in spring 2023)

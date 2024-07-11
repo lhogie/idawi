@@ -1,18 +1,23 @@
 package idawi.transport;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 
-public class SharedMemoryTransport extends TransportService {
-
-	public SharedMemoryTransport(Component c) {
-		super(c);
-	}
+public class SharedMemoryTransport extends InputStreamBasedDriver {
 
 	@Override
 	public String getName() {
-		return "shared mem";
+		return "serial ports";
 	}
 
 	@Override
@@ -27,6 +32,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		SerialPo
 //		Cout.debug(outLinks);
 //		outLinks.forEach(l -> l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg)));
 		fakeSend(msg, outLinks);
@@ -35,5 +41,10 @@ public class SharedMemoryTransport extends TransportService {
 	@Override
 	protected void bcast(byte[] msg) {
 		multicast(msg, activeOutLinks());
+	}
+
+	@Override
+	protected Stream<InputStream> inputStream() {
+		return Arrays.stream(SerialPort.getCommPorts()).map(p -> p.getInputStream());
 	}
 }

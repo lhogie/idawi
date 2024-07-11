@@ -269,10 +269,18 @@ public class DemoService extends Service {
 
 			suppliers.add(() -> {
 				try {
-					var i = new RawData();
-					i.mimeType = "image/jpeg";
-					i.bytes = loremPicsum.imageData(new Dimension(200, 100));
-					return i;
+					return new RawData(loremPicsum.imageData(new Dimension(200, 100)), "image/jpeg");
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+
+			suppliers.add(() -> {
+				try {
+					var array = new Object[2];
+					array[0] = "coucou";
+					array[1] = new RawData(loremPicsum.imageData(new Dimension(200, 100)), "image/jpeg");
+					return array;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -283,14 +291,12 @@ public class DemoService extends Service {
 			suppliers.add(() -> new RawData.html("<a href=\"https://www.google.com/\">Hello <b>Google</b></a>"));
 
 			suppliers.add(() -> {
-				var i = new RawData();
-				i.mimeType = "image/svg+xml";
-				i.bytes = ("<svg height=\"150\" width=\"500\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+				var svg = "<svg height=\"150\" width=\"500\" xmlns=\"http://www.w3.org/2000/svg\">\n"
 						+ "  <ellipse cx=\"240\" cy=\"100\" rx=\"220\" ry=\"30\" fill=\"purple\" />\n"
 						+ "  <ellipse cx=\"220\" cy=\"70\" rx=\"190\" ry=\"20\" fill=\"lime\" />\n"
 						+ "  <ellipse cx=\"210\" cy=\"45\" rx=\"170\" ry=\"15\" fill=\"yellow\" />\n"
-						+ "  Sorry, your browser does not support inline SVG. \n" + "</svg>").getBytes();
-				return i;
+						+ "  Sorry, your browser does not support inline SVG. \n" + "</svg>";
+				return new RawData(svg.getBytes(), "image/svg+xml");
 			});
 
 			for (int i = 0; i < target; ++i) {
@@ -362,10 +368,9 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
-			var rd = new RawData();
-			rd.bytes = NetUtilities.retrieveURLContent(
-					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg");
-			rd.mimeType = "image/jpeg";
+			var rd = new RawData(NetUtilities.retrieveURLContent(
+					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg"),
+					"image/jpeg");
 			send(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}

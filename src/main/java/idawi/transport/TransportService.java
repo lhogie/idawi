@@ -38,6 +38,7 @@ public abstract class TransportService extends Service {
 //		 c.localView().g.markLinkActive(this, this); // loopback
 	}
 
+
 	@Override
 	public long sizeOf() {
 		return 8 * 4 + super.sizeOf();
@@ -110,8 +111,6 @@ public abstract class TransportService extends Service {
 			err(msg, err);
 		}
 	}
-
-
 
 	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
 
