@@ -32,17 +32,6 @@ public class serialTest extends TransportService {
         byte[] msg = serialObject.startSend(dataToSend);
 
         SerialPort comPort = SerialPort.getCommPort("COM7");
-        SerialPort[] comPortAll = SerialPort.getCommPorts();
-        for (SerialPort serialPort : comPortAll) {
-            System.out.println(serialPort.getDescriptivePortName());
-            System.out.println(serialPort.getManufacturer());
-            System.out.println(serialPort.getVendorID());
-            System.out.println(serialPort.getSystemPortName());
-            System.out.println(serialPort.getProductID());
-            System.out.println(serialPort.getProductID());
-            System.out.println(serialPort.getBaudRate());
-
-        }
 
         comPort.setBaudRate(57600);
         comPort.setNumDataBits(8);
