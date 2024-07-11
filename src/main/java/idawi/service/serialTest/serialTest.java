@@ -2,10 +2,8 @@ package idawi.service.serialTest;
 
 import java.net.DatagramPacket;
 import java.util.Collection;
-import java.net.DatagramSocket;
 
 import com.fazecast.jSerialComm.*;
-import java.io.IOException;
 
 import idawi.Component;
 import idawi.Idawi;
@@ -14,33 +12,38 @@ import idawi.transport.Link;
 import idawi.transport.TransportService;
 
 public class serialTest extends TransportService {
-    private DatagramSocket socket;
 
     public serialTest(Component c) {
         super(c);
     }
 
-    public void startSerial(byte[] data, int length) {
+    public byte[] startSend(String data) {
+        Message msg = new Message<>();
+        msg.content = data;
+        byte[] msgBytes = serializer.toBytes(msg);
 
-        DatagramPacket p = new DatagramPacket(data, length);
-
-        try {
-            // Cout.info("reading packet");
-            socket.receive(p);
-            Message msg = (Message) serializer.fromBytes(p.getData());
-            // Cout.info("UDP received " + msg);
-            // Cout.debugSuperVisible(msg.ID);
-            processIncomingMessage(msg);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        return msgBytes;
     }
 
     public static void main(String[] args) {
-        String dataToSend = "Hello, Serial Port!";
-        byte[] data = dataToSend.getBytes();
+        String dataToSend = "Hello";
+        Component c = new Component();
+        serialTest serialObject = new serialTest(c);
+        byte[] msg = serialObject.startSend(dataToSend);
+
         SerialPort comPort = SerialPort.getCommPort("COM7");
+        SerialPort[] comPortAll = SerialPort.getCommPorts();
+        for (SerialPort serialPort : comPortAll) {
+            System.out.println(serialPort.getDescriptivePortName());
+            System.out.println(serialPort.getManufacturer());
+            System.out.println(serialPort.getVendorID());
+            System.out.println(serialPort.getSystemPortName());
+            System.out.println(serialPort.getProductID());
+            System.out.println(serialPort.getProductID());
+            System.out.println(serialPort.getBaudRate());
+
+        }
+
         comPort.setBaudRate(57600);
         comPort.setNumDataBits(8);
         comPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
@@ -51,8 +54,9 @@ public class serialTest extends TransportService {
         try {
             while (true) {
                 Thread.sleep(1000);
-                int bytesWritten = comPort.writeBytes(data, data.length);
-                System.out.println(bytesWritten);
+                int bytesWritten = comPort.writeBytes(msg, msg.length);
+
+                System.out.println(msg + " " + bytesWritten);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,5 +90,4 @@ public class serialTest extends TransportService {
         var msgClone = (Message) serializer.fromBytes(msg);
         Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
     }
-
 }
