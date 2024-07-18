@@ -11,14 +11,19 @@ import java.util.Collection;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.io.Cout;
 import toools.math.MathsUtilities;
 
-public class UDPDriver extends IPDriver {
+public class UDPDriver extends IPDriver implements Broadcastable {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
 	private DatagramSocket socket;
 
 	public UDPDriver(Component c) {
 		super(c);
+
+		if (!c.isDigitalTwin()) {
+			Idawi.agenda.threadPool.submit(() -> startServer());
+		}
 	}
 
 	@Override
@@ -81,19 +86,6 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void bcast(byte[] msgBytes) {
-		try {
-			for (var ni : NetworkInterface.networkInterfaces().toList()) {
-				for (var ia : ni.getInterfaceAddresses()) {
-					udpSend(msgBytes, ia.getBroadcast(), getPort());
-				}
-			}
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
 	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
 		for (var l : outLinks) {
 			var i = l.dest.component.dt().info();
@@ -105,10 +97,29 @@ public class UDPDriver extends IPDriver {
 		DatagramPacket p = new DatagramPacket(buf, buf.length);
 		p.setAddress(ip);
 		p.setPort(getPort());
-
+		Cout.debugSuperVisible(ip);
 		try {
 			socket.send(p);
 		} catch (IOException e1) {
+		}
+	}
+
+	@Override
+	public final void bcast(byte[] msgBytes) {
+		try {
+			for (var ni : NetworkInterface.networkInterfaces().toList()) {
+				for (var ia : ni.getInterfaceAddresses()) {
+					InetAddress baddr = ia.getBroadcast();
+
+					if (baddr != null) {
+						for (int port : bcastPortList) {
+							udpSend(msgBytes, baddr, port);
+						}
+					}
+				}
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
 		}
 	}
 }

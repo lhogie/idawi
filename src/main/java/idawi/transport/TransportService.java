@@ -53,8 +53,11 @@ public abstract class TransportService extends Service {
 
 	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
 
-	protected abstract void bcast(byte[] msgBytes);
-
+	public void multicast(byte[] msg) {
+		multicast(msg, activeOutLinks());
+	}
+	
+	
 	// this is called by transport implementations
 	protected synchronized final void processIncomingMessage(Message msg) {
 		if (!msg.route.getLast().link.dest.component.equals(component))
@@ -118,7 +121,7 @@ public abstract class TransportService extends Service {
 		outGoingTraffic += msg.sizeOf();
 
 		// add a link heading to an unknown destination
-		msg.route.add(new Entry(new Link(this), r));
+		msg.route.add(new Entry(new Link(this), r.getClass()));
 		listeners.forEach(l -> l.msgSent(this, msg, outLinks));
 
 		if (outLinks == null) {
@@ -126,7 +129,11 @@ public abstract class TransportService extends Service {
 				// ???
 			}
 
-			bcast(msgToBytes(msg));
+			if (this instanceof Broadcastable tb) {
+				tb.bcast(msgToBytes(msg));
+			}else {
+				throw new IllegalStateException("broadcast not supported by " + this);
+			}
 		} else {
 			for (var l : outLinks)
 				if (l.src != this)

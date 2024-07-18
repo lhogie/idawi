@@ -34,10 +34,5 @@ public class Loopback extends TransportService {
 		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
 	}
 
-	@Override
-	protected void bcast(byte[] msg) {
-		var msgClone = (Message) serializer.fromBytes(msg);
-		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
-	}
 
 }

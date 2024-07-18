@@ -244,7 +244,7 @@ public class WebService extends Service {
 
 		var computation = exec(target, serviceClass, (Class) endpointClass, msg -> {
 			msg.content = parms;
-			msg.routingStrategy = new RoutingStrategy(routing, routingParms);
+			msg.routingStrategy = new RoutingStrategy(routing.getClass(), routingParms);
 			msg.eot = postDataInputStream == null;
 		});
 
@@ -345,7 +345,7 @@ public class WebService extends Service {
 		} else {
 			var ro = exec(matcher, s, listEndpoints.class, msg -> {
 				msg.eot = true;
-				msg.routingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r.getClass(), rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(stopCollectingWhen).messages;
 			var map = new HashMap<Component, List<String>>();
@@ -366,7 +366,7 @@ public class WebService extends Service {
 		} else {
 			var ro = exec(t, ServiceManager.class, listServices.class, msg -> {
 				msg.eot = true;
-				msg.routingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r.getClass(), rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(terminationCondition).messages;
 			var map = new HashMap<Component, List<? extends Service>>();

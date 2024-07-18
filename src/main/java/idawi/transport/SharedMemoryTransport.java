@@ -1,10 +1,14 @@
 package idawi.transport;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import idawi.Component;
 
-public class SharedMemoryTransport extends TransportService {
+public class SharedMemoryTransport extends TransportService implements Broadcastable{
+
+	public static final Set<Component> s = new HashSet<>();
 
 	public SharedMemoryTransport(Component c) {
 		super(c);
@@ -33,7 +37,9 @@ public class SharedMemoryTransport extends TransportService {
 	}
 
 	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
+	public void bcast(byte[] msg) {
+		var outLinks = s.stream().map(c -> component.localView().g.findLink(this, c.service(getClass()), true, null))
+				.toList();
+		fakeSend(msg, outLinks);
 	}
 }

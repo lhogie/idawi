@@ -1,19 +1,19 @@
 package idawi.transport;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 
-public class SharedMemoryTransport extends InputStreamBasedDriver {
+public class SIKTransport extends InputStreamBasedDriver implements Broadcastable {
+
+	public SIKTransport(Component c) {
+		super(c);
+	}
 
 	@Override
 	public String getName() {
@@ -32,19 +32,15 @@ public class SharedMemoryTransport extends InputStreamBasedDriver {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		SerialPo
-//		Cout.debug(outLinks);
-//		outLinks.forEach(l -> l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg)));
-		fakeSend(msg, outLinks);
+
 	}
 
 	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
+	public void bcast(byte[] msg) {
 	}
 
 	@Override
-	protected Stream<InputStream> inputStream() {
+	protected Stream<InputStream> inputStreams() {
 		return Arrays.stream(SerialPort.getCommPorts()).map(p -> p.getInputStream());
 	}
 }

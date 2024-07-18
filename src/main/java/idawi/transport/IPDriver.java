@@ -3,6 +3,8 @@ package idawi.transport;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 import idawi.Component;
 import toools.io.Cout;
@@ -11,18 +13,19 @@ import toools.thread.Q;
 
 public abstract class IPDriver extends TransportService {
 
-//	public static final int DEFAULT_PORT = 4553;
+	public static final int DEFAULT_PORT = 4553;
 
 	private int port = NetUtilities.randomUserPort();
 	private Thread thread;
 	private final Q waitReady = new Q(1);
+	public List<Integer> bcastPortList = new ArrayList<Integer>();
 
 	public IPDriver(Component c) {
 		super(c);
 	}
 
 	protected void markReady() {
-		Cout.info(getName() + " is ready");
+		Cout.info(getName() + " is ready, port " + getPort());
 		waitReady.add_sync("ready");
 	}
 
@@ -50,6 +53,7 @@ public abstract class IPDriver extends TransportService {
 	}
 
 
+	
 	private void stop() {
 		stopServer();
 

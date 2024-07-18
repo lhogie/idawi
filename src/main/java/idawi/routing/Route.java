@@ -96,7 +96,7 @@ public class Route extends ArrayList<Entry> implements SizeOf {
 		return get(0);
 	}
 
-	public void add(Link l, RoutingService p) {
+	public void add(Link l, Class<? extends RoutingService> p) {
 		add(new Entry(l, p));
 	}
 

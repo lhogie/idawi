@@ -11,13 +11,13 @@ public class RoutingStrategy implements Serializable, SizeOf {
 	public Class<? extends RoutingService> routingService;
 	public RoutingParameters parms;
 
-	public RoutingStrategy(RoutingService routingService, RoutingParameters parms2) {
-		this.routingService = routingService.getClass();
+	public RoutingStrategy(Class<? extends RoutingService> routingService, RoutingParameters parms2) {
+		this.routingService = routingService;
 		this.parms = parms2;
 	}
 
 	public RoutingStrategy(RoutingService r) {
-		this(r, r.defaultData());
+		this(r.getClass(), r.defaultData());
 	}
 
 	@Override

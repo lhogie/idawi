@@ -3,25 +3,17 @@ package idawi.transport;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.stream.Stream;
 
+import idawi.Component;
 import idawi.messaging.Message;
 
 public abstract class InputStreamBasedDriver extends TransportService {
 
 	public static final byte[] marker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 
-	@Override
-	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	protected void bcast(byte[] msgBytes) {
-		// TODO Auto-generated method stub
-
+	public InputStreamBasedDriver(Component c) {
+		super(c);
 	}
 
 	protected abstract Stream<InputStream> inputStreams();
