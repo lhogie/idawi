@@ -78,7 +78,6 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 		// comPort2.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED |
 		// SerialPort.FLOW_CONTROL_CTS_ENABLED);
 		// comPort2.openPort();
-
 		try {
 			byte[] lengthmsg = ByteBuffer.allocate(4).putInt(msg1.length).array();
 			System.out.println(ByteBuffer.wrap(lengthmsg).getInt() + "   " + lengthmsg.length);
@@ -108,7 +107,7 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 			int bytesWrittenCombined = comPort.writeBytes(combined, combined.length);
 			String t = new String(combined);
 			// System.out.println(t);
-			// Thread.sleep(500);
+			Thread.sleep(1000);
 			System.out.println(combined);
 
 			System.out.println(combined + " " + bytesWrittenCombined);
