@@ -10,14 +10,16 @@ public class App {
 	public static void main(String[] args) {
 		var c = new Component();
 		var t = new SIKDriver(c);
+		new S(c);
 
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-			t.main(args);
 			System.out.println("sending ");
 		});
 	}
 
-	public class S extends Service {
+	public static class S extends Service {
+		public static final long serialVersionUID=0L;
+
 		public S(Component component) {
 			super(component);
 		}
@@ -26,6 +28,7 @@ public class App {
 
 			@Override
 			public void doIt(String in) throws Throwable {
+				
 				System.out.println("received " + in);
 			}
 		}

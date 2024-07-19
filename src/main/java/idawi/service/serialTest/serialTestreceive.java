@@ -20,6 +20,7 @@ import com.fazecast.jSerialComm.*;
 
 import idawi.Component;
 import idawi.Idawi;
+import idawi.bachir.App;
 import idawi.messaging.Message;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
@@ -28,6 +29,7 @@ public class serialTestreceive extends TransportService implements SerialPortMes
     public serialTestreceive(Component c) {
         super(c);
     }
+    public static final long serialVersionUID=6207309244483020844L;
     public static int countlines=0;
     public static int truelines=0;
     public static float finallines=0;
@@ -35,107 +37,12 @@ public class serialTestreceive extends TransportService implements SerialPortMes
     public static String bufferReader=new String();
     public static int advanceBuffer=0;
     private static boolean word=false;
-    public void startSerial(byte[] data) {
-        byte[] lenghtbytes=new byte[4];
-        byte[] byteReader= new byte[1];
-        ByteBuffer byteBufferReader=ByteBuffer.wrap(data);
-        String testData=new String(data);
-        System.out.println(testData);
-
-        try {
-            if (data.length>=24){
-                for (int i = 0; i < 24 ;i++) {
-                    byteBufferReader.position(i);
-                    byteBufferReader.get(byteReader,0,1);
-                    String byteValue=new String (byteReader,0,1);
-
-                        if("fgmfkdjgvhdfkghksfjhfdsj".charAt(advanceBuffer)==byteValue.charAt(0)){
-                            bufferReader=bufferReader+byteValue.charAt(0);
-                            advanceBuffer+=1;
-                        }
-                    
-                   
-                }
-                System.out.println("buffer:"+bufferReader+" "+bufferReader.length());
-                if((bufferReader.length()==24)){ 
-                    if (bufferReader.equals("fgmfkdjgvhdfkghksfjhfdsj")){
-                        truelines=truelines+1;
-                        if (data.length>=28){
-                        byteBufferReader.position(24);
-                        byteBufferReader.get(lenghtbytes,0,4);
-                        int lengthValue=ByteBuffer.wrap(lenghtbytes).getInt();
-                        System.out.println("length : "+lengthValue);
-                        if(data.length-28>=lengthValue){
-                        byte[] msgBytes=new byte[lengthValue];
-                        byteBufferReader.position(28);
-                        byteBufferReader.get(msgBytes,0,lengthValue);
-                        try{
-                         
-                        Message msg= (Message)serializer.fromBytes(msgBytes);
-                        System.out.println(msg.content);
-
-                    }
-                        catch (Exception e) {
-                            e.printStackTrace();
-                            // TODO: handle exception
-                        }}
-                    }
-                }                    
-                bufferReader="";
-                advanceBuffer=0;
-
-            }
-
-          }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: handle exception
-        }
-        // try {
-        //     ByteBuffer.wrap(data).get(twentyfourbytes, 0, 24);
-
-        // String valuex;
-        // valuex = new String(twentyfourbytes,0,24);
-        
-        // if("fgmfkdjgvhdfkghksfjhfdsj".equals(valuex)){
-        //     // if (word==false){
-        //         ByteBuffer byteBuffer=ByteBuffer.wrap(data);
-        //         byteBuffer.position(24);
-        //         byteBuffer.get(lenghtbytes,0,4);
-        //         int lengthValue=ByteBuffer.wrap(lenghtbytes).getInt();
-        //         byte[] msgBytes=new byte[lengthValue];
-        //         // System.out.println("value length: "+lengthValue);
-        //         byteBuffer.position(28);
-        //         byteBuffer.get(msgBytes,0,lengthValue);
-        //         Message msg= (Message)serializer.fromBytes(msgBytes);
-        //         System.out.println(msg.content);
-        //         truelines=truelines+1;
-
-        //         // send(msg);
-        //     // }
-        // }
-        // else{
-        //     System.out.println(data);
-        //     ByteBuffer.wrap(data).get(bufferData, 0, data.length);
-        //     String valueBuffer;
-        //     valueBuffer = new String(bufferData,0,bufferData.length);
-        //     System.out.println(valueBuffer);
-
-            
-        // }
-        // System.out.println("value marker: "+valuex);
-    // }
-    //   catch (Exception e) {
-    //    e.printStackTrace();
-    //     }
-     
-    }
 
     public static void main(String[] args) {
         Component c =new Component();
         serialTestreceive testos= new serialTestreceive(c);
+        new App.S(c);
         SerialPort comPort = SerialPort.getCommPort("/dev/ttyUSB0");
-
 
         comPort.setBaudRate(57600);
         comPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
@@ -192,11 +99,6 @@ public class serialTestreceive extends TransportService implements SerialPortMes
         Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
     }
 
-    @Override
-    protected void bcast(byte[] msg) {
-        var msgClone = (Message) serializer.fromBytes(msg);
-        Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
-    }
 
     @Override
     public int getListeningEvents() {
@@ -212,7 +114,6 @@ public class serialTestreceive extends TransportService implements SerialPortMes
     public void serialEvent(SerialPortEvent event) {
         byte[] delimitedMessage = event.getReceivedData();
         String t=new String(delimitedMessage);
-        // System.out.println(t);
         byte[] lenghtbytes=new byte[4];
         ByteBuffer byteBufferReader=ByteBuffer.wrap(delimitedMessage);
         // System.out.println("data : "+t);
@@ -222,7 +123,6 @@ public class serialTestreceive extends TransportService implements SerialPortMes
                         byteBufferReader.position(24);
                         byteBufferReader.get(lenghtbytes,0,4);
                         int lengthValue=ByteBuffer.wrap(lenghtbytes).getInt();
-                        System.out.println("length : "+lengthValue);
                         if(delimitedMessage.length-28>=lengthValue){
                         byte[] delimitedMessageHashcode=new byte[4];
                         byteBufferReader.position(delimitedMessage.length-4);
@@ -232,10 +132,12 @@ public class serialTestreceive extends TransportService implements SerialPortMes
                         byteBufferReader.position(28);
                         byteBufferReader.get(msgBytes,0,lengthValue);
                         if(receivedHashCode==Arrays.hashCode(msgBytes)){
+                            System.out.println("yeees");
                         try{
                          
                         Message msg= (Message)serializer.fromBytes(msgBytes);
-                        System.out.println(msg.content);
+                        System.out.println(msg);
+                        processIncomingMessage(msg);
 
                     }
                         catch (Exception e) {
