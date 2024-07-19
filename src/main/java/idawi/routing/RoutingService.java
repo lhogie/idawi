@@ -35,7 +35,7 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 
 	@Override
 	public void accept(Message<?> msg) {
-//		accept(msg);
+		// accept(msg);
 		++nbMessagesInitiated;
 		acceptImpl(msg, (P) msg.routingStrategy.parms);
 	}
@@ -85,10 +85,6 @@ public abstract class RoutingService<P extends RoutingParameters> extends Servic
 			return dataSuggestions().stream().map(d -> d.toURLElement()).toList();
 		}
 
-		@Override
-		protected String r() {
-			return "suggest parms";
-		}
 	}
 
 	public MessageQueue ping(ComponentMatcher target, P p) {

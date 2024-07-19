@@ -11,7 +11,7 @@ public class Entry implements Serializable, SizeOf {
 	public double emissionDate, receptionDate;
 	public RoutingStrategy routing;
 
-	public Entry(Link l, RoutingService routing) {
+	public Entry(Link l, Class<? extends RoutingService> routing) {
 		this.link = l;
 		this.routing = routing == null ? null : new RoutingStrategy(routing, null);
 	}

@@ -26,7 +26,7 @@ public class LocationService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "the location of this component";
 		}
 	}

@@ -94,7 +94,7 @@ public class PublishSubscribeService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "topics known by this node";
 		}
 	}

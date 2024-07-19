@@ -97,11 +97,6 @@ public class Bluetooth extends WirelessTransport {
 	}
 
 	@Override
-	protected void bcast(byte[] msg) {
-		throw new NotYetImplementedException();
-	}
-
-	@Override
 	public void dispose(Link l) {
 	}
 

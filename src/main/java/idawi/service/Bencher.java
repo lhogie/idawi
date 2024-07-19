@@ -17,8 +17,6 @@ import idawi.Service;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.routing.ComponentMatcher;
-import idawi.service.web.WebService.HTMLRenderableObject;
-import idawi.service.web.WebService.TypedObject;
 import toools.text.json.JSONElement;
 import toools.text.json.JSONable;
 import toools.thread.Q;
@@ -46,20 +44,6 @@ public class Bencher extends Service {
 		long multithread;
 		long monothread;
 
-		TypedObject<Long> monothread2 = new TypedObject<Long>() {
-			@Override
-			public String nature() {
-				return "ratio";
-			}
-		};
-
-		HTMLRenderableObject<Long> monothread3 = new HTMLRenderableObject<Long>() {
-			@Override
-			public String html() {
-				return "<p>" + value + "</p>";
-			}
-		};
-
 		@Override
 		public JSONElement toJSONElement() {
 			return null;
@@ -81,7 +65,7 @@ public class Bencher extends Service {
 		parms.size = size;
 		Map<Component, Results> map = new HashMap<>();
 
-		exec(ComponentMatcher.all, getClass(), localBench.class,  m -> {
+		exec(ComponentMatcher.all, getClass(), localBench.class, m -> {
 		}).returnQ.collector().collect(c -> {
 			var m = c.messages.last();
 

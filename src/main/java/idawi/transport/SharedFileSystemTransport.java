@@ -45,11 +45,7 @@ public class SharedFileSystemTransport extends TransportService {
 		});
 	}
 
-	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
-	}
-
+	
 	@Override
 	public String getName() {
 		return "shared-directory driver";

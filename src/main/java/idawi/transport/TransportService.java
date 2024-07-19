@@ -30,12 +30,13 @@ public abstract class TransportService extends Service {
 	// used to serialize messages for transport
 	public final transient IdawiSerializer serializer;
 	public final List<TransportListener> listeners = new ArrayList<>();
-//	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	// public final AutoForgettingLongList alreadyKnownMsgs = new
+	// AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
 		this.serializer = new IdawiSerializer(this);
-//		 c.localView().g.markLinkActive(this, this); // loopback
+		// c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
@@ -52,7 +53,9 @@ public abstract class TransportService extends Service {
 
 	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
 
-	protected abstract void bcast(byte[] msgBytes);
+	protected void multicast(byte[] msgBytes) {
+		multicast(msgBytes, activeOutLinks());
+	}
 
 	// this is called by transport implementations
 	protected synchronized final void processIncomingMessage(Message msg) {
@@ -65,12 +68,12 @@ public abstract class TransportService extends Service {
 			++nbMsgReceived;
 			incomingTraffic += msg.sizeOf();
 			Entry lastRouteEntry = msg.route.getLast();
-//			lastRouteEntry.link.dest = this;
+			// lastRouteEntry.link.dest = this;
 			lastRouteEntry.receptionDate = component.now();
 			lastRouteEntry.link.latency = lastRouteEntry.duration();
-//			Cout.debugSuperVisible(serializer.transportService);
+			// Cout.debugSuperVisible(serializer.transportService);
 			listeners.forEach(l -> l.msgReceived(this, msg));
-//			Cout.debug("-----");
+			// Cout.debug("-----");
 
 			component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
@@ -111,15 +114,13 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-
-
 	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
 
 		++nbMsgSent;
 		outGoingTraffic += msg.sizeOf();
 
 		// add a link heading to an unknown destination
-		msg.route.add(new Entry(new Link(this), r));
+		msg.route.add(new Entry(new Link(this), r.getClass()));
 		listeners.forEach(l -> l.msgSent(this, msg, outLinks));
 
 		if (outLinks == null) {
@@ -127,7 +128,11 @@ public abstract class TransportService extends Service {
 				// ???
 			}
 
-			bcast(msgToBytes(msg));
+			if (this instanceof Broadcastable tb) {
+				tb.bcast(msgToBytes(msg));
+			} else {
+				multicast(msgToBytes(msg));
+			}
 		} else {
 			for (var l : outLinks)
 				if (l.src != this)
@@ -154,7 +159,7 @@ public abstract class TransportService extends Service {
 
 			var msgBytes = msgToBytes(msg);
 			multicast(msgBytes, realSend);
-			fakeSend(msg, fakeEmissions);
+			sendToTwin(msg, fakeEmissions);
 		}
 
 		component.alreadySentMsgs.add(msg.ID);
@@ -172,16 +177,16 @@ public abstract class TransportService extends Service {
 		return serializer.toBytes(msg);
 	}
 
-	private void fakeSend(Message msg, Collection<Link> fakeEmissions) {
-		fakeSend(serializer.toBytes(fakeEmissions), fakeEmissions);
+	private void sendToTwin(Message msg, Collection<Link> links) {
+		sendToTwin(serializer.toBytes(links), links);
 	}
 
-	protected void fakeSend(byte[] msg, Collection<Link> fakeEmissions) {
-		for (var l : fakeEmissions) {
+	protected void sendToTwin(byte[] msg, Collection<Link> links) {
+		for (var l : links) {
 			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
 				@Override
 				public void run() {
-//							Cout.debugSuperVisible(":)   "  +   l +     "      "+ l.dest);
+					// Cout.debugSuperVisible(":) " + l + " "+ l.dest);
 					try {
 						l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
 					} catch (Throwable e) {
@@ -213,7 +218,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "number of message received so far";
 		}
 	}
@@ -225,7 +230,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get the neighborhood";
 		}
 	}

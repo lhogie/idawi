@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import idawi.Component;
+import idawi.Endpoint.EDescription;
 import idawi.InnerClassEndpoint;
 import idawi.ProcedureEndpoint;
 import idawi.Service;
@@ -115,15 +116,11 @@ public class ChordService extends Service {
 		return r;
 	}
 
+	@EDescription("gets the name of the entries stored in this component")
 	public class keys extends SupplierEndPoint<Collection<String>> {
 		@Override
 		public Collection<String> get() {
 			return localKeys();
-		}
-
-		@Override
-		public String r() {
-			return "the name of the entries stored in this component";
 		}
 	}
 

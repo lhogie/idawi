@@ -9,7 +9,7 @@ import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.io.Cout;
 
-public class Pipe_ChildSide extends TransportService {
+public class Pipe_ChildSide extends TransportService implements Broadcastable {
 	public boolean suicideIfLoseParent = true;
 
 	public Pipe_ChildSide(Component me) {
@@ -37,7 +37,7 @@ public class Pipe_ChildSide extends TransportService {
 	}
 
 	@Override
-	protected void bcast(byte[] msgBytes) {
+	public void bcast(byte[] msgBytes) {
 		send(msgBytes);
 	}
 

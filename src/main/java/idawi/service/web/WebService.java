@@ -60,18 +60,6 @@ import toools.text.TextUtilities;
 
 public class WebService extends Service {
 
-	public static abstract class TypedObject<T> {
-		T value;
-
-		public abstract String nature();
-	}
-
-	public static abstract class HTMLRenderableObject<T> {
-		protected T value;
-
-		public abstract String html();
-	}
-
 	public static int DEFAULT_PORT = 8081;
 	public static Map<String, Serializer> name2serializer = new HashMap<>();
 
@@ -182,7 +170,7 @@ public class WebService extends Service {
 						if (src.equals("files")) { // enables the dev of frontend code
 							bytes = new RegularFile("$HOME/public_html/idawi/" + filename).getContent();
 						} else if (src.equals("web")) {
-//							filename = "http://" + filename;
+							// filename = "http://" + filename;
 							System.out.println("wget " + filename);
 							bytes = NetUtilities.retrieveURLContent(filename);
 							System.out.println(bytes.length);
@@ -204,7 +192,7 @@ public class WebService extends Service {
 							TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
 				} catch (IOException ee) {
-//					ee.printStackTrace();
+					// ee.printStackTrace();
 				}
 			}
 
@@ -256,7 +244,7 @@ public class WebService extends Service {
 
 		var computation = exec(target, serviceClass, (Class) endpointClass, msg -> {
 			msg.content = parms;
-			msg.routingStrategy = new RoutingStrategy(routing, routingParms);
+			msg.routingStrategy = new RoutingStrategy(routing.getClass(), routingParms);
 			msg.eot = postDataInputStream == null;
 		});
 
@@ -348,7 +336,6 @@ public class WebService extends Service {
 		System.out.println("collecting completed");
 	}
 
-
 	private <I, O, S extends Service> Class<? extends Endpoint<I, O>> endpoint(Map<String, String> query,
 			OutputStream output, Serializer serializer, ComponentMatcher matcher, RoutingService<?> r,
 			RoutingParameters rp, Class<S> s, Predicate<MessageCollector> stopCollectingWhen)
@@ -358,7 +345,7 @@ public class WebService extends Service {
 		} else {
 			var ro = exec(matcher, s, listEndpoints.class, msg -> {
 				msg.eot = true;
-				msg.routingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r.getClass(), rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(stopCollectingWhen).messages;
 			var map = new HashMap<Component, List<String>>();
@@ -379,7 +366,7 @@ public class WebService extends Service {
 		} else {
 			var ro = exec(t, ServiceManager.class, listServices.class, msg -> {
 				msg.eot = true;
-				msg.routingStrategy = new RoutingStrategy(r, rp);
+				msg.routingStrategy = new RoutingStrategy(r.getClass(), rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(terminationCondition).messages;
 			var map = new HashMap<Component, List<? extends Service>>();
@@ -412,7 +399,7 @@ public class WebService extends Service {
 
 			return (RoutingService) component.service(serviceClass);
 		} else {
-			new Suggestion("r", "gives the name of an routing algorithm",
+			new Suggestion("r", "gives the class name of a routing algorithm",
 					component.services(RoutingService.class).stream().map(s -> s.getClass()).toList())
 					.send(output, serializer);
 			return component.defaultRoutingProtocol();

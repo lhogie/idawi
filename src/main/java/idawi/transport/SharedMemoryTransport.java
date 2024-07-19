@@ -3,8 +3,6 @@ package idawi.transport;
 import java.util.Collection;
 
 import idawi.Component;
-import idawi.messaging.Message;
-import toools.io.Cout;
 
 public class SharedMemoryTransport extends TransportService {
 
@@ -19,7 +17,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	public void dispose(Link l) {
-//		l.activity.close();
+		// l.activity.close();
 	}
 
 	@Override
@@ -29,13 +27,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-//		Cout.debug(outLinks);
-//		outLinks.forEach(l -> l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg)));
-		fakeSend(msg, outLinks);
+		sendToTwin(msg, outLinks);
 	}
 
-	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
-	}
 }

@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.messaging.Message;
 import toools.exceptions.NotYetImplementedException;
 import toools.math.MathsUtilities;
 
@@ -17,9 +16,8 @@ public class WiFiDirect extends WirelessTransport {
 
 	@Override
 	public String getName() {
-		return "Wi-Fi";
+		return "Wi-Fi direct";
 	}
-
 
 	@Override
 	public void dispose(Link l) {
@@ -29,7 +27,7 @@ public class WiFiDirect extends WirelessTransport {
 	public double typicalEmissionRange() {
 		return 200;
 	}
-	
+
 	@Override
 	public double latency() {
 		return MathsUtilities.pickRandomBetween(0.010, 0.030, Idawi.prng);
@@ -39,10 +37,4 @@ public class WiFiDirect extends WirelessTransport {
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
 		throw new NotYetImplementedException();
 	}
-
-	@Override
-	protected void bcast(byte[] msg) {
-		throw new NotYetImplementedException();
-	}
-
 }
