@@ -12,6 +12,7 @@ public class App {
 		var t = new SIKDriver(c);
 
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+			t.main(args);
 			System.out.println("sending ");
 		});
 	}
