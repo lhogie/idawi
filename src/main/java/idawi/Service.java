@@ -465,7 +465,6 @@ public class Service implements SizeOf, Serializable {
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
 			msg.endpointID = targetEndpoint;
-
 			var iSpec = Endpoint.inputSpecification(targetEndpoint);
 
 			if (iSpec != null) {

@@ -12,12 +12,15 @@ public class App {
 		var t = new SIKDriver(c);
 
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-			t.main(args);
+			msg.content = "hello";
+			System.out.println(msg);
 			System.out.println("sending ");
 		});
 	}
 
 	public class S extends Service {
+		public static final long serialVersionUID = 0L;
+
 		public S(Component component) {
 			super(component);
 		}
