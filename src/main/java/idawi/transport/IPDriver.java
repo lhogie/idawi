@@ -6,14 +6,13 @@ import java.net.SocketException;
 
 import idawi.Component;
 import toools.io.Cout;
-import toools.net.NetUtilities;
 import toools.thread.Q;
 
 public abstract class IPDriver extends TransportService {
 
-//	public static final int DEFAULT_PORT = 4553;
+	public static final int DEFAULT_PORT = 4553;
 
-	private int port = NetUtilities.randomUserPort();
+	protected int port = -1;
 	private Thread thread;
 	private final Q waitReady = new Q(1);
 
@@ -22,7 +21,7 @@ public abstract class IPDriver extends TransportService {
 	}
 
 	protected void markReady() {
-		Cout.info(getName() + " is ready");
+		Cout.info(getName() + " is ready, port=" + getPort());
 		waitReady.add_sync("ready");
 	}
 
@@ -33,13 +32,28 @@ public abstract class IPDriver extends TransportService {
 
 	protected abstract String getProtocolName();
 
-	private void start() {
-		if (isRunning())
-			throw new IllegalStateException("already running");
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int newPort) {
+		if (newPort == port)
+			return;
 
 		if (port > 0) {
-			// start the server in a separate thread
-			thread = new Thread(() -> startServer());
+			stopServer();
+
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		this.port = newPort;
+
+		if (newPort > 0) {
+			thread = new Thread(() -> serveLoop());
 			thread.start();
 
 			// and waits that the server actually listens
@@ -49,38 +63,13 @@ public abstract class IPDriver extends TransportService {
 		}
 	}
 
-
-	private void stop() {
-		stopServer();
-
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	protected final boolean isRunning() {
+		return port >= 0;
 	}
-
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-
-		if (isRunning()) {
-			stop();
-
-			if (port > 0) {
-				start();
-			}
-		}
-	}
-
-	protected abstract boolean isRunning();
 
 	protected abstract void stopServer();
 
-	protected abstract void startServer();
+	protected abstract void serveLoop();
 
 	public static boolean isThisMyIpAddress(InetAddress addr) {
 		// Check if the address is a valid special local or loop back

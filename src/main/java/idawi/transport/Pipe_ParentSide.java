@@ -20,7 +20,7 @@ import toools.math.MathsUtilities;
 import toools.thread.Q;
 import toools.thread.Threads;
 
-public class Pipe_ParentSide extends TransportService {
+public class Pipe_ParentSide extends TransportService  implements Broadcastable{
 
 	public static class Entry {
 		InputStream stdout, stderr;
@@ -149,7 +149,7 @@ public class Pipe_ParentSide extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		Cout.debug(this + " multicast: " + outLinks);
+//		Cout.debug(this + " multicast: " + outLinks);
 		for (var l : outLinks) {
 			var n = l.dest.component;
 			var e = findEntry(n);
@@ -162,7 +162,7 @@ public class Pipe_ParentSide extends TransportService {
 	}
 
 	@Override
-	protected void bcast(byte[] msg) {
+	public void bcast(byte[] msg) {
 //		Cout.debug(this + " bcast: " + child_entry.stream().map(e -> e.child).toList());
 
 		for (var e : child_entry) {

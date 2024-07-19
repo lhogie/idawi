@@ -42,15 +42,14 @@ public class TCPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void startServer() {
+	protected void serveLoop() {
 		while (true) {
 			try {
 				this.ss = new ServerSocket(getPort());
 				markReady();
 
 				while (true) {
-					Socket incomingSocket = ss.accept();
-					newSocket(incomingSocket);
+					newSocket(ss.accept());
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -60,8 +59,8 @@ public class TCPDriver extends IPDriver {
 		}
 	}
 
-	private void newSocket(Socket socket) throws IOException {
-		InputStream is = socket.getInputStream();
+	private void newSocket(Socket newSocket) throws IOException {
+		InputStream is = newSocket.getInputStream();
 
 		new Thread(() -> {
 			try {
@@ -72,8 +71,8 @@ public class TCPDriver extends IPDriver {
 					synchronized (neighbor_socket) {
 						Entry e = neighbor_socket.get(from);
 
-						if (e == null || e.socket != socket) {
-							neighbor_socket.put(from, new Entry(socket));
+						if (e == null || e.socket != newSocket) {
+							neighbor_socket.put(from, new Entry(newSocket));
 						}
 					}
 
@@ -81,7 +80,7 @@ public class TCPDriver extends IPDriver {
 				}
 			} catch (IOException e) {
 				// e.printStackTrace();
-				errorOn(socket);
+				errorOn(newSocket);
 			}
 		}).start();
 	}
@@ -139,14 +138,9 @@ public class TCPDriver extends IPDriver {
 		try {
 			ss.close();
 			ss = null;
+			port = -1;
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
-	}
-
-	@Override
-	protected boolean isRunning() {
-		return ss != null;
 	}
 
 	public Collection<Component> actualNeighbors() {
@@ -190,11 +184,6 @@ public class TCPDriver extends IPDriver {
 				}
 			}
 		}
-	}
-
-	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
 	}
 
 }

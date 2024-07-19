@@ -27,14 +27,7 @@ public class SharedMemoryTransport extends TransportService {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		// Cout.debug(outLinks);
-		// outLinks.forEach(l -> l.dest.processIncomingMessage((Message)
-		// l.dest.serializer.fromBytes(msg)));
-		fakeSend(msg, outLinks);
+		sendToTwin(msg, outLinks);
 	}
 
-	@Override
-	protected void bcast(byte[] msg) {
-		multicast(msg, activeOutLinks());
-	}
 }

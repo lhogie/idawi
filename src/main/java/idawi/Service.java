@@ -445,7 +445,7 @@ public class Service implements SizeOf, Serializable {
 		var msg = new Message<I>();
 		var r = component.defaultRoutingProtocol();
 		var dd = r.defaultData();
-		msg.routingStrategy = new RoutingStrategy(r, dd);
+		msg.routingStrategy = new RoutingStrategy(r.getClass(), dd);
 		var returnQ = createUniqueQueue("return-");
 		msg.replyTo = new QueueAddress(ComponentMatcher.unicast(component), getClass(), returnQ.name);
 		privateCustomizer.accept(msg);
@@ -459,14 +459,14 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Computation exec(ComponentMatcher t,
-			Class<S> s, Class<E> e, Consumer<Message<I>> msgCustomizer) {
+			Class<S> targetService, Class<E> targetEndpoint, Consumer<Message<I>> msgCustomizer) {
 		return prepareExec(msg -> {
-			msg.qAddr = new QueueAddress(t, s, e.getSimpleName() + "@" + now());
+			msg.qAddr = new QueueAddress(t, targetService, targetEndpoint.getSimpleName() + "@" + now());
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
-			msg.endpointID = e;
+			msg.endpointID = targetEndpoint;
 
-			var iSpec = Endpoint.inputSpecification(e);
+			var iSpec = Endpoint.inputSpecification(targetEndpoint);
 
 			if (iSpec != null) {
 				try {

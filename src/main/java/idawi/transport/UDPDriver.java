@@ -6,15 +6,20 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.io.Cout;
 import toools.math.MathsUtilities;
 
-public class UDPDriver extends IPDriver {
+public class UDPDriver extends IPDriver implements Broadcastable {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
+	public List<Integer> broadcastPorts = new ArrayList<>();
+
 	private DatagramSocket socket;
 
 	public UDPDriver(Component c) {
@@ -27,7 +32,7 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void startServer() {
+	protected void serveLoop() {
 		byte[] buf = new byte[1000000];
 
 		while (true) {
@@ -46,29 +51,31 @@ public class UDPDriver extends IPDriver {
 						// Cout.info("reading packet");
 						socket.receive(p);
 						Message msg = (Message) serializer.fromBytes(p.getData());
-						// Cout.info("UDP received " + msg);
+						 Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
 						processIncomingMessage(msg);
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (IOException err) {
+						err.printStackTrace();
 					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException err) {
+				err.printStackTrace();
 				// Threads.sleepMs(1000);
 			}
 		}
 	}
 
 	@Override
-	protected void stopServer() {
-		socket.close();
-		socket = null;
+	public void setPort(int port) {
+		broadcastPorts.add(port);
+		super.setPort(port);
 	}
 
 	@Override
-	protected boolean isRunning() {
-		return socket != null;
+	protected void stopServer() {
+		socket.close();
+		socket = null;
+		port = -1;
 	}
 
 	@Override
@@ -81,11 +88,17 @@ public class UDPDriver extends IPDriver {
 	}
 
 	@Override
-	protected void bcast(byte[] msgBytes) {
+	public void bcast(byte[] msgBytes) {
 		try {
 			for (var ni : NetworkInterface.networkInterfaces().toList()) {
-				for (var ia : ni.getInterfaceAddresses()) {
-					udpSend(msgBytes, ia.getBroadcast(), getPort());
+				for (int p : broadcastPorts) {
+					for (var ia : ni.getInterfaceAddresses()) {
+						var ba = ia.getBroadcast();
+
+						if (ba != null) {
+							udpSend(msgBytes, ba, p);
+						}
+					}
 				}
 			}
 		} catch (SocketException e) {
@@ -102,11 +115,12 @@ public class UDPDriver extends IPDriver {
 	}
 
 	private void udpSend(byte[] buf, InetAddress ip, int port) {
-		DatagramPacket p = new DatagramPacket(buf, buf.length);
+		var p = new DatagramPacket(buf, buf.length);
 		p.setAddress(ip);
-		p.setPort(getPort());
+		p.setPort(port);
 
 		try {
+			Cout.debug("udp send on port " +  port);
 			socket.send(p);
 		} catch (IOException e1) {
 		}
