@@ -96,7 +96,7 @@ public class Message<C> implements Serializable, SizeOf {
 
 	@Override
 	public long sizeOf() {
-		return 8 + SizeOf.sizeOf(routingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + qAddr.sizeOf()
+		return 8 + SizeOf.sizeOf(routingStrategy) + route.sizeOf() + SizeOf.sizeOf(content) + SizeOf.sizeOf(qAddr)
 				+ runtimes.sizeOf();
 	}
 

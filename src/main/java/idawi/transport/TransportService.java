@@ -30,12 +30,13 @@ public abstract class TransportService extends Service {
 	// used to serialize messages for transport
 	public final transient IdawiSerializer serializer;
 	public final List<TransportListener> listeners = new ArrayList<>();
-//	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	// public final AutoForgettingLongList alreadyKnownMsgs = new
+	// AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
 		this.serializer = new IdawiSerializer(this);
-//		 c.localView().g.markLinkActive(this, this); // loopback
+		// c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
@@ -65,12 +66,12 @@ public abstract class TransportService extends Service {
 			++nbMsgReceived;
 			incomingTraffic += msg.sizeOf();
 			Entry lastRouteEntry = msg.route.getLast();
-//			lastRouteEntry.link.dest = this;
+			// lastRouteEntry.link.dest = this;
 			lastRouteEntry.receptionDate = component.now();
 			lastRouteEntry.link.latency = lastRouteEntry.duration();
-//			Cout.debugSuperVisible(serializer.transportService);
+			// Cout.debugSuperVisible(serializer.transportService);
 			listeners.forEach(l -> l.msgReceived(this, msg));
-//			Cout.debug("-----");
+			// Cout.debug("-----");
 
 			component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
@@ -110,8 +111,6 @@ public abstract class TransportService extends Service {
 			err(msg, err);
 		}
 	}
-
-
 
 	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
 
@@ -181,7 +180,7 @@ public abstract class TransportService extends Service {
 			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
 				@Override
 				public void run() {
-//							Cout.debugSuperVisible(":)   "  +   l +     "      "+ l.dest);
+					// Cout.debugSuperVisible(":) " + l + " "+ l.dest);
 					try {
 						l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
 					} catch (Throwable e) {
@@ -213,7 +212,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "number of message received so far";
 		}
 	}
@@ -225,7 +224,7 @@ public abstract class TransportService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get the neighborhood";
 		}
 	}

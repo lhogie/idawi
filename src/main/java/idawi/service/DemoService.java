@@ -4,16 +4,22 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
+import javax.swing.JLabel;
+
 import idawi.Component;
+import idawi.Endpoint.EDescription;
 import idawi.FunctionEndPoint;
 import idawi.InnerClassEndpoint;
 import idawi.ProcedureEndpoint;
 import idawi.Service;
 import idawi.SupplierEndPoint;
+import idawi.messaging.Message;
 import idawi.messaging.MessageQueue;
 import idawi.messaging.ProgressMessage;
 import idawi.messaging.ProgressRatio;
@@ -39,12 +45,8 @@ public class DemoService extends Service {
 		});
 	}
 
+	@EDescription("sends a random message every second")
 	public class multipleRandomMessages extends InnerClassEndpoint<Integer, Integer> {
-
-		@Override
-		public String getDescription() {
-			return "sends a random message every second";
-		}
 
 		@Override
 		public void impl(MessageQueue in) throws Throwable {
@@ -59,15 +61,11 @@ public class DemoService extends Service {
 		}
 	}
 
+	@EDescription("waits")
 	public class waiting extends ProcedureEndpoint<Double> {
 		@Override
 		public void doIt(Double d) {
 			Threads.sleepMs((long) (d * 1000));
-		}
-
-		@Override
-		public String getDescription() {
-			return "just waits";
 		}
 	}
 
@@ -93,64 +91,46 @@ public class DemoService extends Service {
 
 			send(null, trigger.replyTo, m -> m.eot = true);
 		}
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 	}
 
-//	public static interface stringLength extends Operation2 {
-//		public static String description = "compute length";
-//
-//		public static class frontEnd extends FrontEnd {
-//			public int f(String s) {
-//				MessageQueue future = from.send(s, new To(target, DummyService.stringLength.class));
-//				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
-//			}
-//		}
-//
-//		public static class backEnd extends Backend<DummyService> {
-//			@Override
-//			public void f(MessageQueue in) {
-//				var msg = in.get_non_blocking();
-//				String s = (String) msg.content;
-//				service.send(s.length(), msg.replyTo);
-//			}
-//		}
-//	}
+	// public static interface stringLength extends Operation2 {
+	// public static String description = "compute length";
+	//
+	// public static class frontEnd extends FrontEnd {
+	// public int f(String s) {
+	// MessageQueue future = from.send(s, new To(target,
+	// DummyService.stringLength.class));
+	// return (Character) future.collect().throwAnyError_Runtime().get(0).content;
+	// }
+	// }
+	//
+	// public static class backEnd extends Backend<DummyService> {
+	// @Override
+	// public void f(MessageQueue in) {
+	// var msg = in.get_non_blocking();
+	// String s = (String) msg.content;
+	// service.send(s.length(), msg.replyTo);
+	// }
+	// }
+	// }
 
 	public class stringLength extends FunctionEndPoint<String, Integer> {
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 		@Override
 		public Integer f(String s) throws Throwable {
 			return s.length();
 		}
 	}
 
+	@EDescription("gives a chart")
 	public class chart extends SupplierEndPoint<Chart> {
-		@Override
-		public String r() {
-			return "gives a chart";
-		}
-
 		@Override
 		public Chart get() {
 			return new Chart();
 		}
 	}
 
+	@EDescription("replies n messages")
 	public class countFrom1toN extends InnerClassEndpoint<AAA, Integer> {
-		@Override
-		public String getDescription() {
-			return "replies n messages";
-		}
 
 		public static class AAA implements Serializable {
 			public double sleepTime;
@@ -171,18 +151,13 @@ public class DemoService extends Service {
 	}
 
 	public class countFromAtoB extends InnerClassEndpoint<Range, Integer> {
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
 		public static class Range implements Serializable, SizeOf {
+			int a, b;
+
 			public Range(int i, int j) {
 				this.a = i;
 				this.b = j;
 			}
-
-			int a, b;
 
 			@Override
 			public long sizeOf() {
@@ -202,11 +177,8 @@ public class DemoService extends Service {
 		}
 	}
 
+	@EDescription("random image")
 	public class loremPicsum extends FunctionEndPoint<Dimension, byte[]> {
-		@Override
-		public String getDescription() {
-			return "returns a random image";
-		}
 
 		@Override
 		public byte[] f(Dimension d) throws IOException {
@@ -221,10 +193,6 @@ public class DemoService extends Service {
 	}
 
 	public class throwError extends InnerClassEndpoint {
-		@Override
-		public String getDescription() {
-			return null;
-		}
 
 		@Override
 		public void impl(MessageQueue in) {
@@ -233,10 +201,6 @@ public class DemoService extends Service {
 	}
 
 	public class quitAll extends InnerClassEndpoint {
-		@Override
-		public String getDescription() {
-			return null;
-		}
 
 		@Override
 		public void impl(MessageQueue in) {
@@ -277,37 +241,64 @@ public class DemoService extends Service {
 
 			var rand = new Random();
 
-			interface R extends Supplier<Object>, SizeOf {
+			List<Supplier<?>> suppliers = new ArrayList<>();
+			suppliers.add(() -> new ProgressRatio(rand.nextInt(100), 100));
+			suppliers.add(() -> new ProgressMessage("I'm still working!"));
+			suppliers.add(() -> rand.nextInt());
+			suppliers.add(() -> rand.nextBoolean());
+			suppliers.add(() -> rand.nextDouble());
+			suppliers.add(() -> rand.nextFloat());
+			suppliers.add(() -> rand.nextLong());
+			suppliers.add(() -> new JLabel("test"));
+			suppliers.add(() -> TextUtilities.pickRandomString(rand, 1, 10));
+			suppliers.add(() -> new Float[] { rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), rand.nextFloat() });
+			suppliers.add(
+					() -> new Double[] { rand.nextDouble(), rand.nextDouble(), rand.nextDouble(), rand.nextDouble() });
+			suppliers.add(() -> new Message<>());
+			suppliers.add(() -> new IOException("some I/O error happened"));
 
-				@Override
-				public default long sizeOf() {
-					return 0;
+			{
+				var m = new HashMap<Integer, Double>();
+				for (int i = 0; i < 10; ++i) {
+					m.put(i, i / 2d);
 				}
+
+				suppliers.add(() -> m);
+				suppliers.add(() -> new HashSet<>(m.keySet()));
+				suppliers.add(() -> new HashSet<>(m.values()));
 			}
 
-			List<R> suppliers = new ArrayList<>();
-			suppliers.add(() -> new ProgressRatio(rand.nextInt(100), 100));
-			suppliers.add(() -> rand.nextInt());
 			suppliers.add(() -> {
 				try {
-					var i = new Image();
-					i.base64 = TextUtilities.base64(loremPicsum.imageData(new Dimension(200, 100)));
-					return i;
+					return new RawData(loremPicsum.imageData(new Dimension(200, 100)), "image/jpeg");
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			});
+
 			suppliers.add(() -> {
 				try {
-					var i = new RawData();
-					i.mimeType = "image/jpeg";
-					i.bytes = loremPicsum.imageData(new Dimension(200, 100));
-					return i;
+					var array = new Object[2];
+					array[0] = "coucou";
+					array[1] = new RawData(loremPicsum.imageData(new Dimension(200, 100)), "image/jpeg");
+					return array;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			});
-			suppliers.add(() -> new ProgressMessage("I'm still working!"));
+
+			suppliers.add(() -> new RawData.javascript("alert( 'Hello, world!' );"));
+			suppliers.add(() -> new RawData.csv("John,Paul,George,Ringo\nguitar,bass,guitar,drums"));
+			suppliers.add(() -> new RawData.html("<a href=\"https://www.google.com/\">Hello <b>Google</b></a>"));
+
+			suppliers.add(() -> {
+				var svg = "<svg height=\"150\" width=\"500\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+						+ "  <ellipse cx=\"240\" cy=\"100\" rx=\"220\" ry=\"30\" fill=\"purple\" />\n"
+						+ "  <ellipse cx=\"220\" cy=\"70\" rx=\"190\" ry=\"20\" fill=\"lime\" />\n"
+						+ "  <ellipse cx=\"210\" cy=\"45\" rx=\"170\" ry=\"15\" fill=\"yellow\" />\n"
+						+ "  Sorry, your browser does not support inline SVG. \n" + "</svg>";
+				return new RawData(svg.getBytes(), "image/svg+xml");
+			});
 
 			for (int i = 0; i < target; ++i) {
 				if (in.size() > 0) {
@@ -337,7 +328,6 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
-
 			send(Graph.random(), msg.replyTo, m -> msg.eot = true);
 		}
 	}
@@ -379,10 +369,9 @@ public class DemoService extends Service {
 		@Override
 		public void impl(MessageQueue in) throws IOException {
 			var msg = in.poll_sync();
-			var rd = new RawData();
-			rd.bytes = NetUtilities.retrieveURLContent(
-					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg");
-			rd.mimeType = "image/jpeg";
+			var rd = new RawData(NetUtilities.retrieveURLContent(
+					"https://thumbs.static-thomann.de/thumb/padthumb600x600/pics/bdb/_43/439308/13826671_800.jpg"),
+					"image/jpeg");
 			send(rd, msg.replyTo, m -> msg.eot = true);
 		}
 	}

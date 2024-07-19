@@ -19,7 +19,6 @@ public class ExitApplication extends Service {
 
 	public class exit extends ProcedureEndpoint<Integer> {
 
-
 		@Override
 		public String getDescription() {
 			return "terminates that JVM";

@@ -33,7 +33,7 @@ public class DirectorySharingService extends Service {
 	public class pathToLocalFiles extends SupplierEndPoint<String> {
 
 		@Override
-		protected String r() {
+		public String getDescription() {
 			return "gives the path to shared files";
 		}
 
@@ -53,7 +53,7 @@ public class DirectorySharingService extends Service {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return null;
 		}
 	}

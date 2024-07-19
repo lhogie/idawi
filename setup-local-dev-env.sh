@@ -1,7 +1,6 @@
 set -e
 
-for P in toools java4unix jdotgen jExperiment jaseto 
-do
+for P in toools java4unix jdotgen jExperiment jaseto; do
     echo '***' $P
 
     # Supprime les dossiers si ils existent déjà

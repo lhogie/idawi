@@ -124,7 +124,7 @@ public class LocalViewService extends KnowledgeBase {
 		@Override
 		public void doIt(Object n) {
 			Cout.debug(component + " received " + n);
-//			Cout.debug("DT merge not yet implemented");
+			// Cout.debug("DT merge not yet implemented");
 		}
 
 		@Override
@@ -140,7 +140,7 @@ public class LocalViewService extends KnowledgeBase {
 		}
 
 		@Override
-		public String r() {
+		public String getDescription() {
 			return "get all known components";
 		}
 	}

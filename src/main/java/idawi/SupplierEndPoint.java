@@ -1,20 +1,21 @@
 package idawi;
 
+import fr.cnrs.i3s.Cache;
 import idawi.messaging.MessageQueue;
 
 public abstract class SupplierEndPoint<O> extends InnerClassEndpoint<Void, O> {
+	Cache<O> cache = new Cache<O>(cacheDuration(), null);
 
 	@Override
 	public final void impl(MessageQueue in) throws Throwable {
-		reply(get(), in.poll_sync());
+		O o = get();
+		cache.set(o);
+		reply(o, in.poll_sync());
 	}
 
-	@Override
-	public final String getDescription() {
-		return "returns " + r();
+	protected double cacheDuration() {
+		return 10;
 	}
-
-	protected abstract String r();
 
 	public abstract O get() throws Throwable;
 }
