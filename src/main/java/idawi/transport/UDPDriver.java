@@ -6,7 +6,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import idawi.Component;
 import idawi.Idawi;
@@ -16,14 +18,12 @@ import toools.math.MathsUtilities;
 
 public class UDPDriver extends IPDriver implements Broadcastable {
 	// public static final int DEFAULT_PORT = IPDriver.DEFAULT_PORT;
+	public List<Integer> broadcastPorts = new ArrayList<>();
+
 	private DatagramSocket socket;
 
 	public UDPDriver(Component c) {
 		super(c);
-
-		if (!c.isDigitalTwin()) {
-			Idawi.agenda.threadPool.submit(() -> startServer());
-		}
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class UDPDriver extends IPDriver implements Broadcastable {
 	}
 
 	@Override
-	protected void startServer() {
+	protected void serveLoop() {
 		byte[] buf = new byte[1000000];
 
 		while (true) {
@@ -51,29 +51,31 @@ public class UDPDriver extends IPDriver implements Broadcastable {
 						// Cout.info("reading packet");
 						socket.receive(p);
 						Message msg = (Message) serializer.fromBytes(p.getData());
-						// Cout.info("UDP received " + msg);
+						 Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
 						processIncomingMessage(msg);
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (IOException err) {
+						err.printStackTrace();
 					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException err) {
+				err.printStackTrace();
 				// Threads.sleepMs(1000);
 			}
 		}
 	}
 
 	@Override
-	protected void stopServer() {
-		socket.close();
-		socket = null;
+	public void setPort(int port) {
+		broadcastPorts.add(port);
+		super.setPort(port);
 	}
 
 	@Override
-	protected boolean isRunning() {
-		return socket != null;
+	protected void stopServer() {
+		socket.close();
+		socket = null;
+		port = -1;
 	}
 
 	@Override
@@ -86,6 +88,25 @@ public class UDPDriver extends IPDriver implements Broadcastable {
 	}
 
 	@Override
+	public void bcast(byte[] msgBytes) {
+		try {
+			for (var ni : NetworkInterface.networkInterfaces().toList()) {
+				for (int p : broadcastPorts) {
+					for (var ia : ni.getInterfaceAddresses()) {
+						var ba = ia.getBroadcast();
+
+						if (ba != null) {
+							udpSend(msgBytes, ba, p);
+						}
+					}
+				}
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
 	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
 		for (var l : outLinks) {
 			var i = l.dest.component.dt().info();
@@ -94,32 +115,14 @@ public class UDPDriver extends IPDriver implements Broadcastable {
 	}
 
 	private void udpSend(byte[] buf, InetAddress ip, int port) {
-		DatagramPacket p = new DatagramPacket(buf, buf.length);
+		var p = new DatagramPacket(buf, buf.length);
 		p.setAddress(ip);
-		p.setPort(getPort());
-		Cout.debugSuperVisible(ip);
+		p.setPort(port);
+
 		try {
+			Cout.debug("udp send on port " +  port);
 			socket.send(p);
 		} catch (IOException e1) {
-		}
-	}
-
-	@Override
-	public final void bcast(byte[] msgBytes) {
-		try {
-			for (var ni : NetworkInterface.networkInterfaces().toList()) {
-				for (var ia : ni.getInterfaceAddresses()) {
-					InetAddress baddr = ia.getBroadcast();
-
-					if (baddr != null) {
-						for (int port : bcastPortList) {
-							udpSend(msgBytes, baddr, port);
-						}
-					}
-				}
-			}
-		} catch (SocketException e) {
-			e.printStackTrace();
 		}
 	}
 }

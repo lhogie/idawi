@@ -34,5 +34,4 @@ public class Loopback extends TransportService {
 		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
 	}
 
-
 }

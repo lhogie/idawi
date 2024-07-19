@@ -4,7 +4,6 @@ import java.util.Random;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.Service;
 import idawi.messaging.Message;
 import idawi.routing.FloodingWithSelfPruning;
 import idawi.service.PingService;

@@ -45,8 +45,7 @@ public class SharedFileSystemTransport extends TransportService {
 		});
 	}
 
-
-
+	
 	@Override
 	public String getName() {
 		return "shared-directory driver";

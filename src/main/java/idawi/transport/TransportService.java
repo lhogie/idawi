@@ -38,7 +38,6 @@ public abstract class TransportService extends Service {
 //		 c.localView().g.markLinkActive(this, this); // loopback
 	}
 
-
 	@Override
 	public long sizeOf() {
 		return 8 * 4 + super.sizeOf();
@@ -53,11 +52,10 @@ public abstract class TransportService extends Service {
 
 	protected abstract void multicast(byte[] msgBytes, Collection<Link> outLinks);
 
-	public void multicast(byte[] msg) {
-		multicast(msg, activeOutLinks());
+	protected void multicast(byte[] msgBytes) {
+		multicast(msgBytes, activeOutLinks());
 	}
-	
-	
+
 	// this is called by transport implementations
 	protected synchronized final void processIncomingMessage(Message msg) {
 		if (!msg.route.getLast().link.dest.component.equals(component))
@@ -131,8 +129,8 @@ public abstract class TransportService extends Service {
 
 			if (this instanceof Broadcastable tb) {
 				tb.bcast(msgToBytes(msg));
-			}else {
-				throw new IllegalStateException("broadcast not supported by " + this);
+			} else {
+				multicast(msgToBytes(msg));
 			}
 		} else {
 			for (var l : outLinks)
@@ -160,7 +158,7 @@ public abstract class TransportService extends Service {
 
 			var msgBytes = msgToBytes(msg);
 			multicast(msgBytes, realSend);
-			fakeSend(msg, fakeEmissions);
+			sendToTwin(msg, fakeEmissions);
 		}
 
 		component.alreadySentMsgs.add(msg.ID);
@@ -178,12 +176,12 @@ public abstract class TransportService extends Service {
 		return serializer.toBytes(msg);
 	}
 
-	private void fakeSend(Message msg, Collection<Link> fakeEmissions) {
-		fakeSend(serializer.toBytes(fakeEmissions), fakeEmissions);
+	private void sendToTwin(Message msg, Collection<Link> links) {
+		sendToTwin(serializer.toBytes(links), links);
 	}
 
-	protected void fakeSend(byte[] msg, Collection<Link> fakeEmissions) {
-		for (var l : fakeEmissions) {
+	protected void sendToTwin(byte[] msg, Collection<Link> links) {
+		for (var l : links) {
 			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
 				@Override
 				public void run() {

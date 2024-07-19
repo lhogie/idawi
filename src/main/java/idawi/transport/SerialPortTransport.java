@@ -9,9 +9,9 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 
-public class SIKTransport extends InputStreamBasedDriver implements Broadcastable {
+public class SerialPortTransport extends InputStreamBasedDriver implements Broadcastable {
 
-	public SIKTransport(Component c) {
+	public SerialPortTransport(Component c) {
 		super(c);
 	}
 
@@ -32,11 +32,11 @@ public class SIKTransport extends InputStreamBasedDriver implements Broadcastabl
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-
 	}
 
 	@Override
 	public void bcast(byte[] msg) {
+		multicast(msg, activeOutLinks());
 	}
 
 	@Override

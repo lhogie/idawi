@@ -4,14 +4,12 @@ import idawi.Component;
 import idawi.ProcedureEndpoint;
 import idawi.Service;
 import idawi.routing.ComponentMatcher;
-import idawi.transport.UDPDriver;
-import toools.thread.Threads;
+import idawi.transport.SIKDriver;
 
 public class App {
 	public static void main(String[] args) {
 		var c = new Component();
-		var t = new UDPDriver(c);
-		Threads.sleep(1);
+		var t = new SIKDriver(c);
 
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
 			System.out.println("sending ");
