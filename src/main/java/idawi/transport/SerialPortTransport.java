@@ -13,7 +13,7 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 
-public class SharedMemoryTransport extends InputStreamBasedDriver {
+public class SerialPortTransport extends InputStreamBasedDriver {
 
 	@Override
 	public String getName() {
@@ -22,7 +22,7 @@ public class SharedMemoryTransport extends InputStreamBasedDriver {
 
 	@Override
 	public void dispose(Link l) {
-//		l.activity.close();
+		// l.activity.close();
 	}
 
 	@Override

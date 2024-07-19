@@ -6,9 +6,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+import idawi.Component;
 import idawi.messaging.Message;
 
 public abstract class InputStreamBasedDriver extends TransportService {
+
+	public InputStreamBasedDriver(Component c) {
+		super(c);
+
+	}
 
 	public static final byte[] marker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 
