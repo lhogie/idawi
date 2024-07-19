@@ -13,12 +13,14 @@ public class App {
 		new S(c);
 
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+			msg.content = "hello";
+			System.out.println(msg);
 			System.out.println("sending ");
 		});
 	}
 
-	public static class S extends Service {
-		public static final long serialVersionUID=0L;
+	public class S extends Service {
+		public static final long serialVersionUID = 0L;
 
 		public S(Component component) {
 			super(component);
