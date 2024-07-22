@@ -23,6 +23,7 @@ public class serialTestreceive extends TransportService implements SerialPortMes
     public static int truelines = 0;
     public static float finallines = 0;
     public static byte[] bufferData;
+    public static byte[] tempbufferData;
     public static int advanceBuffer = 0;
 
     public static void main(String[] args) {
@@ -109,16 +110,20 @@ public class serialTestreceive extends TransportService implements SerialPortMes
                             e.printStackTrace();
                         }
                     }
-                }else{
-                    // bufferData=new byte[delimitedMessage.length-28];
-                    // byteBufferReader.position(28);
-                    // byteBufferReader.get(bufferData, 0, delimitedMessage.length-28);
-                    // byte[] allByteArray = new byte[bufferData.length + delimitedMessage.length];
-                    // ByteBuffer buff = ByteBuffer.wrap(allByteArray);
-                    // buff.put(bufferData);
-                    // buff.put(delimitedMessage);
-                    // byte[] combined = buff.array();
-                    // String tcombined=new String()
+                } else {
+                    tempbufferData = new byte[delimitedMessage.length - 28];// Buffer that will contain the message and
+                                                                            // the checksum of the previous msg
+                    byteBufferReader.position(28);
+                    byteBufferReader.get(tempbufferData, 0, delimitedMessage.length - 28);
+                    byte[] allByteArray = new byte[tempbufferData.length + delimitedMessage.length];
+                    ByteBuffer buff = ByteBuffer.wrap(allByteArray);
+                    buff.put(tempbufferData);
+                    buff.put(delimitedMessage);
+                    bufferData = buff.array();// Buffer with all previousData
+                    //
+                    String tcombined = new String(bufferData);
+                    System.out.println(tcombined);
+                    //
                 }
             }
 
