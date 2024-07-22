@@ -67,7 +67,7 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 		byte[] msg1 = msg;
 		// byte[] msg2 = serialObject.startSend(dataToSend2);
 
-		SerialPort comPort = SerialPort.getCommPort("COM8");
+		SerialPort comPort = SerialPort.getCommPort("/dev/ttyUSB0");
 		// SerialPort comPort2 = SerialPort.getCommPort("COM7");
 
 		comPort.setBaudRate(57600);

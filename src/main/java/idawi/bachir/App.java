@@ -1,6 +1,7 @@
 package idawi.bachir;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.ProcedureEndpoint;
 import idawi.Service;
 import idawi.bachir.App.S;
@@ -16,7 +17,7 @@ public class App {
 		t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
 			while (true) {
 				msg.content = "hello";
-				System.out.println(msg);
+				System.out.println("yo"+msg);
 				System.out.println("sending ");
 			}
 		});
