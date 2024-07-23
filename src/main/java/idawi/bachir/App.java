@@ -1,5 +1,9 @@
 package idawi.bachir;
 
+import java.io.Serial;
+
+import com.fazecast.jSerialComm.SerialPort;
+
 import idawi.Component;
 import idawi.Idawi;
 import idawi.ProcedureEndpoint;
@@ -14,15 +18,21 @@ public class App {
 		var c = new Component();
 		var t = new SIKDriver(c);
 		new S(c);
-		while (true) {
+		SerialPort comPort = SerialPort.getCommPort("COM8");
+		try {
+			while (true) {
 
-			t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-				msg.content = "hello";
-				System.out.println("yo"+msg);
-				System.out.println("sending ");
+				t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+					msg.content = "hello";
+					System.out.println("message : " + msg);
+					System.out.println("sending ");
 
-			});
+				});
+			}
+		} catch (Exception e) {
+			comPort.closePort();
 		}
+
 	}
 
 	public static class S extends Service {

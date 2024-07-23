@@ -1,5 +1,6 @@
 package idawi.transport;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,15 +11,22 @@ import com.fazecast.jSerialComm.SerialPort;
 import idawi.Component;
 import idawi.Idawi;
 import idawi.messaging.Message;
+import idawi.routing.ComponentMatcher.all;
 import idawi.service.serialTest.serialTest;
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 	public static final byte[] marker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 	public static final long serialVersionUID = 6207309244483020844L;
+	public static SerialPort comPort = SerialPort.getCommPort("COM8");
 
 	public SIKDriver(Component c) {
 		super(c);
+		comPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+		comPort.setBaudRate(57600);
+		comPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
+		comPort.openPort();
 	}
 
 	public byte[] startSend(String data) {
@@ -52,13 +60,27 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
-		var msgClone = (Message) serializer.fromBytes(msg);
-		Idawi.agenda.scheduleNow(() -> processIncomingMessage(msgClone));
+
+	}
+
+	public void test(InputStream it, Consumer<byte[]> f) throws IOException {
+		byte[] bufferReaderMarker = new byte[24];
+		String allByte = new String();
+		int byteCounter = 0;
+		while (true) {
+			char oneByte = (char) it.read();
+			if (oneByte == -1) {
+				break;
+			}
+			allByte = allByte + oneByte;
+			if (byteCounter == 24) {
+			}
+			byteCounter++;
+		}
 	}
 
 	@Override
 	public void bcast(byte[] msg) {
-		int i = 0;
 		// String dataToSend = "Helcxvcxvcxlo";
 		// String dataToSend2 = "Yafdvfdvfdkmp";
 
@@ -67,12 +89,13 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 		byte[] msg1 = msg;
 		// byte[] msg2 = serialObject.startSend(dataToSend2);
 
-		SerialPort comPort = SerialPort.getCommPort("/dev/ttyUSB0");
-		// SerialPort comPort2 = SerialPort.getCommPort("COM7");
+		// SerialPort comPort = SerialPort.getCommPort("/dev/ttyUSB0");
+		// SerialPort comPort = SerialPort.getCommPort("COM8");
 
-		comPort.setBaudRate(57600);
-		comPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
-		comPort.openPort();
+		// comPort.setBaudRate(57600);
+		// comPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED |
+		// SerialPort.FLOW_CONTROL_CTS_ENABLED);
+		// comPort.openPort();
 
 		// comPort2.setBaudRate(57600);
 		// comPort2.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED |
@@ -80,7 +103,7 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 		// comPort2.openPort();
 		try {
 			byte[] lengthmsg = ByteBuffer.allocate(4).putInt(msg1.length).array();
-			System.out.println(ByteBuffer.wrap(lengthmsg).getInt() + "   " + lengthmsg.length);
+			byte[] testlength = new byte[4];
 			int intHashCode = Arrays.hashCode(msg1);
 			byte[] hashCode = ByteBuffer.allocate(4).putInt(intHashCode).array();
 			System.out.println(intHashCode);
@@ -96,21 +119,23 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 			// int bytesWrittenLength = comPort.writeBytes(lengthmsg, lengthmsg.length);
 			// Thread.sleep(500);
 			// int bytesWritten = comPort.writeBytes(msg1, msg1.length);
-			// Thread.sleep(500);
-			byte[] allByteArray = new byte[marker.length + lengthmsg.length + msg1.length + hashCode.length];
+			byte[] allByteArray = new byte[msg1.length + hashCode.length + marker.length + msg1.length + hashCode.length
+					+ marker.length + msg1.length + hashCode.length + marker.length];
 			ByteBuffer buff = ByteBuffer.wrap(allByteArray);
-			buff.put(marker);
-			buff.put(lengthmsg);
 			buff.put(msg1);
 			buff.put(hashCode);
+			buff.put(marker);
+			System.out.println("all : " + allByteArray.length);
 			byte[] combined = buff.array();
 			int bytesWrittenCombined = comPort.writeBytes(combined, combined.length);
-			String t = new String(combined);
-			// System.out.println(t);
-			Thread.sleep(1000);
-			System.out.println(combined);
 
-			System.out.println(combined + " " + bytesWrittenCombined);
+			ByteBuffer.wrap(combined).get(testlength, 0, 4);
+			System.out
+					.println(
+							ByteBuffer.wrap(testlength).getInt() + " length of  message object :  " + lengthmsg.length);
+			String t = new String(combined);
+
+			System.out.println(combined + " written : " + bytesWrittenCombined);
 
 			// byte[] allByteArray2 = new byte[marker.length + lengthmsg2.length +
 			// msg2.length + hashCode2.length];
@@ -127,12 +152,10 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 			// System.out.println(marker + " " + bytesWrittenMarker);
 			// System.out.println(lengthmsg + " " + bytesWrittenLength);
 			// System.out.println(msg1 + " " + bytesWritten);
-			i++;
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		comPort.closePort();
 		// comPort2.closePort();
 
 	}
