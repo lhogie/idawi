@@ -29,7 +29,7 @@ public class RandomWalk extends RoutingService<RandomWalkData> {
 		for (var t : transports()) {
 			if (p.acceptTransport.test(t)) {
 
-				t.send(msg, randomRelays, this, p);
+				t.send(msg, randomRelays, this);
 			}
 		}
 	}

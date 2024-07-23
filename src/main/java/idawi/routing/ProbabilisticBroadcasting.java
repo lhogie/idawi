@@ -26,11 +26,11 @@ public class ProbabilisticBroadcasting extends RoutingService<ProbabilisticBroad
 	synchronized public void acceptImpl(Message msg, ProbabilisticBroadcastingParms parms) {
 		// the message was never received
 		if (!component.alreadyReceivedMsgs.contains(msg.ID) && !component.alreadySentMsgs.contains(msg.ID)
-				&& Idawi.prng.nextDouble() < 0) {
+				&& Idawi.prng.nextDouble() < parms.p) {
 			for (var t : component.services(TransportService.class)) {
 				if (parms.acceptTransport.test(t)) {
 
-					t.send(msg, null, this, parms);
+					t.send(msg, null, this);
 				}
 			}
 

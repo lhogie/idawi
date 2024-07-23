@@ -18,7 +18,6 @@ import idawi.messaging.ACK.serviceNotAvailable;
 import idawi.messaging.Message;
 import idawi.routing.ComponentMatcher.multicast;
 import idawi.routing.Entry;
-import idawi.routing.RoutingParameters;
 import idawi.routing.RoutingService;
 import idawi.service.EncryptionService;
 
@@ -113,7 +112,7 @@ public abstract class TransportService extends Service {
 		}
 	}
 
-	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r, RoutingParameters parms) {
+	public final void send(Message msg, Iterable<Link> outLinks, RoutingService r) {
 
 		++nbMsgSent;
 		outGoingTraffic += msg.sizeOf();
@@ -182,9 +181,16 @@ public abstract class TransportService extends Service {
 
 	protected void sendToTwin(byte[] msg, Collection<Link> links) {
 		for (var l : links) {
+			sendToTwin(msg, l);
+		}
+	}
+	
+	protected void sendToTwin(byte[] msg, Link l) {
 			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
 				@Override
 				public void run() {
+//					Cout.debug("bast");
+
 //							Cout.debugSuperVisible(":)   "  +   l +     "      "+ l.dest);
 					try {
 						l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
@@ -194,7 +200,6 @@ public abstract class TransportService extends Service {
 					}
 				}
 			});
-		}
 	}
 
 	public List<Link> activeOutLinks() {

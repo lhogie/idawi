@@ -36,7 +36,7 @@ public class BasicTableRoutingService extends RoutingService<RoutingParameters> 
 										l -> l.src.component.equals(component) && l.dest.component.equals(relay));
 
 								if (link != null) {
-									t.send(msg, Set.of(link), this, parms);
+									t.send(msg, Set.of(link), this);
 								}
 							}
 						});

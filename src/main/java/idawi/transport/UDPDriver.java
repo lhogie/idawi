@@ -51,7 +51,7 @@ public class UDPDriver extends IPDriver implements Broadcastable {
 						// Cout.info("reading packet");
 						socket.receive(p);
 						Message msg = (Message) serializer.fromBytes(p.getData());
-						 Cout.info("UDP received " + msg);
+						// Cout.info("UDP received " + msg);
 						// Cout.debugSuperVisible(msg.ID);
 						processIncomingMessage(msg);
 					} catch (IOException err) {

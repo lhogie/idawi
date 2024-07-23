@@ -30,7 +30,7 @@ public class BlindBroadcasting extends RoutingService<RoutingParameters> {
 		if (!alreadyKnown) {
 			for (var t : component.services(TransportService.class)) {
 				if (parms.acceptTransport.test(t)) {
-					t.send(msg, null, this, parms);
+					t.send(msg, null, this);
 				}
 			}
 

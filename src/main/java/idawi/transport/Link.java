@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import idawi.Component;
-import idawi.Idawi;
 import idawi.service.local_view.Info;
 import idawi.service.local_view.Infoable;
 import toools.SizeOf;
@@ -124,19 +123,13 @@ public class Link implements Infoable, SizeOf {
 
 	public void markActive() {
 		active = true;
-/*
-		if (activity.isEmpty()) {
-			activity.add(new TimeFrame(Idawi.agenda.now()));
-		} else {
-			var last = activity.last();
-
-			if (last.isClosed()) {
-				activity.add(new TimeFrame(Idawi.agenda.now()));
-			} else {
-				last.end(Idawi.agenda.now());
-			}
-		}
-		*/
+		/*
+		 * if (activity.isEmpty()) { activity.add(new TimeFrame(Idawi.agenda.now())); }
+		 * else { var last = activity.last();
+		 * 
+		 * if (last.isClosed()) { activity.add(new TimeFrame(Idawi.agenda.now())); }
+		 * else { last.end(Idawi.agenda.now()); } }
+		 */
 	}
 
 	public void markInactive() {

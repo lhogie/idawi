@@ -32,11 +32,14 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		new Exception().printStackTrace();
 
 	}
 
 	@Override
 	public void bcast(byte[] msg) {
+		new Exception().printStackTrace();
+
 	}
 
 	@Override
