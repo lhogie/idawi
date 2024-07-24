@@ -1,5 +1,6 @@
 package idawi.transport;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,15 +11,32 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import idawi.Component;
+import idawi.Idawi;
 import idawi.messaging.Message;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import toools.util.Conversion;
 
-public abstract class InputStreamBasedDriver extends TransportService implements Broadcastable {
+public abstract class StreamBasedDriver extends TransportService implements Broadcastable {
 
-	public InputStreamBasedDriver(Component c) {
+	public StreamBasedDriver(Component c) {
 		super(c);
-		// TODO Auto-generated constructor stub
+
+		inputStreams().forEach(in -> newThread(in));
+	}
+
+	private void newThread(InputStream in) {
+		Idawi.agenda.threadPool.submit(() -> inputStreamDecoder(in, bytes -> callback(bytes)));
+	}
+
+	private void callback(byte[] bytes) {
+		var msgBytes = Arrays.copyOf(bytes, bytes.length - 4);
+		int hashCode = ByteBuffer.wrap(bytes, bytes.length - 4, 4).getInt();
+
+		if (Arrays.hashCode(msgBytes) == hashCode) {
+			processIncomingMessage((Message) serializer.fromBytes(bytes));
+		} else {
+			System.err.println("garbage");
+		}
 	}
 
 	public static final byte[] marker = ByteBuffer.wrap(new byte[8]).putLong(939196893501413829L).array();
@@ -36,26 +54,15 @@ public abstract class InputStreamBasedDriver extends TransportService implements
 	public void bcast(byte[] msgBytes) {
 		outputStreams().forEach(os -> {
 			try {
-				os.write(msgBytes);
-				os.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
-				os.write(marker);
+				var b = new ByteArrayOutputStream();
+				b.write(msgBytes);
+				b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
+				b.write(marker);
+				os.write(b.toByteArray());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
-	}
-
-	public void start() {
-		inputStreams().forEach(in -> inputStreamDecoder(in, bytes -> {
-			var msgBytes = Arrays.copyOf(bytes, bytes.length - 4);
-			int hashCode = ByteBuffer.wrap(bytes, bytes.length - 4, 4).getInt();
-
-			if (Arrays.hashCode(msgBytes) == hashCode) {
-				processIncomingMessage((Message) serializer.fromBytes(bytes));
-			} else {
-				System.err.println("garbage");
-			}
-		}));
 	}
 
 	public static void inputStreamDecoder(InputStream in, Consumer<byte[]> callback) {
