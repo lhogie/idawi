@@ -60,6 +60,7 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 
 	@Override
 	protected void multicast(byte[] msg, Collection<Link> outLinks) {
+		new Exception().printStackTrace();
 
 	}
 
@@ -156,7 +157,6 @@ public class SIKDriver extends InputStreamBasedDriver implements Broadcastable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		// comPort2.closePort();
 
 	}
 

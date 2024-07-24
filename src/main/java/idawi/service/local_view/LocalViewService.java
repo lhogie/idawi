@@ -21,6 +21,7 @@ import idawi.service.DigitalTwinService;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
 import toools.io.Cout;
+import toools.src.Source;
 
 public class LocalViewService extends KnowledgeBase {
 
@@ -123,7 +124,7 @@ public class LocalViewService extends KnowledgeBase {
 	public class acceptHello extends ProcedureEndpoint<Object> {
 		@Override
 		public void doIt(Object n) {
-			Cout.debug(component + " received " + n);
+			Cout.debug(Source.here(), component + " received " + n);
 			// Cout.debug("DT merge not yet implemented");
 		}
 

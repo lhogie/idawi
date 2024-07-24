@@ -40,7 +40,7 @@ public class IRP extends RoutingService<IRPParms> {
 
 					synchronized (aliveMessages) {
 						for (Message msg : aliveMessages.values()) {
-							tt.send(msg, Set.of(l), IRP.this, msg.route.getLast().routing.parms);
+							tt.send(msg, Set.of(l), IRP.this);
 						}
 					}
 				}
@@ -66,7 +66,7 @@ public class IRP extends RoutingService<IRPParms> {
 			boolean outdated = msg.route.isEmpty() ? false : p.validityDuration > msg.route.duration();
 
 			if (!wentToFar && !outdated) {
-				component.services(TransportService.class).forEach(t -> t.send(msg, null, this, p));
+				component.services(TransportService.class).forEach(t -> t.send(msg, null, this));
 			}
 		}
 	}

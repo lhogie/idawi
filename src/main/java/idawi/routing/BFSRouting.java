@@ -34,7 +34,7 @@ public class BFSRouting extends RoutingService<BFSRoutingParms> {
 
 						if (parms.acceptTransport.test(t)) {
 							var links = e.getValue();
-							t.send(msg, links, this, null);
+							t.send(msg, links, this);
 						}
 					});
 		}

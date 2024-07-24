@@ -6,49 +6,45 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 import idawi.Idawi;
-import idawi.ProcedureEndpoint;
+import idawi.InnerClassEndpoint;
 import idawi.Service;
-import idawi.bachir.App.S;
+import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
-import idawi.transport.SIKDriver;
+import idawi.transport.SharedMemoryTransport;
 
 public class App {
 	public static void main(String[] args) {
 		Idawi.agenda.start();
-		var c = new Component();
-		var t = new SIKDriver(c);
-		new S(c);
-		SerialPort comPort = SerialPort.getCommPort("COM8");
-		try {
-			while (true) {
+		var a = new Component();
+		var a_s = new S(a);
+		// new SIKDriver(a);
+		var a_smt = new SharedMemoryTransport(a);
 
-				t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-					msg.content = "hello";
-					System.out.println("message : " + msg);
-					System.out.println("sending ");
+		var b = new Component();
+		var b_s = new S(b);
+		// new SIKDriver(b);
+		new SharedMemoryTransport(b);
 
-				});
-			}
-		} catch (Exception e) {
-			comPort.closePort();
-		}
+		a_smt.bcastTargets.add(b);
 
+		a_s.exec(ComponentMatcher.unicast(b), S.class, S.E.class, msg -> {
+			msg.content = "blabla";
+			System.out.println("sending ");
+		});
 	}
 
 	public static class S extends Service {
-		public static final long serialVersionUID = 0L;
-
 		public S(Component component) {
 			super(component);
 			System.out.println("Instance S Created");
 		}
 
-		public class E extends ProcedureEndpoint<String> {
+		public class E extends InnerClassEndpoint<Object, Object> {
 
 			@Override
-			public void doIt(String in) throws Throwable {
-
-				System.out.println("received " + in);
+			public void impl(MessageQueue in) throws Throwable {
+				var msg = in.poll_sync();
+				System.out.println("exec on b: " + msg);
 			}
 		}
 	}

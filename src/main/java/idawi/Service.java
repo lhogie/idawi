@@ -441,26 +441,22 @@ public class Service implements SizeOf, Serializable {
 		return Idawi.agenda.time();
 	}
 
-	private <I> Computation prepareExec(Consumer<Message<I>> privateCustomizer, Consumer<Message<I>> userCustomizer) {
+	protected <I> Computation send(Consumer<Message<I>> customizer) {
 		var msg = new Message<I>();
-		var r = component.defaultRoutingProtocol();
-		var dd = r.defaultData();
-		msg.routingStrategy = new RoutingStrategy(r.getClass(), dd);
+		msg.endpointID = deliverToQueue.class;
+		var routing = component.defaultRoutingProtocol();
+		msg.routingStrategy = new RoutingStrategy(routing.getClass(), routing.defaultData());
 		var returnQ = createUniqueQueue("return-");
 		msg.replyTo = new QueueAddress(ComponentMatcher.unicast(component), getClass(), returnQ.name);
-		privateCustomizer.accept(msg);
-
-		if (userCustomizer != null) {
-			userCustomizer.accept(msg);
-		}
-
-		r.accept(msg);
+		customizer.accept(msg);
+//		Arrays.stream(customizers).forEach(c -> c.accept(msg));
+		routing.accept(msg); // ask the routing protocol to send the message on the transports
 		return new Computation(msg.qAddr, returnQ);
 	}
 
 	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Computation exec(ComponentMatcher t,
 			Class<S> targetService, Class<E> targetEndpoint, Consumer<Message<I>> msgCustomizer) {
-		return prepareExec(msg -> {
+		return send((Message<I> msg) -> {
 			msg.qAddr = new QueueAddress(t, targetService, targetEndpoint.getSimpleName() + "@" + now());
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
@@ -475,7 +471,9 @@ public class Service implements SizeOf, Serializable {
 					// throw new IllegalStateException(err);
 				}
 			}
-		}, msgCustomizer);
+
+			msgCustomizer.accept(msg);
+		});
 	}
 
 	public <S extends Service, I, O, E extends InnerClassEndpoint<I, O>> Computation exec(Component c, Class<S> service,
@@ -488,15 +486,12 @@ public class Service implements SizeOf, Serializable {
 	}
 
 	public <I> Computation send(I content, QueueAddress dest, Consumer<Message<I>> msgCustomizer) {
-		return prepareExec(msg -> {
+		return send((Message<I> msg) -> {
 			msg.qAddr = dest;
 			msg.endpointID = deliverToQueue.class;
 			msg.content = content;
-		}, msgCustomizer);
-	}
-
-	protected <I> Computation send(Consumer<Message<I>> msgCustomizer) {
-		return prepareExec(msg -> msg.endpointID = deliverToQueue.class, msgCustomizer);
+			msgCustomizer.accept(msg);
+		});
 	}
 
 	public static double RPC_TIMEOUT = 5;

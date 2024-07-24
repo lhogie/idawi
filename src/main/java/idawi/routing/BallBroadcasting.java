@@ -43,7 +43,7 @@ public class BallBroadcasting extends RoutingService<BallBroadcastingParms> {
 			for (var t : component.services(TransportService.class)) {
 				if (parms.acceptTransport.test(t)) {
 					if (parms.energy-- > 0) {
-						t.send(msg, null, this, parms);
+						t.send(msg, null, this);
 					} else {
 						return;
 					}

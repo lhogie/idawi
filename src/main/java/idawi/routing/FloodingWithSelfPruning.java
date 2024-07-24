@@ -34,7 +34,7 @@ public class FloodingWithSelfPruning extends RoutingService<FloodingWithSelfPrun
 				p.outNeighbors = myNeighbors;
 
 				for (var t : component.services(TransportService.class)) {
-					t.send(msg, null, this, p);
+					t.send(msg, null, this);
 				}
 			} else {
 				myNeighbors.removeAll(convert(msg.route.getLast().routing.parms).outNeighbors);
@@ -46,7 +46,7 @@ public class FloodingWithSelfPruning extends RoutingService<FloodingWithSelfPrun
 							.flatMap(n -> component.localView().g.findLinksConnecting(component, n).stream()).toList();
 
 					for (var t : component.services(TransportService.class)) {
-						t.send(msg, links, this, p);
+						t.send(msg, links, this);
 					}
 				}
 			}
