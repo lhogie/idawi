@@ -2,17 +2,19 @@ package idawi.transport;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import idawi.Component;
 import idawi.messaging.Message;
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectFunction;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import toools.util.Conversion;
 
-public abstract class InputStreamBasedDriver extends TransportService {
+public abstract class InputStreamBasedDriver extends TransportService implements Broadcastable {
 
 	public InputStreamBasedDriver(Component c) {
 		super(c);
@@ -23,11 +25,28 @@ public abstract class InputStreamBasedDriver extends TransportService {
 
 	protected abstract Stream<InputStream> inputStreams();
 
-	static interface State extends Byte2ObjectFunction<State> {
+	protected abstract Stream<OutputStream> outputStreams();
+
+	@Override
+	protected void multicast(byte[] msgBytes, Collection<Link> outLinks) {
+		bcast(msgBytes);
+	}
+
+	@Override
+	public void bcast(byte[] msgBytes) {
+		outputStreams().forEach(os -> {
+			try {
+				os.write(msgBytes);
+				os.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
+				os.write(marker);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	public void start() {
-		inputStreams().forEach(in -> f(in, bytes -> {
+		inputStreams().forEach(in -> inputStreamDecoder(in, bytes -> {
 			var msgBytes = Arrays.copyOf(bytes, bytes.length - 4);
 			int hashCode = ByteBuffer.wrap(bytes, bytes.length - 4, 4).getInt();
 
@@ -39,7 +58,7 @@ public abstract class InputStreamBasedDriver extends TransportService {
 		}));
 	}
 
-	public static void f(InputStream in, Consumer<byte[]> callback) {
+	public static void inputStreamDecoder(InputStream in, Consumer<byte[]> callback) {
 		try {
 			var bytes = new ByteArrayList();
 
