@@ -8,12 +8,13 @@ import idawi.service.serialTest.serialTest;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+import com.fazecast.jSerialComm.SerialPort;
+
 public class SIKDriver extends JSerialCommTransport implements Broadcastable {
 
 	public SIKDriver(Component c) {
 		super(c);
 
-		// INIT
 	}
 
 	public void setPower(double watt) {

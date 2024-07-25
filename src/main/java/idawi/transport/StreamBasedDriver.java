@@ -21,11 +21,14 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 	public StreamBasedDriver(Component c) {
 		super(c);
 
-		inputStreams().forEach(in -> newThread(in));
 	}
 
 	private void newThread(InputStream in) {
 		Idawi.agenda.threadPool.submit(() -> inputStreamDecoder(in, bytes -> callback(bytes)));
+	}
+
+	public void threadAllocator() {
+		inputStreams().forEach(in -> newThread(in));
 	}
 
 	private void callback(byte[] bytes) {
@@ -59,6 +62,8 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 				b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 				b.write(marker);
 				os.write(b.toByteArray());
+				System.out.println("writing done");
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -68,7 +73,6 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 	public static void inputStreamDecoder(InputStream in, Consumer<byte[]> callback) {
 		try {
 			var bytes = new ByteArrayList();
-
 			while (true) {
 				int i = in.read();
 
@@ -79,9 +83,11 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 				bytes.add((byte) i);
 
 				if (endsBy(marker, bytes)) {
+
 					callback.accept(Arrays.copyOf(bytes.elements(), bytes.size() - marker.length));
 					bytes.clear();
 					bytes.add((byte) i);
+
 				}
 			}
 
