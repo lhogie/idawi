@@ -40,7 +40,7 @@ public abstract class IPDriver extends TransportService {
 		if (newPort == port)
 			return;
 
-		if (port > 0) { // if server runs
+		if (port > 0) {
 			stopServer();
 
 			try {

@@ -39,7 +39,8 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 		}
 	}
 
-	public static final byte[] marker = ByteBuffer.wrap(new byte[8]).putLong(939196893501413829L).array();
+	
+	public static final byte[] marker = {0, 34, -23, -1, 126, 12, -92, 13, 7};
 
 	protected abstract Stream<InputStream> inputStreams();
 
