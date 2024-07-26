@@ -1,17 +1,13 @@
 package idawi.bachir;
 
-import java.io.Serial;
 
-import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Component;
 import idawi.Idawi;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
-import idawi.routing.ComponentMatcher;
 import idawi.transport.SIKDriver;
-import idawi.transport.SharedMemoryTransport;
 
 public class App {
 	public static void main(String[] args) throws InterruptedException {
@@ -30,15 +26,15 @@ public class App {
 		// new SharedMemoryTransport(b);
 
 		// a_smt.bcastTargets.add(b);
-		while (true) {
-			System.out.println("nice");
-			t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-				msg.content = "blabla";
-				System.out.println("sending ");
-			});
-			Thread.sleep(1000);
+		// while (true) {
+		// 	System.out.println("nice");
+		// 	t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+		// 		msg.content = "blabla";
+		// 		System.out.println("sending ");
+		// 	});
+		// 	Thread.sleep(1000);
 
-		}
+		// }
 	}
 
 	public static class S extends Service {
@@ -46,7 +42,6 @@ public class App {
 			super(component);
 			System.out.println("Instance S Created");
 		}
-
 		public class E extends InnerClassEndpoint<Object, Object> {
 
 			@Override
