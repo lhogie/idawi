@@ -54,14 +54,13 @@ public class JSerialCommTransport extends StreamBasedDriver implements Broadcast
 
 	public void openPorts() throws InterruptedException {
 		boolean serialOpenContains = false;
-
 		while (true) {
 			SerialPort[] allPorts = SerialPort.getCommPorts();
-
+			boolean addition=false;
 			for (SerialPort serialPort : allPorts) {
 				serialOpenContains = checkOpenArray(serialPort);
 				if (!serialPort.isOpen() && !serialOpenContains) {
-					if (!serialPort.getDescriptivePortName().contains("Bluetooth")) {
+					if ((!serialPort.getDescriptivePortName().contains("Bluetooth"))&&(!serialPort.getDescriptivePortName().contains("S4")) ) {
 						serialPort.openPort();
 						serialPort.setBaudRate(57600);
 						serialPort.setFlowControl(
@@ -69,12 +68,15 @@ public class JSerialCommTransport extends StreamBasedDriver implements Broadcast
 						serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 
 						serialOpen.add(serialPort);
+					
+						addition=true;
 					}
 				}
 			}
-			threadAllocator();
+			if (addition){
+			threadAllocator();}
+				Thread.sleep(1000);
 
-			Thread.sleep(1000);
 
 		}
 	}

@@ -1,17 +1,11 @@
 package idawi.bachir;
 
-import java.io.Serial;
-
-import com.fazecast.jSerialComm.SerialPort;
-
 import idawi.Component;
 import idawi.Idawi;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
-import idawi.routing.ComponentMatcher;
 import idawi.transport.SIKDriver;
-import idawi.transport.SharedMemoryTransport;
 
 public class App {
 	public static void main(String[] args) throws InterruptedException {
