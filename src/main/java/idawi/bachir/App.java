@@ -5,6 +5,7 @@ import idawi.Idawi;
 import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
+import idawi.routing.ComponentMatcher;
 import idawi.transport.SIKDriver;
 
 public class App {
