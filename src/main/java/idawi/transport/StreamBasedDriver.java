@@ -42,7 +42,7 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 		}
 	}
 
-	public static final byte[] marker = ByteBuffer.wrap(new byte[8]).putLong(939196893501413829L).array();
+	public static final byte[] marker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 
 	protected abstract Stream<InputStream> inputStreams();
 
@@ -61,9 +61,11 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 				b.write(msgBytes);
 				b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 				b.write(marker);
+				System.out.println(b.toByteArray());
+				System.out.println((Arrays.hashCode(msgBytes)));
+
 				os.write(b.toByteArray());
 				System.out.println("writing done");
-
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

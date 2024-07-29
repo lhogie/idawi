@@ -36,8 +36,6 @@ public class App {
 				msg.content = "blabla";
 				System.out.println("sending ");
 			});
-			Thread.sleep(1000);
-
 		}
 	}
 
@@ -45,6 +43,7 @@ public class App {
 		public S(Component component) {
 			super(component);
 			System.out.println("Instance S Created");
+
 		}
 
 		public class E extends InnerClassEndpoint<Object, Object> {

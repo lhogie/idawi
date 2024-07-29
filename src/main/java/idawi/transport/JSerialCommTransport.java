@@ -63,7 +63,7 @@ public class JSerialCommTransport extends StreamBasedDriver implements Broadcast
 				if (!serialPort.isOpen() && !serialOpenContains) {
 					if (!serialPort.getDescriptivePortName().contains("Bluetooth")) {
 						serialPort.openPort();
-						serialPort.setBaudRate(56000);
+						serialPort.setBaudRate(57600);
 						serialPort.setFlowControl(
 								SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
 						serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
@@ -86,7 +86,6 @@ public class JSerialCommTransport extends StreamBasedDriver implements Broadcast
 
 	@Override
 	protected Stream<InputStream> inputStreams() {
-		System.out.println(serialOpen);
 		return Arrays.stream(serialOpen.toArray()).map(p -> ((SerialPort) p).getInputStream());
 	}
 
