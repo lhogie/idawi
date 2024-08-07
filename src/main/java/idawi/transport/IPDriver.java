@@ -9,7 +9,6 @@ import toools.io.Cout;
 import toools.thread.Q;
 
 public abstract class IPDriver extends TransportService {
-
 	public static final int DEFAULT_PORT = 4553;
 
 	protected int port = -1;

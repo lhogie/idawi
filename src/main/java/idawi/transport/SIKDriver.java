@@ -2,7 +2,7 @@ package idawi.transport;
 
 import idawi.Component;
 
-public class SIKDriver extends JSerialCommTransport implements Broadcastable {
+public class SIKDriver extends SerialDriver implements Broadcastable {
 
 	public SIKDriver(Component c) {
 		super(c);

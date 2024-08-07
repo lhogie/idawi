@@ -39,8 +39,7 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 		}
 	}
 
-	
-	public static final byte[] marker = {0, 34, -23, -1, 126, 12, -92, 13, 7};
+	public static final byte[] marker = { 0, 34, -23, -1, 126, 12, -92, 13, 7 };
 
 	protected abstract Stream<InputStream> inputStreams();
 
@@ -93,6 +92,7 @@ public abstract class StreamBasedDriver extends TransportService implements Broa
 
 	private static boolean endsBy(byte[] marker, ByteArrayList l) {
 		var buf = l.elements();
-		return Arrays.equals(buf, l.size() - marker.length, l.size(), marker, 0, marker.length);
+		return buf.length < marker.length ? false
+				: Arrays.equals(buf, l.size() - marker.length, l.size(), marker, 0, marker.length);
 	}
 }
