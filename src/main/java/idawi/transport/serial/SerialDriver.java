@@ -65,8 +65,29 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	}
 
 	private boolean isSIK(SerialPort p) {
-		// TODO Auto-generated method stub
-		return false;
+		byte[] sikMarkerVerifier = "ATI".getBytes();
+		p.writeBytes(sikMarkerVerifier, sikMarkerVerifier.length);
+		var buf = new MyByteArrayOutputStream();
+
+		while (true) {
+			int i;
+			try {
+				i = p.getInputStream().read();
+				if (i == -1) {
+					buf.close();
+					return false;
+				}
+				buf.write((byte) i);
+				if (buf.endsBy(sikMarkerVerifier)) {
+					buf.close();
+					return true;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+
 	}
 
 	private void newThread(SerialDevice d) {
@@ -78,6 +99,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					int i = d.p.getInputStream().read();
 
 					if (i == -1) {
+						buf.close();
 						return;
 					}
 
