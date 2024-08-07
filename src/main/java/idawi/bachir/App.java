@@ -6,32 +6,39 @@ import idawi.InnerClassEndpoint;
 import idawi.Service;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
-import idawi.transport.SharedMemoryTransport;
+import idawi.transport.serial.SerialDriver;
+import idawi.transport.serial.SikDevice;
 
 public class App {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		Idawi.agenda.start();
 		var a = new Component();
-		var a_s = new S(a);
-//		new SIKDriver(a);
-		var a_smt = new SharedMemoryTransport(a);
+		var t = new SerialDriver(a);
+		new S(a);
 
-		var b = new Component();
-		var b_s = new S(b);
-//		new SIKDriver(b);
-		new SharedMemoryTransport(b);
+		// new SIKDriver(a);
+		// var a_smt = new SharedMemoryTransport(a);
 
-		a_smt.bcastTargets.add(b);
+		// var b = new Component();
+		// var b_s = new S(b);
+		// // new SIKDriver(b);
+		// new SharedMemoryTransport(b);
 
-		a_s.exec(ComponentMatcher.unicast(b), S.class, S.E.class, msg -> {
-			msg.content = "blabla";
-			System.out.println("sending ");
-		});
+		// a_smt.bcastTargets.add(b);
+		// while (true) {
+		// System.out.println("nice");
+		// t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+		// msg.content = "blabla";
+		// System.out.println("sending ");
+		// });
+		// }
 	}
 
 	public static class S extends Service {
 		public S(Component component) {
 			super(component);
+			System.out.println("Instance S Created");
+
 		}
 
 		public class E extends InnerClassEndpoint<Object, Object> {

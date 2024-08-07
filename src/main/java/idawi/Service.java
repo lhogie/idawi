@@ -30,7 +30,7 @@ public class Service implements SizeOf, Serializable {
 
 	public final Component component;
 	private boolean askToRun = true;
-//	transient protected final List<Thread> threads = new ArrayList<>();
+	// transient protected final List<Thread> threads = new ArrayList<>();
 	transient private final Set<AbstractEndpoint<?, ?>> endpoints = new HashSet<>();
 	transient private final Map<String, MessageQueue> name2queue = new HashMap<>();
 	transient private final Set<String> detachedQueues = new HashSet<>();
@@ -39,7 +39,7 @@ public class Service implements SizeOf, Serializable {
 	transient private long nbMsgsReceived;
 
 	transient private Directory directory;
-//	transient SD data;
+	// transient SD data;
 
 	public Service(Component component) {
 		this.component = component;
@@ -114,7 +114,7 @@ public class Service implements SizeOf, Serializable {
 
 	public void process(Message msg) throws NotGrantedException {
 		++nbMsgsReceived;
-//Cout.debug(msg);
+		// Cout.debug(msg);
 		AbstractEndpoint endpoint = lookupEndpoint(msg.endpointID.getSimpleName());
 
 		if (endpoint == null)
@@ -461,7 +461,6 @@ public class Service implements SizeOf, Serializable {
 			msg.autoCreateQueue = true;
 			msg.deleteQueueAfterCompletion = true;
 			msg.endpointID = targetEndpoint;
-
 			var iSpec = Endpoint.inputSpecification(targetEndpoint);
 
 			if (iSpec != null) {
@@ -469,7 +468,7 @@ public class Service implements SizeOf, Serializable {
 					msg.content = iSpec.getConstructor().newInstance();
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException | SecurityException err) {
-//					throw new IllegalStateException(err);
+					// throw new IllegalStateException(err);
 				}
 			}
 

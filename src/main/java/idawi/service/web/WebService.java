@@ -170,7 +170,7 @@ public class WebService extends Service {
 						if (src.equals("files")) { // enables the dev of frontend code
 							bytes = new RegularFile("$HOME/public_html/idawi/" + filename).getContent();
 						} else if (src.equals("web")) {
-//							filename = "http://" + filename;
+							// filename = "http://" + filename;
 							System.out.println("wget " + filename);
 							bytes = NetUtilities.retrieveURLContent(filename);
 							System.out.println(bytes.length);
@@ -192,7 +192,7 @@ public class WebService extends Service {
 							TextUtilities.exception2string(err).getBytes(), e, output);
 					logError(err.getMessage());
 				} catch (IOException ee) {
-//					ee.printStackTrace();
+					// ee.printStackTrace();
 				}
 			}
 

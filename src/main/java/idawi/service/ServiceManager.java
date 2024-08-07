@@ -103,7 +103,7 @@ public class ServiceManager extends Service {
 	public class ensureStarted extends ProcedureEndpoint<Class> {
 		@Override
 		public void doIt(Class serviceID) {
-//			Cout.debugSuperVisible("ensure started " + serviceID);
+			// Cout.debugSuperVisible("ensure started " + serviceID);
 			component.service(serviceID);
 		}
 

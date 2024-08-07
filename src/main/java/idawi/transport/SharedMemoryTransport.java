@@ -20,7 +20,7 @@ public class SharedMemoryTransport extends TransportService implements Broadcast
 
 	@Override
 	public void dispose(Link l) {
-//		l.activity.close();
+		// l.activity.close();
 	}
 
 	@Override

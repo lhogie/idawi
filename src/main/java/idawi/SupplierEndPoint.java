@@ -17,6 +17,5 @@ public abstract class SupplierEndPoint<O> extends InnerClassEndpoint<Void, O> {
 		return 10;
 	}
 
-
 	public abstract O get() throws Throwable;
 }
