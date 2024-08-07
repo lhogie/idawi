@@ -51,8 +51,6 @@ public abstract class AbstractEndpoint<I, O> implements Endpoint<I, O>, SizeOf {
 		return service + "/" + getName();
 	}
 
-
-
 	public double avgDuration() {
 		return totalDuration / nbCalls;
 	}

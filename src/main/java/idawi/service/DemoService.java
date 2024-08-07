@@ -93,25 +93,26 @@ public class DemoService extends Service {
 		}
 	}
 
-//	public static interface stringLength extends Operation2 {
-//		public static String description = "compute length";
-//
-//		public static class frontEnd extends FrontEnd {
-//			public int f(String s) {
-//				MessageQueue future = from.send(s, new To(target, DummyService.stringLength.class));
-//				return (Character) future.collect().throwAnyError_Runtime().get(0).content;
-//			}
-//		}
-//
-//		public static class backEnd extends Backend<DummyService> {
-//			@Override
-//			public void f(MessageQueue in) {
-//				var msg = in.get_non_blocking();
-//				String s = (String) msg.content;
-//				service.send(s.length(), msg.replyTo);
-//			}
-//		}
-//	}
+	// public static interface stringLength extends Operation2 {
+	// public static String description = "compute length";
+	//
+	// public static class frontEnd extends FrontEnd {
+	// public int f(String s) {
+	// MessageQueue future = from.send(s, new To(target,
+	// DummyService.stringLength.class));
+	// return (Character) future.collect().throwAnyError_Runtime().get(0).content;
+	// }
+	// }
+	//
+	// public static class backEnd extends Backend<DummyService> {
+	// @Override
+	// public void f(MessageQueue in) {
+	// var msg = in.get_non_blocking();
+	// String s = (String) msg.content;
+	// service.send(s.length(), msg.replyTo);
+	// }
+	// }
+	// }
 
 	public class stringLength extends FunctionEndPoint<String, Integer> {
 		@Override

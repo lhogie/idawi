@@ -125,7 +125,7 @@ public class LocalViewService extends KnowledgeBase {
 		@Override
 		public void doIt(Object n) {
 			Cout.debug(Source.here(), component + " received " + n);
-//			Cout.debug("DT merge not yet implemented");
+			// Cout.debug("DT merge not yet implemented");
 		}
 
 		@Override

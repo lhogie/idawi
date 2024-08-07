@@ -29,12 +29,13 @@ public abstract class TransportService extends Service {
 	// used to serialize messages for transport
 	public final transient IdawiSerializer serializer;
 	public final List<TransportListener> listeners = new ArrayList<>();
-//	public final AutoForgettingLongList alreadyKnownMsgs = new AutoForgettingLongList(l -> l.size() < 1000);
+	// public final AutoForgettingLongList alreadyKnownMsgs = new
+	// AutoForgettingLongList(l -> l.size() < 1000);
 
 	public TransportService(Component c) {
 		super(c);
 		this.serializer = new IdawiSerializer(this);
-//		 c.localView().g.markLinkActive(this, this); // loopback
+		// c.localView().g.markLinkActive(this, this); // loopback
 	}
 
 	@Override
@@ -66,12 +67,12 @@ public abstract class TransportService extends Service {
 			++nbMsgReceived;
 			incomingTraffic += msg.sizeOf();
 			Entry lastRouteEntry = msg.route.getLast();
-//			lastRouteEntry.link.dest = this;
+			// lastRouteEntry.link.dest = this;
 			lastRouteEntry.receptionDate = component.now();
 			lastRouteEntry.link.latency = lastRouteEntry.duration();
-//			Cout.debugSuperVisible(serializer.transportService);
+			// Cout.debugSuperVisible(serializer.transportService);
 			listeners.forEach(l -> l.msgReceived(this, msg));
-//			Cout.debug("-----");
+			// Cout.debug("-----");
 
 			component.trafficListeners.forEach(l -> l.newMessageReceived(this, msg));
 
@@ -184,22 +185,22 @@ public abstract class TransportService extends Service {
 			sendToTwin(msg, l);
 		}
 	}
-	
-	protected void sendToTwin(byte[] msg, Link l) {
-			Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
-				@Override
-				public void run() {
-//					Cout.debug("bast");
 
-//							Cout.debugSuperVisible(":)   "  +   l +     "      "+ l.dest);
-					try {
-						l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
-					} catch (Throwable e) {
-						e.printStackTrace();
-						System.exit(0);
-					}
+	protected void sendToTwin(byte[] msg, Link l) {
+		Idawi.agenda.schedule(new Event<PointInTime>("message reception", new PointInTime(now() + l.latency())) {
+			@Override
+			public void run() {
+				// Cout.debug("bast");
+
+				// Cout.debugSuperVisible(":) " + l + " "+ l.dest);
+				try {
+					l.dest.processIncomingMessage((Message) l.dest.serializer.fromBytes(msg));
+				} catch (Throwable e) {
+					e.printStackTrace();
+					System.exit(0);
 				}
-			});
+			}
+		});
 	}
 
 	public List<Link> activeOutLinks() {
