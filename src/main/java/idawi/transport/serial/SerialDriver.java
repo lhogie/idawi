@@ -29,16 +29,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		});
 	}
 
-	public SerialDevice getDeviceUsing(SerialPort port) {
-		for (var d : devices) {
-			if (d.getName().equalsIgnoreCase(port.getDescriptivePortName())) {
-				return d;
-			}
-		}
-
-		return null;
-	}
-
 	public synchronized void updateDeviceList() throws InterruptedException {
 		while (true) {
 			createDevicesForNewPorts(SerialPort.getCommPorts());
@@ -57,23 +47,34 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 	private synchronized void createDevicesForNewPorts(SerialPort[] serialPorts) {
 		for (var serialPort : serialPorts) {
-			if (!serialPort.isOpen() && getDeviceUsing(serialPort) == null) {
-				if ((!serialPort.getDescriptivePortName().contains("Bluetooth"))
-						&& (!serialPort.getDescriptivePortName().contains("S4"))) {
-					serialPort.openPort();
-					serialPort.setBaudRate(115200);// configurable ?
-					serialPort
-							.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
-																														// ?
-					serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+			// search for a device with the same port name
+			var device = devices.stream().filter(
+					d -> d.serialPort.getDescriptivePortName().equalsIgnoreCase(serialPort.getDescriptivePortName()))
+					.findFirst().get();
 
-					var device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
-					device.newThread(this);
-					System.out.println("okay for fetch");
-					devices.add(device);
+			if (device == null) {
+				open(serialPort);
+				device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
+				devices.add(device);
+				device.newThread(this);
+			} else {
+				if (!serialPort.isOpen()) {
+					open(serialPort);
+					device.serialPort = serialPort;
+
+					if (device.rebootWaiter != null) {
+						device.rebootWaiter.add_sync(new Object());
+					}
 				}
 			}
 		}
+	}
+
+	private void open(SerialPort serialPort) {
+		serialPort.openPort();
+		serialPort.setBaudRate(115200);// configurable ?
+		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
+		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 	}
 
 	private boolean isSIK(SerialPort p) {

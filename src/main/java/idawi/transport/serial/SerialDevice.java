@@ -12,12 +12,14 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import idawi.Idawi;
 import idawi.messaging.Message;
+import toools.thread.Q;
 import toools.util.Conversion;
 
 public class SerialDevice {
 	protected SerialPort serialPort;
 	public List<Callback> markers = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
+	public Q<Object> rebootWaiter = new Q<>(1);
 
 	public SerialDevice(SerialPort p) {
 		this.serialPort = p;
@@ -47,6 +49,7 @@ public class SerialDevice {
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
 			var buf = new MyByteArrayOutputStream();
+
 			try {
 
 				while (true) {
