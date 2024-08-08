@@ -19,7 +19,8 @@ public class SerialDevice {
 	protected SerialPort serialPort;
 	public List<Callback> markers = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
-	public Q<Object> rebootWaiter = new Q<>(1);
+	public Q<Object> rebootQ = new Q<>(1);
+	public boolean rebooting;
 
 	public SerialDevice(SerialPort p) {
 		this.serialPort = p;
@@ -94,5 +95,6 @@ public class SerialDevice {
 	public String getName() {
 		return serialPort.getDescriptivePortName();
 	}
+
 
 }

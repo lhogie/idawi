@@ -24,6 +24,10 @@ public class SikDeviceLUC extends SerialDevice {
 				configQ.add_sync(Config.from(new String(bytes)));
 			}
 		});
+		
+		var config = getConfig();
+		config.findByName("TXPOWER").value = 40;
+		setConfig(config);
 	}
 
 	@Override
@@ -46,6 +50,7 @@ public class SikDeviceLUC extends SerialDevice {
 		}
 	}
 
+
 	public Config setConfig(Config c) {
 		try {
 			enterSetupMode().print(c.stream().map(param -> "ATS" + param.code + "=" + param.value)
@@ -53,10 +58,12 @@ public class SikDeviceLUC extends SerialDevice {
 			Thread.sleep(1000);
 
 			// save and reboot
+			rebooting = true;
 			serialPort.getOutputStream().write("AT&W\nATZ\n".getBytes());
 
-			// block until rebooted
-			rebootWaiter.poll_sync();
+			// block 10s until rebooted
+			rebootQ.poll_sync(10);
+			rebooting = false;
 		} catch (IOException | InterruptedException e) {
 			throw new IllegalStateException(e);
 		}

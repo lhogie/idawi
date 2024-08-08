@@ -2,7 +2,6 @@ package idawi.transport.serial;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,24 +21,26 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		super(c);
 		Idawi.agenda.threadPool.submit(() -> {
 			try {
-				updateDeviceList();
+				while (true) {
+					updateDeviceList();
+					Thread.sleep(1000);
+				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
-	public synchronized void updateDeviceList() throws InterruptedException {
-		while (true) {
-			createDevicesForNewPorts(SerialPort.getCommPorts());
-			removeDeviceForDisapearedPorts(SerialPort.getCommPorts());
-			Thread.sleep(1000);
-		}
+	public synchronized void updateDeviceList() {
+		createDevicesForNewPorts(SerialPort.getCommPorts());
+		removeDeviceForDisapearedPorts(List.of(SerialPort.getCommPorts()));
 	}
 
-	private synchronized void removeDeviceForDisapearedPorts(SerialPort[] serialPorts) {
-		for (SerialDevice device : new ArrayList<>(devices)) {
-			if (Arrays.stream(serialPorts).filter(p -> p.equals(device.serialPort)).findAny().isEmpty()) {
+	private synchronized void removeDeviceForDisapearedPorts(List<SerialPort> serialPorts) {
+		for (var device : List.copyOf(devices)) {
+			boolean portStillExists = serialPorts.contains(device.serialPort);
+
+			if (!portStillExists && !device.rebooting) {
 				devices.remove(device);
 			}
 		}
@@ -57,14 +58,12 @@ public class SerialDriver extends TransportService implements Broadcastable {
 				device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
 				devices.add(device);
 				device.newThread(this);
-			} else {
-				if (!serialPort.isOpen()) {
-					open(serialPort);
-					device.serialPort = serialPort;
+			} else if (!serialPort.isOpen()) {
+				open(serialPort);
+				device.serialPort = serialPort;
 
-					if (device.rebootWaiter != null) {
-						device.rebootWaiter.add_sync(new Object());
-					}
+				if (device.rebootQ != null) {
+					device.rebootQ.add_sync(new Object());
 				}
 			}
 		}

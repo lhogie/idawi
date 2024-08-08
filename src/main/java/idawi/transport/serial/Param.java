@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Param implements Serializable {
 	public final String code;
 	public final String name;
-	public final int value;
+	public  int value;
 
 	public Param(String code, String name, int value) {
 		this.code = code;
