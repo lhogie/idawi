@@ -1,45 +1,20 @@
 package idawi.transport.serial;
 
-public class Param {
-    private String code;
-    private String name;
-    private int value;
+import java.io.Serializable;
 
-    public Param(String code, String name, int value) {
-        this.code = code;
-        this.name = name;
-        this.value = value;
-    }
+public class Param implements Serializable {
+	public final String code;
+	public final String name;
+	public final int value;
 
-    public String getCode() {
-        return code;
-    }
+	public Param(String code, String name, int value) {
+		this.code = code;
+		this.name = name;
+		this.value = value;
+	}
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return "Param{" +
-                "name='" + name + '\'' +
-                ", value='" + value + '\'' +
-                '}';
-    }
+	@Override
+	public String toString() {
+		return name + "=" + value;
+	}
 }

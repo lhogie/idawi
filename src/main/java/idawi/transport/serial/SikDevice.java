@@ -1,8 +1,6 @@
 package idawi.transport.serial;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -13,10 +11,9 @@ public class SikDevice extends SerialDevice {
 	Config config;
 
 	public SikDevice(SerialPort p) {
-
 		super(p);
 
-		callbacks.add(new Callback() {
+		markers.add(new Callback() {
 
 			@Override
 			public byte[] marker() {
@@ -24,7 +21,7 @@ public class SikDevice extends SerialDevice {
 			}
 
 			@Override
-			public void impl(byte[] bytes, SerialDriver d) {
+			public void callback(byte[] bytes, SerialDriver d) {
 				config = new Config();
 
 				for (var s : new String(bytes).split("\\n")) {
@@ -32,7 +29,7 @@ public class SikDevice extends SerialDevice {
 					var code = splitString[0].replaceAll("[^\\d.]", "");
 					var name = splitString[1];
 					var value = Integer.parseInt(splitString[2].trim());
-					config.addParam(new Param(code, name, value));
+					config.add(new Param(code, name, value));
 				}
 			}
 		});
@@ -45,21 +42,14 @@ public class SikDevice extends SerialDevice {
 		return "Config in Sik Device : " + config;
 	}
 
-	private void setupMode() throws IOException {
-		try {
-			Thread.sleep(1100);
-			p.getOutputStream().write("+++".getBytes());
-			Thread.sleep(1100);
-
-		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
-		}
+	private void enterSetupMode() throws IOException {
+		serialPort.getOutputStream().write("+++".getBytes());
 	}
 
 	private void setParameter(String param, int value) throws IOException {
 		try {
-			p.getOutputStream().write((param + "=" + value).getBytes());
-			p.getOutputStream().write(lineSeparator.getBytes());
+			serialPort.getOutputStream().write((param + "=" + value).getBytes());
+			serialPort.getOutputStream().write(lineSeparator.getBytes());
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
@@ -68,8 +58,8 @@ public class SikDevice extends SerialDevice {
 
 	public void showSetup() {
 		try {
-			setupMode();
-			var os = p.getOutputStream();
+			enterSetupMode();
+			var os = serialPort.getOutputStream();
 			os.write(("ATI5").getBytes());
 			os.write(lineSeparator.getBytes());
 			Thread.sleep(100);
@@ -84,8 +74,8 @@ public class SikDevice extends SerialDevice {
 	public boolean setConfig(Config c) {
 		try {
 			config.modifyConfig(c);
-			setupMode();
-			for (Param param : config.getParams()) {
+			enterSetupMode();
+			for (Param param : config) {
 				setParameter("ATS" + param.getCode(), param.getValue());
 			}
 			save();
@@ -96,7 +86,7 @@ public class SikDevice extends SerialDevice {
 	}
 
 	void save() {
-		var os = p.getOutputStream();
+		var os = serialPort.getOutputStream();
 
 		try {
 			os.write("AT&W".getBytes());

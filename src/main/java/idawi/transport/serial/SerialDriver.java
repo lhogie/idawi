@@ -1,6 +1,8 @@
 package idawi.transport.serial;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,14 +22,14 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		super(c);
 		Idawi.agenda.threadPool.submit(() -> {
 			try {
-				openPorts();
+				updateDeviceList();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
-	public SerialDevice getCorrespondingDevice(SerialPort port) {
+	public SerialDevice getDeviceUsing(SerialPort port) {
 		for (var d : devices) {
 			if (d.getName().equalsIgnoreCase(port.getDescriptivePortName())) {
 				return d;
@@ -37,34 +39,67 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		return null;
 	}
 
-	public void openPorts() throws InterruptedException {
+	public synchronized void updateDeviceList() throws InterruptedException {
 		while (true) {
-			for (var serialPort : SerialPort.getCommPorts()) {
-
-				if (!serialPort.isOpen() && getCorrespondingDevice(serialPort) == null) {
-					if ((!serialPort.getDescriptivePortName().contains("Bluetooth"))
-							&& (!serialPort.getDescriptivePortName().contains("S4"))) {
-						serialPort.openPort();
-						serialPort.setBaudRate(115200);
-						serialPort.setFlowControl(
-								SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
-						serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-
-						var device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
-						device.newThread(this);
-						System.out.println("okay for fetch");
-						devices.add(device);
-					}
-				}
-			}
-
+			createDevicesForNewPorts(SerialPort.getCommPorts());
+			removeDeviceForDisapearedPorts(SerialPort.getCommPorts());
 			Thread.sleep(1000);
 		}
 	}
 
+	private synchronized void removeDeviceForDisapearedPorts(SerialPort[] serialPorts) {
+		for (SerialDevice device : new ArrayList<>(devices)) {
+			if (Arrays.stream(serialPorts).filter(p -> p.equals(device.serialPort)).findAny().isEmpty()) {
+				devices.remove(device);
+			}
+		}
+	}
+
+	private synchronized void createDevicesForNewPorts(SerialPort[] serialPorts) {
+		for (var serialPort : serialPorts) {
+			if (!serialPort.isOpen() && getDeviceUsing(serialPort) == null) {
+				if ((!serialPort.getDescriptivePortName().contains("Bluetooth"))
+						&& (!serialPort.getDescriptivePortName().contains("S4"))) {
+					serialPort.openPort();
+					serialPort.setBaudRate(115200);// configurable ?
+					serialPort
+							.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
+																														// ?
+					serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+
+					var device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
+					device.newThread(this);
+					System.out.println("okay for fetch");
+					devices.add(device);
+				}
+			}
+		}
+	}
+
 	private boolean isSIK(SerialPort p) {
-		// TODO Auto-generated method stub
-		return false;
+		byte[] sikMarkerVerifier = "ATI".getBytes();
+		p.writeBytes(sikMarkerVerifier, sikMarkerVerifier.length);
+		var buf = new MyByteArrayOutputStream();
+
+		while (true) {
+			int i;
+			try {
+				i = p.getInputStream().read();
+				if (i == -1) {
+					buf.close();
+					return false;
+				}
+				buf.write((byte) i);
+				if (buf.endsBy(sikMarkerVerifier)) {
+					buf.close();
+					return true;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+
 	}
 
 	@Override

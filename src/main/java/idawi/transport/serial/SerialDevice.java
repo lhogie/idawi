@@ -15,13 +15,13 @@ import idawi.messaging.Message;
 import toools.util.Conversion;
 
 public class SerialDevice {
-	protected SerialPort p;
-	public List<Callback> callbacks = new ArrayList<>();
+	protected SerialPort serialPort;
+	public List<Callback> markers = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 
 	public SerialDevice(SerialPort p) {
-		this.p = p;
-		callbacks.add(new Callback() {
+		this.serialPort = p;
+		markers.add(new Callback() {
 
 			@Override
 			public byte[] marker() {
@@ -29,7 +29,7 @@ public class SerialDevice {
 			}
 
 			@Override
-			public void impl(byte[] bytes, SerialDriver serialDriver) {
+			public void callback(byte[] bytes, SerialDriver serialDriver) {
 				var msgBytes = Arrays.copyOf(bytes, bytes.length - 4);
 				int hashCode = ByteBuffer.wrap(bytes, bytes.length - 4, 4).getInt();
 
@@ -50,7 +50,7 @@ public class SerialDevice {
 			try {
 
 				while (true) {
-					int i = p.getInputStream().read();
+					int i = serialPort.getInputStream().read();
 
 					if (i == -1) {
 						return;
@@ -58,9 +58,9 @@ public class SerialDevice {
 
 					buf.write((byte) i);
 
-					for (var callback : callbacks) {
+					for (var callback : markers) {
 						if (buf.endsBy(callback.marker())) {
-							callback.impl(buf.toByteArray(), driver);
+							callback.callback(buf.toByteArray(), driver);
 							buf.reset();
 						}
 					}
@@ -73,7 +73,7 @@ public class SerialDevice {
 	}
 
 	public void bcast(byte[] msgBytes) {
-		OutputStream os = p.getOutputStream();
+		OutputStream os = serialPort.getOutputStream();
 		try {
 			var b = new ByteArrayOutputStream();
 			b.write(msgBytes);
@@ -89,7 +89,7 @@ public class SerialDevice {
 	}
 
 	public String getName() {
-		return p.getDescriptivePortName();
+		return serialPort.getDescriptivePortName();
 	}
 
 }
