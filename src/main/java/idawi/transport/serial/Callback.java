@@ -1,7 +1,7 @@
 package idawi.transport.serial;
 
-public interface MarkerManager {
+public interface Callback {
 	byte[] marker();
 
-	void callBack(byte[] buf, SerialDriver d);
+	void impl(byte[] buf, SerialDriver d);
 }

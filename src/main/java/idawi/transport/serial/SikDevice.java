@@ -1,6 +1,8 @@
 package idawi.transport.serial;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -14,7 +16,7 @@ public class SikDevice extends SerialDevice {
 
 		super(p);
 
-		markers.add(new MarkerManager() {
+		callbacks.add(new Callback() {
 
 			@Override
 			public byte[] marker() {
@@ -22,11 +24,11 @@ public class SikDevice extends SerialDevice {
 			}
 
 			@Override
-			public void callBack(byte[] bytes, SerialDriver d) {
+			public void impl(byte[] bytes, SerialDriver d) {
 				config = new Config();
 
-				for (String string : new String(bytes).split("\\n")) {
-					String[] splitString = string.split(":|=");
+				for (var s : new String(bytes).split("\\n")) {
+					String[] splitString = s.split(":|=");
 					var code = splitString[0].replaceAll("[^\\d.]", "");
 					var name = splitString[1];
 					var value = Integer.parseInt(splitString[2].trim());

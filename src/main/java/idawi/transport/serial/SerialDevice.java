@@ -10,17 +10,18 @@ import java.util.List;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import idawi.Idawi;
 import idawi.messaging.Message;
 import toools.util.Conversion;
 
 public class SerialDevice {
-	public SerialPort p;
-	public List<MarkerManager> markers = new ArrayList<>();
+	protected SerialPort p;
+	public List<Callback> callbacks = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 
 	public SerialDevice(SerialPort p) {
 		this.p = p;
-		markers.add(new MarkerManager() {
+		callbacks.add(new Callback() {
 
 			@Override
 			public byte[] marker() {
@@ -28,7 +29,7 @@ public class SerialDevice {
 			}
 
 			@Override
-			public void callBack(byte[] bytes, SerialDriver serialDriver) {
+			public void impl(byte[] bytes, SerialDriver serialDriver) {
 				var msgBytes = Arrays.copyOf(bytes, bytes.length - 4);
 				int hashCode = ByteBuffer.wrap(bytes, bytes.length - 4, 4).getInt();
 
@@ -43,6 +44,34 @@ public class SerialDevice {
 		});
 	}
 
+	void newThread(SerialDriver driver) {
+		Idawi.agenda.threadPool.submit(() -> {
+			var buf = new MyByteArrayOutputStream();
+			try {
+
+				while (true) {
+					int i = p.getInputStream().read();
+
+					if (i == -1) {
+						return;
+					}
+
+					buf.write((byte) i);
+
+					for (var callback : callbacks) {
+						if (buf.endsBy(callback.marker())) {
+							callback.impl(buf.toByteArray(), driver);
+							buf.reset();
+						}
+					}
+				}
+
+			} catch (IOException err) {
+				System.err.println("I/O error reading stream");
+			}
+		});
+	}
+
 	public void bcast(byte[] msgBytes) {
 		OutputStream os = p.getOutputStream();
 		try {
@@ -53,10 +82,14 @@ public class SerialDevice {
 			System.out.println(b.toByteArray());
 			System.out.println((Arrays.hashCode(msgBytes)));
 			os.write(b.toByteArray());
-			System.out.println("writing done");
+//			System.out.println("writing done");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public String getName() {
+		return p.getDescriptivePortName();
 	}
 
 }

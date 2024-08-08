@@ -1,6 +1,5 @@
 package idawi.transport.serial;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,9 +28,9 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	}
 
 	public SerialDevice getCorrespondingDevice(SerialPort port) {
-		for (SerialDevice alreadyInDevice : devices) {
-			if (alreadyInDevice.p.getDescriptivePortName().equalsIgnoreCase(port.getDescriptivePortName())) {
-				return alreadyInDevice;
+		for (var d : devices) {
+			if (d.getName().equalsIgnoreCase(port.getDescriptivePortName())) {
+				return d;
 			}
 		}
 
@@ -39,7 +38,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	}
 
 	public void openPorts() throws InterruptedException {
-
 		while (true) {
 			for (var serialPort : SerialPort.getCommPorts()) {
 
@@ -53,7 +51,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 						serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 
 						var device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
-						newThread(device);
+						device.newThread(this);
 						System.out.println("okay for fetch");
 						devices.add(device);
 					}
@@ -67,34 +65,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	private boolean isSIK(SerialPort p) {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	private void newThread(SerialDevice d) {
-		Idawi.agenda.threadPool.submit(() -> {
-			try {
-				var buf = new MyByteArrayOutputStream();
-
-				while (true) {
-					int i = d.p.getInputStream().read();
-
-					if (i == -1) {
-						return;
-					}
-
-					buf.write((byte) i);
-
-					for (var m : d.markers) {
-						if (buf.endsBy(m.marker())) {
-							m.callBack(buf.toByteArray(), this);
-							buf.reset();
-						}
-					}
-				}
-
-			} catch (IOException err) {
-				System.err.println("I/O error reading stream");
-			}
-		});
 	}
 
 	@Override
