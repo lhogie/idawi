@@ -38,18 +38,41 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		return null;
 	}
 
-	public void openPorts() throws InterruptedException {
+	public void removedDeviceDetector(SerialPort[] serialPorts) {
+		boolean deviceFound = false;
+		for (SerialDevice device : devices) {
+			for (SerialPort alreadyOpened : serialPorts) {
+				if (alreadyOpened.getDescriptivePortName().equalsIgnoreCase(device.p.getDescriptivePortName())) {
+					// pas de problème veut dire que le port est ouvert et que le device est
+					// présent
+					deviceFound = true;
+					break;
+				}
+			}
+			if (deviceFound == false) {
+				// problème veut dire que le port est ouvert et le device n'est PAS présent
+				// on remove donc le device de notre liste (il est ensuite supprimé par le
+				// garbage collector)
+				devices.remove(device);
+				deviceFound = false;
+			}
 
+		}
+	}
+
+	public void openPorts() throws InterruptedException {
+		SerialPort[] serialPorts = SerialPort.getCommPorts();
 		while (true) {
-			for (var serialPort : SerialPort.getCommPorts()) {
+			for (var serialPort : serialPorts) {
 
 				if (!serialPort.isOpen() && getCorrespondingDevice(serialPort) == null) {
 					if ((!serialPort.getDescriptivePortName().contains("Bluetooth"))
 							&& (!serialPort.getDescriptivePortName().contains("S4"))) {
 						serialPort.openPort();
-						serialPort.setBaudRate(115200);
+						serialPort.setBaudRate(115200);// configurable ?
 						serialPort.setFlowControl(
-								SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
+								SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
+																											// ?
 						serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 
 						var device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
@@ -59,6 +82,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					}
 				}
 			}
+			removedDeviceDetector(serialPorts);
 
 			Thread.sleep(1000);
 		}
