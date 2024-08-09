@@ -24,7 +24,7 @@ public class SikDeviceLUC extends SerialDevice {
 				configQ.add_sync(Config.from(new String(bytes)));
 			}
 		});
-		
+		System.out.println("azdzad");
 		var config = getConfig();
 		config.findByName("TXPOWER").value = 40;
 		setConfig(config);
@@ -43,13 +43,17 @@ public class SikDeviceLUC extends SerialDevice {
 
 	public Config getConfig() {
 		try {
-			enterSetupMode().print("ATI5\nATO\n");
-			return configQ.poll_sync();
+			PrintStream ps = enterSetupMode();
+			ps.println("ATI5");
+			var config = configQ.poll_sync();
+			ps.println("ATO");
+			System.out.println(config);
+			return config;
+
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 	}
-
 
 	public Config setConfig(Config c) {
 		try {

@@ -76,7 +76,7 @@ public class SikDevice extends SerialDevice {
 			config.modifyConfig(c);
 			enterSetupMode();
 			for (Param param : config) {
-				setParameter("ATS" + param.getCode(), param.getValue());
+				setParameter("ATS" + param.code, param.value);
 			}
 			save();
 			return true;
