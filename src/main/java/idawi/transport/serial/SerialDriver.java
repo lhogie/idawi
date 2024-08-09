@@ -51,7 +51,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			// search for a device with the same port name
 			var device = devices.stream().filter(
 					d -> d.serialPort.getDescriptivePortName().equalsIgnoreCase(serialPort.getDescriptivePortName()))
-					.findFirst().get();
+					.findFirst().orElseGet(null);
 
 			if (device == null) {
 				open(serialPort);
