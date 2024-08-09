@@ -86,7 +86,7 @@ public class SerialDevice {
 			System.out.println(b.toByteArray());
 			System.out.println((Arrays.hashCode(msgBytes)));
 			os.write(b.toByteArray());
-//			System.out.println("writing done");
+			// System.out.println("writing done");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -95,6 +95,5 @@ public class SerialDevice {
 	public String getName() {
 		return serialPort.getDescriptivePortName();
 	}
-
 
 }

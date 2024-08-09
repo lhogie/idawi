@@ -95,35 +95,33 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	private boolean isSIK(SerialPort p) {
 		byte[] setupMarker = "+++".getBytes();
 		byte[] sikMarker = "ATI".getBytes();
-
+		byte[] outMarker = "ATO".getBytes();
+		byte[] separator = System.getProperty("line.separator").getBytes();
 		p.writeBytes(setupMarker, setupMarker.length);
 		var buf = new MyByteArrayOutputStream();
 		while (true) {
 			int i;
 			try {
 				i = p.getInputStream().read();
-
 				if (i == -1) {
-
 					buf.close();
 					return false;
 				}
 				buf.write((byte) i);
-				System.out.println("ta");
 
 				if (buf.endsBy("OK".getBytes())) {
-
-					System.out.println("yo");
 					buf.reset();
 					p.writeBytes(sikMarker, sikMarker.length);
-				}
-				if (buf.endsBy("SiK".getBytes())) {
-					System.out.println("pa");
+					p.writeBytes(separator, separator.length);
 
+				} else if (buf.endsBy("SiK".getBytes()) || buf.endsBy("sik".getBytes())
+						|| buf.endsBy("SIK".getBytes())) {
+					p.writeBytes(outMarker, outMarker.length);
+					p.writeBytes(separator, separator.length);
 					buf.close();
+
 					return true;
 				}
-				System.out.println("ti");
 
 			} catch (IOException e) {
 				e.printStackTrace();
