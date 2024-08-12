@@ -50,20 +50,19 @@ public class SerialDevice {
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
 			var buf = new MyByteArrayOutputStream();
-
+			var inputStream = serialPort.getInputStream();
 			try {
 
 				while (true) {
-					int i = serialPort.getInputStream().read();
-
+					int i = inputStream.read();
 					if (i == -1) {
 						return;
 					}
 
 					buf.write((byte) i);
-
 					for (var callback : markers) {
 						if (buf.endsBy(callback.marker())) {
+							System.out.println("callback call marker :" + new String(callback.marker()));
 							callback.callback(buf.toByteArray(), driver);
 							buf.reset();
 						}

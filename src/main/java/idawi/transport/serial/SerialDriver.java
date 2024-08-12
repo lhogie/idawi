@@ -66,14 +66,17 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 			if (device == null) {
 				open(serialPort);
-				System.out.println("dsfd");
 
 				device = isSIK(serialPort) ? new SikDeviceLUC(serialPort) : new SerialDevice(serialPort);
-				System.out.println("dsfd2");
 
 				devices.add(device);
 
 				device.newThread(this);
+				if (device instanceof SikDeviceLUC sd) {
+					sd.initialConfig();
+
+				}
+
 			} else if (!serialPort.isOpen()) {
 				open(serialPort);
 				device.serialPort = serialPort;
@@ -118,8 +121,9 @@ public class SerialDriver extends TransportService implements Broadcastable {
 						|| buf.endsBy("SIK".getBytes())) {
 					p.writeBytes(outMarker, outMarker.length);
 					p.writeBytes(separator, separator.length);
+					p.getInputStream().readNBytes(p.bytesAvailable());
+					System.out.println(p.bytesAvailable());
 					buf.close();
-
 					return true;
 				}
 

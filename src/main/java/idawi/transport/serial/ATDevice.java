@@ -21,6 +21,7 @@ public class ATDevice extends SerialDevice {
 
 			@Override
 			public void callback(byte[] bytes, SerialDriver d) {
+				System.out.println("callback AT :" + new String(bytes));
 				configQ.add_sync(Config.from(new String(bytes)));
 			}
 		});
@@ -31,20 +32,33 @@ public class ATDevice extends SerialDevice {
 		return getConfig().toString();
 	}
 
-	private PrintStream enterSetupMode() throws IOException {
-		var ps = new PrintStream(serialPort.getOutputStream());
-		ps.print("+++");
-		return ps;
+	private PrintStream enterSetupMode() {
+		try {
+			var ps = new PrintStream(serialPort.getOutputStream());
+			Thread.sleep(1100);
+			ps.print("+++");
+			Thread.sleep(1100);
+
+			return ps;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public Config getConfig() {
-		try {
-			enterSetupMode().print("ATI5\nATO\n");
-			System.out.println("ok");
-			return configQ.poll_sync();
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
+		var ps = enterSetupMode();
+		ps.println("ATI5");
+		for (Config config : configQ) {
+			System.out.println("config : " + config);
 		}
+		System.out.println("what");
+
+		var config = configQ.poll_sync(1000);
+		System.out.println("OUAAAAAAAAAAAAAIS");
+
+		ps.println("ATO");
+		return config;
 	}
 
 	public Config setConfig(Config c) {

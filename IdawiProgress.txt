@@ -1,0 +1,23 @@
+why static for functgions in streamBasedDriver ?
+
+
+------
+faire un fetchConfig pour avoir les params de base
+les parser 
+en faire des variables dynamiques en utilisant params
+tout mettre dans config en tant qu'objet
+
+DONE
+
+
+
+-------
+Rerun fetchdeviessik DONE
+
+------- 
+detect in serial driver if SiK or not when creating ports Done
+remove garbage after ATI Done
+-------
+remove setup from show (maybe ?) DONE ?
+-------
+detect removed devices

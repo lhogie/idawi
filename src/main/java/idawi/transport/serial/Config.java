@@ -7,12 +7,10 @@ public class Config extends ArrayList<Param> {
 
 	public static Config from(String text) {
 		var c = new Config();
-
 		for (var line : text.split("\\n")) {
 			String[] a = line.split(":|=");
 			c.add(new Param(a[0], a[1], Integer.valueOf(a[2].trim())));
 		}
-
 		return c;
 	}
 
