@@ -21,6 +21,7 @@ public class SerialDevice {
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 	public Q<Object> rebootQ = new Q<>(1);
 	public boolean rebooting;
+	Q<Config> configQ = new Q<>(1);
 
 	public SerialDevice(SerialPort p) {
 		this.serialPort = p;
@@ -38,7 +39,7 @@ public class SerialDevice {
 
 				if (Arrays.hashCode(msgBytes) == hashCode) {
 					Message testBytes = (Message) serialDriver.serializer.fromBytes(bytes);
-					System.out.println(testBytes);
+					System.out.println("Message Arrived :" + testBytes);
 					serialDriver.processIncomingMessage((Message) serialDriver.serializer.fromBytes(bytes));
 				} else {
 					System.err.println("garbage");
@@ -54,6 +55,9 @@ public class SerialDevice {
 			try {
 
 				while (true) {
+					if ((inputStream.available() == 0) && buf.endsByData()) {
+						dataParse(buf.toByteArray(), driver);
+					}
 					int i = inputStream.read();
 					if (i == -1) {
 						return;
@@ -62,8 +66,10 @@ public class SerialDevice {
 					buf.write((byte) i);
 					for (var callback : markers) {
 						if (buf.endsBy(callback.marker())) {
-							System.out.println("callback call marker :" + new String(callback.marker()));
+							System.out.println("Before callback");
+
 							callback.callback(buf.toByteArray(), driver);
+							System.out.println("After callback");
 							buf.reset();
 						}
 					}
@@ -93,6 +99,15 @@ public class SerialDevice {
 
 	public String getName() {
 		return serialPort.getDescriptivePortName();
+	}
+
+	public void dataParse(byte[] bytes, SerialDriver serialDriver) {
+
+		System.out.println("callback AT :");
+		var config = Config.from(new String(bytes));
+		System.out.println("Callback parsed and data added to configQ");
+		configQ.add_sync(config);
+
 	}
 
 }

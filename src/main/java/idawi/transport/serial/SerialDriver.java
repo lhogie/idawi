@@ -121,9 +121,11 @@ public class SerialDriver extends TransportService implements Broadcastable {
 						|| buf.endsBy("SIK".getBytes())) {
 					p.writeBytes(outMarker, outMarker.length);
 					p.writeBytes(separator, separator.length);
-					p.getInputStream().readNBytes(p.bytesAvailable());
-					System.out.println(p.bytesAvailable());
 					buf.close();
+
+				} else if (buf.endsBy("ATO".getBytes())) {
+					buf.close();
+
 					return true;
 				}
 

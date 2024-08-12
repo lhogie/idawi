@@ -10,7 +10,15 @@ public class MyByteArrayOutputStream extends ByteArrayOutputStream {
 
 		if (count < marker.length)
 			return false;
-		System.out.println("buf : " + new String(buf) + " marker : " + new String(marker));
-		return Arrays.equals(buf, count - marker.length, count, marker, 0, marker.length);
+		boolean equals = Arrays.equals(buf, count - marker.length, count, marker, 0, marker.length);
+
+		return equals;
+	}
+
+	public boolean endsByData() throws UnsupportedEncodingException {
+		if (new String(buf).contains("ATI5")) {
+			return true;
+		}
+		return false;
 	}
 }

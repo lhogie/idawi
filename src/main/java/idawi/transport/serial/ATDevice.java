@@ -8,23 +8,10 @@ import com.fazecast.jSerialComm.SerialPort;
 import toools.thread.Q;
 
 public class ATDevice extends SerialDevice {
-	Q<Config> configQ = new Q<>(1);
 
 	public ATDevice(SerialPort p) {
 		super(p);
 
-		markers.add(new Callback() {
-			@Override
-			public byte[] marker() {
-				return "ATO".getBytes();
-			}
-
-			@Override
-			public void callback(byte[] bytes, SerialDriver d) {
-				System.out.println("callback AT :" + new String(bytes));
-				configQ.add_sync(Config.from(new String(bytes)));
-			}
-		});
 	}
 
 	@Override
@@ -49,32 +36,35 @@ public class ATDevice extends SerialDevice {
 	public Config getConfig() {
 		var ps = enterSetupMode();
 		ps.println("ATI5");
-		for (Config config : configQ) {
-			System.out.println("config : " + config);
-		}
-		System.out.println("what");
+
+		System.out.println("avant poll");
 
 		var config = configQ.poll_sync(1000);
-		System.out.println("OUAAAAAAAAAAAAAIS");
-
+		System.out.println("après poll");
 		ps.println("ATO");
+
 		return config;
 	}
 
 	public Config setConfig(Config c) {
 		try {
-			enterSetupMode().print(c.stream().map(param -> "ATS" + param.code + "=" + param.value)
+			System.out.println("yo");
+			var ps = enterSetupMode();
+			ps.print(c.stream().map(param -> "ATS" + param.code + "=" + param.value)
 					.reduce((a, b) -> a + "\n" + b).get());
 			Thread.sleep(1000);
 
 			// save and reboot
 			rebooting = true;
-			serialPort.getOutputStream().write("AT&W\nATZ\n".getBytes());
+			ps.println("AT&W");
+			ps.println("ATZ");
 
 			// block 10s until rebooted
 			rebootQ.poll_sync(10);
 			rebooting = false;
-		} catch (IOException | InterruptedException e) {
+			System.out.println("nice");
+
+		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
 
