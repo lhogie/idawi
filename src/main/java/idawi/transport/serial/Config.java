@@ -6,13 +6,13 @@ import java.util.function.Predicate;
 public class Config extends ArrayList<Param> {
 
 	public static Config from(String text) {
+		var splitedText = text.substring(text.indexOf("S0")).replace("ATO", "").split("\\r?\\n");
 		var c = new Config();
-
-		for (var line : text.split("\\n")) {
+		for (String line : splitedText) {
 			String[] a = line.split(":|=");
+			Integer.valueOf(a[2].trim());
 			c.add(new Param(a[0], a[1], Integer.valueOf(a[2].trim())));
 		}
-
 		return c;
 	}
 

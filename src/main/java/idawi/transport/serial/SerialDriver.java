@@ -25,15 +25,16 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					updateDeviceList();
 					Thread.sleep(1000);
 				}
-			} catch (InterruptedException err) {
-				err.printStackTrace();
+			} catch (Throwable e) {
+				e.printStackTrace();
 			}
 		});
 	}
 
 	public synchronized void updateDeviceList() {
-		createDevicesForNewPorts(SerialPort.getCommPorts());
-		removeDeviceForDisapearedPorts(List.of(SerialPort.getCommPorts()));
+		SerialPort[] serialPorts = SerialPort.getCommPorts();
+		createDevicesForNewPorts(serialPorts);
+		removeDeviceForDisapearedPorts(List.of(serialPorts));
 	}
 
 	private synchronized void removeDeviceForDisapearedPorts(List<SerialPort> serialPorts) {
@@ -42,45 +43,78 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 			if (!portStillExists && !device.rebooting) {
 				devices.remove(device);
+				System.out.println("device removed :" + device);
 			}
 		}
 	}
 
 	private synchronized void createDevicesForNewPorts(SerialPort[] serialPorts) {
 		for (var serialPort : serialPorts) {
-			// search for a device with the same port name
-			var device = devices.stream().filter(
-					d -> d.serialPort.getDescriptivePortName().equalsIgnoreCase(serialPort.getDescriptivePortName()))
-					.findFirst().orElseGet(null);
 
+			// search for a device with the same port name
+
+			var deviceFirst = devices.stream().filter(
+					d -> d.serialPort.getDescriptivePortName().equalsIgnoreCase(serialPort.getDescriptivePortName()))
+					.findFirst();
+			SerialDevice device;
+
+			if (deviceFirst.isPresent()) {
+
+				device = deviceFirst.get();
+			} else {
+				device = null;
+
+			}
+			System.out.println("devices :" + devices);
+			System.out.println("device actuel :" + device);
 			if (device == null) {
 				open(serialPort);
-				device = isSIK(serialPort) ? new SikDevice(serialPort) : new SerialDevice(serialPort);
-				devices.add(device);
-				device.newThread(this);
-			} else if (!serialPort.isOpen()) {
-				open(serialPort);
-				device.serialPort = serialPort;
 
-				if (device.rebootQ != null) {
+				device = isSIK(serialPort) ? new SikDeviceLUC(serialPort) : new SerialDevice(serialPort);
+
+				devices.add(device);
+
+				device.newThread(this);
+				if (device instanceof SikDeviceLUC sd) {
+					Idawi.agenda.threadPool.submit(() -> {
+						try {
+
+							sd.initialConfig();
+
+						} catch (Throwable e) {
+							e.printStackTrace();
+						}
+					});
+				}
+
+			} else {
+				if (!serialPort.isOpen()) {
+					open(serialPort);
+					device.serialPort = serialPort;
+				}
+				if (device.rebooting) {
 					device.rebootQ.add_sync(new Object());
 				}
 			}
 		}
+
 	}
 
 	private void open(SerialPort serialPort) {
 		serialPort.openPort();
 		serialPort.setBaudRate(115200);// configurable ?
+
 		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
 		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 	}
 
 	private boolean isSIK(SerialPort p) {
-		byte[] sikMarkerVerifier = "ATI".getBytes();
-		p.writeBytes(sikMarkerVerifier, sikMarkerVerifier.length);
+		byte[] setupMarker = "+++".getBytes();
+		byte[] sikMarker = "ATI".getBytes();
+		byte[] outMarker = "ATO".getBytes();
+		byte[] separator = System.getProperty("line.separator").getBytes();
+		p.writeBytes(setupMarker, setupMarker.length);
 		var buf = new MyByteArrayOutputStream();
-
 		while (true) {
 			int i;
 			try {
@@ -90,10 +124,24 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					return false;
 				}
 				buf.write((byte) i);
-				if (buf.endsBy(sikMarkerVerifier)) {
+
+				if (buf.endsBy("OK".getBytes())) {
+					buf.reset();
+					p.writeBytes(sikMarker, sikMarker.length);
+					p.writeBytes(separator, separator.length);
+
+				} else if (buf.endsBy("SiK".getBytes()) || buf.endsBy("sik".getBytes())
+						|| buf.endsBy("SIK".getBytes())) {
+					p.writeBytes(outMarker, outMarker.length);
+					p.writeBytes(separator, separator.length);
 					buf.close();
+
+				} else if (buf.endsBy("ATO".getBytes())) {
+					buf.close();
+
 					return true;
 				}
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -21,6 +21,7 @@ public class SerialDevice {
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 	public Q<Object> rebootQ = new Q<>(1);
 	public boolean rebooting;
+	Q<Config> configQ = new Q<>(1);
 
 	public SerialDevice(SerialPort p) {
 		this.serialPort = p;
@@ -38,7 +39,7 @@ public class SerialDevice {
 
 				if (Arrays.hashCode(msgBytes) == hashCode) {
 					Message testBytes = (Message) serialDriver.serializer.fromBytes(bytes);
-					System.out.println(testBytes);
+					System.out.println("Message Arrived :" + testBytes);
 					serialDriver.processIncomingMessage((Message) serialDriver.serializer.fromBytes(bytes));
 				} else {
 					System.err.println("garbage");
@@ -50,21 +51,25 @@ public class SerialDevice {
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
 			var buf = new MyByteArrayOutputStream();
-
+			var inputStream = serialPort.getInputStream();
 			try {
 
 				while (true) {
-					int i = serialPort.getInputStream().read();
-
+					if ((inputStream.available() == 0) && buf.endsByData()) {
+						dataParse(buf.toByteArray(), driver);
+					}
+					int i = inputStream.read();
 					if (i == -1) {
 						return;
 					}
 
 					buf.write((byte) i);
-
 					for (var callback : markers) {
 						if (buf.endsBy(callback.marker())) {
+							System.out.println("Before callback");
+
 							callback.callback(buf.toByteArray(), driver);
+							System.out.println("After callback");
 							buf.reset();
 						}
 					}
@@ -86,7 +91,7 @@ public class SerialDevice {
 			System.out.println(b.toByteArray());
 			System.out.println((Arrays.hashCode(msgBytes)));
 			os.write(b.toByteArray());
-//			System.out.println("writing done");
+			// System.out.println("writing done");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,5 +101,11 @@ public class SerialDevice {
 		return serialPort.getDescriptivePortName();
 	}
 
+	public void dataParse(byte[] bytes, SerialDriver serialDriver) {
+
+		var config = Config.from(new String(bytes));
+		configQ.add_sync(config);
+
+	}
 
 }

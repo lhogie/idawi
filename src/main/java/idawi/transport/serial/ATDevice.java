@@ -8,22 +8,10 @@ import com.fazecast.jSerialComm.SerialPort;
 import toools.thread.Q;
 
 public class ATDevice extends SerialDevice {
-	Q<Config> configQ = new Q<>(1);
 
 	public ATDevice(SerialPort p) {
 		super(p);
 
-		markers.add(new Callback() {
-			@Override
-			public byte[] marker() {
-				return "ATO".getBytes();
-			}
-
-			@Override
-			public void callback(byte[] bytes, SerialDriver d) {
-				configQ.add_sync(Config.from(new String(bytes)));
-			}
-		});
 	}
 
 	@Override
@@ -31,36 +19,70 @@ public class ATDevice extends SerialDevice {
 		return getConfig().toString();
 	}
 
-	private PrintStream enterSetupMode() throws IOException {
-		var ps = new PrintStream(serialPort.getOutputStream());
-		ps.print("+++");
-		return ps;
+	private PrintStream enterSetupMode() {
+		try {
+			var ps = new PrintStream(serialPort.getOutputStream());
+			Thread.sleep(1100);
+			ps.print("+++");
+			Thread.sleep(1100);
+
+			return ps;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public Config getConfig() {
+		Config config;
 		try {
-			enterSetupMode().print("ATI5\nATO\n");
-			return configQ.poll_sync();
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
-	}
 
+			var ps = enterSetupMode();
+			ps.println("ATI5");
+
+			System.out.println("avant poll");
+			System.out.println(serialPort.isOpen());
+
+			System.out.println(serialPort.getInputStream());
+			config = configQ.poll_sync(2);
+
+			System.out.println("après poll");
+			ps.println("ATO");
+
+			return config;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		config = new Config();
+		return config;
+	}
 
 	public Config setConfig(Config c) {
 		try {
-			enterSetupMode().print(c.stream().map(param -> "ATS" + param.code + "=" + param.value)
-					.reduce((a, b) -> a + "\n" + b).get());
-			Thread.sleep(1000);
+			System.out.println("begin Set Config");
+			var ps = enterSetupMode();
+			for (Param param : c) {
+				if (param.code == "S0") {
+					continue;
+				}
+				ps.println("AT" + param.code + "=" + param.value);
+				Thread.sleep(100);
+
+			}
 
 			// save and reboot
+			ps.println("AT&W");
+
+			ps.println("ATZ");
 			rebooting = true;
-			serialPort.getOutputStream().write("AT&W\nATZ\n".getBytes());
 
 			// block 10s until rebooted
-			rebootQ.poll_sync(10);
+			var rebootAknowlgement = rebootQ.poll_sync(2);
+			System.out.println("reboot aknow :" + rebootAknowlgement);
 			rebooting = false;
-		} catch (IOException | InterruptedException e) {
+			System.out.println("end Set Config");
+
+		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
 
