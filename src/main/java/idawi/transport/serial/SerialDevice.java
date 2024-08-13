@@ -103,9 +103,7 @@ public class SerialDevice {
 
 	public void dataParse(byte[] bytes, SerialDriver serialDriver) {
 
-		System.out.println("callback AT :");
 		var config = Config.from(new String(bytes));
-		System.out.println("Callback parsed and data added to configQ");
 		configQ.add_sync(config);
 
 	}

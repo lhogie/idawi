@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class MyByteArrayOutputStream extends ByteArrayOutputStream {
 
 	public boolean endsBy(byte[] marker) throws UnsupportedEncodingException {
@@ -16,7 +19,9 @@ public class MyByteArrayOutputStream extends ByteArrayOutputStream {
 	}
 
 	public boolean endsByData() throws UnsupportedEncodingException {
-		if (new String(buf).contains("ATI5")) {
+		Pattern pattern = Pattern.compile("S15:.*[\r\n]+");
+		Matcher matcher = pattern.matcher(new String(buf));
+		if (matcher.find()) {
 			return true;
 		}
 		return false;

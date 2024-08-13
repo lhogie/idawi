@@ -25,15 +25,16 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					updateDeviceList();
 					Thread.sleep(1000);
 				}
-			} catch (InterruptedException e) {
+			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
 	public synchronized void updateDeviceList() {
-		createDevicesForNewPorts(SerialPort.getCommPorts());
-		removeDeviceForDisapearedPorts(List.of(SerialPort.getCommPorts()));
+		SerialPort[] serialPorts = SerialPort.getCommPorts();
+		createDevicesForNewPorts(serialPorts);
+		removeDeviceForDisapearedPorts(List.of(serialPorts));
 	}
 
 	private synchronized void removeDeviceForDisapearedPorts(List<SerialPort> serialPorts) {
@@ -42,6 +43,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 			if (!portStillExists && !device.rebooting) {
 				devices.remove(device);
+				System.out.println("device removed :" + device);
 			}
 		}
 	}
@@ -63,7 +65,8 @@ public class SerialDriver extends TransportService implements Broadcastable {
 				device = null;
 
 			}
-
+			System.out.println("devices :" + devices);
+			System.out.println("device actuel :" + device);
 			if (device == null) {
 				open(serialPort);
 
@@ -73,24 +76,34 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 				device.newThread(this);
 				if (device instanceof SikDeviceLUC sd) {
-					sd.initialConfig();
+					Idawi.agenda.threadPool.submit(() -> {
+						try {
 
+							sd.initialConfig();
+
+						} catch (Throwable e) {
+							e.printStackTrace();
+						}
+					});
 				}
 
-			} else if (!serialPort.isOpen()) {
-				open(serialPort);
-				device.serialPort = serialPort;
-
-				if (device.rebootQ != null) {
+			} else {
+				if (!serialPort.isOpen()) {
+					open(serialPort);
+					device.serialPort = serialPort;
+				}
+				if (device.rebooting) {
 					device.rebootQ.add_sync(new Object());
 				}
 			}
 		}
+
 	}
 
 	private void open(SerialPort serialPort) {
 		serialPort.openPort();
 		serialPort.setBaudRate(115200);// configurable ?
+
 		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
 		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 	}

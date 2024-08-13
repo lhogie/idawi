@@ -7,10 +7,6 @@ public class Config extends ArrayList<Param> {
 
 	public static Config from(String text) {
 		var splitedText = text.substring(text.indexOf("S0")).replace("ATO", "").split("\\r?\\n");
-		for (String string : splitedText) {
-			System.out.println("splitedText :" + string);
-
-		}
 		var c = new Config();
 		for (String line : splitedText) {
 			String[] a = line.split(":|=");
