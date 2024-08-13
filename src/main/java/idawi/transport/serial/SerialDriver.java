@@ -25,8 +25,8 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					updateDeviceList();
 					Thread.sleep(1000);
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException err) {
+				err.printStackTrace();
 			}
 		});
 	}
