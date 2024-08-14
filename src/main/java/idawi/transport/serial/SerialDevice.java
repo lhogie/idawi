@@ -83,9 +83,10 @@ public class SerialDevice {
 
 	public void bcast(byte[] msgBytes) {
 		OutputStream os = serialPort.getOutputStream();
+
 		try {
 			var b = new ByteArrayOutputStream();
-			b.write(msgBytes);
+			b.write(msgBytes); 
 			b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 			b.write(msgMarker);
 			System.out.println(b.toByteArray());
