@@ -55,9 +55,7 @@ public class SerialDevice {
 			try {
 
 				while (true) {
-					if ((inputStream.available() == 0) && buf.endsByData()) {
-						dataParse(buf.toByteArray(), driver);
-					}
+
 					int i = inputStream.read();
 					if (i == -1) {
 						return;
@@ -99,13 +97,6 @@ public class SerialDevice {
 
 	public String getName() {
 		return serialPort.getDescriptivePortName();
-	}
-
-	public void dataParse(byte[] bytes, SerialDriver serialDriver) {
-
-		var config = Config.from(new String(bytes));
-		configQ.add_sync(config);
-
 	}
 
 }

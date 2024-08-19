@@ -18,8 +18,8 @@ public class MyByteArrayOutputStream extends ByteArrayOutputStream {
 		return equals;
 	}
 
-	public boolean endsByData() throws UnsupportedEncodingException {
-		Pattern pattern = Pattern.compile("S15:.*[\r\n]+");
+	public boolean endsByData(String regexString) throws UnsupportedEncodingException {
+		Pattern pattern = Pattern.compile(regexString);
 		Matcher matcher = pattern.matcher(new String(buf));
 		if (matcher.find()) {
 			return true;
