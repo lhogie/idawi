@@ -1,91 +1,41 @@
 package idawi.transport.serial;
 
-import java.io.IOException;
-import java.io.PrintStream;
-
 import com.fazecast.jSerialComm.SerialPort;
 
-import toools.thread.Q;
+import toools.thread.Threads;
 
 public class ATDevice extends SerialDevice {
+	private SetUpMode setup;
 
 	public ATDevice(SerialPort p) {
 		super(p);
-
 	}
 
-	@Override
-	public String toString() {
-		return getConfig().toString();
+	public synchronized SetUpMode setup() {
+		if (setup != null)
+			throw new IllegalStateException("already in setup mode");
+
+		setup = new SetUpMode(this);
+		Threads.sleep(1.1);
+		setup.out.print("+++");
+		Threads.sleep(1.1);
+		return setup;
 	}
 
-	private PrintStream enterSetupMode() {
-		try {
-			var ps = new PrintStream(serialPort.getOutputStream());
-			Thread.sleep(1100);
-			ps.print("+++");
-			Thread.sleep(1100);
-
-			return ps;
-		} catch (Exception e) {
-			e.printStackTrace();
+	public synchronized void bcast(byte[] msgBytes) {
+		if (setup != null) {
+			setup.awaitingMessages.add_sync(msgBytes);
+		} else {
+			super.bcast(msgBytes);
 		}
-		return null;
 	}
 
-	public Config getConfig() {
-		Config config;
-		try {
+	synchronized void exitSetup() {
+		if (setup == null)
+			throw new IllegalStateException("not in setup mode");
 
-			var ps = enterSetupMode();
-			ps.println("ATI5");
-
-			System.out.println("avant poll");
-			System.out.println(serialPort.isOpen());
-
-			System.out.println(serialPort.getInputStream());
-			config = configQ.poll_sync(2);
-
-			System.out.println("après poll");
-			ps.println("ATO");
-
-			return config;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		config = new Config();
-		return config;
-	}
-
-	public Config setConfig(Config c) {
-		try {
-			System.out.println("begin Set Config");
-			var ps = enterSetupMode();
-			for (Param param : c) {
-				if (param.code == "S0") {
-					continue;
-				}
-				ps.println("AT" + param.code + "=" + param.value);
-				Thread.sleep(100);
-
-			}
-
-			// save and reboot
-			ps.println("AT&W");
-
-			ps.println("ATZ");
-			rebooting = true;
-
-			// block 10s until rebooted
-			var rebootAknowlgement = rebootQ.poll_sync(2);
-			System.out.println("reboot aknow :" + rebootAknowlgement);
-			rebooting = false;
-			System.out.println("end Set Config");
-
-		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
-		}
-
-		return getConfig();
+		setup.out.println("ATO");
+		setup.awaitingMessages.forEach(b -> bcast(b));
+		setup = null;
 	}
 }
