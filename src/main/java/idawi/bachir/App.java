@@ -7,7 +7,6 @@ import idawi.Service;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.transport.serial.SerialDriver;
-import idawi.transport.serial.SikDevice;
 
 public class App {
 	public static void main(String[] args) throws InterruptedException {

@@ -10,10 +10,11 @@ public class SikDeviceLUC extends ATDevice {
 	}
 
 	public void initialConfig() {
-
+		setup();
 		var config = getConfig();
 		if (config != null)
 			System.out.println("config 1: correct");
+		setup();
 
 		config = getConfig();
 		if (config != null)
@@ -21,7 +22,9 @@ public class SikDeviceLUC extends ATDevice {
 			System.out.println("config 2: correct");
 
 		// config.findByName("TXPOWER").value = 5;
+		setup();
 		config = setConfig(config);
-		System.out.println("config 3:" + config);
+		if (config != null)
+			System.out.println("config 3: correct");
 	}
 }

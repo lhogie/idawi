@@ -20,7 +20,8 @@ public class SerialDevice {
 	public List<Callback> markers = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 	public Q<Object> rebootQ = new Q<>(1);
-	public boolean rebooting;
+	public boolean rebooting = false;
+	public boolean setupping = false;
 	Q<Config> configQ = new Q<>(1);
 
 	public SerialDevice(SerialPort p) {
@@ -55,20 +56,23 @@ public class SerialDevice {
 			try {
 
 				while (true) {
+					if (!setupping) {
+						int i = inputStream.read();
+						if (i == -1) {
+							return;
+						}
 
-					int i = inputStream.read();
-					if (i == -1) {
-						return;
-					}
+						buf.write((byte) i);
+						for (var callback : markers) {
+							if (buf.endsBy("OK".getBytes())) {
+								setupping = true;
+							} else if (buf.endsBy(callback.marker())) {
+								System.out.println("Before callback");
 
-					buf.write((byte) i);
-					for (var callback : markers) {
-						if (buf.endsBy(callback.marker())) {
-							System.out.println("Before callback");
-
-							callback.callback(buf.toByteArray(), driver);
-							System.out.println("After callback");
-							buf.reset();
+								callback.callback(buf.toByteArray(), driver);
+								System.out.println("After callback");
+								buf.reset();
+							}
 						}
 					}
 				}
@@ -84,11 +88,10 @@ public class SerialDevice {
 
 		try {
 			var b = new ByteArrayOutputStream();
-			b.write(msgBytes); 
+			b.write(msgBytes);
 			b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 			b.write(msgMarker);
-			System.out.println(b.toByteArray());
-			System.out.println((Arrays.hashCode(msgBytes)));
+
 			os.write(b.toByteArray());
 			// System.out.println("writing done");
 		} catch (IOException e) {

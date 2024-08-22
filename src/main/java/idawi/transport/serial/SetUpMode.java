@@ -1,43 +1,45 @@
 package idawi.transport.serial;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+
+import com.fazecast.jSerialComm.SerialPort;
 
 import toools.thread.Q;
 
 public class SetUpMode {
 	PrintStream out;
-	BufferedReader in;
+	InputStream in;
 	private final ATDevice device;
 	Q<byte[]> awaitingMessages = new Q<>(100);
 
 	SetUpMode(ATDevice d) {
 		this.device = d;
+
 		out = new PrintStream(d.serialPort.getOutputStream());
-		in = new BufferedReader(new InputStreamReader(d.ser));
+		in = d.serialPort.getInputStream();
 	}
 
-
-	public void exit() {
+	private void exit() {
 		device.exitSetup();
 	}
 
-	public Config getConfig() {
+	private void exitReload() {
+		device.exitSetupReload();
+	}
+
+	Config getConfig() {
 		Config config;
 		try {
+			var regexString = "S15:.*[\r\n]+";
 
-			var ps = enterSetupMode();
-			ps.out.println("ATI5");
+			out.println("ATI5");
 
-			System.out.println("avant poll");
-			System.out.println(serialPort.isOpen());
-
-			System.out.println(serialPort.getInputStream());
-			config = configQ.poll_sync(2);
-
-			System.out.println("après poll");
-			ps.out.println("ATO");
+			config = readConfig(regexString);
+			exit();
 
 			return config;
 		} catch (Exception e) {
@@ -47,35 +49,118 @@ public class SetUpMode {
 		return config;
 	}
 
-	public Config setConfig(Config c) {
+	PrintStream enterSetupMode() {
 		try {
-			System.out.println("begin Set Config");
-			var ps = enterSetupMode();
+
+			Thread.sleep(1100);
+			out.print("+++");
+			Thread.sleep(1100);
+
+			return out;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	Config setConfig(Config c) {
+		try {
 			for (Param param : c) {
-				if (param.code == "S0") {
+				if (param.code.equals("S0")) {
 					continue;
 				}
-				ps.println("AT" + param.code + "=" + param.value);
-				Thread.sleep(100);
+
+				out.println("AT" + param.code + "=" + param.value);
+				okDetector();
 
 			}
-
 			// save and reboot
-			ps.println("AT&W");
-
-			ps.println("ATZ");
-			rebooting = true;
+			out.println("AT&W");
+			okDetector();
+			exitReload();
 
 			// block 10s until rebooted
-			var rebootAknowlgement = rebootQ.poll_sync(2);
-			System.out.println("reboot aknow :" + rebootAknowlgement);
-			rebooting = false;
-			System.out.println("end Set Config");
+			var rebootAknowlgement = awaitingMessages.poll_sync(2);// make a queue poll
 
-		} catch (InterruptedException e) {
+			device.rebooting = false;
+			// System.out.println("reboot aknow :" + rebootAknowlgement);
+			device.setup();
+			return getConfig();
+
+		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 
-		return getConfig();
+	}
+
+	private Config readConfig(String reString) {
+		var buf = new MyByteArrayOutputStream();
+		var c = new Config();
+		device.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+				1000);
+
+		try {
+
+			while (true) {
+				int i;
+				i = in.read();// timeout not working because the timeout should be on the read and write, this
+								// is not SIK specific but java specific ask Luc
+				if (i == -1) {
+					buf.close();
+					return c;
+				}
+
+				buf.write((byte) i);
+				if ((in.available() == 0) && buf.endsByData(reString)) {
+					device.serialPort.setComPortTimeouts(
+							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
+							0, 0);
+					return dataParse(buf.toByteArray());
+
+				}
+
+			}
+		} catch (IOException err) {
+			System.err.println("I/O error reading stream");
+		}
+		return c;
+	}
+
+	private boolean okDetector() {
+		var buf = new MyByteArrayOutputStream();
+		device.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+				1000);
+		try {
+
+			while (true) {
+				int i;
+				i = in.read(); // timeout not working because the timeout should be on the read and write, this
+								// is not SIK specific but java specific ask Luc
+				if (i == -1) {
+					buf.close();
+					return false;
+				}
+
+				buf.write((byte) i);
+				if ((in.available() == 0) && buf.endsByData("OK")) {
+					device.serialPort.setComPortTimeouts(
+							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
+							0, 0);
+					return true;
+
+				}
+
+			}
+		} catch (IOException err) {
+			System.err.println("I/O error reading stream");
+		}
+		return false;
+	}
+
+	private Config dataParse(byte[] bytes) {
+
+		var config = Config.from(new String(bytes));
+		return config;
+
 	}
 }
