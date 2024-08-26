@@ -17,10 +17,6 @@ public class ATDevice extends SerialDevice {
 			throw new IllegalStateException("already in setup mode");
 
 		setup = new SetUpMode(this);
-		System.out.println("setup AT done");
-		// Threads.sleep(1.1);
-		// setup.out.print("+++");
-		// Threads.sleep(1.1);
 		ps = setup.enterSetupMode();
 		return setup;
 	}

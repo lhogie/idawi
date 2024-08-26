@@ -134,26 +134,28 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		byte[] setupMarker = "+++".getBytes();
 		byte[] sikMarker = "ATI".getBytes();
 		byte[] outMarker = "ATO".getBytes();
+		byte[] currentByte = new byte[1];
 		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000, 1000);
 		p.writeBytes(setupMarker, setupMarker.length);
 		var buf = new MyByteArrayOutputStream();
 		while (true) {
-			int i;
 			try {
 
-				i = p.getInputStream().read(); // timeout not working because the timeout should be on the read and
-												// write, this is not SIK specific but java specific ask Luc
+				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
+														// gérer
+														// par la fonction setComPortTimeouts un peu plus haut
 
 				if (i == -1) {
 					buf.close();
 					return false;
 				}
-				buf.write((byte) i);
+				buf.write((byte) currentByte[0]);
 
 				if (buf.endsBy("OK".getBytes())) {
 					markerWrite(p, buf, sikMarker);
 
 				} else if (buf.endsBy("SiK".getBytes())) {
+
 					markerWrite(p, buf, outMarker);
 
 				} else if (buf.endsBy("ATO".getBytes())) {

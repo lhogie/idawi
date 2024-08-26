@@ -52,19 +52,24 @@ public class SerialDevice {
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
 			var buf = new MyByteArrayOutputStream();
-			var inputStream = serialPort.getInputStream();
+			byte[] currentByte = new byte[1];
 			try {
 
 				while (true) {
 					if (!setupping) {
-						int i = inputStream.read();
+						int i = serialPort.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son
+																		// timeout peut
+						// être
+						// gérer
+						// par la fonction setComPortTimeouts un peu plus haut
 						if (i == -1) {
 							return;
 						}
 
-						buf.write((byte) i);
+						buf.write((byte) currentByte[0]);
 						for (var callback : markers) {
 							if (buf.endsBy("OK".getBytes())) {
+
 								setupping = true;
 							} else if (buf.endsBy(callback.marker())) {
 								System.out.println("Before callback");

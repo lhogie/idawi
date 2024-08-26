@@ -54,11 +54,12 @@ public class SetUpMode {
 
 			Thread.sleep(1100);
 			out.print("+++");
+
 			Thread.sleep(1100);
 
 			return out;
 		} catch (Exception e) {
-			e.printStackTrace();
+
 		}
 		return null;
 	}
@@ -77,8 +78,8 @@ public class SetUpMode {
 			// save and reboot
 			out.println("AT&W");
 			okDetector();
-			exitReload();
 
+			exitReload();
 			// block 10s until rebooted
 			var rebootAknowlgement = awaitingMessages.poll_sync(2);// make a queue poll
 
@@ -96,23 +97,25 @@ public class SetUpMode {
 	private Config readConfig(String reString) {
 		var buf = new MyByteArrayOutputStream();
 		var c = new Config();
-		device.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
-				1000);
+		byte[] currentByte = new byte[1];
 
+		SerialPort p = device.serialPort;
+		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+				1000);
 		try {
 
 			while (true) {
-				int i;
-				i = in.read();// timeout not working because the timeout should be on the read and write, this
-								// is not SIK specific but java specific ask Luc
+				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
+														// gérer par la fonction setComPortTimeouts un peu plus haut
+
 				if (i == -1) {
 					buf.close();
 					return c;
 				}
 
-				buf.write((byte) i);
+				buf.write((byte) currentByte[0]);
 				if ((in.available() == 0) && buf.endsByData(reString)) {
-					device.serialPort.setComPortTimeouts(
+					p.setComPortTimeouts(
 							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
 							0, 0);
 					return dataParse(buf.toByteArray());
@@ -128,22 +131,25 @@ public class SetUpMode {
 
 	private boolean okDetector() {
 		var buf = new MyByteArrayOutputStream();
-		device.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+		byte[] currentByte = new byte[1];
+
+		SerialPort p = device.serialPort;
+		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
 				1000);
 		try {
 
 			while (true) {
-				int i;
-				i = in.read(); // timeout not working because the timeout should be on the read and write, this
-								// is not SIK specific but java specific ask Luc
+				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
+														// gérer par la fonction setComPortTimeouts un peu plus haut
+
 				if (i == -1) {
 					buf.close();
 					return false;
 				}
 
-				buf.write((byte) i);
+				buf.write((byte) currentByte[0]);
 				if ((in.available() == 0) && buf.endsByData("OK")) {
-					device.serialPort.setComPortTimeouts(
+					p.setComPortTimeouts(
 							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
 							0, 0);
 					return true;
