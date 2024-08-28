@@ -25,12 +25,11 @@ public class App {
 
 		// a_smt.bcastTargets.add(b);
 		// while (true) {
-		// System.out.println("nice");
 		// t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
 		// msg.content = "blabla";
-		// System.out.println("sending ");
 		// });
 		// }
+
 	}
 
 	public static class S extends Service {

@@ -37,8 +37,8 @@ public class SetUpMode {
 			var regexString = "S15:.*[\r\n]+";
 
 			out.println("ATI5");
-
 			config = readConfig(regexString);
+
 			exit();
 
 			return config;
@@ -81,8 +81,9 @@ public class SetUpMode {
 
 			exitReload();
 			// block 10s until rebooted
-			var rebootAknowlgement = awaitingMessages.poll_sync(2);// make a queue poll
 
+			// var rebootAknowlgement = awaitingMessages.poll_sync(2);// make a queue poll
+			var rebootAknowlgement = device.rebootQ.poll_sync(2);
 			device.rebooting = false;
 			// System.out.println("reboot aknow :" + rebootAknowlgement);
 			device.setup();

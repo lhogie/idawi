@@ -16,8 +16,10 @@ public class ATDevice extends SerialDevice {
 		if (setup != null)
 			throw new IllegalStateException("already in setup mode");
 
+		setupping = true;
 		setup = new SetUpMode(this);
 		ps = setup.enterSetupMode();
+
 		return setup;
 	}
 
@@ -26,6 +28,7 @@ public class ATDevice extends SerialDevice {
 			setup.awaitingMessages.add_sync(msgBytes);
 		} else {
 			super.bcast(msgBytes);
+
 		}
 	}
 

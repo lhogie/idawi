@@ -14,6 +14,7 @@ import idawi.Idawi;
 import idawi.transport.Broadcastable;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
+import java.util.Collections;
 
 public class SerialDriver extends TransportService implements Broadcastable {
 
@@ -26,6 +27,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 				while (true) {
 					updateDeviceList();
 					Thread.sleep(1000);
+					System.out.println("threadpool serialDriver");
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -33,12 +35,10 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		});
 	}
 
-	public synchronized void updateDeviceList() {
+	private synchronized void updateDeviceList() {
+		System.out.println("running");
 		SerialPort[] serialPorts = SerialPort.getCommPorts();
-		createDevicesForNewPorts(serialPorts);
-	}
 
-	private synchronized void createDevicesForNewPorts(SerialPort[] serialPorts) {
 		for (var serialPort : serialPorts) {
 
 			// search for a device with the same port name
@@ -69,15 +69,16 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 					@Override
 					public void serialEvent(SerialPortEvent serialPortEvent) {
-						if (serialPortEvent.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED)
-							serialPort.closePort();
-						for (var device : List.copyOf(devices)) {
-							boolean portStillExists = (device.serialPort == serialPort);
+						if (serialPortEvent.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
 
-							if (!portStillExists && !device.rebooting) {
-								devices.remove(device);
-								System.out.println("device removed :" + device);
+							for (var device : devices) {
+								if (device.serialPort.equals(serialPort) && !device.rebooting) {
+									devices.remove(device);
+									serialPort.closePort();
+									System.out.println("device removed :" + device);
+								}
 							}
+
 						}
 
 					}
@@ -115,6 +116,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			}
 
 		}
+		System.out.println("end of serialDriver");
 
 	}
 
@@ -137,28 +139,36 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		byte[] currentByte = new byte[1];
 		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000, 1000);
 		p.writeBytes(setupMarker, setupMarker.length);
+		int bytesRed = 0;
+		boolean anyResponse = false;
 		var buf = new MyByteArrayOutputStream();
 		while (true) {
 			try {
-
 				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
 														// gérer
 														// par la fonction setComPortTimeouts un peu plus haut
-
 				if (i == -1) {
 					buf.close();
 					return false;
 				}
+				bytesRed = bytesRed + 1;
 				buf.write((byte) currentByte[0]);
-
+				if ((bytesRed >= 10) && !anyResponse) {// permet de voir si on a eu une réponse après quelques bytes si
+														// aucune réponse ne nous convient le device n'est pas un SiK
+					markerWrite(p, buf, outMarker);
+					bytesRed = 0;
+					buf.close();
+					return false;
+				}
 				if (buf.endsBy("OK".getBytes())) {
+					anyResponse = true;
 					markerWrite(p, buf, sikMarker);
 
 				} else if (buf.endsBy("SiK".getBytes())) {
 
 					markerWrite(p, buf, outMarker);
 
-				} else if (buf.endsBy("ATO".getBytes())) {
+				} else if (buf.endsBy("ATO".getBytes()) && anyResponse) {
 					buf.close();
 					return true;
 				}
@@ -185,8 +195,19 @@ public class SerialDriver extends TransportService implements Broadcastable {
 
 	@Override
 	public void bcast(byte[] msgBytes) {
+
 		for (var d : devices) {
-			d.bcast(msgBytes);
+			if ((d instanceof SikDeviceLUC sd)) {
+
+				if ((sd.firstConfig)) {
+					System.out.println("sending");
+					sd.bcast(msgBytes);
+
+				}
+			} else {
+
+				d.bcast(msgBytes);
+			}
 		}
 	}
 

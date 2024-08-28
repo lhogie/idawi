@@ -57,6 +57,7 @@ public class SerialDevice {
 
 				while (true) {
 					if (!setupping) {
+						System.out.println("main reading" + serialPort);
 						int i = serialPort.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son
 																		// timeout peut
 						// être
@@ -68,10 +69,7 @@ public class SerialDevice {
 
 						buf.write((byte) currentByte[0]);
 						for (var callback : markers) {
-							if (buf.endsBy("OK".getBytes())) {
-
-								setupping = true;
-							} else if (buf.endsBy(callback.marker())) {
+							if (buf.endsBy(callback.marker())) {
 								System.out.println("Before callback");
 
 								callback.callback(buf.toByteArray(), driver);
@@ -98,9 +96,11 @@ public class SerialDevice {
 			b.write(msgMarker);
 
 			os.write(b.toByteArray());
-			// System.out.println("writing done");
 		} catch (IOException e) {
+			System.out.println("problem sending with device :");
+
 			e.printStackTrace();
+
 		}
 	}
 
