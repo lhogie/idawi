@@ -57,7 +57,7 @@ public class SerialDevice {
 
 				while (true) {
 					if (!setupping) {
-						System.out.println("main reading" + serialPort);
+						System.out.println("main reading" + serialPort.getSystemPortName());
 						int i = serialPort.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son
 																		// timeout peut
 						// être
@@ -105,7 +105,7 @@ public class SerialDevice {
 	}
 
 	public String getName() {
-		return serialPort.getDescriptivePortName();
+		return serialPort.getSystemPortName();
 	}
 
 }

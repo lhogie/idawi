@@ -14,17 +14,17 @@ public class SikDeviceLUC extends ATDevice {
 		setup();
 		var config = getConfig();
 		if (config != null)
-			System.out.println("config 1: correct");
-		setup();
+			System.out.println("config 1: correct" + serialPort.getSystemPortName());
+		// setup();
 
-		config = getConfig();
-		if (config != null)
+		// config = getConfig();
+		// if (config != null)
 
-			System.out.println("config 2: correct");
+		// System.out.println("config 2: correct" + serialPort.getSystemPortName());
 
 		config = defaultConfig(config);
 		if (config != null)
-			System.out.println("config 3: correct");
+			System.out.println("config 3: correct" + serialPort.getSystemPortName());
 		System.out.println("setupping :" + setupping);
 		firstConfig = true;
 	}

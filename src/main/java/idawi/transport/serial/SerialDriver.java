@@ -27,7 +27,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 				while (true) {
 					updateDeviceList();
 					Thread.sleep(1000);
-					System.out.println("threadpool serialDriver");
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -36,7 +35,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	}
 
 	private synchronized void updateDeviceList() {
-		System.out.println("running");
 		SerialPort[] serialPorts = SerialPort.getCommPorts();
 
 		for (var serialPort : serialPorts) {
@@ -44,7 +42,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			// search for a device with the same port name
 
 			var deviceFirst = devices.stream().filter(
-					d -> d.serialPort.getDescriptivePortName().equalsIgnoreCase(serialPort.getDescriptivePortName()))
+					d -> d.serialPort.getSystemPortName().equalsIgnoreCase(serialPort.getSystemPortName()))
 					.findFirst();
 			SerialDevice device;
 
@@ -59,7 +57,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			// System.out.println("device actuel :" + device);
 			if (device == null) {
 				var isOpened = open(serialPort);
-				System.out.println("opened serial :" + isOpened + " " + serialPort.getDescriptivePortName());
+				System.out.println("opened serial :" + isOpened + " " + serialPort.getSystemPortName());
 				serialPort.addDataListener(new SerialPortDataListener() {
 					@Override
 					public int getListeningEvents() {
@@ -116,7 +114,6 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			}
 
 		}
-		System.out.println("end of serialDriver");
 
 	}
 
@@ -200,7 +197,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 			if ((d instanceof SikDeviceLUC sd)) {
 
 				if ((sd.firstConfig)) {
-					System.out.println("sending");
+					System.out.println("sending" + sd.serialPort.getSystemPortName());
 					sd.bcast(msgBytes);
 
 				}

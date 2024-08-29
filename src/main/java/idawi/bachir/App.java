@@ -24,11 +24,11 @@ public class App {
 		// new SharedMemoryTransport(b);
 
 		// a_smt.bcastTargets.add(b);
-		// while (true) {
-		// t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-		// msg.content = "blabla";
-		// });
-		// }
+		while (true) {
+			t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+				msg.content = "blabla";
+			});
+		}
 
 	}
 
