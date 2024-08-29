@@ -22,6 +22,7 @@ public class SerialDevice {
 	public Q<Object> rebootQ = new Q<>(1);
 	public boolean rebooting;
 	Q<Config> configQ = new Q<>(1);
+	protected Thread readingThread;
 
 	public SerialDevice(SerialPort p) {
 		this.serialPort = p;
@@ -50,29 +51,38 @@ public class SerialDevice {
 
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
+			this.readingThread = Thread.currentThread();
 			var buf = new MyByteArrayOutputStream();
 			var inputStream = serialPort.getInputStream();
+
 			try {
 
 				while (true) {
 					if ((inputStream.available() == 0) && buf.endsByData()) {
 						dataParse(buf.toByteArray(), driver);
 					}
-					int i = inputStream.read();
-					if (i == -1) {
-						return;
-					}
 
-					buf.write((byte) i);
-					for (var callback : markers) {
-						if (buf.endsBy(callback.marker())) {
-							System.out.println("Before callback");
-
-							callback.callback(buf.toByteArray(), driver);
-							System.out.println("After callback");
-							buf.reset();
+					try {
+						int i = inputStream.read();
+						if (i == -1) {
+							return;
 						}
+
+						buf.write((byte) i);
+
+						for (var callback : markers) {
+							if (buf.endsBy(callback.marker())) {
+								System.out.println("Before callback");
+
+								callback.callback(buf.toByteArray(), driver);
+								System.out.println("After callback");
+								buf.reset();
+							}
+						}
+					} catch (InterruptedException ierr) {
+
 					}
+
 				}
 
 			} catch (IOException err) {
@@ -86,7 +96,7 @@ public class SerialDevice {
 
 		try {
 			var b = new ByteArrayOutputStream();
-			b.write(msgBytes); 
+			b.write(msgBytes);
 			b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 			b.write(msgMarker);
 			System.out.println(b.toByteArray());
