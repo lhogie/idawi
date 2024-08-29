@@ -7,6 +7,7 @@ import java.io.PrintStream;
 public class ATDevice extends SerialDevice {
 	private SetUpMode setup;
 	private PrintStream ps;
+	String separator = "\r\n";
 
 	public ATDevice(SerialPort p) {
 		super(p);
@@ -36,7 +37,9 @@ public class ATDevice extends SerialDevice {
 		if (setup == null)
 			throw new IllegalStateException("not in setup mode");
 
-		setup.out.println("ATO");
+		setup.out.print("ATO");
+		setup.out.print(separator);
+
 		setupping = false;
 		setup.awaitingMessages.forEach(b -> bcast(b));
 		setup = null;
@@ -46,7 +49,8 @@ public class ATDevice extends SerialDevice {
 		if (setup == null)
 			throw new IllegalStateException("not in setup mode");
 
-		setup.out.println("ATZ");
+		setup.out.print("ATZ");
+		setup.out.print(separator);
 
 		setupping = false;
 		setup.awaitingMessages.forEach(b -> bcast(b));

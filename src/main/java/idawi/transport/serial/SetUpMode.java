@@ -36,7 +36,9 @@ public class SetUpMode {
 		try {
 			var regexString = "S15:.*[\r\n]+";
 
-			out.println("ATI5");
+			out.print("ATI5");
+			out.print(device.separator);
+
 			config = readConfig(regexString);
 
 			exit();
@@ -71,12 +73,16 @@ public class SetUpMode {
 					continue;
 				}
 
-				out.println("AT" + param.code + "=" + param.value);
+				out.print("AT" + param.code + "=" + param.value);
+				out.print(device.separator);
+
 				okDetector();
 
 			}
 			// save and reboot
-			out.println("AT&W");
+			out.print("AT&W");
+			out.print(device.separator);
+
 			okDetector();
 
 			exitReload();

@@ -179,7 +179,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 	}
 
 	private void markerWrite(SerialPort p, MyByteArrayOutputStream buf, byte[] marker) {
-		byte[] separator = System.getProperty("line.separator").getBytes();
+		byte[] separator = "\r\n".getBytes();
 		buf.reset();
 		p.writeBytes(marker, marker.length);
 		p.writeBytes(separator, separator.length);
