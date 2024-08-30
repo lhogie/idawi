@@ -49,6 +49,9 @@ public class SerialDevice {
 		});
 	}
 
+	/**
+	 * Fonction de lecture perpétulle du device en question
+	 */
 	void newThread(SerialDriver driver) {
 		Idawi.agenda.threadPool.submit(() -> {
 			var buf = new MyByteArrayOutputStream();
@@ -57,12 +60,9 @@ public class SerialDevice {
 
 				while (true) {
 					if (!setupping) {
-						System.out.println("main reading" + serialPort.getSystemPortName());
 						int i = serialPort.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son
-																		// timeout peut
-						// être
-						// gérer
-						// par la fonction setComPortTimeouts un peu plus haut
+																		// timeout peut être géré par la fonction
+																		// setComPortTimeouts un peu plus haut
 						if (i == -1) {
 							return;
 						}

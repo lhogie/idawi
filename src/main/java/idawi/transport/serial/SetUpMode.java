@@ -113,7 +113,7 @@ public class SetUpMode {
 
 			while (true) {
 				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
-														// gérer par la fonction setComPortTimeouts un peu plus haut
+														// géré par la fonction setComPortTimeouts un peu plus haut
 
 				if (i == -1) {
 					buf.close();
@@ -121,7 +121,7 @@ public class SetUpMode {
 				}
 
 				buf.write((byte) currentByte[0]);
-				if ((in.available() == 0) && buf.endsByData(reString)) {
+				if (buf.endsByData(reString)) {
 					p.setComPortTimeouts(
 							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
 							0, 0);
@@ -147,7 +147,7 @@ public class SetUpMode {
 
 			while (true) {
 				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
-														// gérer par la fonction setComPortTimeouts un peu plus haut
+														// géré par la fonction setComPortTimeouts un peu plus haut
 
 				if (i == -1) {
 					buf.close();
@@ -155,7 +155,7 @@ public class SetUpMode {
 				}
 
 				buf.write((byte) currentByte[0]);
-				if ((in.available() == 0) && buf.endsByData("OK")) {
+				if (buf.endsByData("OK")) {
 					p.setComPortTimeouts(
 							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
 							0, 0);

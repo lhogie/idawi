@@ -14,7 +14,6 @@ import idawi.Idawi;
 import idawi.transport.Broadcastable;
 import idawi.transport.Link;
 import idawi.transport.TransportService;
-import java.util.Collections;
 
 public class SerialDriver extends TransportService implements Broadcastable {
 
@@ -121,7 +120,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		serialPort.openPort();
 		serialPort.setBaudRate(115200);// configurable ?
 
-		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);// configurable
+		serialPort.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
 		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 0, 0);
 		if (!serialPort.isOpen()) {
 			return false;
@@ -136,8 +135,7 @@ public class SerialDriver extends TransportService implements Broadcastable {
 		byte[] currentByte = new byte[1];
 		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000, 1000);
 		p.writeBytes(setupMarker, setupMarker.length);
-		int bytesRed = 0;
-		boolean anyResponse = false;
+
 		var buf = new MyByteArrayOutputStream();
 		while (true) {
 			try {
@@ -148,24 +146,16 @@ public class SerialDriver extends TransportService implements Broadcastable {
 					buf.close();
 					return false;
 				}
-				bytesRed = bytesRed + 1;
 				buf.write((byte) currentByte[0]);
-				if ((bytesRed >= 10) && !anyResponse) {// permet de voir si on a eu une réponse après quelques bytes si
-														// aucune réponse ne nous convient le device n'est pas un SiK
-					markerWrite(p, buf, outMarker);
-					bytesRed = 0;
-					buf.close();
-					return false;
-				}
+
 				if (buf.endsBy("OK".getBytes())) {
-					anyResponse = true;
 					markerWrite(p, buf, sikMarker);
 
 				} else if (buf.endsBy("SiK".getBytes())) {
 
 					markerWrite(p, buf, outMarker);
 
-				} else if (buf.endsBy("ATO".getBytes()) && anyResponse) {
+				} else if (buf.endsBy("ATO".getBytes())) {
 					buf.close();
 					return true;
 				}

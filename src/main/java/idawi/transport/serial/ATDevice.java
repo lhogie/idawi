@@ -7,6 +7,10 @@ import java.io.PrintStream;
 public class ATDevice extends SerialDevice {
 	private SetUpMode setup;
 	private PrintStream ps;
+	/**
+	 * Très important de ne pas faire un println au lieu d'un print car le separator
+	 * d'un OS à l'autre n'est pas le même et AT ne marche qu'avec le separator \r\n
+	 */
 	String separator = "\r\n";
 
 	public ATDevice(SerialPort p) {
@@ -45,13 +49,17 @@ public class ATDevice extends SerialDevice {
 		setup = null;
 	}
 
+	/**
+	 * Fonctionne exactement comme la fonction existSetup plus mais fais un reload
+	 * au lieu de simplement quitter le setup
+	 */
 	synchronized void exitSetupReload() {
+
 		if (setup == null)
 			throw new IllegalStateException("not in setup mode");
 
 		setup.out.print("ATZ");
 		setup.out.print(separator);
-
 		setupping = false;
 		setup.awaitingMessages.forEach(b -> bcast(b));
 		rebooting = true;

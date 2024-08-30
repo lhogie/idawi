@@ -28,6 +28,7 @@ public class App {
 			t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
 				msg.content = "blabla";
 			});
+
 		}
 
 	}

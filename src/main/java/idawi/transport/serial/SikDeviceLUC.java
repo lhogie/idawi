@@ -3,6 +3,10 @@ package idawi.transport.serial;
 import com.fazecast.jSerialComm.SerialPort;
 
 public class SikDeviceLUC extends ATDevice {
+	/**
+	 * Variable qui indique si la première config a eu lieu avant de démarrer les
+	 * envoies.
+	 */
 	boolean firstConfig = false;
 
 	public SikDeviceLUC(SerialPort p) {
@@ -15,12 +19,12 @@ public class SikDeviceLUC extends ATDevice {
 		var config = getConfig();
 		if (config != null)
 			System.out.println("config 1: correct" + serialPort.getSystemPortName());
-		// setup();
+		setup();
 
-		// config = getConfig();
-		// if (config != null)
+		config = getConfig();
+		if (config != null)
 
-		// System.out.println("config 2: correct" + serialPort.getSystemPortName());
+			System.out.println("config 2: correct" + serialPort.getSystemPortName());
 
 		config = defaultConfig(config);
 		if (config != null)
