@@ -7,7 +7,6 @@ import idawi.Service;
 import idawi.messaging.MessageQueue;
 import idawi.routing.ComponentMatcher;
 import idawi.transport.serial.SerialDriver;
-import idawi.transport.serial.SikDevice;
 
 public class App {
 	public static void main(String[] args) throws InterruptedException {
@@ -25,13 +24,12 @@ public class App {
 		// new SharedMemoryTransport(b);
 
 		// a_smt.bcastTargets.add(b);
-		// while (true) {
-		// System.out.println("nice");
-		// t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
-		// msg.content = "blabla";
-		// System.out.println("sending ");
-		// });
-		// }
+		while (true) {
+			t.exec(ComponentMatcher.all, S.class, S.E.class, msg -> {
+				msg.content = "blabla";
+			});
+		}
+
 	}
 
 	public static class S extends Service {

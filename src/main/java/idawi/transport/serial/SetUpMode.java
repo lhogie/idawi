@@ -1,43 +1,47 @@
 package idawi.transport.serial;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+
+import com.fazecast.jSerialComm.SerialPort;
 
 import toools.thread.Q;
 
 public class SetUpMode {
 	PrintStream out;
-	BufferedReader in;
+	InputStream in;
 	private final ATDevice device;
 	Q<byte[]> awaitingMessages = new Q<>(100);
 
 	SetUpMode(ATDevice d) {
 		this.device = d;
+
 		out = new PrintStream(d.serialPort.getOutputStream());
-		in = new BufferedReader(new InputStreamReader(d.ser));
+		in = d.serialPort.getInputStream();
 	}
 
-
-	public void exit() {
+	private void exit() {
 		device.exitSetup();
 	}
 
-	public Config getConfig() {
+	private void exitReload() {
+		device.exitSetupReload();
+	}
+
+	Config getConfig() {
 		Config config;
 		try {
+			var regexString = "S15:.*[\r\n]+";
 
-			var ps = enterSetupMode();
-			ps.out.println("ATI5");
+			out.print("ATI5");
+			out.print(device.separator);
 
-			System.out.println("avant poll");
-			System.out.println(serialPort.isOpen());
+			config = readConfig(regexString);
 
-			System.out.println(serialPort.getInputStream());
-			config = configQ.poll_sync(2);
-
-			System.out.println("après poll");
-			ps.out.println("ATO");
+			exit();
 
 			return config;
 		} catch (Exception e) {
@@ -47,35 +51,129 @@ public class SetUpMode {
 		return config;
 	}
 
-	public Config setConfig(Config c) {
+	PrintStream enterSetupMode() {
 		try {
-			System.out.println("begin Set Config");
-			var ps = enterSetupMode();
+
+			Thread.sleep(1100);
+			out.print("+++");
+
+			Thread.sleep(1100);
+
+			return out;
+		} catch (Exception e) {
+
+		}
+		return null;
+	}
+
+	Config setConfig(Config c) {
+		try {
 			for (Param param : c) {
-				if (param.code == "S0") {
+				if (param.code.equals("S0")) {
 					continue;
 				}
-				ps.println("AT" + param.code + "=" + param.value);
-				Thread.sleep(100);
+
+				out.print("AT" + param.code + "=" + param.value);
+				out.print(device.separator);
+
+				okDetector();
 
 			}
-
 			// save and reboot
-			ps.println("AT&W");
+			out.print("AT&W");
+			out.print(device.separator);
 
-			ps.println("ATZ");
-			rebooting = true;
+			okDetector();
 
+			exitReload();
 			// block 10s until rebooted
-			var rebootAknowlgement = rebootQ.poll_sync(2);
-			System.out.println("reboot aknow :" + rebootAknowlgement);
-			rebooting = false;
-			System.out.println("end Set Config");
 
-		} catch (InterruptedException e) {
+			// var rebootAknowlgement = awaitingMessages.poll_sync(2);// make a queue poll
+			var rebootAknowlgement = device.rebootQ.poll_sync(2);
+			device.rebooting = false;
+			// System.out.println("reboot aknow :" + rebootAknowlgement);
+			device.setup();
+			return getConfig();
+
+		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 
-		return getConfig();
+	}
+
+	private Config readConfig(String reString) {
+		var buf = new MyByteArrayOutputStream();
+		var c = new Config();
+		byte[] currentByte = new byte[1];
+
+		SerialPort p = device.serialPort;
+		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+				1000);
+		try {
+
+			while (true) {
+				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
+														// gérer par la fonction setComPortTimeouts un peu plus haut
+
+				if (i == -1) {
+					buf.close();
+					return c;
+				}
+
+				buf.write((byte) currentByte[0]);
+				if ((in.available() == 0) && buf.endsByData(reString)) {
+					p.setComPortTimeouts(
+							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
+							0, 0);
+					return dataParse(buf.toByteArray());
+
+				}
+
+			}
+		} catch (IOException err) {
+			System.err.println("I/O error reading stream");
+		}
+		return c;
+	}
+
+	private boolean okDetector() {
+		var buf = new MyByteArrayOutputStream();
+		byte[] currentByte = new byte[1];
+
+		SerialPort p = device.serialPort;
+		p.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 1000,
+				1000);
+		try {
+
+			while (true) {
+				int i = p.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son timeout peut être
+														// gérer par la fonction setComPortTimeouts un peu plus haut
+
+				if (i == -1) {
+					buf.close();
+					return false;
+				}
+
+				buf.write((byte) currentByte[0]);
+				if ((in.available() == 0) && buf.endsByData("OK")) {
+					p.setComPortTimeouts(
+							SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING,
+							0, 0);
+					return true;
+
+				}
+
+			}
+		} catch (IOException err) {
+			System.err.println("I/O error reading stream");
+		}
+		return false;
+	}
+
+	private Config dataParse(byte[] bytes) {
+
+		var config = Config.from(new String(bytes));
+		return config;
+
 	}
 }

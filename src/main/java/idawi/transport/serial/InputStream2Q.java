@@ -2,6 +2,7 @@ package idawi.transport.serial;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 import toools.thread.Q;
 
@@ -9,7 +10,7 @@ public class InputStream2Q implements Runnable {
 	private final Ok okSingleton = new Ok();
 	public final Q q = new Q(1);
 	private final InputStream in;
-	
+
 	public InputStream2Q(InputStream in) {
 		this.in = in;
 	}

@@ -95,7 +95,6 @@ public class WebService extends Service {
 		whatToSendMap.put("route", c -> c.messages.last().route);
 		whatToSendMap.put("source", c -> c.messages.last().route.source());
 		whatToSendMap.put("sc", c -> new Object[] { c.messages.last().route.source(), c.messages.last().content });
-
 	}
 
 	@Override
@@ -115,15 +114,17 @@ public class WebService extends Service {
 
 		httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 		httpServer.createContext("/", e -> {
-			URI uri = e.getRequestURI();
-			InputStream input = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
-			// is.close();
-			List<String> path = Utils.path(uri.getPath());
-			Map<String, String> query = Utils.query(uri.getQuery());
-			e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 			OutputStream output = e.getResponseBody();
 
 			try {
+				URI uri = e.getRequestURI();
+				InputStream input = "POST".equals(e.getRequestMethod()) ? e.getRequestBody() : null;
+				// is.close();
+				System.out.println(uri.getPath());
+				List<String> path = Utils.path(uri.getPath());
+				System.out.println(path);
+				Map<String, String> query = Utils.query(uri.getQuery());
+				e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 				if (path == null) {
 					Utils.singleHTTPResponse(HttpURLConnection.HTTP_OK, "text/html",
 							new JavaResource(getClass(), "root.html").getByteArray(), e, output);
@@ -194,9 +195,9 @@ public class WebService extends Service {
 				} catch (IOException ee) {
 					// ee.printStackTrace();
 				}
+			} finally {
+				output.close();
 			}
-
-			output.close();
 		});
 
 		httpServer.setExecutor(Idawi.agenda.threadPool);
@@ -357,21 +358,21 @@ public class WebService extends Service {
 	}
 
 	private <S extends Service> Class<S> service(Map<String, String> query, OutputStream output, Serializer serializer,
-			ComponentMatcher t, RoutingService<?> r, RoutingParameters rp,
+			ComponentMatcher target, RoutingService<?> r, RoutingParameters rp,
 			Predicate<MessageCollector> terminationCondition) throws ClassNotFoundException, IOException {
 		if (query.containsKey("s")) {
 			var s = query.remove("s");
 			var c = shortcut_service.get(s);
 			return (Class<S>) (c != null ? c : Class.forName(s));
 		} else {
-			var ro = exec(t, ServiceManager.class, listServices.class, msg -> {
+			var ro = exec(target, ServiceManager.class, listServices.class, msg -> {
 				msg.eot = true;
 				msg.routingStrategy = new RoutingStrategy(r.getClass(), rp);
 			});
 			var messages = ro.returnQ.collector().collectUntil(terminationCondition).messages;
-			var map = new HashMap<Component, List<? extends Service>>();
-			messages.forEach(m -> map.put(m.sender(), (List<? extends Service>) m.content));
-			new Suggestion("s", "gives the name of a service", map).send(output, serializer);
+			var component_services = new HashMap<Component, List<? extends Service>>();
+			messages.forEach(m -> component_services.put(m.sender(), (List<? extends Service>) m.content));
+			new Suggestion("s", "gives the name of a service", component_services).send(output, serializer);
 			return null;
 		}
 	}

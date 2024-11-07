@@ -43,10 +43,11 @@ public class Utils {
 			s = s.substring(1);
 		}
 
-		// if the path ends by a /
-		if (s.charAt(s.length() - 1) == '/' && s.charAt(s.length() - 2) != '/') {
+		if (s.endsWith("/")) {
 			s = s.substring(0, s.length() - 1);
 		}
+
+		s = s.replaceAll("//", "/");
 
 		return s.isEmpty() ? null : TextUtilities.split(s, '/');
 	}

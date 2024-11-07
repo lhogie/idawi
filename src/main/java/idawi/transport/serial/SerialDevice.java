@@ -20,7 +20,8 @@ public class SerialDevice {
 	public List<Callback> markers = new ArrayList<>();
 	public static final byte[] msgMarker = "fgmfkdjgvhdfkghksfjhfdsj".getBytes();
 	public Q<Object> rebootQ = new Q<>(1);
-	public boolean rebooting;
+	public boolean rebooting = false;
+	public boolean setupping = false;
 	Q<Config> configQ = new Q<>(1);
 	protected Thread readingThread;
 
@@ -53,23 +54,23 @@ public class SerialDevice {
 		Idawi.agenda.threadPool.submit(() -> {
 			this.readingThread = Thread.currentThread();
 			var buf = new MyByteArrayOutputStream();
-			var inputStream = serialPort.getInputStream();
 
+			byte[] currentByte = new byte[1];
 			try {
 
 				while (true) {
-					if ((inputStream.available() == 0) && buf.endsByData()) {
-						dataParse(buf.toByteArray(), driver);
-					}
-
-					try {
-						int i = inputStream.read();
+					if (!setupping) {
+						System.out.println("main reading" + serialPort.getSystemPortName());
+						int i = serialPort.readBytes(currentByte, 1); // j'utilise readBytes de JserialComm car son
+																		// timeout peut
+						// être
+						// gérer
+						// par la fonction setComPortTimeouts un peu plus haut
 						if (i == -1) {
 							return;
 						}
 
-						buf.write((byte) i);
-
+						buf.write((byte) currentByte[0]);
 						for (var callback : markers) {
 							if (buf.endsBy(callback.marker())) {
 								System.out.println("Before callback");
@@ -79,10 +80,8 @@ public class SerialDevice {
 								buf.reset();
 							}
 						}
-					} catch (InterruptedException ierr) {
 
 					}
-
 				}
 
 			} catch (IOException err) {
@@ -99,24 +98,18 @@ public class SerialDevice {
 			b.write(msgBytes);
 			b.write(Conversion.intToBytes(Arrays.hashCode(msgBytes)));
 			b.write(msgMarker);
-			System.out.println(b.toByteArray());
-			System.out.println((Arrays.hashCode(msgBytes)));
+
 			os.write(b.toByteArray());
-			// System.out.println("writing done");
 		} catch (IOException e) {
+			System.out.println("problem sending with device :");
+
 			e.printStackTrace();
+
 		}
 	}
 
 	public String getName() {
-		return serialPort.getDescriptivePortName();
-	}
-
-	public void dataParse(byte[] bytes, SerialDriver serialDriver) {
-
-		var config = Config.from(new String(bytes));
-		configQ.add_sync(config);
-
+		return serialPort.getSystemPortName();
 	}
 
 }
