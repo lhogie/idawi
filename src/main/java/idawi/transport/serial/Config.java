@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.function.Predicate;
 
 public class Config extends ArrayList<Param> {
-
+	/**
+	 * Parsing des données lues et conversion en objet Config
+	 */
 	public static Config from(String text) {
+
 		var splitedText = text.substring(text.indexOf("S0")).replace("ATO", "").split("\\r?\\n");
 		var c = new Config();
 		for (String line : splitedText) {
