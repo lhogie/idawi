@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Hogie"
+  given-names: "Luc"
+  orcid: "https://orcid.org/0000-0001-8044-5672"
+title: "Idawi"
+version: 2.0.4
+date-released: 2023-01-01
+url: "https://github.com/lhogie/idawi"
