@@ -1,23 +1,20 @@
 package idawi.messaging;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.BooleanSupplier;
 
-import idawi.Service;
-import toools.io.Cout;
-import toools.thread.Q;
 
-public class MessageQueue extends Q<Message<?>> {
+public class MessageQueue extends Element {
+	Q<Message<?>> q;
 	public final Service service;
 	public final String name;
 //	private final Consumer<MessageQueue> destructor;
 //	private final Set<ComponentDescriptor> completedSenders = new HashSet<>();
 
 	public MessageQueue(Service service, String name, int capacity) {
-		super(capacity);
+		super();
+		this.q = new Q<>(100);
 		this.name = name;
 		this.service = service;
+		
 	}
 
 	public void detach() {
